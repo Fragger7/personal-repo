@@ -1,0 +1,16 @@
+{
+  "short_name": "Daily Push",
+  "name": "Daily Push",
+  "icons": [
+    {
+      "src": "https://cdn.jsdelivr.net/npm/emoji-datasource-apple@14.0.0/img/apple/64/26a1.png",
+      "type": "image/png",
+      "sizes": "64x64"
+    }
+  ],
+  "start_url": "index.html",
+  "background_color": "#02040a",
+  "theme_color": "#02040a",
+  "display": "standalone",
+  "orientation": "portrait"
+}
