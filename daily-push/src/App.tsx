@@ -49,7 +49,7 @@ export default function App() {
 
   // Terminal Console logging buffer
   const [consoleLogs, setConsoleLogs] = useState<LogEntry[]>([]);
-  const logsEndRef = useRef<HTMLDivElement>(null);
+  const consoleBufferRef = useRef<HTMLDivElement>(null);
 
   // UI Toast State
   const [toast, setToast] = useState<{ message: string; success: boolean } | null>(null);
@@ -86,19 +86,19 @@ export default function App() {
           const parsed: WorkoutDay[] = JSON.parse(content);
           const sorted = parsed.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
           setDataFrame(sorted);
-          writeLog(`Sovereign OPFS hardware storage synchronized. Detected ${sorted.length} records.`);
+          writeLog(`Local disk storage synced. Detected ${sorted.length} records.`);
           setStorageType("OFFLINE_OPFS");
           return sorted;
         } else {
-          writeLog("OPFS sandbox initialized clean. Ready to accept daily records.");
+          writeLog("Local storage initialized. Ready to record reps.");
           setStorageType("OFFLINE_OPFS");
           return [];
         }
       } else {
-        throw new Error("OPFS is not natively active in this user agent.");
+        throw new Error("High-speed local disk storage not supported in browser.");
       }
     } catch (err: any) {
-      writeLog(`OPFS Handshake bypassed: ${err.message}. Initialized browser LocalStorage cache.`, false);
+      writeLog(`Storage fallback: ${err.message}. Loading browser local database.`, false);
       setStorageType("LOCAL_STORAGE");
       
       const localData = localStorage.getItem("workout_data.json");
@@ -107,13 +107,13 @@ export default function App() {
           const parsed: WorkoutDay[] = JSON.parse(localData);
           const sorted = parsed.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
           setDataFrame(sorted);
-          writeLog(`LocalStorage sync completed. Loaded ${sorted.length} records.`);
+          writeLog(`Backup database synced. Loaded ${sorted.length} records.`);
           return sorted;
         } catch (parseErr) {
-          writeLog("Failed to parse local backup ledger.", true);
+          writeLog("Failed to parse fallback database.", true);
         }
       } else {
-        writeLog("LocalStorage initialized clean. Ready to record logs offline.");
+        writeLog("Backup database initialized. Ready to record reps.");
       }
       return [];
     }
@@ -127,13 +127,13 @@ export default function App() {
         const writable = await handle.createWritable();
         await writable.write(JSON.stringify(data, null, 2));
         await writable.close();
-        writeLog("Sovereign session safely locked to local OPFS hardware disk.");
+        writeLog("Workout reps successfully saved to local storage.");
       } else {
         localStorage.setItem("workout_data.json", JSON.stringify(data, null, 2));
-        writeLog("Session safely committed to browser LocalStorage cluster cache.");
+        writeLog("Workout reps saved to local memory database.");
       }
     } catch (err: any) {
-      writeLog(`Hardware write rejected: ${err.message}. Writing to browser cache...`, true);
+      writeLog(`Disk write error: ${err.message}. Fallback write triggered.`, true);
       localStorage.setItem("workout_data.json", JSON.stringify(data, null, 2));
     }
   };
@@ -152,7 +152,9 @@ export default function App() {
 
   // Scroll logging buffer
   useEffect(() => {
-    logsEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (consoleBufferRef.current) {
+      consoleBufferRef.current.scrollTop = consoleBufferRef.current.scrollHeight;
+    }
   }, [consoleLogs]);
 
   // --- DYNAMIC FORM INJECTION ---
@@ -371,40 +373,40 @@ export default function App() {
       </AnimatePresence>
 
       {/* Primary Navigation / Utility Bar */}
-      <header className="sticky top-0 z-40 bg-[#02040a]/80 backdrop-blur-xl border-b border-white/5 px-6 py-5 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="h-8 w-8 rounded-lg bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center text-slate-950 font-black shadow-lg shadow-emerald-500/10">
-            <Zap size={14} className="fill-slate-950 stroke-none" />
+      <header className="sticky top-0 z-40 bg-[#02040a]/80 backdrop-blur-xl border-b border-white/5 px-4 sm:px-6 py-3.5 sm:py-5 flex items-center justify-between">
+        <div className="flex items-center gap-2 sm:gap-3">
+          <div className="h-7 w-7 sm:h-8 sm:w-8 rounded-lg bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center text-slate-950 font-black shadow-lg shadow-emerald-500/10">
+            <Zap size={13} className="fill-slate-950 stroke-none" />
           </div>
           <div>
-            <h1 className="text-[13px] font-bold tracking-widest text-white uppercase font-sans">DAILY PUSH</h1>
-            <p className="text-[9px] font-mono text-emerald-400 tracking-wider uppercase font-medium flex items-center gap-1">
+            <h1 className="text-[12px] sm:text-[13px] font-bold tracking-widest text-white uppercase font-sans">DAILY PUSH</h1>
+            <p className="text-[8px] sm:text-[9px] font-mono text-emerald-400 tracking-wider uppercase font-medium flex items-center gap-1">
               <span className="h-1 w-1 bg-current rounded-full" />
-              {storageType} (SOVEREIGN_NODE)
+              {storageType === "OFFLINE_OPFS" ? "DISK DATABASE" : "MEMORY DATABASE"}
             </p>
           </div>
         </div>
         
-        <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1.5 border border-white/5 bg-slate-950/60 text-slate-400 text-[10px] font-mono px-3 py-2 rounded-xl">
-            <ShieldCheck size={12} className="text-emerald-400" />
-            100% PRIVATE & OFFLINE
+        <div className="flex items-center gap-1.5 sm:gap-2">
+          <div className="flex items-center gap-1 border border-white/5 bg-slate-950/60 text-slate-400 text-[9px] sm:text-[10px] px-2 py-1.5 sm:px-3 sm:py-2 rounded-xl">
+            <ShieldCheck size={11} className="text-emerald-400" />
+            <span className="hidden xs:inline">OFFLINE</span>
           </div>
 
           <button 
             type="button"
             onClick={triggerManualExport} 
-            className="bg-slate-950 border border-white/5 hover:bg-slate-900 text-slate-350 text-[10px] font-mono px-3 py-2 rounded-xl flex items-center gap-1 cursor-pointer font-bold transition-all"
+            className="bg-slate-950 border border-white/5 hover:bg-slate-900 text-slate-350 text-[9px] sm:text-[10px] px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl flex items-center gap-1 cursor-pointer font-bold transition-all"
           >
-            <Download size={11} />
+            <Download size={10} />
             EXPORT
           </button>
           
           <label 
             htmlFor="import-file" 
-            className="bg-slate-900 hover:bg-slate-800 border border-white/5 text-slate-300 text-[10px] font-bold px-4 py-2 rounded-xl cursor-pointer font-mono transition-all flex items-center gap-1"
+            className="bg-slate-900 hover:bg-slate-800 border border-white/5 text-slate-350 text-[9px] sm:text-[10px] font-bold px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl cursor-pointer transition-all flex items-center gap-1"
           >
-            <Upload size={11} />
+            <Upload size={10} />
             SEED
           </label>
           <input 
@@ -609,14 +611,14 @@ export default function App() {
             </div>
           </div>
           
-          <div className="relative w-full flex-1 h-44 mt-2">
+          <div className="relative w-full flex-1 h-[180px] mt-2">
             {chartData.length === 0 ? (
-              <div className="h-full w-full flex flex-col items-center justify-center text-slate-500 font-mono text-[10px] gap-2 border border-dashed border-white/5 rounded-xl bg-black/20">
-                <AlertTriangle size={16} className="text-slate-600" />
-                <span>PENDING LOCAL LEDGER SEQUENCES</span>
+              <div className="h-full w-full min-h-[180px] flex flex-col items-center justify-center text-slate-500 font-mono text-[10px] gap-2 border border-dashed border-white/5 rounded-xl bg-black/20 px-4 text-center">
+                <AlertTriangle size={15} className="text-slate-600" />
+                <span>Reps will appear here dynamically to list your performance timeline.</span>
               </div>
             ) : (
-              <ResponsiveContainer width="100%" height="100%">
+              <ResponsiveContainer width="100%" height={180}>
                 <LineChart data={chartData} margin={{ top: 10, right: 5, left: -25, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.01)" />
                   <XAxis 
@@ -667,13 +669,13 @@ export default function App() {
         {/* Offline Diagnostic Feed */}
         <div className="p-4 bg-slate-950/40 border border-white/5 rounded-2xl backdrop-blur-md">
           <div className="flex items-center justify-between border-b border-white/5 pb-2 mb-2 select-none">
-            <h4 className="text-[10px] font-semibold tracking-widest text-slate-400 font-mono flex items-center gap-1.5">
+            <h4 className="text-[10px] font-semibold tracking-widest text-slate-440 font-mono flex items-center gap-1.5">
               <Cpu size={12} className="text-emerald-400" />
-              SOVEREIGN_LOG_FEED
+              SYSTEM LOG EVENTS
             </h4>
             <button 
               onClick={copyLogsToClipboard} 
-              className="text-[9px] font-mono bg-slate-950 border border-white/10 hover:bg-slate-900 px-2.5 py-1 rounded text-slate-405 cursor-pointer transition-all"
+              className="text-[9px] font-mono bg-slate-950 border border-white/10 hover:bg-slate-900 px-2.5 py-1 rounded text-slate-400 cursor-pointer transition-all"
             >
               COPY OUTPUT
             </button>
@@ -681,10 +683,11 @@ export default function App() {
 
           <div 
             id="consoleBuffer" 
-            className="font-mono text-[10px] text-slate-400 h-24 overflow-y-auto space-y-1.5 p-3.5 bg-black/40 border border-white/5 rounded-xl select-text scrollbar-thin scrollbar-thumb-white/5"
+            ref={consoleBufferRef}
+            className="font-mono text-[10px] text-slate-450 h-24 overflow-y-auto space-y-1.5 p-3.5 bg-black/40 border border-white/5 rounded-xl select-text scrollbar-thin scrollbar-thumb-white/5"
           >
             {consoleLogs.length === 0 ? (
-              <div className="text-slate-600 italic">[Active state telemetry ready...]</div>
+              <div className="text-slate-600 italic">[Tracker initialized successfully...]</div>
             ) : (
               consoleLogs.map((entry) => (
                 <div 
@@ -695,7 +698,6 @@ export default function App() {
                 </div>
               ))
             )}
-            <div ref={logsEndRef} />
           </div>
         </div>
 
