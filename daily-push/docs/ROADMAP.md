@@ -19,6 +19,11 @@ We have several tactical enhancement directions:
   * Perfecting cache asset structures inside `sw.js` to ensure perfect offline boots when cellular connectivity is poor.
 * **Tranche 2: Dynamic Cloud Sync Status Indicator**
   * Keep an interactive neon cloud sync indicator at the top of the mobile utility bar.
+* **Tranche 3: Google Drive Data Synchronization Backlog**
+  * **Objective**: Sync user data directly to their personal Google Drive instead of or in addition to local/GitHub storage.
+  * **Flow**: Implement one-time OAuth authentication using a secure popup flow via Google Workspace Integration APIs (Drive AppData folder scopes).
+  * **Storage Location**: Store, read, and write a secure backup copy of the `workout_data.json` database directly in a dedicated application folder on Google Drive.
+  * **Status**: Deferred on backlog per user request. To be completed when user initiates the flow.
 
 ---
 
