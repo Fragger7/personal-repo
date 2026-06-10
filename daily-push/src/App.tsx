@@ -78,6 +78,16 @@ export default function App() {
     return customClientId.trim() || DEFAULT_GOOGLE_CLIENT_ID.trim() || (import.meta as any).env.VITE_GOOGLE_CLIENT_ID || "";
   };
 
+  const getGoogleRedirectUri = () => {
+    let basePath = "/";
+    const pathname = window.location.pathname;
+    const lastSlash = pathname.lastIndexOf("/");
+    if (lastSlash > 0) {
+      basePath = pathname.endsWith("/") ? pathname : pathname.substring(0, lastSlash + 1);
+    }
+    return `${window.location.origin}${basePath}oauth-callback.html`;
+  };
+
   const handleGoogleAuth = () => {
     const cid = getGoogleClientId();
     if (!cid) {
@@ -87,7 +97,7 @@ export default function App() {
       return;
     }
 
-    const redirectUri = `${window.location.origin}/oauth-callback.html`;
+    const redirectUri = getGoogleRedirectUri();
     const scope = "https://www.googleapis.com/auth/drive.appdata";
     const authUrl = `https://accounts.google.com/o/oauth2/v2/auth` +
       `?client_id=${encodeURIComponent(cid)}` +
@@ -830,7 +840,7 @@ export default function App() {
                       <li>
                         Under <strong>Authorized redirect URIs</strong>, add:
                         <div className="mt-1 bg-slate-950 p-1.5 rounded border border-white/5 select-text lowercase text-[9px] text-cyan-300 overflow-x-auto">
-                          {window.location.origin}/oauth-callback.html
+                          {getGoogleRedirectUri()}
                         </div>
                       </li>
                       <li>
