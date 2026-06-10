@@ -1,0 +1,74 @@
+# Google Drive OAuth Integration Guide & Knowledge Base
+**Daily Push (v2.0)**
+
+This document serves as the project documentation and workspace knowledge base for configuring, retrieving, and securing your Google Drive backup integration.
+
+---
+
+## 1. Safety and Security: Who Can Access Your Data?
+
+A common question when setting up client-side Google Drive integrations is:
+> *If I enter my Client ID on the app or hardcode it in my code, can other people access my workout files?*
+
+### The Short Answer: No. Your data is absolutely safe!
+
+Here is why:
+1. **Google OAuth is Identity-Bound**: The **Client ID** is simply a public identifier for the application (it acts like the app's "username" so Google knows which app is asking to connect). It does **not** grant access to physical databases or files.
+2. **User Sovereignty**: When someone visits your Daily Push tracking app and clicks **CONNECT DRIVE**, Google prompts **their** device to authorize their **own** Google Account.
+3. **Encapsulated AppData Sandbox (Secure scope)**: Daily Push uses the restricted `"https://www.googleapis.com/auth/drive.appdata"` scope. This ensures:
+   - Your app can *only* read and write a single private backup file (`workout_data.json`) in a hidden, isolated workspace on Google Drive reserved exclusively for Daily Push.
+   - You cannot read other users' Google Drives, and other users cannot access yours, even if you are using the exact same Client ID and application URL.
+   - Anyone visiting the app can use their own Google Drive seamlessly to save their own workouts on their own account.
+
+---
+
+## 2. How to Retrieve Your Client ID (`faraze46m3@gmail.com`)
+
+If you ever lose your browser cache or want to retrieve your Client ID from the source, follow these steps to find it:
+
+### Step-by-Step Google Cloud Console Retrieval:
+1. **Go to Google Cloud**: Open your browser and navigate to the **[Google Cloud Credentials Console](https://console.cloud.google.com/apis/credentials)**.
+2. **Account Sign-In**: Ensure you are signed in with your personal account: **`faraze46m3@gmail.com`**.
+3. **Select Your Project**: Click the project selection dropdown in the top-left navigation bar and choose the project associated with your tracker (e.g. `Daily Push` or `personal-repo`).
+4. **Locate Credentials**:
+   - In the left sidebar, click **Credentials**.
+   - Under the **OAuth 2.0 Client IDs** table, look for your Web application credentials (e.g., `"Daily Push Client"`).
+5. **Copy the Client ID**: Click the copy icon next to the Client ID. 
+   
+   For reference, your active Client ID is already configured as:
+   `363694431662-rmt5fjbvik4dogimij7papln804ec315.apps.googleusercontent.com`
+
+---
+
+## 3. Configuring the Authorized Origins & URLs
+
+To ensure Google responds correctly to login requests from both your development workspace and your live GitHub Pages production tracker, make sure your OAuth client settings in the Cloud Console have these values added:
+
+### Authorized JavaScript origins:
+* `http://localhost:3000` (Local local development/preview)
+* `https://ais-dev-eqn2z6ttrtglw2clnh22p4-335559214841.us-east5.run.app` (Your active AI Studio development domain)
+* `https://Fragger7.github.io` (Your personal GitHub Pages domain)
+
+### Authorized redirect URIs:
+* `http://localhost:3000/oauth-callback.html`
+* `https://ais-dev-eqn2z6ttrtglw2clnh22p4-335559214841.us-east5.run.app/oauth-callback.html`
+* `https://Fragger7.github.io/personal-repo/daily-push/oauth-callback.html`
+
+---
+
+## 4. Baked-In Design: No More Cache Memory Repetitions!
+
+Instead of typing your Client ID into the settings panel every time you clear your cache or open the app on another computer, you can **hardcode a default developer fallback ID** in the source files. 
+
+We have updated the code to support a built-in fallback variable (`DEFAULT_GOOGLE_CLIENT_ID`) at the very top of `src/App.tsx`. 
+
+### To Lock Your Client ID Permanently into Daily Push:
+1. Copy your Client ID from the Google Cloud Console.
+2. Open `src/App.tsx`.
+3. Locate the variable definition at the top of the file:
+   ```typescript
+   // --- GOOGLE WORKSPACE CLIENT CONFIGURATION ---
+   const DEFAULT_GOOGLE_CLIENT_ID = "363694431662-rmt5fjbvik4dogimij7papln804ec315.apps.googleusercontent.com";
+   ```
+4. Paste your Client ID and save.
+5. Re-run or deploy the application structure to GitHub. The app will now automatically use this ID, allowing you to connect Google Drive seamlessly with a single click, completely bypassing the setting page!

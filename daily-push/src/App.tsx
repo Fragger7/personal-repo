@@ -36,6 +36,12 @@ import {
 
 import { WorkoutDay, LogEntry } from "./types";
 
+// --- GOOGLE WORKSPACE CLIENT CONFIGURATION ---
+// Paste your Google OAuth 2.0 Client ID here to lock it permanently into your tracker code.
+// This ensures that even if you clear your browser cache or visit the app on a different device,
+// you can connect your Google Drive with a single click without having to enter anything!
+const DEFAULT_GOOGLE_CLIENT_ID = "363694431662-rmt5fjbvik4dogimij7papln804ec315.apps.googleusercontent.com"; // Placed holder / preset for user to utilize directly or modify.
+
 export default function App() {
   // Core state metrics
   const [dataFrame, setDataFrame] = useState<WorkoutDay[]>([]);
@@ -69,7 +75,7 @@ export default function App() {
 
   // --- GOOGLE DRIVE SYNC PIPELINES ---
   const getGoogleClientId = () => {
-    return customClientId.trim() || (import.meta as any).env.VITE_GOOGLE_CLIENT_ID || "";
+    return customClientId.trim() || DEFAULT_GOOGLE_CLIENT_ID.trim() || (import.meta as any).env.VITE_GOOGLE_CLIENT_ID || "";
   };
 
   const handleGoogleAuth = () => {
@@ -784,7 +790,7 @@ export default function App() {
                     </label>
                     <input 
                       type="text"
-                      placeholder="Paste your Google OAuth Client ID here..."
+                      placeholder={DEFAULT_GOOGLE_CLIENT_ID ? `Using preset ending in ...${DEFAULT_GOOGLE_CLIENT_ID.slice(-15)}` : "Paste your Google OAuth Client ID here..."}
                       value={customClientId}
                       onChange={(e) => {
                         setCustomClientId(e.target.value);
@@ -793,7 +799,13 @@ export default function App() {
                       className="w-full bg-slate-950 border border-white/5 focus:border-cyan-500/30 rounded-xl p-2.5 text-white font-mono text-[11px] focus:outline-none transition-all"
                     />
                     <p className="text-[9px] text-slate-500 leading-normal">
-                      Leave empty to use default environment client ID. If none is injected, you must paste an OAuth Client ID from Google Cloud Console as listed below.
+                      {customClientId.trim() ? (
+                        <span className="text-amber-400 font-bold">⚠️ Custom Client ID override in effect. Clear this input to revert to the built-in workspace preset.</span>
+                      ) : DEFAULT_GOOGLE_CLIENT_ID ? (
+                        <span className="text-emerald-400 font-bold">✅ Workspace preset Client ID active ({DEFAULT_GOOGLE_CLIENT_ID.substring(0, 12)}...). Hands-free connect is ready!</span>
+                      ) : (
+                        <span>Paste an OAuth Client ID from your Google Cloud Credentials console.</span>
+                      )}
                     </p>
                   </div>
 
