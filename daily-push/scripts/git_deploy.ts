@@ -71,7 +71,6 @@ try {
     "package.json",
     "tsconfig.json",
     "vite.config.ts",
-    "index.html",
     "metadata.json",
     "manifest.json",
     ".env.example",
