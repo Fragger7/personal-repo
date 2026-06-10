@@ -20,7 +20,6 @@ import {
   Sparkles,
   Cloud,
   CloudLightning,
-  Settings,
   RefreshCw,
   LogOut
 } from "lucide-react";
@@ -55,8 +54,6 @@ export default function App() {
   const [gdUser, setGdUser] = useState<{ displayName: string; emailAddress: string; photoLink?: string } | null>(null);
   const [isSyncing, setIsSyncing] = useState<boolean>(false);
   const [lastGdSyncTime, setLastGdSyncTime] = useState<string | null>(() => localStorage.getItem("last_gd_sync_time"));
-  const [customClientId, setCustomClientId] = useState<string>(() => localStorage.getItem("gd_custom_client_id") || "");
-  const [isConfigOpen, setIsConfigOpen] = useState<boolean>(false);
 
   // Form states
   const [p1, setP1] = useState<string>("");
@@ -75,7 +72,7 @@ export default function App() {
 
   // --- GOOGLE DRIVE SYNC PIPELINES ---
   const getGoogleClientId = () => {
-    return customClientId.trim() || DEFAULT_GOOGLE_CLIENT_ID.trim() || (import.meta as any).env.VITE_GOOGLE_CLIENT_ID || "";
+    return DEFAULT_GOOGLE_CLIENT_ID.trim() || (import.meta as any).env.VITE_GOOGLE_CLIENT_ID || "";
   };
 
   const getGoogleRedirectUri = () => {
@@ -106,9 +103,8 @@ export default function App() {
   const handleGoogleAuth = () => {
     const cid = getGoogleClientId();
     if (!cid) {
-      setIsConfigOpen(true);
-      writeLog("Setup required: Google Drive Client ID is missing. Configure in settings.", true);
-      triggerToast("Configure Client ID first", false);
+      writeLog("Setup error: Google Drive Client ID is missing in application source.", true);
+      triggerToast("Client ID is missing", false);
       return;
     }
 
@@ -743,15 +739,6 @@ export default function App() {
             </div>
 
             <div className="flex items-center gap-2 self-end sm:self-auto">
-              <button
-                type="button"
-                onClick={() => setIsConfigOpen((p) => !p)}
-                className="p-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-white/5 text-slate-400 transition-all cursor-pointer"
-                title="Configure OAuth Client ID"
-              >
-                <Settings size={14} className={isConfigOpen ? "text-cyan-400" : ""} />
-              </button>
-
               {gdAccessToken ? (
                 <div className="flex items-center gap-1.5">
                   <button
@@ -785,88 +772,6 @@ export default function App() {
               )}
             </div>
           </div>
-
-          {/* Config Setup Dropdown / Panel */}
-          <AnimatePresence>
-            {isConfigOpen && (
-              <motion.div
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: "auto", opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                className="overflow-hidden mt-3"
-              >
-                <div className="bg-black/40 border border-white/5 p-3 sm:p-4 rounded-xl space-y-3 font-sans text-xs">
-                  <div className="flex items-center justify-between border-b border-white/5 pb-2 mb-1">
-                    <span className="font-bold text-[10px] tracking-wider uppercase text-slate-400 font-mono flex items-center gap-1">
-                      <Settings size={12} className="text-cyan-400" />
-                      OAuth Credentials Configuration
-                    </span>
-                    <button 
-                      onClick={() => setIsConfigOpen(false)}
-                      className="text-[10px] font-mono text-slate-500 hover:text-slate-350"
-                    >
-                      [CLOSE]
-                    </button>
-                  </div>
-
-                  <div className="space-y-1.5 font-mono">
-                    <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-450">
-                      Google OAuth Client ID
-                    </label>
-                    <input 
-                      type="text"
-                      placeholder={DEFAULT_GOOGLE_CLIENT_ID ? `Using preset ending in ...${DEFAULT_GOOGLE_CLIENT_ID.slice(-15)}` : "Paste your Google OAuth Client ID here..."}
-                      value={customClientId}
-                      onChange={(e) => {
-                        setCustomClientId(e.target.value);
-                        localStorage.setItem("gd_custom_client_id", e.target.value);
-                      }}
-                      className="w-full bg-slate-950 border border-white/5 focus:border-cyan-500/30 rounded-xl p-2.5 text-white font-mono text-[11px] focus:outline-none transition-all"
-                    />
-                    <p className="text-[9px] text-slate-500 leading-normal">
-                      {customClientId.trim() ? (
-                        <span className="text-amber-400 font-bold">⚠️ Custom Client ID override in effect. Clear this input to revert to the built-in workspace preset.</span>
-                      ) : DEFAULT_GOOGLE_CLIENT_ID ? (
-                        <span className="text-emerald-400 font-bold">✅ Workspace preset Client ID active ({DEFAULT_GOOGLE_CLIENT_ID.substring(0, 12)}...). Hands-free connect is ready!</span>
-                      ) : (
-                        <span>Paste an OAuth Client ID from your Google Cloud Credentials console.</span>
-                      )}
-                    </p>
-                  </div>
-
-                  {/* Connection Steps Helper */}
-                  <div className="space-y-2 border-t border-white/5 pt-2.5">
-                    <p className="font-bold text-[10px] tracking-wider uppercase text-slate-400 font-mono">
-                      📋 Google Cloud Console Instructions
-                    </p>
-                    <ol className="list-decimal list-inside space-y-1.5 text-[10.5px] text-slate-400 leading-relaxed font-mono">
-                      <li>
-                        Go to the <a href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noopener noreferrer" className="text-cyan-400 underline hover:text-cyan-300">Google Cloud Credentials Console</a>.
-                      </li>
-                      <li>
-                        Create an <strong>OAuth client ID</strong> of application type <strong>Web application</strong>.
-                      </li>
-                      <li>
-                        Under <strong>Authorized JavaScript origins</strong>, add:
-                        <div className="mt-1 bg-slate-950 p-1.5 rounded border border-white/5 select-text lowercase text-[9px] text-cyan-300 overflow-x-auto">
-                          {window.location.origin}
-                        </div>
-                      </li>
-                      <li>
-                        Under <strong>Authorized redirect URIs</strong>, add:
-                        <div className="mt-1 bg-slate-950 p-1.5 rounded border border-white/5 select-text lowercase text-[9px] text-cyan-300 overflow-x-auto">
-                          {getGoogleRedirectUri()}
-                        </div>
-                      </li>
-                      <li>
-                        Copy the client ID, paste it into the field above, and click "CONNECT DRIVE" inside the dashboard to activate sync.
-                      </li>
-                    </ol>
-                  </div>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
 
           {/* Sync Stats Info Banner */}
           {lastGdSyncTime && (

@@ -56,22 +56,16 @@ To ensure Google responds correctly to login requests from both your development
 
 ---
 
-## 4. Baked-In Design: No More Cache Memory Repetitions!
+## 4. Baked-In Design: Fully Automated Hands-Free Sync!
 
-Instead of typing your Client ID into the settings panel every time you clear your cache or open the app on another computer, you can **hardcode a default developer fallback ID** in the source files. 
+To ensure maximum design elegance and zero friction, we have completely retired and removed the redundant manual Client ID configuration box and Setting gear button from the user interface. 
 
-We have updated the code to support a built-in fallback variable (`DEFAULT_GOOGLE_CLIENT_ID`) at the very top of `src/App.tsx`. 
+The application is now **permanently configured** with your locked Client ID (`363694431662-rmt5fjbvik4dogimij7papln804ec315.apps.googleusercontent.com`) directly in the source code as a default fallback (`DEFAULT_GOOGLE_CLIENT_ID` at the top of `src/App.tsx`).
 
-### To Lock Your Client ID Permanently into Daily Push:
-1. Copy your Client ID from the Google Cloud Console.
-2. Open `src/App.tsx`.
-3. Locate the variable definition at the top of the file:
-   ```typescript
-   // --- GOOGLE WORKSPACE CLIENT CONFIGURATION ---
-   const DEFAULT_GOOGLE_CLIENT_ID = "363694431662-rmt5fjbvik4dogimij7papln804ec315.apps.googleusercontent.com";
-   ```
-4. Paste your Client ID and save.
-5. Re-run or deploy the application structure to GitHub. The app will now automatically use this ID, allowing you to connect Google Drive seamlessly with a single click, completely bypassing the setting page!
+### Benefits of this Baked-In Architecture:
+* **True Single-Click Sync**: Simply click **CONNECT DRIVE** or **SYNC NOW**. There are absolutely no text boxes or local cache details to re-enter.
+* **Minimalist UI**: Clutter-free dashboard is completely spared from settings toggles, redundant forms, and instructions.
+* **Zero Configuration**: Anyone visiting your deployed application can sync their workout records to their secure Google Drive instantly, completely hands-free!
 
 ---
 
