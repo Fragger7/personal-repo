@@ -79,13 +79,28 @@ export default function App() {
   };
 
   const getGoogleRedirectUri = () => {
-    let basePath = "/";
+    const origin = window.location.origin;
     const pathname = window.location.pathname;
+    
+    // Check if we are running in the personal-repo sub-directory (GitHub Pages)
+    if (pathname.includes("/personal-repo/daily-push")) {
+      return `${origin}/personal-repo/daily-push/oauth-callback.html`;
+    }
+    
+    // Check for any general subfolder implementation
+    if (pathname.includes("/daily-push")) {
+      const idx = pathname.indexOf("/daily-push");
+      const partBefore = pathname.substring(0, idx);
+      return `${origin}${partBefore}/daily-push/oauth-callback.html`;
+    }
+    
+    // Otherwise fallback to dynamic path detection
+    let basePath = "/";
     const lastSlash = pathname.lastIndexOf("/");
     if (lastSlash > 0) {
       basePath = pathname.endsWith("/") ? pathname : pathname.substring(0, lastSlash + 1);
     }
-    return `${window.location.origin}${basePath}oauth-callback.html`;
+    return `${origin}${basePath}oauth-callback.html`;
   };
 
   const handleGoogleAuth = () => {
