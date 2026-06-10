@@ -32,14 +32,19 @@ All code lives inside a modular, responsive client built with **React (v19)**, *
 
 ---
 
-## 3. Secure Backend-Secured Deployments
-Instead of entering user credentials on a public website, Daily Push operates as a robust full-stack application:
+## 3. Secure Backend-Secured Deployments & Automated Git Pipelines
+Instead of entering user credentials on a public website or manually configuring Git on command lines, Daily Push operates as a robust full-stack application with automated server-side synchronizations:
 
-* **Sever-Side Environment Encapsulation:**
-  * Your GitHub Personal Access Token (PAT) and repository info stay securely in an offline `.env` file in our Node workspace.
-  * Credentials are never transferred to or visible in the web browser console or source inspector.
-* **Serverless Production Portal Deployment (`/api/deploy`):**
-  * Clicking the deployment button builds the React application and pushes the final compressed bundle directly into the `/daily-push/` subdirectory of your repository.
-  * Your app becomes immediately live on your personal GitHub Pages domain at `https://[USERNAME].github.io/[REPO]/daily-push/`.
+* **Server-Side Environment Encapsulation:**
+  * Your GitHub Personal Access Token (PAT), user details (`Fragger7`), and repository info stay securely in an offline `.env` file in our Node workspace.
+  * Credentials are never transferred to or visible in the web browser console, local caches, or source files in production.
+* **Automated Production Deployment Pipeline (`npm run deploy`):**
+  * We engineered a custom automation script (`scripts/git_deploy.ts`) accessible in the package structure via `npm run deploy`.
+  * **Build Step:** Runs `vite build` to compile minimized index page resources and optimized assets.
+  * **Git Isolation:** Clones the user's remote repository to `/tmp/` securely, verifying valid connection parameters using the server-side PAT credentials.
+  * **Pruning and Syncing:** Automatically clears out previous assets in `/daily-push/assets/` to prevent cumulative bundle clutter. Copies built compiled paths into corresponding subfolder hierarchies.
+  * **Backup Control Integration:** Programmatically copies all active workspace assets (including source code folders `/src/`, config files, scripts, and markdowns) straight to the repo's `/daily-push/` subdirectory. This ensures your repository maintains a complete backup of both production-ready bundles and their exact underlying source files!
+  * **Commit and Push:** Performs automated diff detection, commits using the user's identity details (`Fragger7`, `faraze46m3@gmail.com`), and instantly pushes directly to the `main` branch.
 * **Cross-Device Shared Branch:**
-  * Everything is maintained on a single branch (`main`) in independent folders, allowing multiple completely modular applications to share the same domain and repository workspace without conflicts or messy branch maintenance.
+  * Everything is maintained on a single branch (`main`) in independent folders, allowing multiple completely modular applications (like `daily-push` and `quantum-nexus`) to share the same domain and repository workspace without conflicts or messy branch maintenance.
+
