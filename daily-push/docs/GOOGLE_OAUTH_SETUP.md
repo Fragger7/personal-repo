@@ -72,3 +72,27 @@ We have updated the code to support a built-in fallback variable (`DEFAULT_GOOGL
    ```
 4. Paste your Client ID and save.
 5. Re-run or deploy the application structure to GitHub. The app will now automatically use this ID, allowing you to connect Google Drive seamlessly with a single click, completely bypassing the setting page!
+
+---
+
+## 5. Resolving "App has not completed the Google verification process" (Error 403: access_denied)
+
+When you attempt to click **Connect Drive** and see an error saying the app is currently in testing and can only be accessed by developer-approved testers, your client ID is correct, but your Google Cloud project's Consent Screen is currently in **Testing** mode. 
+
+You can easily bypass or resolve this in one of two ways in your Google Cloud Console:
+
+### Method A: Add your email as an Approved Test User (Recommended)
+This keeps your project secure and does not require going through Google's public verification process.
+1. Go to the **[Google Cloud Consent Screen Console](https://console.cloud.google.com/apis/credentials/consent)**.
+2. Select your project in the top-left dropdown.
+3. Under the **Test users** section, click **+ ADD USERS**.
+4. Enter your email: **`faraze46m3@gmail.com`** (and any other email accounts you plan to use).
+5. Click **Save**.
+6. Refresh your Daily Push app and try to log in again. It will now let you proceed!
+
+### Method B: Publish the App to Production
+If you want anyone with a Google account to be able to sync their personal backups to Drive under your Client ID:
+1. Go to the **[Google Cloud Consent Screen Console](https://console.cloud.google.com/apis/credentials/consent)**.
+2. Under **Publishing status**, click **PUBLISH APP**.
+3. Confirm the dialog. Google will warn you that you may need to submit for verification, but you can ignore this for personal use; users will simply see an "Advanced -> Go to Daily Push (unsafe)" option to log in.
+
