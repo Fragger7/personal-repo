@@ -136,6 +136,23 @@ export default function App() {
     triggerToast("Disconnected from Drive");
   };
 
+  const getGoogleErrorDetails = async (res: Response): Promise<string> => {
+    try {
+      const text = await res.text();
+      try {
+        const parsed = JSON.parse(text);
+        if (parsed?.error?.message) {
+          return `${parsed.error.message} (HTTP ${res.status})`;
+        }
+      } catch {
+        // Not JSON
+      }
+      return `${text ? text.substring(0, 155) : "Unknown detail"} (HTTP ${res.status})`;
+    } catch {
+      return `HTTP error ${res.status}`;
+    }
+  };
+
   const fetchDriveUserAndSync = async (token: string) => {
     setIsSyncing(true);
     try {
@@ -145,7 +162,8 @@ export default function App() {
       });
       
       if (!aboutRes.ok) {
-        throw new Error(`User info fetch failed: ${aboutRes.status}`);
+        const details = await getGoogleErrorDetails(aboutRes);
+        throw new Error(`User profile query failed: ${details}`);
       }
       
       const aboutData = await aboutRes.json();
@@ -178,13 +196,16 @@ export default function App() {
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      if (folderSearchRes.ok) {
-        const folderSearchData = await folderSearchRes.json();
-        const folders = folderSearchData.files || [];
-        if (folders.length > 0) {
-          folderId = folders[0].id;
-          writeLog(`Located 'Daily Push' application folder. [ID: ${folderId}]`);
-        }
+      if (!folderSearchRes.ok) {
+        const details = await getGoogleErrorDetails(folderSearchRes);
+        throw new Error(`Folder index request failed: ${details}`);
+      }
+
+      const folderSearchData = await folderSearchRes.json();
+      const folders = folderSearchData.files || [];
+      if (folders.length > 0) {
+        folderId = folders[0].id;
+        writeLog(`Located 'Daily Push' application folder. [ID: ${folderId}]`);
       }
 
       if (!folderId) {
@@ -209,7 +230,8 @@ export default function App() {
           folderId = folderData.id;
           writeLog(`Created 'Daily Push' storage folder successfully. [ID: ${folderId}]`);
         } else {
-          throw new Error(`Failed to create 'Daily Push' storage folder. Code: ${createFolderRes.status}`);
+          const details = await getGoogleErrorDetails(createFolderRes);
+          throw new Error(`Failed to create 'Daily Push' storage folder: ${details}`);
         }
       }
 
@@ -221,7 +243,8 @@ export default function App() {
       );
       
       if (!searchRes.ok) {
-        throw new Error(`Cloud index lookup failed code: ${searchRes.status}`);
+        const details = await getGoogleErrorDetails(searchRes);
+        throw new Error(`Cloud index lookup failed: ${details}`);
       }
       
       const searchData = await searchRes.json();
@@ -246,6 +269,9 @@ export default function App() {
           } catch (parseError) {
             writeLog("Warning: Cloud backup file contains illegal JSON formats.", true);
           }
+        } else {
+          const details = await getGoogleErrorDetails(downloadRes);
+          throw new Error(`Database recovery failed: ${details}`);
         }
       }
 
@@ -304,7 +330,8 @@ export default function App() {
         );
         
         if (!updateRes.ok) {
-          throw new Error(`Sync upload transaction aborted code: ${updateRes.status}`);
+          const details = await getGoogleErrorDetails(updateRes);
+          throw new Error(`Sync upload transaction aborted: ${details}`);
         }
       } else {
         writeLog("Allocating new application storage cell inside 'Daily Push' folder...");
@@ -312,7 +339,7 @@ export default function App() {
           name: "workout_data.json",
           parents: [folderId]
         };
-        
+         
         const form = new FormData();
         form.append("metadata", new Blob([JSON.stringify(metadata)], { type: "application/json" }));
         form.append("file", fileBlob);
@@ -327,7 +354,8 @@ export default function App() {
         );
         
         if (!createRes.ok) {
-          throw new Error(`Cloud document allocation aborted: ${createRes.status}`);
+          const details = await getGoogleErrorDetails(createRes);
+          throw new Error(`Cloud document allocation aborted: ${details}`);
         }
         
         const createData = await createRes.json();
