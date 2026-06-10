@@ -15,8 +15,10 @@ A common question when setting up client-side Google Drive integrations is:
 Here is why:
 1. **Google OAuth is Identity-Bound**: The **Client ID** is simply a public identifier for the application (it acts like the app's "username" so Google knows which app is asking to connect). It does **not** grant access to physical databases or files.
 2. **User Sovereignty**: When someone visits your Daily Push tracking app and clicks **CONNECT DRIVE**, Google prompts **their** device to authorize their **own** Google Account.
-3. **Encapsulated AppData Sandbox (Secure scope)**: Daily Push uses the restricted `"https://www.googleapis.com/auth/drive.appdata"` scope. This ensures:
-   - Your app can *only* read and write a single private backup file (`workout_data.json`) in a hidden, isolated workspace on Google Drive reserved exclusively for Daily Push.
+3. **Encapsulated 'Daily Push' Dedicated Folder (Secure drive.file scope)**: Daily Push uses the `"https://www.googleapis.com/auth/drive.file"` scope. This ensures:
+   - Your app can *only* read and write files and folders that the app itself created. It *cannot* read or modify your generic personal spreadsheets, photos, or documents.
+   - It automatically creates a beautifully organized **`Daily Push`** folder directly in the root of your Google Drive containing your **`workout_data.json`** file.
+   - Because the folder is fully visible, you can easily open, copy, edit, download, or share your workout JSON file on any web or mobile device directly from your normal Drive account!
    - You cannot read other users' Google Drives, and other users cannot access yours, even if you are using the exact same Client ID and application URL.
    - Anyone visiting the app can use their own Google Drive seamlessly to save their own workouts on their own account.
 

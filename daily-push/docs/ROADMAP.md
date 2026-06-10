@@ -23,7 +23,7 @@ We have several tactical enhancement directions:
   * Keep an interactive neon cloud sync indicator at the top of the mobile utility bar.
 * **Tranche 3: Google Drive Data Integration (Fully Complete & Visualized!)**
   * **Objective achieved**: Complete cloud sync of user data directly to personal Google Drive.
-  * **Flow implemented**: Bidirectional cloud-sync matching local tracker ledger with Google Drive, resolving workouts elegantly, and storing backup records under the app's secure sandboxed `appData` space.
+  * **Flow implemented**: Bidirectional cloud-sync matching local tracker ledger with Google Drive, resolving workouts elegantly, and storing backup records under a dedicated, visible `Daily Push` folder in their own Google Drive (using secure `drive.file` scope).
 
 
 ---

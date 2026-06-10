@@ -109,14 +109,14 @@ export default function App() {
     }
 
     const redirectUri = getGoogleRedirectUri();
-    const scope = "https://www.googleapis.com/auth/drive.appdata";
+    const scope = "https://www.googleapis.com/auth/drive.file";
     const authUrl = `https://accounts.google.com/o/oauth2/v2/auth` +
       `?client_id=${encodeURIComponent(cid)}` +
       `&redirect_uri=${encodeURIComponent(redirectUri)}` +
       `&response_type=token` +
       `&scope=${encodeURIComponent(scope)}`;
 
-    writeLog("Initiating Google Drive authorization protocol (appdata sandbox)...");
+    writeLog("Initiating Google Drive authorization protocol (secure folder/file sandbox)...");
     const width = 500;
     const height = 650;
     const left = window.screenX + (window.innerWidth - width) / 2;
@@ -169,14 +169,59 @@ export default function App() {
 
   const executeDriveSync = async (token: string) => {
     try {
-      writeLog("Querying Google Drive appDataFolder workspace...");
+      writeLog("Querying Google Drive for 'Daily Push' storage folder...");
+      let folderId = null;
+
+      // 1. Locate or create 'Daily Push' Folder
+      const folderSearchRes = await fetch(
+        "https://www.googleapis.com/drive/v3/files?q=mimeType='application/vnd.google-apps.folder' and name='Daily Push' and trashed=false&fields=files(id)",
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      if (folderSearchRes.ok) {
+        const folderSearchData = await folderSearchRes.json();
+        const folders = folderSearchData.files || [];
+        if (folders.length > 0) {
+          folderId = folders[0].id;
+          writeLog(`Located 'Daily Push' application folder. [ID: ${folderId}]`);
+        }
+      }
+
+      if (!folderId) {
+        writeLog("Creating new secure 'Daily Push' storage folder in your Drive root...");
+        const createFolderRes = await fetch(
+          "https://www.googleapis.com/drive/v3/files",
+          {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+              name: "Daily Push",
+              mimeType: "application/vnd.google-apps.folder"
+            })
+          }
+        );
+
+        if (createFolderRes.ok) {
+          const folderData = await createFolderRes.json();
+          folderId = folderData.id;
+          writeLog(`Created 'Daily Push' storage folder successfully. [ID: ${folderId}]`);
+        } else {
+          throw new Error(`Failed to create 'Daily Push' storage folder. Code: ${createFolderRes.status}`);
+        }
+      }
+
+      // 2. Query for 'workout_data.json' inside that folder
+      writeLog("Querying 'workout_data.json' replica inside 'Daily Push' folder...");
       const searchRes = await fetch(
-        "https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&q=name='workout_data.json'&fields=files(id,name,modifiedTime)",
+        `https://www.googleapis.com/drive/v3/files?q='${folderId}' in parents and name='workout_data.json' and trashed=false&fields=files(id,name,modifiedTime)`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       
       if (!searchRes.ok) {
-        throw new Error(`Drive index lookup failed code: ${searchRes.status}`);
+        throw new Error(`Cloud index lookup failed code: ${searchRes.status}`);
       }
       
       const searchData = await searchRes.json();
@@ -185,7 +230,7 @@ export default function App() {
       let driveData: WorkoutDay[] = [];
       
       if (driveFileId) {
-        writeLog(`Database replica found in cloud storage. Importing payload [ID: ${driveFileId}]...`);
+        writeLog(`Database replica found in cloud folder. Importing payload [ID: ${driveFileId}]...`);
         const downloadRes = await fetch(
           `https://www.googleapis.com/drive/v3/files/${driveFileId}?alt=media`,
           { headers: { Authorization: `Bearer ${token}` } }
@@ -196,7 +241,7 @@ export default function App() {
             const rawText = await downloadRes.text();
             if (rawText.trim().length > 0) {
               driveData = JSON.parse(rawText);
-              writeLog(`Downloaded ${driveData.length} records from Google Drive.`);
+              writeLog(`Downloaded ${driveData.length} records from your Google Drive files.`);
             }
           } catch (parseError) {
             writeLog("Warning: Cloud backup file contains illegal JSON formats.", true);
@@ -262,10 +307,10 @@ export default function App() {
           throw new Error(`Sync upload transaction aborted code: ${updateRes.status}`);
         }
       } else {
-        writeLog("Carving new application storage cell inside user Google Drive AppData folder...");
+        writeLog("Allocating new application storage cell inside 'Daily Push' folder...");
         const metadata = {
           name: "workout_data.json",
-          parents: ["appDataFolder"]
+          parents: [folderId]
         };
         
         const form = new FormData();
