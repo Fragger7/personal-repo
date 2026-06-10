@@ -11,10 +11,11 @@ To combine the speed of offline-first storage with the durability of cloud backu
    * Read & writes the master timeline array directly into a physical file: `workout_data.json`.
 2. **Failover Client Layer: Standard LocalStorage**
    * Automatically activated if the user agent doesn't support modern OPFS (e.g., in-app webviews or old browser runtimes).
-3. **Cloud Layer: Remote File Synchronization (`/api/sync`)**
-   * The application automatically synchronizes logs with the user's GitHub repository.
-   * Data is stored inside your repository at: `/daily-push/data/workout_data.json`.
-   * On application startup, the system pulls the latest array from GitHub so you instantly resume on any device.
+3. **Cloud Layer: Google Drive Cloud Sync Platform**
+   * Syncs the workout ledger bi-directionally with the user's personal Google Drive using the secure `drive.file` scope.
+   * Programmatically creates a dedicated, fully visible **`Daily Push`** folder at the root of the user's Drive.
+   * Stores the master database backup file inside as **`workout_data.json`**, letting the user access, share, or download the raw file anywhere on any device.
+   * Integrates an intelligent daily merging algorithm—resolving set-by-set entries bidirectionally by selecting the workout day with higher total repetitions.
 
 ---
 
