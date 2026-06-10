@@ -17,7 +17,12 @@ import {
   Zap,
   ShieldCheck,
   Calendar,
-  Sparkles
+  Sparkles,
+  Cloud,
+  CloudLightning,
+  Settings,
+  RefreshCw,
+  LogOut
 } from "lucide-react";
 import { 
   ResponsiveContainer, 
@@ -39,6 +44,14 @@ export default function App() {
   const [storageType, setStorageType] = useState<"OFFLINE_OPFS" | "LOCAL_STORAGE">("OFFLINE_OPFS");
   const [rollingRangeWindow, setRollingRangeWindow] = useState<14 | 30>(30);
 
+  // Google Drive Sync States
+  const [gdAccessToken, setGdAccessToken] = useState<string | null>(null);
+  const [gdUser, setGdUser] = useState<{ displayName: string; emailAddress: string; photoLink?: string } | null>(null);
+  const [isSyncing, setIsSyncing] = useState<boolean>(false);
+  const [lastGdSyncTime, setLastGdSyncTime] = useState<string | null>(() => localStorage.getItem("last_gd_sync_time"));
+  const [customClientId, setCustomClientId] = useState<string>(() => localStorage.getItem("gd_custom_client_id") || "");
+  const [isConfigOpen, setIsConfigOpen] = useState<boolean>(false);
+
   // Form states
   const [p1, setP1] = useState<string>("");
   const [p2, setP2] = useState<string>("");
@@ -53,6 +66,253 @@ export default function App() {
 
   // UI Toast State
   const [toast, setToast] = useState<{ message: string; success: boolean } | null>(null);
+
+  // --- GOOGLE DRIVE SYNC PIPELINES ---
+  const getGoogleClientId = () => {
+    return customClientId.trim() || (import.meta as any).env.VITE_GOOGLE_CLIENT_ID || "";
+  };
+
+  const handleGoogleAuth = () => {
+    const cid = getGoogleClientId();
+    if (!cid) {
+      setIsConfigOpen(true);
+      writeLog("Setup required: Google Drive Client ID is missing. Configure in settings.", true);
+      triggerToast("Configure Client ID first", false);
+      return;
+    }
+
+    const redirectUri = `${window.location.origin}/oauth-callback.html`;
+    const scope = "https://www.googleapis.com/auth/drive.appdata";
+    const authUrl = `https://accounts.google.com/o/oauth2/v2/auth` +
+      `?client_id=${encodeURIComponent(cid)}` +
+      `&redirect_uri=${encodeURIComponent(redirectUri)}` +
+      `&response_type=token` +
+      `&scope=${encodeURIComponent(scope)}`;
+
+    writeLog("Initiating Google Drive authorization protocol (appdata sandbox)...");
+    const width = 500;
+    const height = 650;
+    const left = window.screenX + (window.innerWidth - width) / 2;
+    const top = window.screenY + (window.innerHeight - height) / 2;
+    
+    window.open(
+      authUrl,
+      "google_drive_oauth",
+      `width=${width},height=${height},left=${left},top=${top},status=no,resizable=yes`
+    );
+  };
+
+  const handleGoogleDisconnect = () => {
+    setGdAccessToken(null);
+    setGdUser(null);
+    writeLog("Google Drive replication channel disconnected.");
+    triggerToast("Disconnected from Drive");
+  };
+
+  const fetchDriveUserAndSync = async (token: string) => {
+    setIsSyncing(true);
+    try {
+      writeLog("Requesting Google Drive authorization endpoint profile details...");
+      const aboutRes = await fetch("https://www.googleapis.com/drive/v3/about?fields=user", {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      if (!aboutRes.ok) {
+        throw new Error(`User info fetch failed: ${aboutRes.status}`);
+      }
+      
+      const aboutData = await aboutRes.json();
+      if (aboutData.user) {
+        setGdUser({
+          displayName: aboutData.user.displayName,
+          emailAddress: aboutData.user.emailAddress,
+          photoLink: aboutData.user.photoLink
+        });
+        writeLog(`Secure Drive connection linked to address: ${aboutData.user.emailAddress}`);
+      }
+
+      await executeDriveSync(token);
+    } catch (err: any) {
+      writeLog(`Authentication Handshake failed: ${err.message}`, true);
+      triggerToast("Drive sync failure", false);
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
+  const executeDriveSync = async (token: string) => {
+    try {
+      writeLog("Querying Google Drive appDataFolder workspace...");
+      const searchRes = await fetch(
+        "https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&q=name='workout_data.json'&fields=files(id,name,modifiedTime)",
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      
+      if (!searchRes.ok) {
+        throw new Error(`Drive index lookup failed code: ${searchRes.status}`);
+      }
+      
+      const searchData = await searchRes.json();
+      const files = searchData.files || [];
+      let driveFileId = files.length > 0 ? files[0].id : null;
+      let driveData: WorkoutDay[] = [];
+      
+      if (driveFileId) {
+        writeLog(`Database replica found in cloud storage. Importing payload [ID: ${driveFileId}]...`);
+        const downloadRes = await fetch(
+          `https://www.googleapis.com/drive/v3/files/${driveFileId}?alt=media`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        
+        if (downloadRes.ok) {
+          try {
+            const rawText = await downloadRes.text();
+            if (rawText.trim().length > 0) {
+              driveData = JSON.parse(rawText);
+              writeLog(`Downloaded ${driveData.length} records from Google Drive.`);
+            }
+          } catch (parseError) {
+            writeLog("Warning: Cloud backup file contains illegal JSON formats.", true);
+          }
+        }
+      }
+
+      // Read current local state
+      const refreshedLocal = await loadVaultData();
+      
+      // Perform bidirectional chronological entry merging
+      const mergedMap = new Map<string, WorkoutDay>();
+      
+      driveData.forEach((day) => {
+        if (day.date) mergedMap.set(day.date, day);
+      });
+      
+      const getSum = (day: WorkoutDay) => {
+        const pSum = (day.p as number[] || [0, 0, 0]).reduce((acc: number, val: number) => acc + val, 0);
+        const cSum = (day.c as number[] || [0, 0, 0]).reduce((acc: number, val: number) => acc + val, 0);
+        return pSum + cSum;
+      };
+
+      refreshedLocal.forEach((day) => {
+        const existing = mergedMap.get(day.date);
+        if (existing) {
+          const driveRepSum = getSum(existing);
+          const localRepSum = getSum(day);
+          if (localRepSum >= driveRepSum) {
+            mergedMap.set(day.date, day);
+          }
+        } else {
+          mergedMap.set(day.date, day);
+        }
+      });
+
+      const finalMergedList = Array.from(mergedMap.values()).sort(
+        (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+      );
+
+      setDataFrame(finalMergedList);
+      await commitToVault(finalMergedList);
+      
+      // Write / Update the files on Google Drive
+      const fileContent = JSON.stringify(finalMergedList, null, 2);
+      const fileBlob = new Blob([fileContent], { type: "application/json" });
+      
+      if (driveFileId) {
+        writeLog("Uploading synchronized tracking history to cloud database...");
+        const updateRes = await fetch(
+          `https://www.googleapis.com/upload/drive/v3/files/${driveFileId}?uploadType=media`,
+          {
+            method: "PATCH",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json"
+            },
+            body: fileContent
+          }
+        );
+        
+        if (!updateRes.ok) {
+          throw new Error(`Sync upload transaction aborted code: ${updateRes.status}`);
+        }
+      } else {
+        writeLog("Carving new application storage cell inside user Google Drive AppData folder...");
+        const metadata = {
+          name: "workout_data.json",
+          parents: ["appDataFolder"]
+        };
+        
+        const form = new FormData();
+        form.append("metadata", new Blob([JSON.stringify(metadata)], { type: "application/json" }));
+        form.append("file", fileBlob);
+
+        const createRes = await fetch(
+          "https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id",
+          {
+            method: "POST",
+            headers: { Authorization: `Bearer ${token}` },
+            body: form
+          }
+        );
+        
+        if (!createRes.ok) {
+          throw new Error(`Cloud document allocation aborted: ${createRes.status}`);
+        }
+        
+        const createData = await createRes.json();
+        writeLog(`Initial cloud allocation achieved (File ID: ${createData.id})`);
+      }
+
+      const now = new Date().toLocaleTimeString();
+      setLastGdSyncTime(now);
+      localStorage.setItem("last_gd_sync_time", now);
+      writeLog(`Google Drive Sync complete. Successfully mirrored ${finalMergedList.length} unified work entries.`);
+      triggerToast("Drive synced successfully!");
+    } catch (e: any) {
+      writeLog(`Cloud replication error: ${e.message}`, true);
+      triggerToast("Drive synchronization failed", false);
+    }
+  };
+
+  const handleManualDriveSync = async () => {
+    if (!gdAccessToken) {
+      handleGoogleAuth();
+      return;
+    }
+    
+    const confirmed = window.confirm(
+      "Bidirectional Cloud Sync:\n\nProceed with matching your local tracker ledger with Google Drive? Any same-day sets will be automatically resolved by picking the workout with more reps."
+    );
+    if (!confirmed) {
+      writeLog("Grid synchronization aborted by user.");
+      return;
+    }
+
+    setIsSyncing(true);
+    await executeDriveSync(gdAccessToken);
+    setIsSyncing(false);
+  };
+
+  // Listen to secure postMessage login redirects
+  useEffect(() => {
+    const handleOAuthMessage = (event: MessageEvent) => {
+      if (event.origin !== window.location.origin) return;
+      
+      if (event.data?.type === "GOOGLE_DRIVE_AUTH_SUCCESS") {
+        const { accessToken } = event.data;
+        setGdAccessToken(accessToken);
+        writeLog("Secure Google authenticator credential block downloaded successfully.");
+        triggerToast("Connected to Drive");
+        fetchDriveUserAndSync(accessToken);
+      } else if (event.data?.type === "GOOGLE_DRIVE_AUTH_FAILURE") {
+        const error = event.data?.error || "User closed dialog";
+        writeLog(`Google Drive connection aborted: ${error}`, true);
+        triggerToast("Drive connection failed", false);
+      }
+    };
+
+    window.addEventListener("message", handleOAuthMessage);
+    return () => window.removeEventListener("message", handleOAuthMessage);
+  }, [dataFrame]);
 
   // --- LOG WRITING ---
   const writeLog = (message: string, isError = false) => {
@@ -233,6 +493,11 @@ export default function App() {
     // Commit locally instantly
     await commitToVault(updatedDataFrame);
     triggerToast("Saved successfully!");
+
+    // Auto-push copy to Google Drive dynamically if authorized
+    if (gdAccessToken) {
+      executeDriveSync(gdAccessToken);
+    }
   };
 
   // --- EXPORT LOCAL LEDGER ---
@@ -420,6 +685,163 @@ export default function App() {
       </header>
 
       <main className="max-w-4xl mx-auto px-4 mt-6 space-y-4 relative z-10">
+
+        {/* Google Drive Balance / Cloud Synchronization System */}
+        <div className="bg-slate-950/40 border border-white/5 p-4 sm:p-5 rounded-2xl backdrop-blur-md relative overflow-hidden">
+          <div className="absolute top-0 left-0 right-0 h-[1.5px] bg-gradient-to-r from-transparent via-cyan-500/15 to-transparent" />
+          
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/5 pb-3">
+            <div className="flex items-center gap-2.5">
+              <div className={`h-8 w-8 rounded-lg flex items-center justify-center transition-all ${
+                gdAccessToken 
+                  ? "bg-cyan-500/15 text-cyan-400 border border-cyan-500/25" 
+                  : "bg-slate-900 text-slate-500 border border-white/5"
+              }`}>
+                <Cloud size={16} className={isSyncing ? "animate-pulse" : ""} />
+              </div>
+              <div>
+                <h3 className="text-xs font-bold uppercase tracking-widest text-white flex items-center gap-1.5 font-sans">
+                  Google Drive Cloud Sync
+                </h3>
+                <p className="text-[9px] font-mono text-slate-500 tracking-wide uppercase">
+                  {gdAccessToken 
+                    ? `Status: Connected as ${gdUser?.displayName || "User"}` 
+                    : "Status: Local Tracking Mode (Cloud Synced Backlog #3)"}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 self-end sm:self-auto">
+              <button
+                type="button"
+                onClick={() => setIsConfigOpen((p) => !p)}
+                className="p-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-white/5 text-slate-400 transition-all cursor-pointer"
+                title="Configure OAuth Client ID"
+              >
+                <Settings size={14} className={isConfigOpen ? "text-cyan-400" : ""} />
+              </button>
+
+              {gdAccessToken ? (
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={handleManualDriveSync}
+                    disabled={isSyncing}
+                    className="bg-cyan-500/15 text-cyan-300 hover:bg-cyan-500/25 border border-cyan-500/20 text-[10px] sm:text-[11px] font-bold px-3 py-2 rounded-xl flex items-center gap-1.5 cursor-pointer transition-all disabled:opacity-50 font-mono"
+                  >
+                    <RefreshCw size={11} className={isSyncing ? "animate-spin" : ""} />
+                    SYNC NOW
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleGoogleDisconnect}
+                    className="bg-red-500/10 text-red-400 hover:bg-red-500/20 border border-red-500/15 p-2 rounded-xl cursor-pointer transition-all"
+                    title="Disconnect Google Account"
+                  >
+                    <LogOut size={12} />
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={handleGoogleAuth}
+                  disabled={isSyncing}
+                  className="bg-slate-50 text-slate-950 hover:bg-slate-200 text-[10px] sm:text-[11px] font-extrabold px-3.5 py-2 rounded-xl flex items-center gap-1.5 cursor-pointer transition-all disabled:opacity-50"
+                >
+                  <CloudLightning size={11} className="fill-current" />
+                  CONNECT DRIVE
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Config Setup Dropdown / Panel */}
+          <AnimatePresence>
+            {isConfigOpen && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: "auto", opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                className="overflow-hidden mt-3"
+              >
+                <div className="bg-black/40 border border-white/5 p-3 sm:p-4 rounded-xl space-y-3 font-sans text-xs">
+                  <div className="flex items-center justify-between border-b border-white/5 pb-2 mb-1">
+                    <span className="font-bold text-[10px] tracking-wider uppercase text-slate-400 font-mono flex items-center gap-1">
+                      <Settings size={12} className="text-cyan-400" />
+                      OAuth Credentials Configuration
+                    </span>
+                    <button 
+                      onClick={() => setIsConfigOpen(false)}
+                      className="text-[10px] font-mono text-slate-500 hover:text-slate-350"
+                    >
+                      [CLOSE]
+                    </button>
+                  </div>
+
+                  <div className="space-y-1.5 font-mono">
+                    <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-450">
+                      Google OAuth Client ID
+                    </label>
+                    <input 
+                      type="text"
+                      placeholder="Paste your Google OAuth Client ID here..."
+                      value={customClientId}
+                      onChange={(e) => {
+                        setCustomClientId(e.target.value);
+                        localStorage.setItem("gd_custom_client_id", e.target.value);
+                      }}
+                      className="w-full bg-slate-950 border border-white/5 focus:border-cyan-500/30 rounded-xl p-2.5 text-white font-mono text-[11px] focus:outline-none transition-all"
+                    />
+                    <p className="text-[9px] text-slate-500 leading-normal">
+                      Leave empty to use default environment client ID. If none is injected, you must paste an OAuth Client ID from Google Cloud Console as listed below.
+                    </p>
+                  </div>
+
+                  {/* Connection Steps Helper */}
+                  <div className="space-y-2 border-t border-white/5 pt-2.5">
+                    <p className="font-bold text-[10px] tracking-wider uppercase text-slate-400 font-mono">
+                      📋 Google Cloud Console Instructions
+                    </p>
+                    <ol className="list-decimal list-inside space-y-1.5 text-[10.5px] text-slate-400 leading-relaxed font-mono">
+                      <li>
+                        Go to the <a href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noopener noreferrer" className="text-cyan-400 underline hover:text-cyan-300">Google Cloud Credentials Console</a>.
+                      </li>
+                      <li>
+                        Create an <strong>OAuth client ID</strong> of application type <strong>Web application</strong>.
+                      </li>
+                      <li>
+                        Under <strong>Authorized JavaScript origins</strong>, add:
+                        <div className="mt-1 bg-slate-950 p-1.5 rounded border border-white/5 select-text lowercase text-[9px] text-cyan-300 overflow-x-auto">
+                          {window.location.origin}
+                        </div>
+                      </li>
+                      <li>
+                        Under <strong>Authorized redirect URIs</strong>, add:
+                        <div className="mt-1 bg-slate-950 p-1.5 rounded border border-white/5 select-text lowercase text-[9px] text-cyan-300 overflow-x-auto">
+                          {window.location.origin}/oauth-callback.html
+                        </div>
+                      </li>
+                      <li>
+                        Copy the client ID, paste it into the field above, and click "CONNECT DRIVE" inside the dashboard to activate sync.
+                      </li>
+                    </ol>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Sync Stats Info Banner */}
+          {lastGdSyncTime && (
+            <div className="mt-2.5 flex items-center justify-between text-[9px] text-slate-400 font-mono bg-black/15 border border-white/5 px-2.5 py-1.5 rounded-xl">
+              <span className="flex items-center gap-1">
+                <span className="h-1 w-1 bg-cyan-400 rounded-full animate-ping" />
+                LAST CLOUD DATABASE REPLICATION:
+              </span>
+              <span className="text-cyan-400 font-bold uppercase">{lastGdSyncTime}</span>
+            </div>
+          )}
+        </div>
 
         {/* Dynamic Cumulative Stat Panels */}
         <div className="grid grid-cols-2 gap-3">
