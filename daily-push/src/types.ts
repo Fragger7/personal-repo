@@ -5,8 +5,8 @@
 
 export interface WorkoutDay {
   date: string; // YYYY-MM-DD
-  p: [number, number, number]; // Pushups sets 1-3
-  c: [number, number, number]; // Crunches sets 1-3
+  p: [number | null, number | null, number | null]; // Pushups sets 1-3
+  c: [number | null, number | null, number | null]; // Crunches sets 1-3
 }
 
 export interface GitHubConfig {

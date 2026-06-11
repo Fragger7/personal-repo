@@ -288,8 +288,8 @@ export default function App() {
       });
       
       const getSum = (day: WorkoutDay) => {
-        const pSum = (day.p as number[] || [0, 0, 0]).reduce((acc: number, val: number) => acc + val, 0);
-        const cSum = (day.c as number[] || [0, 0, 0]).reduce((acc: number, val: number) => acc + val, 0);
+        const pSum = (day.p as (number | null)[] || [0, 0, 0]).reduce((acc: number, val: number | null) => acc + (val || 0), 0);
+        const cSum = (day.c as (number | null)[] || [0, 0, 0]).reduce((acc: number, val: number | null) => acc + (val || 0), 0);
         return pSum + cSum;
       };
 
@@ -525,12 +525,12 @@ export default function App() {
 
     const match = dataFrame.find((d) => d.date === activeDate);
     if (match) {
-      setP1(match.p[0] === 0 ? "" : String(match.p[0]));
-      setP2(match.p[1] === 0 ? "" : String(match.p[1]));
-      setP3(match.p[2] === 0 ? "" : String(match.p[2]));
-      setC1(match.c[0] === 0 ? "" : String(match.c[0]));
-      setC2(match.c[1] === 0 ? "" : String(match.c[1]));
-      setC3(match.c[2] === 0 ? "" : String(match.c[2]));
+      setP1(match.p[0] == null ? "" : String(match.p[0]));
+      setP2(match.p[1] == null ? "" : String(match.p[1]));
+      setP3(match.p[2] == null ? "" : String(match.p[2]));
+      setC1(match.c[0] == null ? "" : String(match.c[0]));
+      setC2(match.c[1] == null ? "" : String(match.c[1]));
+      setC3(match.c[2] == null ? "" : String(match.c[2]));
       setFormBadgeStatus("MUTATE_RECORD");
     } else {
       setP1(""); setP2(""); setP3("");
@@ -586,16 +586,22 @@ export default function App() {
     e.preventDefault();
     if (!activeDate) return;
 
-    const pushupsArray: [number, number, number] = [
-      parseInt(p1) || 0,
-      parseInt(p2) || 0,
-      parseInt(p3) || 0
+    const parseInput = (val: string): number | null => {
+      if (val.trim() === "") return null;
+      const parsed = parseInt(val, 10);
+      return isNaN(parsed) ? null : parsed;
+    };
+
+    const pushupsArray: [number | null, number | null, number | null] = [
+      parseInput(p1),
+      parseInput(p2),
+      parseInput(p3)
     ];
 
-    const crunchesArray: [number, number, number] = [
-      parseInt(c1) || 0,
-      parseInt(c2) || 0,
-      parseInt(c3) || 0
+    const crunchesArray: [number | null, number | null, number | null] = [
+      parseInput(c1),
+      parseInput(c2),
+      parseInput(c3)
     ];
 
     const newPayload: WorkoutDay = {
@@ -691,8 +697,8 @@ export default function App() {
     let activeDays = 0;
 
     dataFrame.forEach((day) => {
-      const pSum = day.p.reduce((acc, val) => acc + val, 0);
-      const cSum = day.c.reduce((acc, val) => acc + val, 0);
+      const pSum = day.p.reduce((acc, val) => acc + (val || 0), 0);
+      const cSum = day.c.reduce((acc, val) => acc + (val || 0), 0);
       
       grossPushups += pSum;
       grossCrunches += cSum;
@@ -719,8 +725,8 @@ export default function App() {
     return subset.map((day) => {
       return {
         date: day.date.substring(5), // mm-dd formatting
-        pushups: day.p.reduce((acc, val) => acc + val, 0),
-        crunches: day.c.reduce((acc, val) => acc + val, 0),
+        pushups: day.p.reduce((acc, val) => acc + (val || 0), 0),
+        crunches: day.c.reduce((acc, val) => acc + (val || 0), 0),
         rawDate: day.date
       };
     });
@@ -1190,8 +1196,8 @@ export default function App() {
           ) : (
             <div className="max-h-56 overflow-y-auto space-y-1.5 pr-1 scrollbar-thin scrollbar-thumb-white/5">
               {[...dataFrame].reverse().slice(0, 10).map((day) => {
-                const dayPushups = day.p.reduce((acc, val) => acc + val, 0);
-                const dayCrunches = day.c.reduce((acc, val) => acc + val, 0);
+                const dayPushups = day.p.reduce((acc, val) => acc + (val || 0), 0);
+                const dayCrunches = day.c.reduce((acc, val) => acc + (val || 0), 0);
                 const isSelected = day.date === activeDate;
 
                 return (
