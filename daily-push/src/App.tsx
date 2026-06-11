@@ -21,7 +21,9 @@ import {
   Cloud,
   CloudLightning,
   RefreshCw,
-  LogOut
+  LogOut,
+  Trash2,
+  History
 } from "lucide-react";
 import { 
   ResponsiveContainer, 
@@ -552,6 +554,32 @@ export default function App() {
     setActiveDate(nextDate);
     writeLog(`Stepped active work-date to: [${nextDate}]`);
   };
+  
+  // --- DELETE WORKOUT COMMITS ---
+  const handleDeleteEntry = async (targetDate: string) => {
+    if (!targetDate) return;
+    
+    // Read fresh current local state
+    const refreshedLocal = await loadVaultData();
+    const updatedDataFrame = refreshedLocal.filter((d) => d.date !== targetDate);
+    
+    setDataFrame(updatedDataFrame);
+    await commitToVault(updatedDataFrame);
+    writeLog(`Deleted workout record for date: [${targetDate}].`);
+    triggerToast("Record deleted successfully.");
+
+    // If deleting the active date, reset the form state
+    if (targetDate === activeDate) {
+      setP1(""); setP2(""); setP3("");
+      setC1(""); setC2(""); setC3("");
+      setFormBadgeStatus("NEW_ENTRY");
+    }
+
+    // Auto-push deletion to Google Drive dynamically if authorized
+    if (gdAccessToken) {
+      executeDriveSync(gdAccessToken);
+    }
+  };
 
   // --- SUBMIT WORKOUT COMMITS ---
   const handleLogSubmit = async (e: React.FormEvent) => {
@@ -745,10 +773,18 @@ export default function App() {
           </div>
           <div>
             <h1 className="text-[12px] sm:text-[13px] font-bold tracking-widest text-white uppercase font-sans">DAILY PUSH</h1>
-            <p className="text-[8px] sm:text-[9px] font-mono text-emerald-400 tracking-wider uppercase font-medium flex items-center gap-1">
-              <span className="h-1 w-1 bg-current rounded-full" />
-              {storageType === "OFFLINE_OPFS" ? "DISK DATABASE" : "MEMORY DATABASE"}
-            </p>
+            <div className="text-[8px] sm:text-[9px] font-mono text-emerald-400 tracking-wider uppercase font-medium flex flex-wrap items-center gap-2">
+              <span className="flex items-center gap-1">
+                <span className="h-1 w-1 bg-current rounded-full animate-pulse" />
+                {storageType === "OFFLINE_OPFS" ? "DISK DATABASE" : "MEMORY DATABASE"}
+              </span>
+              {gdAccessToken && (
+                <span className="text-cyan-400 flex items-center gap-1 border-l border-white/10 pl-2">
+                  <Cloud size={9} className={isSyncing ? "animate-spin" : ""} />
+                  CLOUD ACTIVE
+                </span>
+              )}
+            </div>
           </div>
         </div>
         
@@ -1012,12 +1048,36 @@ export default function App() {
               </div>
             </div>
 
-            <button 
-              type="submit" 
-              className="w-full bg-slate-50 text-slate-950 font-extrabold py-4 rounded-xl text-xs uppercase tracking-widest font-mono hover:bg-slate-200 active:bg-slate-300 transition-all cursor-pointer shadow-md"
-            >
-              Commit Safe Session
-            </button>
+            {formBadgeStatus === "MUTATE_RECORD" ? (
+              <div className="flex gap-2">
+                <button 
+                  type="submit" 
+                  className="flex-1 bg-slate-50 text-slate-950 font-extrabold py-4 rounded-xl text-xs uppercase tracking-widest font-mono hover:bg-slate-200 active:bg-slate-350 transition-all cursor-pointer shadow-md"
+                >
+                  Save Active Changes
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const confirmed = window.confirm(`Permanently wipe out workout ledger for ${activeDate}?`);
+                    if (confirmed) {
+                      handleDeleteEntry(activeDate);
+                    }
+                  }}
+                  className="bg-red-500/10 text-red-400 hover:bg-red-500/20 active:bg-red-500/30 border border-red-500/20 px-5 rounded-xl transition-all flex items-center justify-center cursor-pointer"
+                  title="Wipe Session"
+                >
+                  <Trash2 size={15} />
+                </button>
+              </div>
+            ) : (
+              <button 
+                type="submit" 
+                className="w-full bg-slate-50 text-slate-950 font-extrabold py-4 rounded-xl text-xs uppercase tracking-widest font-mono hover:bg-slate-200 active:bg-slate-300 transition-all cursor-pointer shadow-md"
+              >
+                Commit Safe Session
+              </button>
+            )}
           </form>
         </div>
 
@@ -1101,6 +1161,82 @@ export default function App() {
               </ResponsiveContainer>
             )}
           </div>
+        </div>
+
+        {/* WORKOUT DATABASE INDEX */}
+        <div className="bg-slate-950/40 border border-white/5 p-4 sm:p-5 rounded-2xl backdrop-blur-md">
+          <div className="flex items-center justify-between border-b border-white/5 pb-2.5 mb-3">
+            <h4 className="text-xs font-bold uppercase tracking-widest text-white flex items-center gap-1.5 font-sans">
+              <History size={13} className="text-indigo-400" />
+              HISTORY DATABASE INDEX
+            </h4>
+            <span className="text-[9px] font-mono bg-slate-900 border border-white/5 px-2 py-0.5 rounded text-slate-400 font-bold">
+              {dataFrame.length} RECORD(S)
+            </span>
+          </div>
+
+          {dataFrame.length === 0 ? (
+            <div className="text-center py-6 text-slate-500 font-mono text-[10px] border border-dashed border-white/5 rounded-xl bg-black/10">
+              No historical records found in current database.
+            </div>
+          ) : (
+            <div className="max-h-56 overflow-y-auto space-y-1.5 pr-1 scrollbar-thin scrollbar-thumb-white/5">
+              {[...dataFrame].reverse().map((day) => {
+                const dayPushups = day.p.reduce((acc, val) => acc + val, 0);
+                const dayCrunches = day.c.reduce((acc, val) => acc + val, 0);
+                const isSelected = day.date === activeDate;
+
+                return (
+                  <div 
+                    key={day.date}
+                    className={`flex items-center justify-between p-2.5 rounded-xl border transition-all text-xs font-mono group ${
+                      isSelected 
+                        ? "border-emerald-500/25 bg-emerald-950/15" 
+                        : "border-white/5 bg-black/10 hover:border-white/10 hover:bg-black/20"
+                    }`}
+                  >
+                    <div 
+                      onClick={() => {
+                        setActiveDate(day.date);
+                        writeLog(`Active work-date index locked to: [${day.date}] via History index.`);
+                        triggerToast("Loaded ledger day.");
+                      }}
+                      className="flex-1 min-w-0 mr-3 cursor-pointer flex items-center justify-between"
+                    >
+                      <div className="font-bold text-slate-300 flex items-center gap-1.5 min-w-[90px]">
+                        <span className={`h-1.5 w-1.5 rounded-full ${isSelected ? "bg-emerald-400 animate-pulse" : "bg-slate-600"}`} />
+                        {day.date}
+                      </div>
+                      <div className="flex items-center gap-4 text-[10px]">
+                        <div className="flex items-center gap-1 text-emerald-400 font-medium">
+                          <span>PUSHUPS:</span>
+                          <span className="font-bold">{dayPushups}</span>
+                        </div>
+                        <div className="flex items-center gap-1 text-indigo-400 font-medium">
+                          <span>CRUNCHES:</span>
+                          <span className="font-bold">{dayCrunches}</span>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const confirmed = window.confirm(`Permanently wipe out workout ledger for ${day.date}?`);
+                        if (confirmed) {
+                          handleDeleteEntry(day.date);
+                        }
+                      }}
+                      className="text-slate-500 hover:text-red-400 p-1.5 rounded-lg border border-transparent hover:border-red-500/10 hover:bg-red-550/5 transition-all cursor-pointer opacity-30 group-hover:opacity-100"
+                      title="Wipe record"
+                    >
+                      <Trash2 size={12} />
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
 
         {/* Offline Diagnostic Feed */}
