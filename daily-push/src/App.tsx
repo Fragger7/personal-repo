@@ -978,9 +978,9 @@ export default function App() {
             <div className="space-y-1.5">
               <label className="block text-[10px] font-bold uppercase tracking-wider text-emerald-400 font-mono flex items-center gap-1">
                 <Sparkles size={11} />
-                Pushups Sets [1, 2, 3]
+                Pushups Sets [1, 2, 3] & Total
               </label>
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-4 gap-2">
                 <input 
                   type="number" 
                   inputMode="numeric"
@@ -1008,6 +1008,10 @@ export default function App() {
                   onChange={(e) => setP3(e.target.value)}
                   className="w-full bg-slate-950 border border-white/5 focus:border-emerald-500/30 rounded-xl p-3 text-center text-white font-mono text-sm focus:outline-none transition-all"
                 />
+                <div className="w-full bg-emerald-950/20 border border-emerald-500/20 rounded-xl flex flex-col items-center justify-center text-emerald-400 font-mono shadow-inner sm:p-2 p-1 overflow-hidden">
+                  <span className="text-[7px] sm:text-[8px] font-bold uppercase tracking-widest opacity-60 mb-0.5">TOTAL</span>
+                  <span className="font-semibold text-xs sm:text-sm leading-none">{(parseInt(p1) || 0) + (parseInt(p2) || 0) + (parseInt(p3) || 0)}</span>
+                </div>
               </div>
             </div>
 
@@ -1015,9 +1019,9 @@ export default function App() {
             <div className="space-y-1.5">
               <label className="block text-[10px] font-bold uppercase tracking-wider text-indigo-400 font-mono flex items-center gap-1">
                 <Sparkles size={11} />
-                Crunches Sets [1, 2, 3]
+                Crunches Sets [1, 2, 3] & Total
               </label>
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-4 gap-2">
                 <input 
                   type="number" 
                   inputMode="numeric"
@@ -1045,6 +1049,10 @@ export default function App() {
                   onChange={(e) => setC3(e.target.value)}
                   className="w-full bg-slate-950 border border-white/5 focus:border-indigo-500/30 rounded-xl p-3 text-center text-white font-mono text-sm focus:outline-none transition-all"
                 />
+                <div className="w-full bg-indigo-950/20 border border-indigo-500/20 rounded-xl flex flex-col items-center justify-center text-indigo-400 font-mono shadow-inner sm:p-2 p-1 overflow-hidden">
+                  <span className="text-[7px] sm:text-[8px] font-bold uppercase tracking-widest opacity-60 mb-0.5">TOTAL</span>
+                  <span className="font-semibold text-xs sm:text-sm leading-none">{(parseInt(c1) || 0) + (parseInt(c2) || 0) + (parseInt(c3) || 0)}</span>
+                </div>
               </div>
             </div>
 
@@ -1171,7 +1179,7 @@ export default function App() {
               HISTORY DATABASE INDEX
             </h4>
             <span className="text-[9px] font-mono bg-slate-900 border border-white/5 px-2 py-0.5 rounded text-slate-400 font-bold">
-              {dataFrame.length} RECORD(S)
+              {Math.min(dataFrame.length, 10)} RECENT RECORD(S)
             </span>
           </div>
 
@@ -1181,7 +1189,7 @@ export default function App() {
             </div>
           ) : (
             <div className="max-h-56 overflow-y-auto space-y-1.5 pr-1 scrollbar-thin scrollbar-thumb-white/5">
-              {[...dataFrame].reverse().map((day) => {
+              {[...dataFrame].reverse().slice(0, 10).map((day) => {
                 const dayPushups = day.p.reduce((acc, val) => acc + val, 0);
                 const dayCrunches = day.c.reduce((acc, val) => acc + val, 0);
                 const isSelected = day.date === activeDate;
