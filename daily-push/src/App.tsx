@@ -35,7 +35,12 @@ import {
   CartesianGrid,
   BarChart,
   Bar,
-  Legend
+  Legend,
+  Radar,
+  RadarChart,
+  PolarGrid,
+  PolarAngleAxis,
+  PolarRadiusAxis
 } from "recharts";
 
 import { WorkoutDay, LogEntry } from "./types";
@@ -59,6 +64,10 @@ export default function App() {
   const [gdUser, setGdUser] = useState<{ displayName: string; emailAddress: string; photoLink?: string } | null>(null);
   const [isSyncing, setIsSyncing] = useState<boolean>(false);
   const [lastGdSyncTime, setLastGdSyncTime] = useState<string | null>(() => localStorage.getItem("last_gd_sync_time"));
+
+  // AI Insight States
+  const [aiInsight, setAiInsight] = useState<string | null>(null);
+  const [isFetchingInsight, setIsFetchingInsight] = useState<boolean>(false);
 
   // Form states
   const [p1, setP1] = useState<string>("");
@@ -792,6 +801,59 @@ export default function App() {
 
   const chartData = getChartData();
 
+  const getRadarData = () => {
+    const days = ["SUNDAY", "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY"];
+    const aggregates = Array(7).fill(0).map((_, i) => ({ subject: days[i], pushups: 0, crunches: 0, count: 0 }));
+    
+    dataFrame.forEach((day) => {
+      const pSum = day.p.reduce((acc, val) => acc + (val || 0), 0);
+      const cSum = day.c.reduce((acc, val) => acc + (val || 0), 0);
+      if (pSum > 0 || cSum > 0) {
+        // Create strict UTC date so timezones don't shift the day
+        const dObj = new Date(day.date + "T00:00:00Z");
+        const idx = dObj.getUTCDay();
+        aggregates[idx].pushups += pSum;
+        aggregates[idx].crunches += cSum;
+        aggregates[idx].count += 1;
+      }
+    });
+
+    return aggregates.map(d => ({
+      subject: d.subject.slice(0, 3), // e.g. "SUN"
+      pushups: d.count ? Math.round(d.pushups / d.count) : 0,
+      crunches: d.count ? Math.round(d.crunches / d.count) : 0,
+      fullMark: Math.max(d.pushups/ (d.count || 1), d.crunches / (d.count || 1)) + 10 // scale max
+    }));
+  };
+
+  const radarData = getRadarData();
+
+  const fetchAiInsight = async () => {
+    setIsFetchingInsight(true);
+    try {
+      const response = await fetch("/api/insight", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          stats: kpis,
+          history: chartData.slice(-5) // Send only the last 5 relevant data points
+        })
+      });
+      const data = await response.json();
+      if (response.ok && data.tip) {
+        setAiInsight(data.tip);
+        triggerToast("AI Coach Insight received");
+      } else {
+        throw new Error(data.error || "Failed");
+      }
+    } catch (e: any) {
+      writeLog(`AI Insight Error: ${e.message}`, true);
+      triggerToast("Insight generation failed", false);
+    } finally {
+      setIsFetchingInsight(false);
+    }
+  };
+
   const copyLogsToClipboard = () => {
     const rawLogs = consoleLogs.map((entry) => `[${entry.timestamp}] ${entry.message}`).join("\n");
     navigator.clipboard.writeText(rawLogs)
@@ -1032,6 +1094,34 @@ export default function App() {
           </div>
         </div>
 
+        {/* AI Insight Panel */}
+        <div className="bg-slate-950/40 border border-emerald-500/10 p-5 p-4 rounded-2xl backdrop-blur-md relative overflow-hidden flex flex-col justify-between">
+          <div className="absolute top-0 right-0 p-4 opacity-10 pointer-events-none text-emerald-400">
+            <Sparkles size={48} />
+          </div>
+          <div className="flex items-center justify-between border-b border-white/5 pb-2.5 mb-3">
+             <h4 className="text-xs font-bold uppercase tracking-widest text-emerald-400 flex items-center gap-1.5 font-sans">
+                <Zap size={13} className="text-emerald-400 animate-pulse" />
+                AI COACH INSIGHT
+              </h4>
+              <button 
+                type="button"
+                onClick={fetchAiInsight}
+                disabled={isFetchingInsight}
+                className="text-[9px] font-mono px-2 py-0.5 rounded transition-all select-none font-bold bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/20 disabled:opacity-50 cursor-pointer flex items-center gap-1.5"
+              >
+                {isFetchingInsight ? "ANALYZING..." : "GENERATE INSIGHT"}
+              </button>
+          </div>
+          <div className="min-h-[48px] text-sm text-slate-300 font-sans tracking-wide leading-relaxed">
+            {aiInsight ? (
+              <p>{aiInsight}</p>
+            ) : (
+              <p className="text-slate-500 italic text-xs">Tap "Generate Insight" to receive personalized feedback and science-backed training tips based on your recent activity.</p>
+            )}
+          </div>
+        </div>
+
         {/* Rep Entry Form Section */}
         <div className="bg-slate-950/40 border border-white/5 p-5 rounded-2xl backdrop-blur-md relative overflow-hidden">
           <div className="absolute top-0 left-0 right-0 h-[1.5px] bg-gradient-to-r from-transparent via-emerald-500/15 to-transparent" />
@@ -1200,7 +1290,7 @@ export default function App() {
 
         {/* Dynamic Recharts Performance Graph */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="p-4 bg-slate-950/40 border border-white/5 rounded-2xl flex flex-col justify-between backdrop-blur-md">
+          <div className="p-4 bg-slate-950/40 border border-white/5 rounded-2xl flex flex-col justify-between backdrop-blur-md md:col-span-2">
             <div className="flex items-center justify-between border-b border-white/5 pb-2 mb-2">
               <h4 className="text-xs font-bold uppercase tracking-widest text-white flex items-center gap-1.5 font-sans">
                 <TrendingUp size={14} className="text-emerald-400" />
@@ -1330,6 +1420,55 @@ export default function App() {
                     <Bar dataKey="pushups" name="Pushups" stackId="a" fill="#34d399" radius={[0, 0, 0, 0]} />
                     <Bar dataKey="crunches" name="Crunches" stackId="a" fill="#6366f1" radius={[4, 4, 0, 0]} />
                   </BarChart>
+                </ResponsiveContainer>
+              )}
+            </div>
+          </div>
+
+          <div className="p-4 bg-slate-950/40 border border-white/5 rounded-2xl flex flex-col justify-between backdrop-blur-md">
+            <div className="flex items-center justify-between border-b border-white/5 pb-2 mb-2">
+              <h4 className="text-xs font-bold uppercase tracking-widest text-white flex items-center gap-1.5 font-sans">
+                <TrendingUp size={14} className="text-orange-400" />
+                WORKLOAD PATTERN
+              </h4>
+              <div className="flex bg-slate-950 p-0.5 rounded border border-white/5 text-[9px] font-mono select-none">
+                <span className="px-2 py-1 rounded text-slate-400 transition-all font-bold">DAY OF WEEK</span>
+              </div>
+            </div>
+            
+            <div className="relative w-full flex-1 h-[180px] mt-2">
+              {radarData.length === 0 ? (
+                <div className="h-full w-full min-h-[180px] flex flex-col items-center justify-center text-slate-500 font-mono text-[10px] gap-2 border border-dashed border-white/5 rounded-xl bg-black/20 px-4 text-center">
+                  <AlertTriangle size={15} className="text-slate-600" />
+                  <span>Reps will appear here dynamically to list your performance timeline.</span>
+                </div>
+              ) : (
+                <ResponsiveContainer width="100%" height={180}>
+                  <RadarChart cx="50%" cy="50%" outerRadius="75%" data={radarData}>
+                    <PolarGrid stroke="rgba(255,255,255,0.05)" />
+                    <PolarAngleAxis 
+                      dataKey="subject" 
+                      tick={{ fill: "#64748b", fontFamily: "JetBrains Mono", fontSize: 8 }} 
+                    />
+                    <PolarRadiusAxis 
+                      angle={90} 
+                      domain={[0, 'dataMax + 10']} 
+                      tick={{ fill: "#64748b", fontFamily: "JetBrains Mono", fontSize: 6 }}
+                      axisLine={false}
+                    />
+                    <Radar name="Pushups" dataKey="pushups" stroke="#10b981" fill="#10b981" fillOpacity={0.4} />
+                    <Radar name="Crunches" dataKey="crunches" stroke="#6366f1" fill="#6366f1" fillOpacity={0.4} />
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: "#02040a", 
+                        borderColor: "rgba(255,255,255,0.1)", 
+                        fontFamily: "JetBrains Mono", 
+                        fontSize: "10px", 
+                        borderRadius: "12px" 
+                      }}
+                      labelStyle={{ color: "#94a3b8" }}
+                    />
+                  </RadarChart>
                 </ResponsiveContainer>
               )}
             </div>
