@@ -66,7 +66,7 @@ try {
 
   // 6. Copy key source files to /daily-push for source control backup
   console.log("=== STEP 4: Backing up source files into daily-push/ ===");
-  const sourceFoldersToSync = ["src", "docs", "public", "scripts"];
+  const sourceFoldersToSync = ["src", "docs", "public", "scripts", "api"];
   const sourceFilesToSync = [
     "package.json",
     "tsconfig.json",
@@ -74,7 +74,8 @@ try {
     "metadata.json",
     "manifest.json",
     ".env.example",
-    "sw.js"
+    "sw.js",
+    "server.ts"
   ];
 
   for (const folder of sourceFoldersToSync) {
@@ -109,7 +110,7 @@ try {
     console.log("No changes detected. Repository is already up to date!");
   } else {
     console.log("Changes detected:\n" + status);
-    const commitMsg = "Sync Daily Push: Locked Client ID, refined UI preset and docs";
+    const commitMsg = "Sync Daily Push: Add Vercel Serverless API endpoint and server.ts backup";
     execSync(`git commit -m "${commitMsg}"`, { cwd: cloneDir, stdio: "inherit" });
     
     console.log("Pushing to GitHub...");
