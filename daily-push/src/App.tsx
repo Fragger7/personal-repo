@@ -32,7 +32,10 @@ import {
   XAxis, 
   YAxis, 
   Tooltip, 
-  CartesianGrid 
+  CartesianGrid,
+  BarChart,
+  Bar,
+  Legend
 } from "recharts";
 
 import { WorkoutDay, LogEntry } from "./types";
@@ -364,7 +367,10 @@ export default function App() {
         writeLog(`Initial cloud allocation achieved (File ID: ${createData.id})`);
       }
 
-      const now = new Date().toLocaleString();
+      const now = new Date().toLocaleString(undefined, {
+        year: 'numeric', month: 'short', day: 'numeric', 
+        hour: '2-digit', minute: '2-digit', second: '2-digit'
+      });
       setLastGdSyncTime(now);
       localStorage.setItem("last_gd_sync_time", now);
       writeLog(`Google Drive Sync complete. Successfully mirrored ${finalMergedList.length} unified work entries.`);
@@ -695,27 +701,60 @@ export default function App() {
     let grossPushups = 0;
     let grossCrunches = 0;
     let activeDays = 0;
-    
-    let maxPushupsInSet = 0;
-    let maxCrunchesInSet = 0;
-    let maxPushupsInDay = 0;
-    let maxCombinedInDay = 0;
 
-    dataFrame.forEach((day) => {
+    let maxPushupsInSet = { val: 0, date: "" };
+    let maxCrunchesInSet = { val: 0, date: "" };
+    let maxPushupsInDay = { val: 0, date: "" };
+    let maxCrunchesInDay = { val: 0, date: "" };
+    let maxCombinedInDay = { val: 0, date: "" };
+    
+    let currentStreak = 0;
+    let longestStreak = { val: 0, date: "" };
+    let prevDateObj: Date | null = null;
+    
+    // Sort array chronologically before iterating to compute streaks correctly
+    const sortedData = [...dataFrame].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+    sortedData.forEach((day, index) => {
       const pSum = day.p.reduce((acc, val) => acc + (val || 0), 0);
       const cSum = day.c.reduce((acc, val) => acc + (val || 0), 0);
+      const total = pSum + cSum;
       
       const pMaxSet = Math.max(...day.p.map(v => v || 0));
       const cMaxSet = Math.max(...day.c.map(v => v || 0));
       
-      maxPushupsInSet = Math.max(maxPushupsInSet, pMaxSet);
-      maxCrunchesInSet = Math.max(maxCrunchesInSet, cMaxSet);
-      maxPushupsInDay = Math.max(maxPushupsInDay, pSum);
-      maxCombinedInDay = Math.max(maxCombinedInDay, pSum + cSum);
+      if (pMaxSet > maxPushupsInSet.val) maxPushupsInSet = { val: pMaxSet, date: day.date };
+      if (cMaxSet > maxCrunchesInSet.val) maxCrunchesInSet = { val: cMaxSet, date: day.date };
+      if (pSum > maxPushupsInDay.val) maxPushupsInDay = { val: pSum, date: day.date };
+      if (cSum > maxCrunchesInDay.val) maxCrunchesInDay = { val: cSum, date: day.date };
+      if (total > maxCombinedInDay.val) maxCombinedInDay = { val: total, date: day.date };
+      
+      if (total > 0) {
+        const dObj = new Date(day.date + "T00:00:00Z");
+        if (!prevDateObj) {
+          currentStreak = 1;
+        } else {
+          const diffTime = dObj.getTime() - prevDateObj.getTime();
+          const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+          if (diffDays === 1) {
+            currentStreak++;
+          } else if (diffDays > 1) {
+            currentStreak = 1;
+          }
+        }
+        prevDateObj = dObj;
+        
+        if (currentStreak > longestStreak.val) {
+          longestStreak = { val: currentStreak, date: day.date };
+        }
+      } else {
+        currentStreak = 0;
+        prevDateObj = null;
+      }
       
       grossPushups += pSum;
       grossCrunches += cSum;
-      if (pSum + cSum > 0) {
+      if (total > 0) {
         activeDays++;
       }
     });
@@ -731,7 +770,9 @@ export default function App() {
       maxPushupsInSet,
       maxCrunchesInSet,
       maxPushupsInDay,
-      maxCombinedInDay
+      maxCrunchesInDay,
+      maxCombinedInDay,
+      longestStreak
     };
   };
 
@@ -952,26 +993,42 @@ export default function App() {
         </div>
 
         {/* Personal Records panel */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
           <div className="p-3 bg-slate-950/40 rounded-xl border border-white/5 flex flex-col justify-center relative overflow-hidden group hover:border-emerald-500/20 transition-colors">
             <div className="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition-opacity"><Zap size={24} /></div>
             <span className="text-[8px] font-bold text-slate-500 uppercase tracking-widest font-mono">Top Pushups / Set</span>
-            <span className="text-xl font-bold text-emerald-400 font-sans leading-none mt-1">{kpis.maxPushupsInSet}</span>
+            <span className="text-xl font-bold text-emerald-400 font-sans leading-none mt-1">{kpis.maxPushupsInSet.val}</span>
+            <span className="text-[9px] text-slate-500 font-mono mt-0.5">{kpis.maxPushupsInSet.date || "--"}</span>
           </div>
           <div className="p-3 bg-slate-950/40 rounded-xl border border-white/5 flex flex-col justify-center relative overflow-hidden group hover:border-indigo-500/20 transition-colors">
             <div className="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition-opacity"><Zap size={24} /></div>
             <span className="text-[8px] font-bold text-slate-500 uppercase tracking-widest font-mono">Top Crunches / Set</span>
-            <span className="text-xl font-bold text-indigo-400 font-sans leading-none mt-1">{kpis.maxCrunchesInSet}</span>
+            <span className="text-xl font-bold text-indigo-400 font-sans leading-none mt-1">{kpis.maxCrunchesInSet.val}</span>
+            <span className="text-[9px] text-slate-500 font-mono mt-0.5">{kpis.maxCrunchesInSet.date || "--"}</span>
           </div>
           <div className="p-3 bg-slate-950/40 rounded-xl border border-white/5 flex flex-col justify-center relative overflow-hidden group hover:border-emerald-500/20 transition-colors">
             <div className="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition-opacity"><TrendingUp size={24} /></div>
             <span className="text-[8px] font-bold text-slate-500 uppercase tracking-widest font-mono">Top Pushups / Day</span>
-            <span className="text-xl font-bold text-emerald-400 font-sans leading-none mt-1">{kpis.maxPushupsInDay}</span>
+            <span className="text-xl font-bold text-emerald-400 font-sans leading-none mt-1">{kpis.maxPushupsInDay.val}</span>
+            <span className="text-[9px] text-slate-500 font-mono mt-0.5">{kpis.maxPushupsInDay.date || "--"}</span>
+          </div>
+          <div className="p-3 bg-slate-950/40 rounded-xl border border-white/5 flex flex-col justify-center relative overflow-hidden group hover:border-indigo-500/20 transition-colors">
+            <div className="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition-opacity"><TrendingUp size={24} /></div>
+            <span className="text-[8px] font-bold text-slate-500 uppercase tracking-widest font-mono">Top Crunches / Day</span>
+            <span className="text-xl font-bold text-indigo-400 font-sans leading-none mt-1">{kpis.maxCrunchesInDay.val}</span>
+            <span className="text-[9px] text-slate-500 font-mono mt-0.5">{kpis.maxCrunchesInDay.date || "--"}</span>
           </div>
           <div className="p-3 bg-slate-950/40 rounded-xl border border-white/5 flex flex-col justify-center relative overflow-hidden group hover:border-cyan-500/20 transition-colors">
             <div className="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition-opacity"><TrendingUp size={24} /></div>
             <span className="text-[8px] font-bold text-slate-500 uppercase tracking-widest font-mono">Top Combined / Day</span>
-            <span className="text-xl font-bold text-white font-sans leading-none mt-1">{kpis.maxCombinedInDay}</span>
+            <span className="text-xl font-bold text-white font-sans leading-none mt-1">{kpis.maxCombinedInDay.val}</span>
+            <span className="text-[9px] text-slate-500 font-mono mt-0.5">{kpis.maxCombinedInDay.date || "--"}</span>
+          </div>
+          <div className="p-3 bg-slate-950/40 rounded-xl border border-white/5 flex flex-col justify-center relative overflow-hidden group hover:border-orange-500/20 transition-colors">
+            <div className="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition-opacity"><Sparkles size={24} /></div>
+            <span className="text-[8px] font-bold text-slate-500 uppercase tracking-widest font-mono">Longest Streak</span>
+            <span className="text-xl font-bold text-orange-400 font-sans leading-none mt-1">{kpis.longestStreak.val} <span className="text-[12px] text-orange-400/50">DAYS</span></span>
+            <span className="text-[9px] text-slate-500 font-mono mt-0.5">{kpis.longestStreak.date ? `Ended ${kpis.longestStreak.date}` : "--"}</span>
           </div>
         </div>
 
@@ -1142,84 +1199,140 @@ export default function App() {
         </div>
 
         {/* Dynamic Recharts Performance Graph */}
-        <div className="p-4 bg-slate-950/40 border border-white/5 rounded-2xl min-h-[265px] flex flex-col justify-between backdrop-blur-md">
-          <div className="flex items-center justify-between border-b border-white/5 pb-2 mb-2">
-            <h4 className="text-xs font-bold uppercase tracking-widest text-white flex items-center gap-1.5 font-sans">
-              <TrendingUp size={14} className="text-emerald-400" />
-              PERFORMANCE TIMELINE
-            </h4>
-            <div className="flex bg-slate-950 p-0.5 rounded border border-white/5 text-[9px] font-mono select-none">
-              <button 
-                onClick={() => setRollingRangeWindow(14)}
-                className={`px-2 py-1 rounded cursor-pointer transition-all ${
-                  rollingRangeWindow === 14 ? "text-white bg-slate-800 font-bold" : "text-slate-400 hover:text-slate-200"
-                }`}
-              >
-                14 DAYS
-              </button>
-              <button 
-                onClick={() => setRollingRangeWindow(30)}
-                className={`px-2 py-1 rounded cursor-pointer transition-all ${
-                  rollingRangeWindow === 30 ? "text-white bg-slate-800 font-bold" : "text-slate-400 hover:text-slate-200"
-                }`}
-              >
-                30 DAYS
-              </button>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="p-4 bg-slate-950/40 border border-white/5 rounded-2xl flex flex-col justify-between backdrop-blur-md">
+            <div className="flex items-center justify-between border-b border-white/5 pb-2 mb-2">
+              <h4 className="text-xs font-bold uppercase tracking-widest text-white flex items-center gap-1.5 font-sans">
+                <TrendingUp size={14} className="text-emerald-400" />
+                PERFORMANCE TIMELINE
+              </h4>
+              <div className="flex bg-slate-950 p-0.5 rounded border border-white/5 text-[9px] font-mono select-none">
+                <button 
+                  onClick={() => setRollingRangeWindow(14)}
+                  className={`px-2 py-1 rounded cursor-pointer transition-all ${
+                    rollingRangeWindow === 14 ? "text-white bg-slate-800 font-bold" : "text-slate-400 hover:text-slate-200"
+                  }`}
+                >
+                  14 DAYS
+                </button>
+                <button 
+                  onClick={() => setRollingRangeWindow(30)}
+                  className={`px-2 py-1 rounded cursor-pointer transition-all ${
+                    rollingRangeWindow === 30 ? "text-white bg-slate-800 font-bold" : "text-slate-400 hover:text-slate-200"
+                  }`}
+                >
+                  30 DAYS
+                </button>
+              </div>
+            </div>
+            
+            <div className="relative w-full flex-1 h-[180px] mt-2">
+              {chartData.length === 0 ? (
+                <div className="h-full w-full min-h-[180px] flex flex-col items-center justify-center text-slate-500 font-mono text-[10px] gap-2 border border-dashed border-white/5 rounded-xl bg-black/20 px-4 text-center">
+                  <AlertTriangle size={15} className="text-slate-600" />
+                  <span>Reps will appear here dynamically to list your performance timeline.</span>
+                </div>
+              ) : (
+                <ResponsiveContainer width="100%" height={180}>
+                  <LineChart data={chartData} margin={{ top: 10, right: 5, left: -25, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.01)" />
+                    <XAxis 
+                      dataKey="date" 
+                      tick={{ fill: "#64748b", fontFamily: "JetBrains Mono", fontSize: 8 }} 
+                      axisLine={{ stroke: "rgba(255,255,255,0.05)" }}
+                      tickLine={false}
+                    />
+                    <YAxis 
+                      tick={{ fill: "#64748b", fontFamily: "JetBrains Mono", fontSize: 8 }} 
+                      axisLine={{ stroke: "rgba(255,255,255,0.05)" }}
+                      tickLine={false}
+                    />
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: "#02040a", 
+                        borderColor: "rgba(255,255,255,0.1)", 
+                        fontFamily: "JetBrains Mono", 
+                        fontSize: "10px", 
+                        borderRadius: "12px" 
+                      }}
+                      labelStyle={{ color: "#94a3b8" }}
+                    />
+                    <Line 
+                      type="monotone" 
+                      name="Pushups"
+                      dataKey="pushups" 
+                      stroke="#10b981" 
+                      strokeWidth={1.5} 
+                      dot={{ r: 1 }} 
+                      activeDot={{ r: 3 }}
+                    />
+                    <Line 
+                      type="monotone" 
+                      name="Crunches"
+                      dataKey="crunches" 
+                      stroke="#6366f1" 
+                      strokeWidth={1} 
+                      dot={{ r: 1 }} 
+                      activeDot={{ r: 3 }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              )}
             </div>
           </div>
-          
-          <div className="relative w-full flex-1 h-[180px] mt-2">
-            {chartData.length === 0 ? (
-              <div className="h-full w-full min-h-[180px] flex flex-col items-center justify-center text-slate-500 font-mono text-[10px] gap-2 border border-dashed border-white/5 rounded-xl bg-black/20 px-4 text-center">
-                <AlertTriangle size={15} className="text-slate-600" />
-                <span>Reps will appear here dynamically to list your performance timeline.</span>
+
+          <div className="p-4 bg-slate-950/40 border border-white/5 rounded-2xl flex flex-col justify-between backdrop-blur-md">
+            <div className="flex items-center justify-between border-b border-white/5 pb-2 mb-2">
+              <h4 className="text-xs font-bold uppercase tracking-widest text-white flex items-center gap-1.5 font-sans">
+                <TrendingUp size={14} className="text-cyan-400" />
+                VOLUME BREAKDOWN
+              </h4>
+              <div className="flex bg-slate-950 p-0.5 rounded border border-white/5 text-[9px] font-mono select-none">
+                <span className="px-2 py-1 rounded text-slate-400 transition-all font-bold">STACKED GROSS REPS</span>
               </div>
-            ) : (
-              <ResponsiveContainer width="100%" height={180}>
-                <LineChart data={chartData} margin={{ top: 10, right: 5, left: -25, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.01)" />
-                  <XAxis 
-                    dataKey="date" 
-                    tick={{ fill: "#64748b", fontFamily: "JetBrains Mono", fontSize: 8 }} 
-                    axisLine={{ stroke: "rgba(255,255,255,0.05)" }}
-                    tickLine={false}
-                  />
-                  <YAxis 
-                    tick={{ fill: "#64748b", fontFamily: "JetBrains Mono", fontSize: 8 }} 
-                    axisLine={{ stroke: "rgba(255,255,255,0.05)" }}
-                    tickLine={false}
-                  />
-                  <Tooltip 
-                    contentStyle={{ 
-                      backgroundColor: "#02040a", 
-                      borderColor: "rgba(255,255,255,0.1)", 
-                      fontFamily: "JetBrains Mono", 
-                      fontSize: "10px", 
-                      borderRadius: "12px" 
-                    }}
-                    labelStyle={{ color: "#94a3b8" }}
-                  />
-                  <Line 
-                    type="monotone" 
-                    name="Pushups"
-                    dataKey="pushups" 
-                    stroke="#10b981" 
-                    strokeWidth={1.5} 
-                    dot={{ r: 1 }} 
-                    activeDot={{ r: 3 }}
-                  />
-                  <Line 
-                    type="monotone" 
-                    name="Crunches"
-                    dataKey="crunches" 
-                    stroke="#6366f1" 
-                    strokeWidth={1} 
-                    dot={{ r: 1 }} 
-                    activeDot={{ r: 3 }}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            )}
+            </div>
+            
+            <div className="relative w-full flex-1 h-[180px] mt-2">
+              {chartData.length === 0 ? (
+                <div className="h-full w-full min-h-[180px] flex flex-col items-center justify-center text-slate-500 font-mono text-[10px] gap-2 border border-dashed border-white/5 rounded-xl bg-black/20 px-4 text-center">
+                  <AlertTriangle size={15} className="text-slate-600" />
+                  <span>Reps will appear here dynamically to list your performance timeline.</span>
+                </div>
+              ) : (
+                <ResponsiveContainer width="100%" height={180}>
+                  <BarChart data={chartData} margin={{ top: 10, right: 5, left: -25, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.01)" vertical={false} />
+                    <XAxis 
+                      dataKey="date" 
+                      tick={{ fill: "#64748b", fontFamily: "JetBrains Mono", fontSize: 8 }} 
+                      axisLine={{ stroke: "rgba(255,255,255,0.05)" }}
+                      tickLine={false}
+                    />
+                    <YAxis 
+                      tick={{ fill: "#64748b", fontFamily: "JetBrains Mono", fontSize: 8 }} 
+                      axisLine={{ stroke: "rgba(255,255,255,0.05)" }}
+                      tickLine={false}
+                    />
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: "#02040a", 
+                        borderColor: "rgba(255,255,255,0.1)", 
+                        fontFamily: "JetBrains Mono", 
+                        fontSize: "10px", 
+                        borderRadius: "12px" 
+                      }}
+                      labelStyle={{ color: "#94a3b8" }}
+                    />
+                    <Legend 
+                      iconType="rect" 
+                      wrapperStyle={{ fontSize: "9px", paddingTop: "5px", fontFamily: "monospace", color: "#64748b" }} 
+                    />
+                    <Bar dataKey="pushups" name="Pushups" stackId="a" fill="#34d399" radius={[0, 0, 0, 0]} />
+                    <Bar dataKey="crunches" name="Crunches" stackId="a" fill="#6366f1" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              )}
+            </div>
           </div>
         </div>
 
