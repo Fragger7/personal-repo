@@ -835,19 +835,29 @@ export default function App() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          stats: kpis,
+          stats: {
+            ...kpis,
+            longestStreak: kpis.longestStreak?.val || 0 // pass raw value to ai
+          },
           history: chartData.slice(-5) // Send only the last 5 relevant data points
         })
       });
+      
+      const isHtml = response.headers.get("content-type")?.includes("text/html");
+      if (isHtml || response.status === 404) {
+         throw new Error("Backend server not found. This feature requires a full-stack environment (like Cloud Run or Vercel). Static hosting like GitHub Pages does not support secure AI key storage.");
+      }
+
       const data = await response.json();
       if (response.ok && data.tip) {
         setAiInsight(data.tip);
         triggerToast("AI Coach Insight received");
       } else {
-        throw new Error(data.error || "Failed");
+        throw new Error(data.error || "Failed context generation");
       }
     } catch (e: any) {
       writeLog(`AI Insight Error: ${e.message}`, true);
+      setAiInsight("Insights are currently unavailable. " + (e.message.includes("fetch") ? "Network connection failed." : e.message));
       triggerToast("Insight generation failed", false);
     } finally {
       setIsFetchingInsight(false);
