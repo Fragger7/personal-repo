@@ -364,7 +364,7 @@ export default function App() {
         writeLog(`Initial cloud allocation achieved (File ID: ${createData.id})`);
       }
 
-      const now = new Date().toLocaleTimeString();
+      const now = new Date().toLocaleString();
       setLastGdSyncTime(now);
       localStorage.setItem("last_gd_sync_time", now);
       writeLog(`Google Drive Sync complete. Successfully mirrored ${finalMergedList.length} unified work entries.`);
@@ -695,10 +695,23 @@ export default function App() {
     let grossPushups = 0;
     let grossCrunches = 0;
     let activeDays = 0;
+    
+    let maxPushupsInSet = 0;
+    let maxCrunchesInSet = 0;
+    let maxPushupsInDay = 0;
+    let maxCombinedInDay = 0;
 
     dataFrame.forEach((day) => {
       const pSum = day.p.reduce((acc, val) => acc + (val || 0), 0);
       const cSum = day.c.reduce((acc, val) => acc + (val || 0), 0);
+      
+      const pMaxSet = Math.max(...day.p.map(v => v || 0));
+      const cMaxSet = Math.max(...day.c.map(v => v || 0));
+      
+      maxPushupsInSet = Math.max(maxPushupsInSet, pMaxSet);
+      maxCrunchesInSet = Math.max(maxCrunchesInSet, cMaxSet);
+      maxPushupsInDay = Math.max(maxPushupsInDay, pSum);
+      maxCombinedInDay = Math.max(maxCombinedInDay, pSum + cSum);
       
       grossPushups += pSum;
       grossCrunches += cSum;
@@ -714,7 +727,11 @@ export default function App() {
       grossPushups: grossPushups.toLocaleString(),
       grossCrunches: grossCrunches.toLocaleString(),
       avgPushups,
-      avgCrunches
+      avgCrunches,
+      maxPushupsInSet,
+      maxCrunchesInSet,
+      maxPushupsInDay,
+      maxCombinedInDay
     };
   };
 
@@ -785,10 +802,15 @@ export default function App() {
                 {storageType === "OFFLINE_OPFS" ? "DISK DATABASE" : "MEMORY DATABASE"}
               </span>
               {gdAccessToken && (
-                <span className="text-cyan-400 flex items-center gap-1 border-l border-white/10 pl-2">
-                  <Cloud size={9} className={isSyncing ? "animate-spin" : ""} />
+                <button 
+                  type="button" 
+                  disabled={isSyncing} 
+                  onClick={handleManualDriveSync}
+                  className="text-cyan-400 flex items-center gap-1 border-l border-white/10 pl-2 [text-shadow:0_0_8px_rgba(34,211,238,0.6)] hover:opacity-80 transition-opacity disabled:opacity-50 cursor-pointer"
+                >
+                  <Cloud size={9} className={isSyncing ? "animate-pulse" : ""} />
                   CLOUD ACTIVE
-                </span>
+                </button>
               )}
             </div>
           </div>
@@ -926,6 +948,30 @@ export default function App() {
               <span className="text-slate-500 uppercase text-[9px]">SESSION AVG:</span>
               <span className="text-indigo-400 font-bold">{kpis.avgCrunches} REPS</span>
             </div>
+          </div>
+        </div>
+
+        {/* Personal Records panel */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div className="p-3 bg-slate-950/40 rounded-xl border border-white/5 flex flex-col justify-center relative overflow-hidden group hover:border-emerald-500/20 transition-colors">
+            <div className="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition-opacity"><Zap size={24} /></div>
+            <span className="text-[8px] font-bold text-slate-500 uppercase tracking-widest font-mono">Top Pushups / Set</span>
+            <span className="text-xl font-bold text-emerald-400 font-sans leading-none mt-1">{kpis.maxPushupsInSet}</span>
+          </div>
+          <div className="p-3 bg-slate-950/40 rounded-xl border border-white/5 flex flex-col justify-center relative overflow-hidden group hover:border-indigo-500/20 transition-colors">
+            <div className="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition-opacity"><Zap size={24} /></div>
+            <span className="text-[8px] font-bold text-slate-500 uppercase tracking-widest font-mono">Top Crunches / Set</span>
+            <span className="text-xl font-bold text-indigo-400 font-sans leading-none mt-1">{kpis.maxCrunchesInSet}</span>
+          </div>
+          <div className="p-3 bg-slate-950/40 rounded-xl border border-white/5 flex flex-col justify-center relative overflow-hidden group hover:border-emerald-500/20 transition-colors">
+            <div className="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition-opacity"><TrendingUp size={24} /></div>
+            <span className="text-[8px] font-bold text-slate-500 uppercase tracking-widest font-mono">Top Pushups / Day</span>
+            <span className="text-xl font-bold text-emerald-400 font-sans leading-none mt-1">{kpis.maxPushupsInDay}</span>
+          </div>
+          <div className="p-3 bg-slate-950/40 rounded-xl border border-white/5 flex flex-col justify-center relative overflow-hidden group hover:border-cyan-500/20 transition-colors">
+            <div className="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition-opacity"><TrendingUp size={24} /></div>
+            <span className="text-[8px] font-bold text-slate-500 uppercase tracking-widest font-mono">Top Combined / Day</span>
+            <span className="text-xl font-bold text-white font-sans leading-none mt-1">{kpis.maxCombinedInDay}</span>
           </div>
         </div>
 
