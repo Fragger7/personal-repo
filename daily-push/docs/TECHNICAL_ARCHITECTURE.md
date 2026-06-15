@@ -28,11 +28,12 @@ All code lives inside a modular, responsive client built with **React (v19)**, *
 * **Granular Data Types and Operations:**
   * Inputs differentiate between explicitly recorded `0` reps and omitted/blank entries `null` to ensure pristine averaging.
   * Native deletion handlers allow wiping out target date indexes across all data layers, syncing deletions bi-directionally to the master cloud file.
-* **Aesthetic Data Graphing:**
+* **Aesthetic Data Graphing & Visual Theming:**
   * Displays a rolling 14-day or 30-day chronological chart of workout achievements using `Recharts`.
   * Integrates dynamic Live Sub-totals within form inputs updating immediately as set parameters change.
   * Includes a compact recent history index tracking the 10 latest entries for quick navigation without bloating performance.
   * Calculates explicit Personal Records (Most combined daily reps, highest individual sets, etc.) organically from the active `dataFrame` each cycle.
+  * Advanced unified Light/Dark mode dynamic toggle mapping pristine, custom Tailwind palette variants natively via Tailwind's `dark:` modifier and DOM `classList` injections.
 * **Zero-Configuration Backup Utilities:**
   * `EXPORT` button triggers an instant local file download (`dailypush_backup_[date].json`).
   * `SEED` processes raw imported files, sanitizes coordinates, and writes back into the OPFS layer.
