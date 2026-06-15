@@ -21,6 +21,8 @@ import {
   LogOut,
   Trash2,
   History,
+  Sun,
+  Moon,
 } from "lucide-react";
 import {
   ResponsiveContainer,
@@ -1034,7 +1036,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-900 dark:bg-slate-50 dark:bg-[#02040a] text-slate-900 dark:text-slate-100 selection:bg-emerald-500/35 selection:text-white dark:text-slate-950 dark:selection:text-slate-900 dark:text-white glow-radial select-none pb-12 font-sans overflow-x-hidden">
+    <div className="min-h-screen bg-slate-50 dark:bg-[#02040a] text-slate-900 dark:text-slate-100 selection:bg-emerald-500/35 selection:text-white glow-radial select-none pb-12 font-sans overflow-x-hidden">
       {/* Background radial ambient soft light */}
       <div className="fixed top-0 left-0 right-0 h-[500px] bg-gradient-to-b from-emerald-500/5 via-teal-550/1 to-transparent pointer-events-none z-0" />
 
@@ -1045,10 +1047,10 @@ export default function App() {
             initial={{ opacity: 0, y: 30, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
-            className={`fixed bottom-6 right-6 z-50 p-4 rounded-xl border font-mono text-[11px] text-slate-900 dark:text-white flex items-center gap-2.5 backdrop-blur-md shadow-2xl ${
+            className={`fixed bottom-6 right-6 z-50 p-4 rounded-xl border font-mono text-[11px] text-white flex items-center gap-2.5 backdrop-blur-md shadow-2xl ${
               toast.success
-                ? "border-emerald-500/30 dark:border-emerald-500/20 bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300"
-                : "border-red-500/30 dark:border-red-500/20 bg-red-50 dark:bg-red-950/50 text-red-700 dark:text-red-300"
+                ? "border-emerald-500/20 bg-emerald-950/50 text-emerald-300"
+                : "border-red-500/20 bg-red-950/50 text-red-300"
             }`}
           >
             <div
@@ -1060,16 +1062,16 @@ export default function App() {
       </AnimatePresence>
 
       {/* Primary Navigation / Utility Bar */}
-      <header className="sticky top-0 z-40 bg-slate-900 dark:bg-slate-50 dark:bg-[#02040a]/80 backdrop-blur-xl border-b border-slate-200 dark:border-white/5 px-4 sm:px-6 py-3.5 sm:py-5 flex items-center justify-between">
+      <header className="sticky top-0 z-40 bg-slate-50/80 dark:bg-[#02040a]/80 backdrop-blur-xl border-b border-slate-300 dark:border-white/5 px-4 sm:px-6 py-3.5 sm:py-5 flex items-center justify-between">
         <div className="flex items-center gap-2 sm:gap-3">
-          <div className="h-7 w-7 sm:h-8 sm:w-8 rounded-lg bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center text-white dark:text-slate-950 font-black shadow-lg shadow-emerald-500/10">
+          <div className="h-7 w-7 sm:h-8 sm:w-8 rounded-lg bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center text-slate-950 font-black shadow-lg shadow-emerald-500/10">
             <Zap size={13} className="fill-slate-950 stroke-none" />
           </div>
           <div>
             <h1 className="text-[12px] sm:text-[13px] font-bold tracking-widest text-slate-900 dark:text-white uppercase font-sans">
               DAILY PUSH
             </h1>
-            <div className="text-[8px] sm:text-[9px] font-mono text-emerald-600 dark:text-emerald-400 tracking-wider uppercase font-medium flex flex-wrap items-center gap-2">
+            <div className="text-[8px] sm:text-[9px] font-mono text-emerald-700 dark:text-emerald-400 tracking-wider uppercase font-medium flex flex-wrap items-center gap-2">
               <span className="flex items-center gap-1">
                 <span className="h-1 w-1 bg-current rounded-full animate-pulse" />
                 {storageType === "OFFLINE_OPFS"
@@ -1081,7 +1083,7 @@ export default function App() {
                   type="button"
                   disabled={isSyncing}
                   onClick={handleManualDriveSync}
-                  className="text-cyan-600 dark:text-cyan-400 flex items-center gap-1 border-l border-slate-300 dark:border-white/10 pl-2 [text-shadow:0_0_8px_rgba(34,211,238,0.6)] hover:opacity-80 transition-opacity disabled:opacity-50 cursor-pointer"
+                  className="text-cyan-700 dark:text-cyan-400 flex items-center gap-1 border-l border-slate-300 dark:border-white/10 pl-2 [text-shadow:0_0_8px_rgba(34,211,238,0.6)] hover:opacity-80 transition-opacity disabled:opacity-50 cursor-pointer"
                 >
                   <Cloud
                     size={9}
@@ -1095,10 +1097,10 @@ export default function App() {
         </div>
 
         <div className="flex items-center gap-1.5 sm:gap-2">
-          <div className="flex items-center gap-1 border border-slate-200 dark:border-white/5 bg-white/60 dark:bg-slate-950/60 text-slate-600 dark:text-slate-400 text-[9px] sm:text-[10px] px-2 py-1.5 sm:px-3 sm:py-2 rounded-xl">
+          <div className="flex items-center gap-1 border border-slate-300 dark:border-white/5 bg-white/80 dark:bg-slate-950/60 text-slate-600 dark:text-slate-400 text-[9px] sm:text-[10px] px-2 py-1.5 sm:px-3 sm:py-2 rounded-xl">
             <ShieldCheck
               size={11}
-              className="text-emerald-600 dark:text-emerald-400"
+              className="text-emerald-700 dark:text-emerald-400"
             />
             <span className="hidden xs:inline">OFFLINE</span>
           </div>
@@ -1106,15 +1108,16 @@ export default function App() {
           <button
             type="button"
             onClick={() => setIsDarkMode(!isDarkMode)}
-            className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-white/5 hover:bg-slate-100 dark:hover:bg-slate-900 text-slate-700 dark:text-slate-350 text-[9px] sm:text-[10px] px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl flex items-center gap-1 cursor-pointer font-bold transition-all"
+            className="bg-white dark:bg-slate-950 border border-slate-300 dark:border-white/5 hover:bg-slate-100 dark:hover:bg-slate-900 text-amber-600 dark:text-amber-400 text-[9px] sm:text-[10px] px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl flex items-center gap-1 cursor-pointer font-bold transition-all"
           >
-            THEME
+            {isDarkMode ? <Moon size={10} /> : <Sun size={10} />}
+            {isDarkMode ? "DARK" : "LIGHT"}
           </button>
 
           <button
             type="button"
             onClick={triggerManualExport}
-            className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-white/5 hover:bg-slate-100 dark:bg-slate-900 text-slate-700 dark:text-slate-350 text-[9px] sm:text-[10px] px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl flex items-center gap-1 cursor-pointer font-bold transition-all"
+            className="bg-white dark:bg-slate-950 border border-slate-300 dark:border-white/5 hover:bg-slate-900 text-slate-700 dark:text-slate-350 text-[9px] sm:text-[10px] px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl flex items-center gap-1 cursor-pointer font-bold transition-all"
           >
             <Download size={10} />
             EXPORT
@@ -1122,7 +1125,7 @@ export default function App() {
 
           <label
             htmlFor="import-file"
-            className="bg-slate-100 dark:bg-slate-900 hover:bg-slate-200 dark:bg-slate-800 border border-slate-200 dark:border-white/5 text-slate-700 dark:text-slate-350 text-[9px] sm:text-[10px] font-bold px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl cursor-pointer transition-all flex items-center gap-1"
+            className="bg-slate-100 dark:bg-slate-900 hover:bg-slate-800 border border-slate-300 dark:border-white/5 text-slate-700 dark:text-slate-350 text-[9px] sm:text-[10px] font-bold px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl cursor-pointer transition-all flex items-center gap-1"
           >
             <Upload size={10} />
             SEED
@@ -1139,16 +1142,16 @@ export default function App() {
 
       <main className="max-w-4xl mx-auto px-4 mt-6 space-y-4 relative z-10">
         {/* Google Drive Balance / Cloud Synchronization System */}
-        <div className="bg-white/40 dark:bg-slate-950/40 border border-slate-200 dark:border-white/5 p-4 sm:p-5 rounded-2xl backdrop-blur-md relative overflow-hidden">
+        <div className="bg-white/40 dark:bg-slate-950/40 border border-slate-300 dark:border-white/5 p-4 sm:p-5 rounded-2xl backdrop-blur-md relative overflow-hidden">
           <div className="absolute top-0 left-0 right-0 h-[1.5px] bg-gradient-to-r from-transparent via-cyan-500/15 to-transparent" />
 
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 dark:border-white/5 pb-3">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-300 dark:border-white/5 pb-3">
             <div className="flex items-center gap-2.5">
               <div
                 className={`h-8 w-8 rounded-lg flex items-center justify-center transition-all ${
                   gdAccessToken
-                    ? "bg-cyan-500/10 dark:bg-cyan-500/15 text-cyan-600 dark:text-cyan-400 border border-cyan-500/30 dark:border-cyan-500/25"
-                    : "bg-slate-100 dark:bg-slate-900 text-slate-500 dark:text-slate-500 border border-slate-200 dark:border-white/5"
+                    ? "bg-cyan-500/15 text-cyan-400 border border-cyan-500/25"
+                    : "bg-slate-900 text-slate-500 border border-white/5"
                 }`}
               >
                 <Cloud size={16} className={isSyncing ? "animate-pulse" : ""} />
@@ -1157,7 +1160,7 @@ export default function App() {
                 <h3 className="text-xs font-bold uppercase tracking-widest text-slate-900 dark:text-white flex items-center gap-1.5 font-sans">
                   Google Drive Cloud Sync
                 </h3>
-                <p className="text-[9px] font-mono text-slate-500 dark:text-slate-500 tracking-wide uppercase">
+                <p className="text-[9px] font-mono text-slate-500 tracking-wide uppercase">
                   {gdAccessToken
                     ? `Status: Connected as ${gdUser?.displayName || "User"}`
                     : "Status: Local Tracking Mode (Cloud Synced Backlog #3)"}
@@ -1172,7 +1175,7 @@ export default function App() {
                     type="button"
                     onClick={handleManualDriveSync}
                     disabled={isSyncing}
-                    className="bg-cyan-500/10 dark:bg-cyan-500/15 text-cyan-700 dark:text-cyan-300 hover:bg-cyan-500/25 border border-cyan-500/20 text-[10px] sm:text-[11px] font-bold px-3 py-2 rounded-xl flex items-center gap-1.5 cursor-pointer transition-all disabled:opacity-50 font-mono"
+                    className="bg-cyan-50 border border-cyan-200 dark:border-transparent dark:bg-cyan-500/15 text-cyan-700 dark:text-cyan-300 hover:bg-cyan-500/25 border border-cyan-500/40 dark:border-cyan-500/20 text-[10px] sm:text-[11px] font-bold px-3 py-2 rounded-xl flex items-center gap-1.5 cursor-pointer transition-all disabled:opacity-50 font-mono"
                   >
                     <RefreshCw
                       size={11}
@@ -1183,7 +1186,7 @@ export default function App() {
                   <button
                     type="button"
                     onClick={handleGoogleDisconnect}
-                    className="bg-red-500/10 text-red-400 hover:bg-red-500/20 border border-red-500/15 p-2 rounded-xl cursor-pointer transition-all"
+                    className="bg-red-500/10 text-red-700 dark:text-red-400 hover:bg-red-500/20 border border-red-500/15 p-2 rounded-xl cursor-pointer transition-all"
                     title="Disconnect Google Account"
                   >
                     <LogOut size={12} />
@@ -1194,7 +1197,7 @@ export default function App() {
                   type="button"
                   onClick={handleGoogleAuth}
                   disabled={isSyncing}
-                  className="bg-slate-900 dark:bg-slate-50 text-white dark:text-slate-950 hover:bg-slate-200 text-[10px] sm:text-[11px] font-extrabold px-3.5 py-2 rounded-xl flex items-center gap-1.5 cursor-pointer transition-all disabled:opacity-50"
+                  className="bg-slate-50 text-slate-950 hover:bg-slate-300 dark:hover:bg-slate-200 text-[10px] sm:text-[11px] font-extrabold px-3.5 py-2 rounded-xl flex items-center gap-1.5 cursor-pointer transition-all disabled:opacity-50"
                 >
                   <CloudLightning size={11} className="fill-current" />
                   CONNECT DRIVE
@@ -1205,12 +1208,12 @@ export default function App() {
 
           {/* Sync Stats Info Banner */}
           {lastGdSyncTime && (
-            <div className="mt-2.5 flex items-center justify-between text-[9px] text-slate-600 dark:text-slate-400 font-mono bg-slate-200/50 dark:bg-black/15 border border-slate-200 dark:border-white/5 px-2.5 py-1.5 rounded-xl">
+            <div className="mt-2.5 flex items-center justify-between text-[9px] text-slate-600 dark:text-slate-400 font-mono bg-slate-200/50 dark:bg-black/15 border border-slate-300 dark:border-white/5 px-2.5 py-1.5 rounded-xl">
               <span className="flex items-center gap-1">
                 <span className="h-1 w-1 bg-cyan-400 rounded-full animate-ping" />
                 LAST CLOUD DATABASE REPLICATION:
               </span>
-              <span className="text-cyan-600 dark:text-cyan-400 font-bold uppercase">
+              <span className="text-cyan-700 dark:text-cyan-400 font-bold uppercase">
                 {lastGdSyncTime}
               </span>
             </div>
@@ -1219,39 +1222,39 @@ export default function App() {
 
         {/* Dynamic Cumulative Stat Panels */}
         <div className="grid grid-cols-2 gap-3">
-          <div className="p-4 bg-white/50 dark:bg-slate-950/50 backdrop-blur-md rounded-2xl border border-slate-200 dark:border-white/5 shadow-md flex flex-col justify-between">
+          <div className="p-4 bg-white/60 dark:bg-slate-950/50 backdrop-blur-md rounded-2xl border border-slate-300 dark:border-white/5 shadow-md flex flex-col justify-between">
             <div>
-              <p className="text-[9px] font-semibold tracking-widest text-slate-500 dark:text-slate-500 uppercase font-mono">
+              <p className="text-[9px] font-semibold tracking-widest text-slate-500 uppercase font-mono">
                 PUSHUPS CUMULATIVE
               </p>
               <h3 className="text-3xl font-bold text-slate-900 dark:text-white mt-1 select-text tracking-tight h-[42px] flex items-center font-sans">
                 {kpis.grossPushups}
               </h3>
             </div>
-            <div className="text-[10px] text-slate-600 dark:text-slate-400 mt-2 font-mono flex items-center gap-1.5 border-t border-slate-200 dark:border-white/5 pt-2">
-              <span className="text-slate-500 dark:text-slate-500 uppercase text-[9px]">
+            <div className="text-[10px] text-slate-600 dark:text-slate-400 mt-2 font-mono flex items-center gap-1.5 border-t border-slate-300 dark:border-white/5 pt-2">
+              <span className="text-slate-500 uppercase text-[9px]">
                 SESSION AVG:
               </span>
-              <span className="text-emerald-600 dark:text-emerald-400 font-bold">
+              <span className="text-emerald-700 dark:text-emerald-400 font-bold">
                 {kpis.avgPushups} REPS
               </span>
             </div>
           </div>
 
-          <div className="p-4 bg-white/50 dark:bg-white dark:bg-slate-950/50 backdrop-blur-md rounded-2xl border border-slate-200 dark:border-white/5 shadow-md flex flex-col justify-between">
+          <div className="p-4 bg-white/60 dark:bg-slate-950/50 backdrop-blur-md rounded-2xl border border-slate-300 dark:border-white/5 shadow-md flex flex-col justify-between">
             <div>
-              <p className="text-[9px] font-semibold tracking-widest text-slate-500 dark:text-slate-500 uppercase font-mono">
+              <p className="text-[9px] font-semibold tracking-widest text-slate-500 uppercase font-mono">
                 CRUNCHES CUMULATIVE
               </p>
               <h3 className="text-3xl font-bold text-slate-900 dark:text-white mt-1 select-text tracking-tight h-[42px] flex items-center font-sans">
                 {kpis.grossCrunches}
               </h3>
             </div>
-            <div className="text-[10px] text-slate-600 dark:text-slate-400 mt-2 font-mono flex items-center gap-1.5 border-t border-slate-200 dark:border-white/5 pt-2">
-              <span className="text-slate-500 dark:text-slate-500 uppercase text-[9px]">
+            <div className="text-[10px] text-slate-600 dark:text-slate-400 mt-2 font-mono flex items-center gap-1.5 border-t border-slate-300 dark:border-white/5 pt-2">
+              <span className="text-slate-500 uppercase text-[9px]">
                 SESSION AVG:
               </span>
-              <span className="text-indigo-600 dark:text-indigo-400 font-bold">
+              <span className="text-indigo-700 dark:text-indigo-400 font-bold">
                 {kpis.avgCrunches} REPS
               </span>
             </div>
@@ -1260,88 +1263,88 @@ export default function App() {
 
         {/* Personal Records panel */}
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-          <div className="p-3 bg-white/40 dark:bg-white dark:bg-slate-950/40 rounded-xl border border-slate-200 dark:border-white/5 flex flex-col justify-center relative overflow-hidden group hover:border-emerald-500/30 dark:border-emerald-500/20 transition-colors">
+          <div className="p-3 bg-white/40 dark:bg-slate-950/40 rounded-xl border border-slate-300 dark:border-white/5 flex flex-col justify-center relative overflow-hidden group hover:border-emerald-500/20 transition-colors">
             <div className="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition-opacity">
               <Zap size={24} />
             </div>
-            <span className="text-[8px] font-bold text-slate-500 dark:text-slate-500 uppercase tracking-widest font-mono">
+            <span className="text-[8px] font-bold text-slate-500 uppercase tracking-widest font-mono">
               Top Pushups / Set
             </span>
-            <span className="text-xl font-bold text-emerald-600 dark:text-emerald-400 font-sans leading-none mt-1">
+            <span className="text-xl font-bold text-emerald-700 dark:text-emerald-400 font-sans leading-none mt-1">
               {kpis.maxPushupsInSet.val}
             </span>
-            <span className="text-[9px] text-slate-500 dark:text-slate-500 font-mono mt-0.5">
+            <span className="text-[9px] text-slate-500 font-mono mt-0.5">
               {kpis.maxPushupsInSet.date || "--"}
             </span>
           </div>
-          <div className="p-3 bg-white/40 dark:bg-white dark:bg-slate-950/40 rounded-xl border border-slate-200 dark:border-white/5 flex flex-col justify-center relative overflow-hidden group hover:border-indigo-500/20 transition-colors">
+          <div className="p-3 bg-white/40 dark:bg-slate-950/40 rounded-xl border border-slate-300 dark:border-white/5 flex flex-col justify-center relative overflow-hidden group hover:border-indigo-500/20 transition-colors">
             <div className="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition-opacity">
               <Zap size={24} />
             </div>
-            <span className="text-[8px] font-bold text-slate-500 dark:text-slate-500 uppercase tracking-widest font-mono">
+            <span className="text-[8px] font-bold text-slate-500 uppercase tracking-widest font-mono">
               Top Crunches / Set
             </span>
-            <span className="text-xl font-bold text-indigo-600 dark:text-indigo-400 font-sans leading-none mt-1">
+            <span className="text-xl font-bold text-indigo-700 dark:text-indigo-400 font-sans leading-none mt-1">
               {kpis.maxCrunchesInSet.val}
             </span>
-            <span className="text-[9px] text-slate-500 dark:text-slate-500 font-mono mt-0.5">
+            <span className="text-[9px] text-slate-500 font-mono mt-0.5">
               {kpis.maxCrunchesInSet.date || "--"}
             </span>
           </div>
-          <div className="p-3 bg-white/40 dark:bg-white dark:bg-slate-950/40 rounded-xl border border-slate-200 dark:border-white/5 flex flex-col justify-center relative overflow-hidden group hover:border-emerald-500/30 dark:border-emerald-500/20 transition-colors">
+          <div className="p-3 bg-white/40 dark:bg-slate-950/40 rounded-xl border border-slate-300 dark:border-white/5 flex flex-col justify-center relative overflow-hidden group hover:border-emerald-500/20 transition-colors">
             <div className="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition-opacity">
               <TrendingUp size={24} />
             </div>
-            <span className="text-[8px] font-bold text-slate-500 dark:text-slate-500 uppercase tracking-widest font-mono">
+            <span className="text-[8px] font-bold text-slate-500 uppercase tracking-widest font-mono">
               Top Pushups / Day
             </span>
-            <span className="text-xl font-bold text-emerald-600 dark:text-emerald-400 font-sans leading-none mt-1">
+            <span className="text-xl font-bold text-emerald-700 dark:text-emerald-400 font-sans leading-none mt-1">
               {kpis.maxPushupsInDay.val}
             </span>
-            <span className="text-[9px] text-slate-500 dark:text-slate-500 font-mono mt-0.5">
+            <span className="text-[9px] text-slate-500 font-mono mt-0.5">
               {kpis.maxPushupsInDay.date || "--"}
             </span>
           </div>
-          <div className="p-3 bg-white/40 dark:bg-white dark:bg-slate-950/40 rounded-xl border border-slate-200 dark:border-white/5 flex flex-col justify-center relative overflow-hidden group hover:border-indigo-500/20 transition-colors">
+          <div className="p-3 bg-white/40 dark:bg-slate-950/40 rounded-xl border border-slate-300 dark:border-white/5 flex flex-col justify-center relative overflow-hidden group hover:border-indigo-500/20 transition-colors">
             <div className="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition-opacity">
               <TrendingUp size={24} />
             </div>
-            <span className="text-[8px] font-bold text-slate-500 dark:text-slate-500 uppercase tracking-widest font-mono">
+            <span className="text-[8px] font-bold text-slate-500 uppercase tracking-widest font-mono">
               Top Crunches / Day
             </span>
-            <span className="text-xl font-bold text-indigo-600 dark:text-indigo-400 font-sans leading-none mt-1">
+            <span className="text-xl font-bold text-indigo-700 dark:text-indigo-400 font-sans leading-none mt-1">
               {kpis.maxCrunchesInDay.val}
             </span>
-            <span className="text-[9px] text-slate-500 dark:text-slate-500 font-mono mt-0.5">
+            <span className="text-[9px] text-slate-500 font-mono mt-0.5">
               {kpis.maxCrunchesInDay.date || "--"}
             </span>
           </div>
-          <div className="p-3 bg-white/40 dark:bg-white dark:bg-slate-950/40 rounded-xl border border-slate-200 dark:border-white/5 flex flex-col justify-center relative overflow-hidden group hover:border-cyan-500/20 transition-colors">
+          <div className="p-3 bg-white/40 dark:bg-slate-950/40 rounded-xl border border-slate-300 dark:border-white/5 flex flex-col justify-center relative overflow-hidden group hover:border-cyan-500/20 transition-colors">
             <div className="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition-opacity">
               <TrendingUp size={24} />
             </div>
-            <span className="text-[8px] font-bold text-slate-500 dark:text-slate-500 uppercase tracking-widest font-mono">
+            <span className="text-[8px] font-bold text-slate-500 uppercase tracking-widest font-mono">
               Top Combined / Day
             </span>
             <span className="text-xl font-bold text-slate-900 dark:text-white font-sans leading-none mt-1">
               {kpis.maxCombinedInDay.val}
             </span>
-            <span className="text-[9px] text-slate-500 dark:text-slate-500 font-mono mt-0.5">
+            <span className="text-[9px] text-slate-500 font-mono mt-0.5">
               {kpis.maxCombinedInDay.date || "--"}
             </span>
           </div>
-          <div className="p-3 bg-white/40 dark:bg-white dark:bg-slate-950/40 rounded-xl border border-slate-200 dark:border-white/5 flex flex-col justify-center relative overflow-hidden group hover:border-orange-500/20 transition-colors">
+          <div className="p-3 bg-white/40 dark:bg-slate-950/40 rounded-xl border border-slate-300 dark:border-white/5 flex flex-col justify-center relative overflow-hidden group hover:border-orange-500/20 transition-colors">
             <div className="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition-opacity">
               <Sparkles size={24} />
             </div>
-            <span className="text-[8px] font-bold text-slate-500 dark:text-slate-500 uppercase tracking-widest font-mono">
+            <span className="text-[8px] font-bold text-slate-500 uppercase tracking-widest font-mono">
               Longest Streak
             </span>
             <span className="text-xl font-bold text-orange-400 font-sans leading-none mt-1">
               {kpis.longestStreak.val}{" "}
               <span className="text-[12px] text-orange-400/50">DAYS</span>
             </span>
-            <span className="text-[9px] text-slate-500 dark:text-slate-500 font-mono mt-0.5">
+            <span className="text-[9px] text-slate-500 font-mono mt-0.5">
               {kpis.longestStreak.date
                 ? `Ended ${kpis.longestStreak.date}`
                 : "--"}
@@ -1350,15 +1353,15 @@ export default function App() {
         </div>
 
         {/* AI Insight Panel */}
-        <div className="bg-white/40 dark:bg-white dark:bg-slate-950/40 border border-emerald-500/10 p-5 p-4 rounded-2xl backdrop-blur-md relative overflow-hidden flex flex-col justify-between">
-          <div className="absolute top-0 right-0 p-4 opacity-10 pointer-events-none text-emerald-600 dark:text-emerald-400">
+        <div className="bg-white/40 dark:bg-slate-950/40 border border-emerald-500/10 p-5 p-4 rounded-2xl backdrop-blur-md relative overflow-hidden flex flex-col justify-between">
+          <div className="absolute top-0 right-0 p-4 opacity-10 pointer-events-none text-emerald-700 dark:text-emerald-400">
             <Sparkles size={48} />
           </div>
-          <div className="flex items-center justify-between border-b border-slate-200 dark:border-white/5 pb-2.5 mb-3">
-            <h4 className="text-xs font-bold uppercase tracking-widest text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5 font-sans">
+          <div className="flex items-center justify-between border-b border-slate-300 dark:border-white/5 pb-2.5 mb-3">
+            <h4 className="text-xs font-bold uppercase tracking-widest text-emerald-700 dark:text-emerald-400 flex items-center gap-1.5 font-sans">
               <Zap
                 size={13}
-                className="text-emerald-600 dark:text-emerald-400 animate-pulse"
+                className="text-emerald-700 dark:text-emerald-400 animate-pulse"
               />
               AI COACH INSIGHT
             </h4>
@@ -1366,7 +1369,7 @@ export default function App() {
               type="button"
               onClick={fetchAiInsight}
               disabled={isFetchingInsight}
-              className="text-[9px] font-mono px-2 py-0.5 rounded transition-all select-none font-bold bg-emerald-500/10 border border-emerald-500/30 dark:border-emerald-500/20 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 disabled:opacity-50 cursor-pointer flex items-center gap-1.5"
+              className="text-[9px] font-mono px-2 py-0.5 rounded transition-all select-none font-bold bg-emerald-500/10 border border-emerald-500/40 dark:border-emerald-500/20 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-500/20 disabled:opacity-50 cursor-pointer flex items-center gap-1.5"
             >
               {isFetchingInsight ? "ANALYZING..." : "GENERATE INSIGHT"}
             </button>
@@ -1375,7 +1378,7 @@ export default function App() {
             {aiInsight ? (
               <p>{aiInsight}</p>
             ) : (
-              <p className="text-slate-500 dark:text-slate-500 italic text-xs">
+              <p className="text-slate-500 italic text-xs">
                 Tap "Generate Insight" to receive personalized feedback and
                 science-backed training tips based on your recent activity.
               </p>
@@ -1384,23 +1387,23 @@ export default function App() {
         </div>
 
         {/* Rep Entry Form Section */}
-        <div className="bg-white/40 dark:bg-white dark:bg-slate-950/40 border border-slate-200 dark:border-white/5 p-5 rounded-2xl backdrop-blur-md relative overflow-hidden">
+        <div className="bg-white/40 dark:bg-slate-950/40 border border-slate-300 dark:border-white/5 p-5 rounded-2xl backdrop-blur-md relative overflow-hidden">
           <div className="absolute top-0 left-0 right-0 h-[1.5px] bg-gradient-to-r from-transparent via-emerald-500/15 to-transparent" />
 
           <form onSubmit={handleLogSubmit} className="space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-200 dark:border-white/5 pb-2.5">
+            <div className="flex items-center justify-between border-b border-slate-300 dark:border-white/5 pb-2.5">
               <h4 className="text-xs font-bold uppercase tracking-widest text-slate-900 dark:text-white flex items-center gap-1.5 font-sans">
                 <Calendar
                   size={13}
-                  className="text-emerald-600 dark:text-emerald-400"
+                  className="text-emerald-700 dark:text-emerald-400"
                 />
                 LOG REPS BY DATE
               </h4>
               <span
                 className={`text-[9px] font-mono px-2 py-0.5 rounded transition-all select-none font-bold ${
                   formBadgeStatus === "MUTATE_RECORD"
-                    ? "bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400"
-                    : "bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-white/5 text-slate-500 dark:text-slate-500"
+                    ? "bg-amber-500/10 border border-amber-500/20 text-amber-400"
+                    : "bg-slate-900 border border-white/5 text-slate-500"
                 }`}
               >
                 {formBadgeStatus}
@@ -1409,14 +1412,14 @@ export default function App() {
 
             {/* Stepper Calendar Selector Component */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-2 items-center">
-              <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-500 font-mono">
+              <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500 font-mono">
                 Log Date Position
               </label>
               <div className="col-span-1 md:col-span-2 flex items-center gap-1.5">
                 <button
                   type="button"
                   onClick={() => stepDate(-1)}
-                  className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-white/5 text-slate-700 dark:text-slate-350 hover:bg-slate-100 dark:bg-slate-900 active:bg-white dark:bg-slate-950 px-3.5 py-3 rounded-xl transition-all cursor-pointer font-bold text-xs font-mono"
+                  className="bg-white dark:bg-slate-950 border border-slate-300 dark:border-white/5 text-slate-700 dark:text-slate-350 hover:bg-slate-900 active:bg-slate-950 px-3.5 py-3 rounded-xl transition-all cursor-pointer font-bold text-xs font-mono"
                 >
                   ◀ PREV
                 </button>
@@ -1425,12 +1428,12 @@ export default function App() {
                   required
                   value={activeDate}
                   onChange={(e) => setActiveDate(e.target.value)}
-                  className="flex-1 bg-white dark:bg-slate-950 border border-slate-200 dark:border-white/5 rounded-xl p-3 text-xs text-slate-900 dark:text-white text-center focus:outline-none focus:border-emerald-400 font-mono cursor-pointer"
+                  className="flex-1 bg-white dark:bg-slate-950 border border-slate-300 dark:border-white/5 rounded-xl p-3 text-xs text-slate-900 dark:text-white text-center focus:outline-none focus:border-emerald-400 font-mono cursor-pointer"
                 />
                 <button
                   type="button"
                   onClick={() => stepDate(1)}
-                  className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-white/5 text-slate-700 dark:text-slate-350 hover:bg-slate-100 dark:bg-slate-900 active:bg-white dark:bg-slate-950 px-3.5 py-3 rounded-xl transition-all cursor-pointer font-bold text-xs font-mono"
+                  className="bg-white dark:bg-slate-950 border border-slate-300 dark:border-white/5 text-slate-700 dark:text-slate-350 hover:bg-slate-900 active:bg-slate-950 px-3.5 py-3 rounded-xl transition-all cursor-pointer font-bold text-xs font-mono"
                 >
                   NEXT ▶
                 </button>
@@ -1439,7 +1442,7 @@ export default function App() {
 
             {/* Sets: Pushups */}
             <div className="space-y-1.5">
-              <label className="block text-[10px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 font-mono flex items-center gap-1">
+              <label className="block text-[10px] font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400 font-mono flex items-center gap-1">
                 <Sparkles size={11} />
                 Pushups Sets [1, 2, 3] & Total
               </label>
@@ -1451,7 +1454,7 @@ export default function App() {
                   placeholder="Set 1"
                   value={p1}
                   onChange={(e) => setP1(e.target.value)}
-                  className="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-white/5 focus:border-emerald-500/30 rounded-xl p-3 text-center text-slate-900 dark:text-white font-mono text-sm focus:outline-none transition-all"
+                  className="w-full bg-white dark:bg-slate-950 border border-slate-300 dark:border-white/5 focus:border-emerald-500/30 rounded-xl p-3 text-center text-slate-900 dark:text-white font-mono text-sm focus:outline-none transition-all"
                 />
                 <input
                   type="number"
@@ -1460,7 +1463,7 @@ export default function App() {
                   placeholder="Set 2"
                   value={p2}
                   onChange={(e) => setP2(e.target.value)}
-                  className="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-white/5 focus:border-emerald-500/30 rounded-xl p-3 text-center text-slate-900 dark:text-white font-mono text-sm focus:outline-none transition-all"
+                  className="w-full bg-white dark:bg-slate-950 border border-slate-300 dark:border-white/5 focus:border-emerald-500/30 rounded-xl p-3 text-center text-slate-900 dark:text-white font-mono text-sm focus:outline-none transition-all"
                 />
                 <input
                   type="number"
@@ -1469,9 +1472,9 @@ export default function App() {
                   placeholder="Set 3"
                   value={p3}
                   onChange={(e) => setP3(e.target.value)}
-                  className="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-white/5 focus:border-emerald-500/30 rounded-xl p-3 text-center text-slate-900 dark:text-white font-mono text-sm focus:outline-none transition-all"
+                  className="w-full bg-white dark:bg-slate-950 border border-slate-300 dark:border-white/5 focus:border-emerald-500/30 rounded-xl p-3 text-center text-slate-900 dark:text-white font-mono text-sm focus:outline-none transition-all"
                 />
-                <div className="w-full bg-emerald-950/20 border border-emerald-500/30 dark:border-emerald-500/20 rounded-xl flex flex-col items-center justify-center text-emerald-600 dark:text-emerald-400 font-mono shadow-inner sm:p-2 p-1 overflow-hidden">
+                <div className="w-full bg-emerald-950/20 border border-emerald-500/40 dark:border-emerald-500/20 rounded-xl flex flex-col items-center justify-center text-emerald-700 dark:text-emerald-400 font-mono shadow-inner sm:p-2 p-1 overflow-hidden">
                   <span className="text-[7px] sm:text-[8px] font-bold uppercase tracking-widest opacity-60 mb-0.5">
                     TOTAL
                   </span>
@@ -1486,7 +1489,7 @@ export default function App() {
 
             {/* Sets: Crunches */}
             <div className="space-y-1.5">
-              <label className="block text-[10px] font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 font-mono flex items-center gap-1">
+              <label className="block text-[10px] font-bold uppercase tracking-wider text-indigo-700 dark:text-indigo-400 font-mono flex items-center gap-1">
                 <Sparkles size={11} />
                 Crunches Sets [1, 2, 3] & Total
               </label>
@@ -1498,7 +1501,7 @@ export default function App() {
                   placeholder="Set 1"
                   value={c1}
                   onChange={(e) => setC1(e.target.value)}
-                  className="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-white/5 focus:border-indigo-500/30 rounded-xl p-3 text-center text-slate-900 dark:text-white font-mono text-sm focus:outline-none transition-all"
+                  className="w-full bg-white dark:bg-slate-950 border border-slate-300 dark:border-white/5 focus:border-indigo-500/30 rounded-xl p-3 text-center text-slate-900 dark:text-white font-mono text-sm focus:outline-none transition-all"
                 />
                 <input
                   type="number"
@@ -1507,7 +1510,7 @@ export default function App() {
                   placeholder="Set 2"
                   value={c2}
                   onChange={(e) => setC2(e.target.value)}
-                  className="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-white/5 focus:border-indigo-500/30 rounded-xl p-3 text-center text-slate-900 dark:text-white font-mono text-sm focus:outline-none transition-all"
+                  className="w-full bg-white dark:bg-slate-950 border border-slate-300 dark:border-white/5 focus:border-indigo-500/30 rounded-xl p-3 text-center text-slate-900 dark:text-white font-mono text-sm focus:outline-none transition-all"
                 />
                 <input
                   type="number"
@@ -1516,9 +1519,9 @@ export default function App() {
                   placeholder="Set 3"
                   value={c3}
                   onChange={(e) => setC3(e.target.value)}
-                  className="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-white/5 focus:border-indigo-500/30 rounded-xl p-3 text-center text-slate-900 dark:text-white font-mono text-sm focus:outline-none transition-all"
+                  className="w-full bg-white dark:bg-slate-950 border border-slate-300 dark:border-white/5 focus:border-indigo-500/30 rounded-xl p-3 text-center text-slate-900 dark:text-white font-mono text-sm focus:outline-none transition-all"
                 />
-                <div className="w-full bg-indigo-950/20 border border-indigo-500/20 rounded-xl flex flex-col items-center justify-center text-indigo-600 dark:text-indigo-400 font-mono shadow-inner sm:p-2 p-1 overflow-hidden">
+                <div className="w-full bg-indigo-950/20 border border-indigo-500/20 rounded-xl flex flex-col items-center justify-center text-indigo-700 dark:text-indigo-400 font-mono shadow-inner sm:p-2 p-1 overflow-hidden">
                   <span className="text-[7px] sm:text-[8px] font-bold uppercase tracking-widest opacity-60 mb-0.5">
                     TOTAL
                   </span>
@@ -1535,7 +1538,7 @@ export default function App() {
               <div className="flex gap-2">
                 <button
                   type="submit"
-                  className="flex-1 bg-slate-900 dark:bg-slate-50 text-white dark:text-slate-950 font-extrabold py-4 rounded-xl text-xs uppercase tracking-widest font-mono hover:bg-slate-200 active:bg-slate-350 transition-all cursor-pointer shadow-md"
+                  className="flex-1 bg-slate-50 text-slate-950 font-extrabold py-4 rounded-xl text-xs uppercase tracking-widest font-mono hover:bg-slate-300 dark:hover:bg-slate-200 active:bg-slate-350 transition-all cursor-pointer shadow-md"
                 >
                   Save Active Changes
                 </button>
@@ -1549,7 +1552,7 @@ export default function App() {
                       handleDeleteEntry(activeDate);
                     }
                   }}
-                  className="bg-red-500/10 text-red-400 hover:bg-red-500/20 active:bg-red-500/30 border border-red-500/30 dark:border-red-500/20 px-5 rounded-xl transition-all flex items-center justify-center cursor-pointer"
+                  className="bg-red-500/10 text-red-700 dark:text-red-400 hover:bg-red-500/20 active:bg-red-500/30 border border-red-500/40 dark:border-red-500/20 px-5 rounded-xl transition-all flex items-center justify-center cursor-pointer"
                   title="Wipe Session"
                 >
                   <Trash2 size={15} />
@@ -1558,7 +1561,7 @@ export default function App() {
             ) : (
               <button
                 type="submit"
-                className="w-full bg-slate-900 dark:bg-slate-50 text-white dark:text-slate-950 font-extrabold py-4 rounded-xl text-xs uppercase tracking-widest font-mono hover:bg-slate-200 active:bg-slate-300 transition-all cursor-pointer shadow-md"
+                className="w-full bg-slate-50 text-slate-950 font-extrabold py-4 rounded-xl text-xs uppercase tracking-widest font-mono hover:bg-slate-300 dark:hover:bg-slate-200 active:bg-slate-300 transition-all cursor-pointer shadow-md"
               >
                 Commit Safe Session
               </button>
@@ -1568,22 +1571,22 @@ export default function App() {
 
         {/* Dynamic Recharts Performance Graph */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="p-4 bg-white/40 dark:bg-white dark:bg-slate-950/40 border border-slate-200 dark:border-white/5 rounded-2xl flex flex-col justify-between backdrop-blur-md md:col-span-2">
-            <div className="flex items-center justify-between border-b border-slate-200 dark:border-white/5 pb-2 mb-2">
+          <div className="p-4 bg-white/40 dark:bg-slate-950/40 border border-slate-300 dark:border-white/5 rounded-2xl flex flex-col justify-between backdrop-blur-md md:col-span-2">
+            <div className="flex items-center justify-between border-b border-slate-300 dark:border-white/5 pb-2 mb-2">
               <h4 className="text-xs font-bold uppercase tracking-widest text-slate-900 dark:text-white flex items-center gap-1.5 font-sans">
                 <TrendingUp
                   size={14}
-                  className="text-emerald-600 dark:text-emerald-400"
+                  className="text-emerald-700 dark:text-emerald-400"
                 />
                 PERFORMANCE TIMELINE
               </h4>
-              <div className="flex bg-white dark:bg-slate-950 p-0.5 rounded border border-slate-200 dark:border-white/5 text-[9px] font-mono select-none">
+              <div className="flex bg-white dark:bg-slate-950 p-0.5 rounded border border-slate-300 dark:border-white/5 text-[9px] font-mono select-none">
                 <button
                   onClick={() => setRollingRangeWindow(14)}
                   className={`px-2 py-1 rounded cursor-pointer transition-all ${
                     rollingRangeWindow === 14
-                      ? "text-slate-900 dark:text-white bg-slate-200 dark:bg-slate-800 font-bold"
-                      : "text-slate-600 dark:text-slate-400 hover:text-slate-200"
+                      ? "text-white bg-slate-800 font-bold"
+                      : "text-slate-400 hover:text-slate-200"
                   }`}
                 >
                   14 DAYS
@@ -1592,8 +1595,8 @@ export default function App() {
                   onClick={() => setRollingRangeWindow(30)}
                   className={`px-2 py-1 rounded cursor-pointer transition-all ${
                     rollingRangeWindow === 30
-                      ? "text-slate-900 dark:text-white bg-slate-200 dark:bg-slate-800 font-bold"
-                      : "text-slate-600 dark:text-slate-400 hover:text-slate-200"
+                      ? "text-white bg-slate-800 font-bold"
+                      : "text-slate-400 hover:text-slate-200"
                   }`}
                 >
                   30 DAYS
@@ -1603,7 +1606,7 @@ export default function App() {
 
             <div className="relative w-full flex-1 h-[180px] mt-2">
               {chartData.length === 0 ? (
-                <div className="h-full w-full min-h-[180px] flex flex-col items-center justify-center text-slate-500 dark:text-slate-500 font-mono text-[10px] gap-2 border border-dashed border-slate-200 dark:border-white/5 rounded-xl bg-slate-200/50 dark:bg-black/20 px-4 text-center">
+                <div className="h-full w-full min-h-[180px] flex flex-col items-center justify-center text-slate-500 font-mono text-[10px] gap-2 border border-dashed border-slate-300 dark:border-white/5 rounded-xl bg-slate-200/50 dark:bg-black/20 px-4 text-center">
                   <AlertTriangle size={15} className="text-slate-600" />
                   <span>
                     Reps will appear here dynamically to list your performance
@@ -1673,16 +1676,16 @@ export default function App() {
             </div>
           </div>
 
-          <div className="p-4 bg-white/40 dark:bg-white dark:bg-slate-950/40 border border-slate-200 dark:border-white/5 rounded-2xl flex flex-col justify-between backdrop-blur-md">
-            <div className="flex items-center justify-between border-b border-slate-200 dark:border-white/5 pb-2 mb-2">
+          <div className="p-4 bg-white/40 dark:bg-slate-950/40 border border-slate-300 dark:border-white/5 rounded-2xl flex flex-col justify-between backdrop-blur-md">
+            <div className="flex items-center justify-between border-b border-slate-300 dark:border-white/5 pb-2 mb-2">
               <h4 className="text-xs font-bold uppercase tracking-widest text-slate-900 dark:text-white flex items-center gap-1.5 font-sans">
                 <TrendingUp
                   size={14}
-                  className="text-cyan-600 dark:text-cyan-400"
+                  className="text-cyan-700 dark:text-cyan-400"
                 />
                 VOLUME BREAKDOWN
               </h4>
-              <div className="flex bg-white dark:bg-slate-950 p-0.5 rounded border border-slate-200 dark:border-white/5 text-[9px] font-mono select-none">
+              <div className="flex bg-white dark:bg-slate-950 p-0.5 rounded border border-slate-300 dark:border-white/5 text-[9px] font-mono select-none">
                 <span className="px-2 py-1 rounded text-slate-600 dark:text-slate-400 transition-all font-bold">
                   STACKED GROSS REPS
                 </span>
@@ -1691,7 +1694,7 @@ export default function App() {
 
             <div className="relative w-full flex-1 h-[180px] mt-2">
               {chartData.length === 0 ? (
-                <div className="h-full w-full min-h-[180px] flex flex-col items-center justify-center text-slate-500 dark:text-slate-500 font-mono text-[10px] gap-2 border border-dashed border-slate-200 dark:border-white/5 rounded-xl bg-slate-200/50 dark:bg-black/20 px-4 text-center">
+                <div className="h-full w-full min-h-[180px] flex flex-col items-center justify-center text-slate-500 font-mono text-[10px] gap-2 border border-dashed border-slate-300 dark:border-white/5 rounded-xl bg-slate-200/50 dark:bg-black/20 px-4 text-center">
                   <AlertTriangle size={15} className="text-slate-600" />
                   <span>
                     Reps will appear here dynamically to list your performance
@@ -1767,13 +1770,13 @@ export default function App() {
             </div>
           </div>
 
-          <div className="p-4 bg-white/40 dark:bg-white dark:bg-slate-950/40 border border-slate-200 dark:border-white/5 rounded-2xl flex flex-col justify-between backdrop-blur-md">
-            <div className="flex items-center justify-between border-b border-slate-200 dark:border-white/5 pb-2 mb-2">
+          <div className="p-4 bg-white/40 dark:bg-slate-950/40 border border-slate-300 dark:border-white/5 rounded-2xl flex flex-col justify-between backdrop-blur-md">
+            <div className="flex items-center justify-between border-b border-slate-300 dark:border-white/5 pb-2 mb-2">
               <h4 className="text-xs font-bold uppercase tracking-widest text-slate-900 dark:text-white flex items-center gap-1.5 font-sans">
                 <TrendingUp size={14} className="text-orange-400" />
                 WORKLOAD PATTERN
               </h4>
-              <div className="flex bg-white dark:bg-slate-950 p-0.5 rounded border border-slate-200 dark:border-white/5 text-[9px] font-mono select-none">
+              <div className="flex bg-white dark:bg-slate-950 p-0.5 rounded border border-slate-300 dark:border-white/5 text-[9px] font-mono select-none">
                 <span className="px-2 py-1 rounded text-slate-600 dark:text-slate-400 transition-all font-bold">
                   DAY OF WEEK
                 </span>
@@ -1782,7 +1785,7 @@ export default function App() {
 
             <div className="relative w-full flex-1 h-[180px] mt-2">
               {radarData.length === 0 ? (
-                <div className="h-full w-full min-h-[180px] flex flex-col items-center justify-center text-slate-500 dark:text-slate-500 font-mono text-[10px] gap-2 border border-dashed border-slate-200 dark:border-white/5 rounded-xl bg-slate-200/50 dark:bg-black/20 px-4 text-center">
+                <div className="h-full w-full min-h-[180px] flex flex-col items-center justify-center text-slate-500 font-mono text-[10px] gap-2 border border-dashed border-slate-300 dark:border-white/5 rounded-xl bg-slate-200/50 dark:bg-black/20 px-4 text-center">
                   <AlertTriangle size={15} className="text-slate-600" />
                   <span>
                     Reps will appear here dynamically to list your performance
@@ -1848,22 +1851,22 @@ export default function App() {
         </div>
 
         {/* WORKOUT DATABASE INDEX */}
-        <div className="bg-white/40 dark:bg-white dark:bg-slate-950/40 border border-slate-200 dark:border-white/5 p-4 sm:p-5 rounded-2xl backdrop-blur-md">
-          <div className="flex items-center justify-between border-b border-slate-200 dark:border-white/5 pb-2.5 mb-3">
+        <div className="bg-white/40 dark:bg-slate-950/40 border border-slate-300 dark:border-white/5 p-4 sm:p-5 rounded-2xl backdrop-blur-md">
+          <div className="flex items-center justify-between border-b border-slate-300 dark:border-white/5 pb-2.5 mb-3">
             <h4 className="text-xs font-bold uppercase tracking-widest text-slate-900 dark:text-white flex items-center gap-1.5 font-sans">
               <History
                 size={13}
-                className="text-indigo-600 dark:text-indigo-400"
+                className="text-indigo-700 dark:text-indigo-400"
               />
               HISTORY DATABASE INDEX
             </h4>
-            <span className="text-[9px] font-mono bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-white/5 px-2 py-0.5 rounded text-slate-600 dark:text-slate-400 font-bold">
+            <span className="text-[9px] font-mono bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-white/5 px-2 py-0.5 rounded text-slate-600 dark:text-slate-400 font-bold">
               {Math.min(dataFrame.length, 10)} RECENT RECORD(S)
             </span>
           </div>
 
           {dataFrame.length === 0 ? (
-            <div className="text-center py-6 text-slate-500 dark:text-slate-500 font-mono text-[10px] border border-dashed border-slate-200 dark:border-white/5 rounded-xl bg-black/10">
+            <div className="text-center py-6 text-slate-500 font-mono text-[10px] border border-dashed border-slate-300 dark:border-white/5 rounded-xl bg-black/10">
               No historical records found in current database.
             </div>
           ) : (
@@ -1888,7 +1891,7 @@ export default function App() {
                       className={`flex items-center justify-between p-2.5 rounded-xl border transition-all text-xs font-mono group ${
                         isSelected
                           ? "border-emerald-500/25 bg-emerald-950/15"
-                          : "border-slate-200 dark:border-white/5 bg-black/10 hover:border-slate-300 dark:border-white/10 hover:bg-slate-200/50 dark:bg-black/20"
+                          : "border-white/5 bg-black/10 hover:border-white/10 hover:bg-black/20"
                       }`}
                     >
                       <div
@@ -1903,16 +1906,16 @@ export default function App() {
                       >
                         <div className="font-bold text-slate-300 flex items-center gap-1.5 min-w-[90px]">
                           <span
-                            className={`h-1.5 w-1.5 rounded-full ${isSelected ? "bg-emerald-400 animate-pulse" : "bg-slate-300 dark:bg-slate-600"}`}
+                            className={`h-1.5 w-1.5 rounded-full ${isSelected ? "bg-emerald-400 animate-pulse" : "bg-slate-600"}`}
                           />
                           {day.date}
                         </div>
                         <div className="flex items-center gap-4 text-[10px]">
-                          <div className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-medium">
+                          <div className="flex items-center gap-1 text-emerald-700 dark:text-emerald-400 font-medium">
                             <span>PUSHUPS:</span>
                             <span className="font-bold">{dayPushups}</span>
                           </div>
-                          <div className="flex items-center gap-1 text-indigo-600 dark:text-indigo-400 font-medium">
+                          <div className="flex items-center gap-1 text-indigo-700 dark:text-indigo-400 font-medium">
                             <span>CRUNCHES:</span>
                             <span className="font-bold">{dayCrunches}</span>
                           </div>
@@ -1929,7 +1932,7 @@ export default function App() {
                             handleDeleteEntry(day.date);
                           }
                         }}
-                        className="text-slate-500 dark:text-slate-500 hover:text-red-400 p-1.5 rounded-lg border border-transparent hover:border-red-500/10 hover:bg-red-550/5 transition-all cursor-pointer opacity-30 group-hover:opacity-100"
+                        className="text-slate-500 hover:text-red-400 p-1.5 rounded-lg border border-transparent hover:border-red-500/10 hover:bg-red-550/5 transition-all cursor-pointer opacity-30 group-hover:opacity-100"
                         title="Wipe record"
                       >
                         <Trash2 size={12} />
@@ -1942,18 +1945,18 @@ export default function App() {
         </div>
 
         {/* Offline Diagnostic Feed */}
-        <div className="p-4 bg-white/40 dark:bg-white dark:bg-slate-950/40 border border-slate-200 dark:border-white/5 rounded-2xl backdrop-blur-md">
-          <div className="flex items-center justify-between border-b border-slate-200 dark:border-white/5 pb-2 mb-2 select-none">
+        <div className="p-4 bg-white/40 dark:bg-slate-950/40 border border-slate-300 dark:border-white/5 rounded-2xl backdrop-blur-md">
+          <div className="flex items-center justify-between border-b border-slate-300 dark:border-white/5 pb-2 mb-2 select-none">
             <h4 className="text-[10px] font-semibold tracking-widest text-slate-440 font-mono flex items-center gap-1.5">
               <Cpu
                 size={12}
-                className="text-emerald-600 dark:text-emerald-400"
+                className="text-emerald-700 dark:text-emerald-400"
               />
               SYSTEM LOG EVENTS
             </h4>
             <button
               onClick={copyLogsToClipboard}
-              className="text-[9px] font-mono bg-white dark:bg-slate-950 border border-slate-300 dark:border-white/10 hover:bg-slate-100 dark:bg-slate-900 px-2.5 py-1 rounded text-slate-600 dark:text-slate-400 cursor-pointer transition-all"
+              className="text-[9px] font-mono bg-white dark:bg-slate-950 border border-slate-300 dark:border-white/10 hover:bg-slate-900 px-2.5 py-1 rounded text-slate-600 dark:text-slate-400 cursor-pointer transition-all"
             >
               COPY OUTPUT
             </button>
@@ -1962,7 +1965,7 @@ export default function App() {
           <div
             id="consoleBuffer"
             ref={consoleBufferRef}
-            className="font-mono text-[10px] text-slate-450 h-24 overflow-y-auto space-y-1.5 p-3.5 bg-black/40 border border-slate-200 dark:border-white/5 rounded-xl select-text scrollbar-thin scrollbar-thumb-white/5"
+            className="font-mono text-[10px] text-slate-450 h-24 overflow-y-auto space-y-1.5 p-3.5 bg-black/40 border border-slate-300 dark:border-white/5 rounded-xl select-text scrollbar-thin scrollbar-thumb-white/5"
           >
             {consoleLogs.length === 0 ? (
               <div className="text-slate-600 italic">
@@ -1975,7 +1978,7 @@ export default function App() {
                   className={
                     entry.isError
                       ? "text-red-400 font-semibold"
-                      : "text-emerald-600 dark:text-emerald-400/95"
+                      : "text-emerald-400/95"
                   }
                 >
                   [{entry.timestamp}] {entry.message}
