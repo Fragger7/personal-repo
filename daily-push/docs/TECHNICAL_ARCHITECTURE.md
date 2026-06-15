@@ -39,19 +39,31 @@ All code lives inside a modular, responsive client built with **React (v19)**, *
 
 ---
 
-## 3. Secure Backend-Secured Deployments & Automated Git Pipelines
-Instead of entering user credentials on a public website or manually configuring Git on command lines, Daily Push operates as a robust full-stack application with automated server-side synchronizations:
+## 3. Secure Vercel Deployments & Serverless API Backend
+Instead of entering user credentials on a public website or relying purely on static hosting, Daily Push operates as a robust full-stack application with a Vercel-hosted Serverless backend:
 
-* **Server-Side Environment Encapsulation:**
-  * Your GitHub Personal Access Token (PAT), user details (`Fragger7`), and repository info stay securely in an offline `.env` file in our Node workspace.
-  * Credentials are never transferred to or visible in the web browser console, local caches, or source files in production.
-* **Automated Production Deployment Pipeline (`npm run deploy`):**
-  * We engineered a custom automation script (`scripts/git_deploy.ts`) accessible in the package structure via `npm run deploy`.
-  * **Build Step:** Runs `vite build` to compile minimized index page resources and optimized assets.
-  * **Git Isolation:** Clones the user's remote repository to `/tmp/` securely, verifying valid connection parameters using the server-side PAT credentials.
-  * **Pruning and Syncing:** Automatically clears out previous assets in `/daily-push/assets/` to prevent cumulative bundle clutter. Copies built compiled paths into corresponding subfolder hierarchies.
-  * **Backup Control Integration:** Programmatically copies all active workspace assets (including source code folders `/src/`, config files, scripts, and markdowns) straight to the repo's `/daily-push/` subdirectory. This ensures your repository maintains a complete backup of both production-ready bundles and their exact underlying source files!
-  * **Commit and Push:** Performs automated diff detection, commits using the user's identity details (`Fragger7`, `faraze46m3@gmail.com`), and instantly pushes directly to the `main` branch.
-* **Cross-Device Shared Branch:**
-  * Everything is maintained on a single branch (`main`) in independent folders, allowing multiple completely modular applications (like `daily-push` and `quantum-nexus`) to share the same domain and repository workspace without conflicts or messy branch maintenance.
+* **Serverless Backend (Vercel):**
+  * We built API handlers (e.g., `/api/insight.ts`) utilizing the `@vercel/node` runtime. This securely encapsulates the Gemini AI Logic and execution.
+  * Your `GEMINI_API_KEY` is completely hidden and lives securely within Vercel's Project Settings -> Environment Variables. It is never transferred to or visible in the web browser console, local caches, or source files in production.
+* **Automated Production Deployment Pipeline:**
+  * We use an internal script (`scripts/git_deploy.ts`) accessible via `npm run deploy` to compile production assets and meticulously copy both the `dist` bundles and the raw source files (`/api`, `/src`, `server.ts`, etc.) into a `daily-push` subdirectory within the `personal-repo` branch.
+  * By synchronizing these exact source files to GitHub, Vercel automatically detects the new commits on the `main` branch, resolves the configuration, and triggers an instantaneous Edge/Serverless deployment.
+  * **Backup Control Integration:** Keeping all active workspace assets pushed directly to the repo ensures your repository maintains a complete backup of both production-ready endpoints and their exact underlying source files!
+* **Scalable Architecture:**
+  * Maintaining everything in modular backend endpoints (`/api/*`) allows the app to scale natively for future integrations without exposing API keys or overloading the client browser node.
+
+---
+
+## 4. Security & Cost Posture (User Environment)
+The application has been engineered to run with high security and minimal/zero operational overhead.
+
+* **Cost Optimization (Zero-Cost Baseline):**
+  * **Vercel Hosting:** The deployed frontend and Serverless Functions (`/api/*`) comfortably run within Vercel's generous free Hobby Tier.
+  * **Google Drive API:** Data sync operates on the user's personal Google Drive storage allowance. The API calls are well within Google's free usage quotas.
+  * **Gemini API:** Utilizing existing free-tier Gemini API limitations; because AI insights trigger conditionally or explicitly on-demand, they will not scale out of bounds unless heavily abused.
+  * **GitHub Storage:** Pushing backups and source files inherently uses standard free GitHub repository storage.
+* **Security & Danger Mitigation:**
+  * **API Keys (Gemini):** By migrating to Vercel Serverless endpoints, the `GEMINI_API_KEY` is fully shielded. It cannot be extracted by visitors, scrapers, or browser consoles.
+  * **OAuth 2.0 (Google Drive):** The app scopes authorization restrictively to `drive.file` (only files *created* by Daily Push), ensuring your overarching Google Drive files (photos, taxes, docs) cannot be read or interfered with. Linking origins (AI Studio & Vercel) further restricts unauthorized domains from spoofing login requests.
+  * **GitHub Deployments:** The Personal Access Token (PAT) used for automated backups is only injected via the secure workspace environment variable (`GITHUB_PAT`); it never travels to the client browser.
 

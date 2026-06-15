@@ -47,14 +47,16 @@ If you ever lose your browser cache or want to retrieve your Client ID from the 
 To ensure Google responds correctly to login requests from both your development workspace and your live GitHub Pages production tracker, make sure your OAuth client settings in the Cloud Console have these values added:
 
 ### Authorized JavaScript origins:
-* `http://localhost:3000` (Local local development/preview)
+* `http://localhost:3000` (Local development/preview)
 * `https://ais-dev-eqn2z6ttrtglw2clnh22p4-335559214841.us-east5.run.app` (Your active AI Studio development domain)
-* `https://Fragger7.github.io` (Your personal GitHub Pages domain)
+* `https://Fragger7.github.io` (Your personal GitHub Pages domain legacy)
+* `https://personal-repo-xi-two.vercel.app` (Your Production Vercel Domain)
 
 ### Authorized redirect URIs:
 * `http://localhost:3000/oauth-callback.html`
 * `https://ais-dev-eqn2z6ttrtglw2clnh22p4-335559214841.us-east5.run.app/oauth-callback.html`
 * `https://Fragger7.github.io/personal-repo/daily-push/oauth-callback.html`
+* `https://personal-repo-xi-two.vercel.app/oauth-callback.html`
 
 ---
 

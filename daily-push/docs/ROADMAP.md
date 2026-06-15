@@ -9,8 +9,10 @@ Today we completed the comprehensive rebrand, security configuration, and deploy
 * **Daily Push Rebrand:** Cleaned the typography, removed scientific over-decorations ("tech-larping"), and focused the application on direct physical workout tracking.
 * **Full-Stack Security Gate:** Relocated the GitHub PAT credentials completely to a server-side `.env` configuration file on the workspace hardware. No more login boxes on the client app interface.
 * **Permanently Handled Google Drive Sync:** Hardcoded your custom verified client ID (`363694431662-rmt5fjbvik4dogimij7papln804ec315.apps.googleusercontent.com`) at the top of the codebase. Clearing browser cache or opening the app on a tablet/phone instantly connects Google Drive with one click, bypassing manual set-up steps.
-* **Vite-Packaged Subfolder Pathing:** Setup the pipeline to bundle, compile, and push the active production app directly into `/daily-push/` inside your unified `personal-repo` repository.
-* **Automated One-Command Deployment Script:** Created `scripts/git_deploy.ts` and wired it directly to our `npm run deploy` script. This executes a complete production build, purges stale files from your remote repository, syncs both optimized outputs and raw source files seamlessly, commits, and pushes to GitHub with one clean execution.
+* **Vercel Serverless Pivot:** Migrated application hosting and execution exclusively to Vercel, allowing us to maintain a full-stack architecture through the `/api/` directory using `@vercel/node`. This effortlessly handles the Edge execution.
+* **AI-Powered "Tip of the Day":** Integrated the Google Gemini AI API via Vercel serverless endpoints. Analyzes recent history, streaks, and trends to deliver punchy, scientifically sound health insights while keeping API keys completely protected on Vercel environment configurations.
+* **Automated Source Backups via Git:** Restructured `scripts/git_deploy.ts` so that all new `api/` endpoints, `server.ts` proxy proxies, and project roots are deeply replicated to the GitHub repository. This gives Vercel all source logic required to compile and automatically push updates seamlessly from Git.
+* **Unified OAuth Domains:** Updated Google Cloud Console integrations to natively embrace `https://personal-repo-xi-two.vercel.app` for smooth hands-free Drive data synchronization.
 * **UI & Capabilities Enhancements:**
   * **Recent History Index:** Introduced a performant record log displaying the most recent 10 days to quickly visualize current patterns without overloading the UI footprint.
   * **Interactive Set Summary:** Added dynamic Total indicator boxes next to the input sets for live addition feedback during entry.
@@ -28,7 +30,16 @@ Today we completed the comprehensive rebrand, security configuration, and deploy
 
 ---
 
-## 3. Continuing Your Work (Context Restore Protocol)
+## 3. Future Work & Upcoming Features
+This outlines the upcoming engineering milestones based on our recent strategy discussions:
+
+*   **Light Mode Integration (Next Immediate Step):** Implement a seamless theme toggling mechanism. This requires mapping existing Tailwind color palettes to support elegant light-theme equivalents (e.g., soft off-whites, crisp slate text borders, maintaining the existing high-contrast visual standards without washing out the UI).
+*   **App v2.0 UI/UX Evolution (The "Plunge"):** A comprehensive visual overhaul to modernize the user experience (fluid animations, skeleton loaders, glassmorphism, or bento grids).
+    *   **Crucial Pre-requisite - Backup Policy:** Before initiating this massive UI change, we must create a permanent snapshot/backup of the current, highly-appealing "v1.0" UI. This ensures we have a fallback if the ambitious redesign strays too far or proves unstable.
+
+---
+
+## 4. Continuing Your Work (Context Restore Protocol)
 This project is an ongoing, persistent full-stack environment in Google AI Studio. It is **not** a temporary sandbox session that will vanish. To return and work on this project under best practices, follow this flow:
 
 ### 📥 Protocol: Resuming the Session
