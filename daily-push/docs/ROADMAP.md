@@ -35,7 +35,13 @@ Today we completed the comprehensive rebrand, security configuration, and deploy
 This outlines the upcoming engineering milestones based on our recent strategy discussions:
 
 *   **App v2.0 UI/UX Evolution (The "Plunge"):** A comprehensive visual overhaul to modernize the user experience (fluid animations, skeleton loaders, glassmorphism, or bento grids).
-    *   **Status: Completed.** Safely bridged the project over to a modern Next-Gen layout featuring Framer Motion staggered animations, deep glassmorphic floating grids (`backdrop-blur-3xl`, large `rounded-3xl` radii), and dynamic radial-gradient ambient mesh backgrounds—while successfully preserving all existing features and Google Sync logic from v1.0. The v1.0 backup safely exists strictly in the GitHub repository history if a raw rollback is ever necessitated.
+    *   **Status: Completed.** Safely bridged the project over to a modern Next-Gen layout featuring Framer Motion staggered animations, deep glassmorphic floating grids (`backdrop-blur-3xl`, large `rounded-3xl` radii), and dynamic radial-gradient ambient mesh backgrounds—while successfully preserving all existing features and Google Sync logic from v1.0. We also implemented scroll-triggered entrance animations (`whileInView`) for better mobile performance and added local storage persistence for the Light/Dark mode toggle.
+
+*   **App v3.0 Next-Gen Visualizations (Future Ideas):**
+    *   **Status: Planning.** 
+    *   *Idea 1: 3D Isometric Contribution Heatmap* – A GitHub-style daily consistency tracker.
+    *   *Idea 2: Muscle Balance Radar Charts* – To visualize push vs. core vs. pull distribution over time.
+    *   *Idea 3: Confetti / Particle Explosions* – Highly polished, satisfying micro-interactions when Personal Records are broken.
 
 ---
 
