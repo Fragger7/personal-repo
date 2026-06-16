@@ -1141,13 +1141,23 @@ export default function App() {
         </div>
       </header>
 
-      <main className="max-w-5xl mx-auto px-4 mt-8 space-y-6 relative z-10 block">
+      <main className="max-w-7xl mx-auto px-4 lg:px-8 mt-8 mb-24 relative z-10 block w-full">
+        <motion.div 
+          initial="hidden"
+          animate="show"
+          variants={{
+            hidden: { opacity: 0 },
+            show: {
+              opacity: 1,
+              transition: { staggerChildren: 0.08, delayChildren: 0.1 }
+            }
+          }}
+          className="grid grid-cols-1 xl:grid-cols-12 gap-6 xl:gap-8"
+        >
         {/* Google Drive Balance / Cloud Synchronization System */}
         <motion.div 
-          initial={{ opacity: 0, y: 15 }} 
-          animate={{ opacity: 1, y: 0 }} 
-          transition={{ duration: 0.4 }}
-          className="bg-white/70 dark:bg-[#060b14]/70 border border-slate-200 dark:border-white/10 p-5 sm:p-6 rounded-3xl backdrop-blur-3xl shadow-xl shadow-slate-200/50 dark:shadow-black/40 relative overflow-hidden"
+          variants={{ hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 300, damping: 24 } } }}
+          className="xl:col-span-12 bg-white/70 dark:bg-[#060b14]/70 border border-slate-200 dark:border-white/10 p-5 sm:p-6 rounded-3xl backdrop-blur-3xl shadow-xl shadow-slate-200/50 dark:shadow-black/40 relative overflow-hidden"
         >
           <div className="absolute top-0 left-0 right-0 h-[1.5px] bg-gradient-to-r from-transparent via-cyan-500/15 to-transparent" />
 
@@ -1228,10 +1238,8 @@ export default function App() {
 
         {/* Dynamic Cumulative Stat Panels */}
         <motion.div 
-          initial={{ opacity: 0, y: 15 }} 
-          animate={{ opacity: 1, y: 0 }} 
-          transition={{ duration: 0.4, delay: 0.1 }}
-          className="grid grid-cols-2 md:grid-cols-4 gap-4"
+          variants={{ hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 300, damping: 24 } } }}
+          className="xl:col-span-12 grid grid-cols-2 md:grid-cols-4 gap-4"
         >
           <div className="p-5 bg-white/80 dark:bg-[#080d19]/80 backdrop-blur-3xl rounded-3xl border border-slate-200 dark:border-white/10 shadow-xl shadow-slate-200/50 dark:shadow-black/40 flex flex-col justify-between col-span-1 md:col-span-2">
             <div>
@@ -1274,10 +1282,8 @@ export default function App() {
 
         {/* Personal Records panel */}
         <motion.div 
-          initial={{ opacity: 0, y: 15 }} 
-          animate={{ opacity: 1, y: 0 }} 
-          transition={{ duration: 0.4, delay: 0.2 }}
-          className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3"
+          variants={{ hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 300, damping: 24 } } }}
+          className="xl:col-span-12 grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-3"
         >
           <div className="p-4 bg-white/70 dark:bg-[#080d19]/70 rounded-3xl border border-slate-200 dark:border-white/10 flex flex-col justify-center relative overflow-hidden group hover:border-emerald-500/30 transition-all shadow-xl shadow-slate-200/50 dark:shadow-black/40 backdrop-blur-3xl lg:col-span-1">
             <div className="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition-opacity">
@@ -1370,10 +1376,8 @@ export default function App() {
 
         {/* AI Insight Panel */}
         <motion.div 
-          initial={{ opacity: 0, y: 15 }} 
-          animate={{ opacity: 1, y: 0 }} 
-          transition={{ duration: 0.4, delay: 0.3 }}
-          className="bg-white/70 dark:bg-[#080d19]/70 border border-emerald-500/20 p-6 rounded-3xl backdrop-blur-3xl shadow-xl shadow-slate-200/50 dark:shadow-black/40 relative overflow-hidden flex flex-col justify-between"
+          variants={{ hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 300, damping: 24 } } }}
+          className="xl:col-span-5 bg-white/70 dark:bg-[#080d19]/70 border border-emerald-500/20 p-6 rounded-3xl backdrop-blur-3xl shadow-xl shadow-slate-200/50 dark:shadow-black/40 relative overflow-hidden flex flex-col justify-between"
         >
           <div className="absolute top-0 right-0 p-4 opacity-10 pointer-events-none text-emerald-700 dark:text-emerald-400">
             <Sparkles size={48} />
@@ -1409,10 +1413,8 @@ export default function App() {
 
         {/* Rep Entry Form Section */}
         <motion.div 
-          initial={{ opacity: 0, y: 15 }} 
-          animate={{ opacity: 1, y: 0 }} 
-          transition={{ duration: 0.4, delay: 0.4 }}
-          className="bg-white/70 dark:bg-[#080d19]/70 border border-slate-200 dark:border-white/10 p-6 rounded-3xl backdrop-blur-3xl shadow-xl shadow-slate-200/50 dark:shadow-black/40 relative overflow-hidden"
+          variants={{ hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 300, damping: 24 } } }}
+          className="xl:col-span-7 bg-white/70 dark:bg-[#080d19]/70 border border-slate-200 dark:border-white/10 p-6 rounded-3xl backdrop-blur-3xl shadow-xl shadow-slate-200/50 dark:shadow-black/40 relative overflow-hidden"
         >
           <div className="absolute top-0 left-0 right-0 h-[1.5px] bg-gradient-to-r from-transparent via-emerald-500/15 to-transparent" />
 
@@ -1597,10 +1599,8 @@ export default function App() {
 
         {/* Dynamic Recharts Performance Graph */}
         <motion.div 
-          initial={{ opacity: 0, y: 15 }} 
-          animate={{ opacity: 1, y: 0 }} 
-          transition={{ duration: 0.4, delay: 0.5 }}
-          className="grid grid-cols-1 md:grid-cols-2 gap-4"
+          variants={{ hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 300, damping: 24 } } }}
+          className="xl:col-span-7 grid grid-cols-1 md:grid-cols-2 gap-4"
         >
           <div className="p-5 bg-white/70 dark:bg-[#080d19]/70 border border-slate-200 dark:border-white/10 rounded-3xl flex flex-col justify-between backdrop-blur-3xl shadow-xl shadow-slate-200/50 dark:shadow-black/40 md:col-span-2">
             <div className="flex items-center justify-between border-b border-slate-300 dark:border-white/5 pb-2 mb-2">
@@ -1708,9 +1708,7 @@ export default function App() {
           </div>
 
           <motion.div 
-            initial={{ opacity: 0, y: 15 }} 
-            animate={{ opacity: 1, y: 0 }} 
-            transition={{ duration: 0.4, delay: 0.6 }}
+            variants={{ hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 300, damping: 24 } } }}
             className="p-5 bg-white/70 dark:bg-[#080d19]/70 border border-slate-200 dark:border-white/10 rounded-3xl flex flex-col justify-between backdrop-blur-3xl shadow-xl shadow-slate-200/50 dark:shadow-black/40"
           >
             <div className="flex items-center justify-between border-b border-slate-300 dark:border-white/5 pb-2 mb-2">
@@ -1807,9 +1805,7 @@ export default function App() {
           </motion.div>
 
           <motion.div 
-            initial={{ opacity: 0, y: 15 }} 
-            animate={{ opacity: 1, y: 0 }} 
-            transition={{ duration: 0.4, delay: 0.7 }}
+            variants={{ hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 300, damping: 24 } } }}
             className="p-5 bg-white/70 dark:bg-[#080d19]/70 border border-slate-200 dark:border-white/10 rounded-3xl flex flex-col justify-between backdrop-blur-3xl shadow-xl shadow-slate-200/50 dark:shadow-black/40"
           >
             <div className="flex items-center justify-between border-b border-slate-300 dark:border-white/5 pb-2 mb-2">
@@ -1893,10 +1889,8 @@ export default function App() {
 
         {/* WORKOUT DATABASE INDEX */}
         <motion.div 
-          initial={{ opacity: 0, y: 15 }} 
-          animate={{ opacity: 1, y: 0 }} 
-          transition={{ duration: 0.4, delay: 0.8 }}
-          className="bg-white/70 dark:bg-[#080d19]/70 border border-slate-200 dark:border-white/10 p-5 sm:p-6 rounded-3xl backdrop-blur-3xl shadow-xl shadow-slate-200/50 dark:shadow-black/40"
+          variants={{ hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 300, damping: 24 } } }}
+          className="xl:col-span-5 bg-white/70 dark:bg-[#080d19]/70 border border-slate-200 dark:border-white/10 p-5 sm:p-6 rounded-3xl backdrop-blur-3xl shadow-xl shadow-slate-200/50 dark:shadow-black/40"
         >
           <div className="flex items-center justify-between border-b border-slate-300 dark:border-white/5 pb-2.5 mb-3">
             <h4 className="text-xs font-bold uppercase tracking-widest text-slate-900 dark:text-white flex items-center gap-1.5 font-sans">
@@ -1992,10 +1986,8 @@ export default function App() {
 
         {/* Offline Diagnostic Feed */}
         <motion.div 
-          initial={{ opacity: 0, y: 15 }} 
-          animate={{ opacity: 1, y: 0 }} 
-          transition={{ duration: 0.4, delay: 0.9 }}
-          className="p-5 bg-white/70 dark:bg-[#080d19]/70 border border-slate-200 dark:border-white/10 rounded-3xl backdrop-blur-3xl shadow-xl shadow-slate-200/50 dark:shadow-black/40"
+          variants={{ hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 300, damping: 24 } } }}
+          className="xl:col-span-12 p-5 bg-white/70 dark:bg-[#080d19]/70 border border-slate-200 dark:border-white/10 rounded-3xl backdrop-blur-3xl shadow-xl shadow-slate-200/50 dark:shadow-black/40"
         >
           <div className="flex items-center justify-between border-b border-slate-300 dark:border-white/5 pb-2 mb-2 select-none">
             <h4 className="text-[10px] font-semibold tracking-widest text-slate-440 font-mono flex items-center gap-1.5">
@@ -2037,6 +2029,7 @@ export default function App() {
               ))
             )}
           </div>
+        </motion.div>
         </motion.div>
       </main>
     </div>
