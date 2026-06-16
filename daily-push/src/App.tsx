@@ -62,7 +62,13 @@ export default function App() {
     "OFFLINE_OPFS" | "LOCAL_STORAGE"
   >("OFFLINE_OPFS");
   const [rollingRangeWindow, setRollingRangeWindow] = useState<14 | 30>(30);
-  const [isDarkMode, setIsDarkMode] = useState<boolean>(true);
+  const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
+    const saved = localStorage.getItem('theme');
+    if (saved) {
+      return saved === 'dark';
+    }
+    return true;
+  });
 
   // Google Drive Sync States
   const [gdAccessToken, setGdAccessToken] = useState<string | null>(null);
@@ -625,8 +631,10 @@ export default function App() {
   useEffect(() => {
     if (isDarkMode) {
       document.documentElement.classList.add("dark");
+      localStorage.setItem('theme', 'dark');
     } else {
       document.documentElement.classList.remove("dark");
+      localStorage.setItem('theme', 'light');
     }
   }, [isDarkMode]);
 
@@ -1038,8 +1046,9 @@ export default function App() {
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-[#03060f] text-slate-900 dark:text-slate-100 selection:bg-emerald-500/35 selection:text-white glow-radial select-none pb-12 font-sans overflow-x-hidden relative">
       {/* Background radial ambient soft light */}
-      <div className="fixed top-[-10%] left-[-10%] w-[120%] h-[600px] bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-emerald-500/10 via-teal-900/5 to-transparent pointer-events-none z-0" />
-      <div className="fixed bottom-[-10%] right-[-10%] w-[80%] h-[500px] bg-[radial-gradient(ellipse_at_bottom_right,_var(--tw-gradient-stops))] from-indigo-500/5 via-fuchsia-900/5 to-transparent pointer-events-none z-0" />
+      <div className="fixed top-[-10%] left-[-20%] w-[100vw] h-[100vw] rounded-full bg-emerald-500/20 dark:bg-emerald-600/10 blur-[100px] pointer-events-none z-0 animate-blob mix-blend-plus-lighter" />
+      <div className="fixed top-[20%] right-[-10%] w-[80vw] h-[80vw] rounded-full bg-cyan-500/20 dark:bg-teal-600/10 blur-[90px] pointer-events-none z-0 animate-blob animation-delay-2000 mix-blend-plus-lighter" />
+      <div className="fixed bottom-[-10%] left-[20%] w-[90vw] h-[90vw] rounded-full bg-indigo-500/20 dark:bg-indigo-600/10 blur-[110px] pointer-events-none z-0 animate-blob animation-delay-4000 mix-blend-plus-lighter" />
 
       {/* Toast Alert Systems */}
       <AnimatePresence>
@@ -1142,21 +1151,10 @@ export default function App() {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 lg:px-8 mt-8 mb-24 relative z-10 block w-full">
-        <motion.div 
-          initial="hidden"
-          animate="show"
-          variants={{
-            hidden: { opacity: 0 },
-            show: {
-              opacity: 1,
-              transition: { staggerChildren: 0.08, delayChildren: 0.1 }
-            }
-          }}
-          className="grid grid-cols-1 xl:grid-cols-12 gap-6 xl:gap-8"
-        >
+        <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 xl:gap-8">
         {/* Google Drive Balance / Cloud Synchronization System */}
         <motion.div 
-          variants={{ hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 300, damping: 24 } } }}
+          initial="hidden" whileInView="show" viewport={{ once: true, amount: 0.05 }} variants={{ hidden: { opacity: 0, y: 40, scale: 0.96 }, show: { opacity: 1, y: 0, scale: 1, transition: { type: "spring", stiffness: 320, damping: 26 } } }}
           className="xl:col-span-12 bg-white/70 dark:bg-[#060b14]/70 border border-slate-200 dark:border-white/10 p-5 sm:p-6 rounded-3xl backdrop-blur-3xl shadow-xl shadow-slate-200/50 dark:shadow-black/40 relative overflow-hidden"
         >
           <div className="absolute top-0 left-0 right-0 h-[1.5px] bg-gradient-to-r from-transparent via-cyan-500/15 to-transparent" />
@@ -1238,7 +1236,7 @@ export default function App() {
 
         {/* Dynamic Cumulative Stat Panels */}
         <motion.div 
-          variants={{ hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 300, damping: 24 } } }}
+          initial="hidden" whileInView="show" viewport={{ once: true, amount: 0.05 }} variants={{ hidden: { opacity: 0, y: 40, scale: 0.96 }, show: { opacity: 1, y: 0, scale: 1, transition: { type: "spring", stiffness: 320, damping: 26 } } }}
           className="xl:col-span-12 grid grid-cols-2 md:grid-cols-4 gap-4"
         >
           <div className="p-5 bg-white/80 dark:bg-[#080d19]/80 backdrop-blur-3xl rounded-3xl border border-slate-200 dark:border-white/10 shadow-xl shadow-slate-200/50 dark:shadow-black/40 flex flex-col justify-between col-span-1 md:col-span-2">
@@ -1282,7 +1280,7 @@ export default function App() {
 
         {/* Personal Records panel */}
         <motion.div 
-          variants={{ hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 300, damping: 24 } } }}
+          initial="hidden" whileInView="show" viewport={{ once: true, amount: 0.05 }} variants={{ hidden: { opacity: 0, y: 40, scale: 0.96 }, show: { opacity: 1, y: 0, scale: 1, transition: { type: "spring", stiffness: 320, damping: 26 } } }}
           className="xl:col-span-12 grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-3"
         >
           <div className="p-4 bg-white/70 dark:bg-[#080d19]/70 rounded-3xl border border-slate-200 dark:border-white/10 flex flex-col justify-center relative overflow-hidden group hover:border-emerald-500/30 transition-all shadow-xl shadow-slate-200/50 dark:shadow-black/40 backdrop-blur-3xl lg:col-span-1">
@@ -1376,7 +1374,7 @@ export default function App() {
 
         {/* AI Insight Panel */}
         <motion.div 
-          variants={{ hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 300, damping: 24 } } }}
+          initial="hidden" whileInView="show" viewport={{ once: true, amount: 0.05 }} variants={{ hidden: { opacity: 0, y: 40, scale: 0.96 }, show: { opacity: 1, y: 0, scale: 1, transition: { type: "spring", stiffness: 320, damping: 26 } } }}
           className="xl:col-span-5 bg-white/70 dark:bg-[#080d19]/70 border border-emerald-500/20 p-6 rounded-3xl backdrop-blur-3xl shadow-xl shadow-slate-200/50 dark:shadow-black/40 relative overflow-hidden flex flex-col justify-between"
         >
           <div className="absolute top-0 right-0 p-4 opacity-10 pointer-events-none text-emerald-700 dark:text-emerald-400">
@@ -1413,7 +1411,7 @@ export default function App() {
 
         {/* Rep Entry Form Section */}
         <motion.div 
-          variants={{ hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 300, damping: 24 } } }}
+          initial="hidden" whileInView="show" viewport={{ once: true, amount: 0.05 }} variants={{ hidden: { opacity: 0, y: 40, scale: 0.96 }, show: { opacity: 1, y: 0, scale: 1, transition: { type: "spring", stiffness: 320, damping: 26 } } }}
           className="xl:col-span-7 bg-white/70 dark:bg-[#080d19]/70 border border-slate-200 dark:border-white/10 p-6 rounded-3xl backdrop-blur-3xl shadow-xl shadow-slate-200/50 dark:shadow-black/40 relative overflow-hidden"
         >
           <div className="absolute top-0 left-0 right-0 h-[1.5px] bg-gradient-to-r from-transparent via-emerald-500/15 to-transparent" />
@@ -1599,7 +1597,7 @@ export default function App() {
 
         {/* Dynamic Recharts Performance Graph */}
         <motion.div 
-          variants={{ hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 300, damping: 24 } } }}
+          initial="hidden" whileInView="show" viewport={{ once: true, amount: 0.05 }} variants={{ hidden: { opacity: 0, y: 40, scale: 0.96 }, show: { opacity: 1, y: 0, scale: 1, transition: { type: "spring", stiffness: 320, damping: 26 } } }}
           className="xl:col-span-7 grid grid-cols-1 md:grid-cols-2 gap-4"
         >
           <div className="p-5 bg-white/70 dark:bg-[#080d19]/70 border border-slate-200 dark:border-white/10 rounded-3xl flex flex-col justify-between backdrop-blur-3xl shadow-xl shadow-slate-200/50 dark:shadow-black/40 md:col-span-2">
@@ -1708,7 +1706,7 @@ export default function App() {
           </div>
 
           <motion.div 
-            variants={{ hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 300, damping: 24 } } }}
+            initial="hidden" whileInView="show" viewport={{ once: true, amount: 0.05 }} variants={{ hidden: { opacity: 0, y: 40, scale: 0.96 }, show: { opacity: 1, y: 0, scale: 1, transition: { type: "spring", stiffness: 320, damping: 26 } } }}
             className="p-5 bg-white/70 dark:bg-[#080d19]/70 border border-slate-200 dark:border-white/10 rounded-3xl flex flex-col justify-between backdrop-blur-3xl shadow-xl shadow-slate-200/50 dark:shadow-black/40"
           >
             <div className="flex items-center justify-between border-b border-slate-300 dark:border-white/5 pb-2 mb-2">
@@ -1805,7 +1803,7 @@ export default function App() {
           </motion.div>
 
           <motion.div 
-            variants={{ hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 300, damping: 24 } } }}
+            initial="hidden" whileInView="show" viewport={{ once: true, amount: 0.05 }} variants={{ hidden: { opacity: 0, y: 40, scale: 0.96 }, show: { opacity: 1, y: 0, scale: 1, transition: { type: "spring", stiffness: 320, damping: 26 } } }}
             className="p-5 bg-white/70 dark:bg-[#080d19]/70 border border-slate-200 dark:border-white/10 rounded-3xl flex flex-col justify-between backdrop-blur-3xl shadow-xl shadow-slate-200/50 dark:shadow-black/40"
           >
             <div className="flex items-center justify-between border-b border-slate-300 dark:border-white/5 pb-2 mb-2">
@@ -1889,7 +1887,7 @@ export default function App() {
 
         {/* WORKOUT DATABASE INDEX */}
         <motion.div 
-          variants={{ hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 300, damping: 24 } } }}
+          initial="hidden" whileInView="show" viewport={{ once: true, amount: 0.05 }} variants={{ hidden: { opacity: 0, y: 40, scale: 0.96 }, show: { opacity: 1, y: 0, scale: 1, transition: { type: "spring", stiffness: 320, damping: 26 } } }}
           className="xl:col-span-5 bg-white/70 dark:bg-[#080d19]/70 border border-slate-200 dark:border-white/10 p-5 sm:p-6 rounded-3xl backdrop-blur-3xl shadow-xl shadow-slate-200/50 dark:shadow-black/40"
         >
           <div className="flex items-center justify-between border-b border-slate-300 dark:border-white/5 pb-2.5 mb-3">
@@ -1986,7 +1984,7 @@ export default function App() {
 
         {/* Offline Diagnostic Feed */}
         <motion.div 
-          variants={{ hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 300, damping: 24 } } }}
+          initial="hidden" whileInView="show" viewport={{ once: true, amount: 0.05 }} variants={{ hidden: { opacity: 0, y: 40, scale: 0.96 }, show: { opacity: 1, y: 0, scale: 1, transition: { type: "spring", stiffness: 320, damping: 26 } } }}
           className="xl:col-span-12 p-5 bg-white/70 dark:bg-[#080d19]/70 border border-slate-200 dark:border-white/10 rounded-3xl backdrop-blur-3xl shadow-xl shadow-slate-200/50 dark:shadow-black/40"
         >
           <div className="flex items-center justify-between border-b border-slate-300 dark:border-white/5 pb-2 mb-2 select-none">
@@ -2029,9 +2027,7 @@ export default function App() {
               ))
             )}
           </div>
-        </motion.div>
-        </motion.div>
-      </main>
+        </motion.div></div></main>
     </div>
   );
 }
