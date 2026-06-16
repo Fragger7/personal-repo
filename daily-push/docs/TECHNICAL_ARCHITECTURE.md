@@ -28,7 +28,9 @@ All code lives inside a modular, responsive client built with **React (v19)**, *
 * **Granular Data Types and Operations:**
   * Inputs differentiate between explicitly recorded `0` reps and omitted/blank entries `null` to ensure pristine averaging.
   * Native deletion handlers allow wiping out target date indexes across all data layers, syncing deletions bi-directionally to the master cloud file.
-* **Aesthetic Data Graphing & Visual Theming:**
+* **Aesthetic Data Graphing & UI 2.0 Foundation:**
+  * Uses a robust "Bento Grid" layout design leveraging Tailwind's deep glassmorphic layers (`bg-white/70`, `backdrop-blur-3xl`, `rounded-3xl` radii).
+  * Framer Motion (`<motion.div>`) drives sequential, staggered layout animations for premium visual feedback on loads.
   * Displays a rolling 14-day or 30-day chronological chart of workout achievements using `Recharts`.
   * Integrates dynamic Live Sub-totals within form inputs updating immediately as set parameters change.
   * Includes a compact recent history index tracking the 10 latest entries for quick navigation without bloating performance.
