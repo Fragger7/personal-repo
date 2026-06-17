@@ -66,7 +66,7 @@ export default function App() {
   const [brandTheme, setBrandTheme] = useState<'blue' | 'emerald' | 'crimson' | 'product-red'>(() => {
     const saved = localStorage.getItem('brandTheme');
     if (saved === 'visa') return 'blue'; // migrate old
-    return (['blue', 'emerald', 'crimson', 'product-red'].includes(saved as string) ? saved : 'blue') as 'blue' | 'emerald' | 'crimson' | 'product-red';
+    return (['blue', 'emerald', 'crimson', 'product-red'].includes(saved as string) ? saved : 'emerald') as 'blue' | 'emerald' | 'crimson' | 'product-red';
   });
   
   useEffect(() => {
@@ -1173,10 +1173,10 @@ export default function App() {
           <div>
             <h3 className="text-xs font-bold uppercase tracking-widest text-slate-900 dark:text-white flex items-center gap-1.5 font-sans">
               <Sparkles size={14} className="text-brand-primary" />
-              Theme Engine
+              Theme
             </h3>
             <p className="text-[9px] font-mono text-slate-500 tracking-wide uppercase mt-1">
-              Select your personalized tracking layout palette
+              Visual Appearance
             </p>
           </div>
           
