@@ -1047,7 +1047,7 @@ export default function App() {
     <div className="min-h-screen bg-[#F0F4FF] dark:bg-[#0A1242] text-slate-900 dark:text-slate-100 selection:bg-[#1434CB]/35 selection:text-white glow-radial select-none pb-12 font-sans overflow-x-hidden relative">
       {/* Background radial ambient soft light */}
       <div className="fixed top-[-10%] left-[-20%] w-[100vw] h-[100vw] rounded-full bg-[#1434CB]/20 dark:bg-[#1A1F71]/10 blur-[100px] pointer-events-none z-0 animate-blob mix-blend-plus-lighter" />
-      <div className="fixed top-[20%] right-[-10%] w-[80vw] h-[80vw] rounded-full bg-[#F7B600]/20 dark:bg-[#1A1F71]/10 blur-[90px] pointer-events-none z-0 animate-blob animation-delay-2000 mix-blend-plus-lighter" />
+      <div className="fixed top-[20%] right-[-10%] w-[80vw] h-[80vw] rounded-full bg-[#F7B600]/20 dark:bg-[#F7B600]/15 blur-[90px] pointer-events-none z-0 animate-blob animation-delay-2000 mix-blend-plus-lighter" />
       <div className="fixed bottom-[-10%] left-[20%] w-[90vw] h-[90vw] rounded-full bg-[#1A1F71]/20 dark:bg-blue-900/10 blur-[110px] pointer-events-none z-0 animate-blob animation-delay-4000 mix-blend-plus-lighter" />
 
       {/* Toast Alert Systems */}
@@ -1074,7 +1074,7 @@ export default function App() {
       {/* Primary Navigation / Utility Bar */}
       <header className="sticky top-0 z-40 bg-white/60 dark:bg-[#0A1242]/60 backdrop-blur-2xl border-b border-slate-200 dark:border-white/5 px-4 sm:px-6 py-3.5 sm:py-5 flex items-center justify-between shadow-sm dark:shadow-black/20">
         <div className="flex items-center gap-2 sm:gap-3">
-          <div className="h-7 w-7 sm:h-8 sm:w-8 rounded-lg bg-gradient-to-tr from-[#1434CB] to-blue-500 flex items-center justify-center text-slate-950 font-black shadow-lg shadow-[#1434CB]/10">
+          <div className="h-7 w-7 sm:h-8 sm:w-8 rounded-lg bg-gradient-to-br from-[#1434CB] via-[#1A1F71] to-[#F7B600] flex items-center justify-center text-slate-950 font-black shadow-lg shadow-[#1434CB]/10">
             <Zap size={13} className="fill-slate-950 stroke-none" />
           </div>
           <div>
@@ -1093,7 +1093,7 @@ export default function App() {
                   type="button"
                   disabled={isSyncing}
                   onClick={handleManualDriveSync}
-                  className="text-amber-700 dark:text-[#F7B600] flex items-center gap-1 border-l border-slate-300 dark:border-white/10 pl-2 [text-shadow:0_0_8px_rgba(34,211,238,0.6)] hover:opacity-80 transition-opacity disabled:opacity-50 cursor-pointer"
+                  className="text-[#CCA200] dark:text-[#F7B600] flex items-center gap-1 border-l border-slate-300 dark:border-white/10 pl-2 [text-shadow:0_0_8px_rgba(34,211,238,0.6)] hover:opacity-80 transition-opacity disabled:opacity-50 cursor-pointer"
                 >
                   <Cloud
                     size={9}
@@ -1189,7 +1189,7 @@ export default function App() {
                     type="button"
                     onClick={handleManualDriveSync}
                     disabled={isSyncing}
-                    className="bg-amber-50 border border-amber-200 dark:border-transparent dark:bg-[#F7B600]/15 text-amber-700 dark:text-amber-300 hover:bg-[#F7B600]/25 border border-[#F7B600]/40 dark:border-[#F7B600]/20 text-[10px] sm:text-[11px] font-bold px-3 py-2 rounded-xl flex items-center gap-1.5 cursor-pointer transition-all disabled:opacity-50 font-mono"
+                    className="bg-[#F7B600]/10 border border-[#F7B600]/20 dark:border-transparent dark:bg-[#F7B600]/15 text-[#CCA200] dark:text-[#F7B600] hover:bg-[#F7B600]/25 border border-[#F7B600]/40 dark:border-[#F7B600]/20 text-[10px] sm:text-[11px] font-bold px-3 py-2 rounded-xl flex items-center gap-1.5 cursor-pointer transition-all disabled:opacity-50 font-mono"
                   >
                     <RefreshCw
                       size={11}
@@ -1227,7 +1227,7 @@ export default function App() {
                 <span className="h-1 w-1 bg-[#F7B600] rounded-full animate-ping" />
                 LAST CLOUD DATABASE REPLICATION:
               </span>
-              <span className="text-amber-700 dark:text-[#F7B600] font-bold uppercase">
+              <span className="text-[#CCA200] dark:text-[#F7B600] font-bold uppercase">
                 {lastGdSyncTime}
               </span>
             </div>
@@ -1392,7 +1392,7 @@ export default function App() {
               type="button"
               onClick={fetchAiInsight}
               disabled={isFetchingInsight}
-              className="text-[9px] font-mono px-2 py-0.5 rounded transition-all select-none font-bold bg-[#1434CB]/10 border border-[#1434CB]/40 dark:border-[#1434CB]/20 text-blue-900 dark:text-[#1434CB] hover:bg-[#1434CB]/20 disabled:opacity-50 cursor-pointer flex items-center gap-1.5"
+              className="text-[9px] font-mono px-2 py-0.5 rounded transition-all select-none font-bold bg-[#F7B600]/10 border border-[#F7B600]/40 dark:border-[#F7B600]/20 text-[#CCA200] dark:text-[#F7B600] hover:bg-[#1434CB]/20 disabled:opacity-50 cursor-pointer flex items-center gap-1.5"
             >
               {isFetchingInsight ? "ANALYZING..." : "GENERATE INSIGHT"}
             </button>
@@ -1564,7 +1564,7 @@ export default function App() {
               <div className="flex gap-2">
                 <button
                   type="submit"
-                  className="flex-1 bg-[#F0F4FF] text-slate-950 font-extrabold py-4 rounded-xl text-xs uppercase tracking-widest font-mono hover:bg-slate-300 dark:hover:bg-slate-200 active:bg-slate-350 transition-all cursor-pointer shadow-md"
+                  className="flex-1 bg-[#F7B600] text-[#0A1242] font-black py-4 rounded-xl text-xs uppercase tracking-widest font-mono hover:bg-[#CCA200] active:scale-95 transition-all cursor-pointer shadow-lg shadow-[#F7B600]/30 border border-[#F7B600]/50"
                 >
                   Save Active Changes
                 </button>
@@ -1587,7 +1587,7 @@ export default function App() {
             ) : (
               <button
                 type="submit"
-                className="w-full bg-[#F0F4FF] text-slate-950 font-extrabold py-4 rounded-xl text-xs uppercase tracking-widest font-mono hover:bg-slate-300 dark:hover:bg-slate-200 active:bg-slate-300 transition-all cursor-pointer shadow-md"
+                className="w-full bg-[#1434CB] text-white font-black py-4 rounded-xl text-xs uppercase tracking-widest font-mono hover:bg-[#1A1F71] active:scale-95 transition-all cursor-pointer shadow-lg shadow-[#1434CB]/30 border border-[#1434CB]/50"
               >
                 Commit Safe Session
               </button>
@@ -1685,7 +1685,7 @@ export default function App() {
                       type="monotone"
                       name="Pushups"
                       dataKey="pushups"
-                      stroke="#10b981"
+                      stroke="#F7B600"
                       strokeWidth={1.5}
                       dot={{ r: 1 }}
                       activeDot={{ r: 3 }}
@@ -1694,7 +1694,7 @@ export default function App() {
                       type="monotone"
                       name="Crunches"
                       dataKey="crunches"
-                      stroke="#6366f1"
+                      stroke="#1434CB"
                       strokeWidth={1}
                       dot={{ r: 1 }}
                       activeDot={{ r: 3 }}
@@ -1713,7 +1713,7 @@ export default function App() {
               <h4 className="text-xs font-bold uppercase tracking-widest text-slate-900 dark:text-white flex items-center gap-1.5 font-sans">
                 <TrendingUp
                   size={14}
-                  className="text-amber-700 dark:text-[#F7B600]"
+                  className="text-[#CCA200] dark:text-[#F7B600]"
                 />
                 VOLUME BREAKDOWN
               </h4>
@@ -1793,7 +1793,7 @@ export default function App() {
                       dataKey="crunches"
                       name="Crunches"
                       stackId="a"
-                      fill="#6366f1"
+                      fill="#1434CB"
                       radius={[4, 4, 0, 0]}
                     />
                   </BarChart>
@@ -1857,15 +1857,15 @@ export default function App() {
                     <Radar
                       name="Pushups"
                       dataKey="pushups"
-                      stroke="#10b981"
-                      fill="#10b981"
+                      stroke="#F7B600"
+                      fill="#F7B600"
                       fillOpacity={0.4}
                     />
                     <Radar
                       name="Crunches"
                       dataKey="crunches"
-                      stroke="#6366f1"
-                      fill="#6366f1"
+                      stroke="#1434CB"
+                      fill="#1434CB"
                       fillOpacity={0.4}
                     />
                     <Tooltip
