@@ -1044,11 +1044,11 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-[#03060f] text-slate-900 dark:text-slate-100 selection:bg-blue-700/35 selection:text-white glow-radial select-none pb-12 font-sans overflow-x-hidden relative">
+    <div className="min-h-screen bg-[#F0F4FF] dark:bg-[#0A1242] text-slate-900 dark:text-slate-100 selection:bg-[#1434CB]/35 selection:text-white glow-radial select-none pb-12 font-sans overflow-x-hidden relative">
       {/* Background radial ambient soft light */}
-      <div className="fixed top-[-10%] left-[-20%] w-[100vw] h-[100vw] rounded-full bg-blue-700/20 dark:bg-blue-800/10 blur-[100px] pointer-events-none z-0 animate-blob mix-blend-plus-lighter" />
-      <div className="fixed top-[20%] right-[-10%] w-[80vw] h-[80vw] rounded-full bg-amber-500/20 dark:bg-blue-800/10 blur-[90px] pointer-events-none z-0 animate-blob animation-delay-2000 mix-blend-plus-lighter" />
-      <div className="fixed bottom-[-10%] left-[20%] w-[90vw] h-[90vw] rounded-full bg-blue-800/20 dark:bg-blue-900/10 blur-[110px] pointer-events-none z-0 animate-blob animation-delay-4000 mix-blend-plus-lighter" />
+      <div className="fixed top-[-10%] left-[-20%] w-[100vw] h-[100vw] rounded-full bg-[#1434CB]/20 dark:bg-[#1A1F71]/10 blur-[100px] pointer-events-none z-0 animate-blob mix-blend-plus-lighter" />
+      <div className="fixed top-[20%] right-[-10%] w-[80vw] h-[80vw] rounded-full bg-[#F7B600]/20 dark:bg-[#1A1F71]/10 blur-[90px] pointer-events-none z-0 animate-blob animation-delay-2000 mix-blend-plus-lighter" />
+      <div className="fixed bottom-[-10%] left-[20%] w-[90vw] h-[90vw] rounded-full bg-[#1A1F71]/20 dark:bg-blue-900/10 blur-[110px] pointer-events-none z-0 animate-blob animation-delay-4000 mix-blend-plus-lighter" />
 
       {/* Toast Alert Systems */}
       <AnimatePresence>
@@ -1059,12 +1059,12 @@ export default function App() {
             exit={{ opacity: 0, scale: 0.95 }}
             className={`fixed bottom-6 right-6 z-50 p-4 rounded-xl border font-mono text-[11px] text-white flex items-center gap-2.5 backdrop-blur-md shadow-2xl ${
               toast.success
-                ? "border-blue-700/20 bg-blue-950/50 text-blue-500"
+                ? "border-[#1434CB]/20 bg-[#0A0D36]/50 text-blue-500"
                 : "border-red-500/20 bg-red-950/50 text-red-300"
             }`}
           >
             <div
-              className={`h-1.5 w-1.5 rounded-full animate-pulse ${toast.success ? "bg-blue-600" : "bg-red-400"}`}
+              className={`h-1.5 w-1.5 rounded-full animate-pulse ${toast.success ? "bg-[#1434CB]" : "bg-red-400"}`}
             />
             <span>{toast.message}</span>
           </motion.div>
@@ -1072,16 +1072,16 @@ export default function App() {
       </AnimatePresence>
 
       {/* Primary Navigation / Utility Bar */}
-      <header className="sticky top-0 z-40 bg-white/60 dark:bg-[#03060f]/60 backdrop-blur-2xl border-b border-slate-200 dark:border-white/5 px-4 sm:px-6 py-3.5 sm:py-5 flex items-center justify-between shadow-sm dark:shadow-black/20">
+      <header className="sticky top-0 z-40 bg-white/60 dark:bg-[#0A1242]/60 backdrop-blur-2xl border-b border-slate-200 dark:border-white/5 px-4 sm:px-6 py-3.5 sm:py-5 flex items-center justify-between shadow-sm dark:shadow-black/20">
         <div className="flex items-center gap-2 sm:gap-3">
-          <div className="h-7 w-7 sm:h-8 sm:w-8 rounded-lg bg-gradient-to-tr from-blue-700 to-blue-500 flex items-center justify-center text-slate-950 font-black shadow-lg shadow-blue-700/10">
+          <div className="h-7 w-7 sm:h-8 sm:w-8 rounded-lg bg-gradient-to-tr from-[#1434CB] to-blue-500 flex items-center justify-center text-slate-950 font-black shadow-lg shadow-[#1434CB]/10">
             <Zap size={13} className="fill-slate-950 stroke-none" />
           </div>
           <div>
             <h1 className="text-[12px] sm:text-[13px] font-bold tracking-widest text-slate-900 dark:text-white uppercase font-sans">
               DAILY PUSH
             </h1>
-            <div className="text-[8px] sm:text-[9px] font-mono text-blue-900 dark:text-blue-600 tracking-wider uppercase font-medium flex flex-wrap items-center gap-2">
+            <div className="text-[8px] sm:text-[9px] font-mono text-blue-900 dark:text-[#1434CB] tracking-wider uppercase font-medium flex flex-wrap items-center gap-2">
               <span className="flex items-center gap-1">
                 <span className="h-1 w-1 bg-current rounded-full animate-pulse" />
                 {storageType === "OFFLINE_OPFS"
@@ -1093,7 +1093,7 @@ export default function App() {
                   type="button"
                   disabled={isSyncing}
                   onClick={handleManualDriveSync}
-                  className="text-amber-700 dark:text-amber-400 flex items-center gap-1 border-l border-slate-300 dark:border-white/10 pl-2 [text-shadow:0_0_8px_rgba(34,211,238,0.6)] hover:opacity-80 transition-opacity disabled:opacity-50 cursor-pointer"
+                  className="text-amber-700 dark:text-[#F7B600] flex items-center gap-1 border-l border-slate-300 dark:border-white/10 pl-2 [text-shadow:0_0_8px_rgba(34,211,238,0.6)] hover:opacity-80 transition-opacity disabled:opacity-50 cursor-pointer"
                 >
                   <Cloud
                     size={9}
@@ -1110,7 +1110,7 @@ export default function App() {
           <div className="flex items-center gap-1 border border-slate-300 dark:border-white/5 bg-white/80 dark:bg-slate-950/60 text-slate-600 dark:text-slate-400 text-[9px] sm:text-[10px] px-2 py-1.5 sm:px-3 sm:py-2 rounded-xl">
             <ShieldCheck
               size={11}
-              className="text-blue-900 dark:text-blue-600"
+              className="text-blue-900 dark:text-[#1434CB]"
             />
             <span className="hidden xs:inline">OFFLINE</span>
           </div>
@@ -1118,7 +1118,7 @@ export default function App() {
           <button
             type="button"
             onClick={() => setIsDarkMode(!isDarkMode)}
-            className="bg-white dark:bg-slate-950 border border-slate-300 dark:border-white/5 hover:bg-slate-100 dark:hover:bg-slate-900 text-amber-600 dark:text-amber-400 text-[9px] sm:text-[10px] px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl flex items-center gap-1 cursor-pointer font-bold transition-all"
+            className="bg-white dark:bg-slate-950 border border-slate-300 dark:border-white/5 hover:bg-slate-100 dark:hover:bg-slate-900 text-[#CCA200] dark:text-[#F7B600] text-[9px] sm:text-[10px] px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl flex items-center gap-1 cursor-pointer font-bold transition-all"
           >
             {isDarkMode ? <Moon size={10} /> : <Sun size={10} />}
             {isDarkMode ? "DARK" : "LIGHT"}
@@ -1155,16 +1155,16 @@ export default function App() {
         {/* Google Drive Balance / Cloud Synchronization System */}
         <motion.div 
           initial="hidden" whileInView="show" viewport={{ once: true, amount: 0.05 }} variants={{ hidden: { opacity: 0, y: 40, scale: 0.96 }, show: { opacity: 1, y: 0, scale: 1, transition: { type: "spring", stiffness: 320, damping: 26 } } }}
-          className="xl:col-span-12 bg-white/70 dark:bg-[#060b14]/70 border border-slate-200 dark:border-white/10 p-5 sm:p-6 rounded-3xl backdrop-blur-3xl shadow-xl shadow-slate-200/50 dark:shadow-black/40 relative overflow-hidden"
+          className="xl:col-span-12 bg-white/70 dark:bg-[#0E1750]/70 border border-slate-200 dark:border-white/10 p-5 sm:p-6 rounded-3xl backdrop-blur-3xl shadow-xl shadow-slate-200/50 dark:shadow-black/40 relative overflow-hidden"
         >
-          <div className="absolute top-0 left-0 right-0 h-[1.5px] bg-gradient-to-r from-transparent via-amber-500/15 to-transparent" />
+          <div className="absolute top-0 left-0 right-0 h-[1.5px] bg-gradient-to-r from-transparent via-[#F7B600]/15 to-transparent" />
 
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-300 dark:border-white/5 pb-3">
             <div className="flex items-center gap-2.5">
               <div
                 className={`h-8 w-8 rounded-lg flex items-center justify-center transition-all ${
                   gdAccessToken
-                    ? "bg-amber-500/15 text-amber-400 border border-amber-500/25"
+                    ? "bg-[#F7B600]/15 text-[#F7B600] border border-[#F7B600]/25"
                     : "bg-slate-900 text-slate-500 border border-white/5"
                 }`}
               >
@@ -1189,7 +1189,7 @@ export default function App() {
                     type="button"
                     onClick={handleManualDriveSync}
                     disabled={isSyncing}
-                    className="bg-amber-50 border border-amber-200 dark:border-transparent dark:bg-amber-500/15 text-amber-700 dark:text-amber-300 hover:bg-amber-500/25 border border-amber-500/40 dark:border-amber-500/20 text-[10px] sm:text-[11px] font-bold px-3 py-2 rounded-xl flex items-center gap-1.5 cursor-pointer transition-all disabled:opacity-50 font-mono"
+                    className="bg-amber-50 border border-amber-200 dark:border-transparent dark:bg-[#F7B600]/15 text-amber-700 dark:text-amber-300 hover:bg-[#F7B600]/25 border border-[#F7B600]/40 dark:border-[#F7B600]/20 text-[10px] sm:text-[11px] font-bold px-3 py-2 rounded-xl flex items-center gap-1.5 cursor-pointer transition-all disabled:opacity-50 font-mono"
                   >
                     <RefreshCw
                       size={11}
@@ -1211,7 +1211,7 @@ export default function App() {
                   type="button"
                   onClick={handleGoogleAuth}
                   disabled={isSyncing}
-                  className="bg-slate-50 text-slate-950 hover:bg-slate-300 dark:hover:bg-slate-200 text-[10px] sm:text-[11px] font-extrabold px-3.5 py-2 rounded-xl flex items-center gap-1.5 cursor-pointer transition-all disabled:opacity-50"
+                  className="bg-[#F0F4FF] text-slate-950 hover:bg-slate-300 dark:hover:bg-slate-200 text-[10px] sm:text-[11px] font-extrabold px-3.5 py-2 rounded-xl flex items-center gap-1.5 cursor-pointer transition-all disabled:opacity-50"
                 >
                   <CloudLightning size={11} className="fill-current" />
                   CONNECT DRIVE
@@ -1224,10 +1224,10 @@ export default function App() {
           {lastGdSyncTime && (
             <div className="mt-2.5 flex items-center justify-between text-[9px] text-slate-600 dark:text-slate-400 font-mono bg-slate-200/50 dark:bg-black/15 border border-slate-300 dark:border-white/5 px-2.5 py-1.5 rounded-xl">
               <span className="flex items-center gap-1">
-                <span className="h-1 w-1 bg-amber-400 rounded-full animate-ping" />
+                <span className="h-1 w-1 bg-[#F7B600] rounded-full animate-ping" />
                 LAST CLOUD DATABASE REPLICATION:
               </span>
-              <span className="text-amber-700 dark:text-amber-400 font-bold uppercase">
+              <span className="text-amber-700 dark:text-[#F7B600] font-bold uppercase">
                 {lastGdSyncTime}
               </span>
             </div>
@@ -1239,7 +1239,7 @@ export default function App() {
           initial="hidden" whileInView="show" viewport={{ once: true, amount: 0.05 }} variants={{ hidden: { opacity: 0, y: 40, scale: 0.96 }, show: { opacity: 1, y: 0, scale: 1, transition: { type: "spring", stiffness: 320, damping: 26 } } }}
           className="xl:col-span-12 grid grid-cols-2 md:grid-cols-4 gap-4"
         >
-          <div className="p-5 bg-white/80 dark:bg-[#080d19]/80 backdrop-blur-3xl rounded-3xl border border-slate-200 dark:border-white/10 shadow-xl shadow-slate-200/50 dark:shadow-black/40 flex flex-col justify-between col-span-1 md:col-span-2">
+          <div className="p-5 bg-white/80 dark:bg-[#111B61]/80 backdrop-blur-3xl rounded-3xl border border-slate-200 dark:border-white/10 shadow-xl shadow-slate-200/50 dark:shadow-black/40 flex flex-col justify-between col-span-1 md:col-span-2">
             <div>
               <p className="text-[9px] font-semibold tracking-widest text-slate-500 uppercase font-mono">
                 PUSHUPS CUMULATIVE
@@ -1252,7 +1252,7 @@ export default function App() {
               <span className="text-slate-500 uppercase text-[9px]">
                 SESSION AVG:
               </span>
-              <span className="text-blue-900 dark:text-blue-600 font-bold">
+              <span className="text-blue-900 dark:text-[#1434CB] font-bold">
                 {kpis.avgPushups} REPS
               </span>
             </div>
@@ -1271,7 +1271,7 @@ export default function App() {
               <span className="text-slate-500 uppercase text-[9px]">
                 SESSION AVG:
               </span>
-              <span className="text-blue-950 dark:text-blue-700 font-bold">
+              <span className="text-[#0A0D36] dark:text-[#1434CB] font-bold">
                 {kpis.avgCrunches} REPS
               </span>
             </div>
@@ -1283,63 +1283,63 @@ export default function App() {
           initial="hidden" whileInView="show" viewport={{ once: true, amount: 0.05 }} variants={{ hidden: { opacity: 0, y: 40, scale: 0.96 }, show: { opacity: 1, y: 0, scale: 1, transition: { type: "spring", stiffness: 320, damping: 26 } } }}
           className="xl:col-span-12 grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-3"
         >
-          <div className="p-4 bg-white/70 dark:bg-[#080d19]/70 rounded-3xl border border-slate-200 dark:border-white/10 flex flex-col justify-center relative overflow-hidden group hover:border-blue-700/30 transition-all shadow-xl shadow-slate-200/50 dark:shadow-black/40 backdrop-blur-3xl lg:col-span-1">
+          <div className="p-4 bg-white/70 dark:bg-[#111B61]/70 rounded-3xl border border-slate-200 dark:border-white/10 flex flex-col justify-center relative overflow-hidden group hover:border-[#1434CB]/30 transition-all shadow-xl shadow-slate-200/50 dark:shadow-black/40 backdrop-blur-3xl lg:col-span-1">
             <div className="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition-opacity">
               <Zap size={24} />
             </div>
             <span className="text-[8px] font-bold text-slate-500 uppercase tracking-widest font-mono">
               Top Pushups / Set
             </span>
-            <span className="text-xl font-bold text-blue-900 dark:text-blue-600 font-sans leading-none mt-1">
+            <span className="text-xl font-bold text-blue-900 dark:text-[#1434CB] font-sans leading-none mt-1">
               {kpis.maxPushupsInSet.val}
             </span>
             <span className="text-[9px] text-slate-500 font-mono mt-0.5">
               {kpis.maxPushupsInSet.date || "--"}
             </span>
           </div>
-          <div className="p-4 bg-white/70 dark:bg-[#080d19]/70 rounded-3xl border border-slate-200 dark:border-white/10 flex flex-col justify-center relative overflow-hidden group hover:border-blue-800/30 transition-all shadow-xl shadow-slate-200/50 dark:shadow-black/40 backdrop-blur-3xl lg:col-span-1">
+          <div className="p-4 bg-white/70 dark:bg-[#111B61]/70 rounded-3xl border border-slate-200 dark:border-white/10 flex flex-col justify-center relative overflow-hidden group hover:border-[#1A1F71]/30 transition-all shadow-xl shadow-slate-200/50 dark:shadow-black/40 backdrop-blur-3xl lg:col-span-1">
             <div className="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition-opacity">
               <Zap size={24} />
             </div>
             <span className="text-[8px] font-bold text-slate-500 uppercase tracking-widest font-mono">
               Top Crunches / Set
             </span>
-            <span className="text-xl font-bold text-blue-950 dark:text-blue-700 font-sans leading-none mt-1">
+            <span className="text-xl font-bold text-[#0A0D36] dark:text-[#1434CB] font-sans leading-none mt-1">
               {kpis.maxCrunchesInSet.val}
             </span>
             <span className="text-[9px] text-slate-500 font-mono mt-0.5">
               {kpis.maxCrunchesInSet.date || "--"}
             </span>
           </div>
-          <div className="p-4 bg-white/70 dark:bg-[#080d19]/70 rounded-3xl border border-slate-200 dark:border-white/10 flex flex-col justify-center relative overflow-hidden group hover:border-blue-700/30 transition-all shadow-xl shadow-slate-200/50 dark:shadow-black/40 backdrop-blur-3xl lg:col-span-1">
+          <div className="p-4 bg-white/70 dark:bg-[#111B61]/70 rounded-3xl border border-slate-200 dark:border-white/10 flex flex-col justify-center relative overflow-hidden group hover:border-[#1434CB]/30 transition-all shadow-xl shadow-slate-200/50 dark:shadow-black/40 backdrop-blur-3xl lg:col-span-1">
             <div className="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition-opacity">
               <TrendingUp size={24} />
             </div>
             <span className="text-[8px] font-bold text-slate-500 uppercase tracking-widest font-mono">
               Top Pushups / Day
             </span>
-            <span className="text-xl font-bold text-blue-900 dark:text-blue-600 font-sans leading-none mt-1">
+            <span className="text-xl font-bold text-blue-900 dark:text-[#1434CB] font-sans leading-none mt-1">
               {kpis.maxPushupsInDay.val}
             </span>
             <span className="text-[9px] text-slate-500 font-mono mt-0.5">
               {kpis.maxPushupsInDay.date || "--"}
             </span>
           </div>
-          <div className="p-4 bg-white/70 dark:bg-[#080d19]/70 rounded-3xl border border-slate-200 dark:border-white/10 flex flex-col justify-center relative overflow-hidden group hover:border-blue-800/30 transition-all shadow-xl shadow-slate-200/50 dark:shadow-black/40 backdrop-blur-3xl lg:col-span-1">
+          <div className="p-4 bg-white/70 dark:bg-[#111B61]/70 rounded-3xl border border-slate-200 dark:border-white/10 flex flex-col justify-center relative overflow-hidden group hover:border-[#1A1F71]/30 transition-all shadow-xl shadow-slate-200/50 dark:shadow-black/40 backdrop-blur-3xl lg:col-span-1">
             <div className="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition-opacity">
               <TrendingUp size={24} />
             </div>
             <span className="text-[8px] font-bold text-slate-500 uppercase tracking-widest font-mono">
               Top Crunches / Day
             </span>
-            <span className="text-xl font-bold text-blue-950 dark:text-blue-700 font-sans leading-none mt-1">
+            <span className="text-xl font-bold text-[#0A0D36] dark:text-[#1434CB] font-sans leading-none mt-1">
               {kpis.maxCrunchesInDay.val}
             </span>
             <span className="text-[9px] text-slate-500 font-mono mt-0.5">
               {kpis.maxCrunchesInDay.date || "--"}
             </span>
           </div>
-          <div className="p-4 bg-white/70 dark:bg-[#080d19]/70 rounded-3xl border border-slate-200 dark:border-white/10 flex flex-col justify-center relative overflow-hidden group hover:border-amber-500/30 transition-all shadow-xl shadow-slate-200/50 dark:shadow-black/40 backdrop-blur-3xl lg:col-span-1">
+          <div className="p-4 bg-white/70 dark:bg-[#111B61]/70 rounded-3xl border border-slate-200 dark:border-white/10 flex flex-col justify-center relative overflow-hidden group hover:border-[#F7B600]/30 transition-all shadow-xl shadow-slate-200/50 dark:shadow-black/40 backdrop-blur-3xl lg:col-span-1">
             <div className="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition-opacity">
               <TrendingUp size={24} />
             </div>
@@ -1353,7 +1353,7 @@ export default function App() {
               {kpis.maxCombinedInDay.date || "--"}
             </span>
           </div>
-          <div className="p-4 bg-white/70 dark:bg-[#080d19]/70 rounded-3xl border border-slate-200 dark:border-white/10 flex flex-col justify-center relative overflow-hidden group hover:border-orange-500/30 transition-all shadow-xl shadow-slate-200/50 dark:shadow-black/40 backdrop-blur-3xl lg:col-span-1">
+          <div className="p-4 bg-white/70 dark:bg-[#111B61]/70 rounded-3xl border border-slate-200 dark:border-white/10 flex flex-col justify-center relative overflow-hidden group hover:border-orange-500/30 transition-all shadow-xl shadow-slate-200/50 dark:shadow-black/40 backdrop-blur-3xl lg:col-span-1">
             <div className="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition-opacity">
               <Sparkles size={24} />
             </div>
@@ -1375,16 +1375,16 @@ export default function App() {
         {/* AI Insight Panel */}
         <motion.div 
           initial="hidden" whileInView="show" viewport={{ once: true, amount: 0.05 }} variants={{ hidden: { opacity: 0, y: 40, scale: 0.96 }, show: { opacity: 1, y: 0, scale: 1, transition: { type: "spring", stiffness: 320, damping: 26 } } }}
-          className="xl:col-span-5 bg-white/70 dark:bg-[#080d19]/70 border border-blue-700/20 p-6 rounded-3xl backdrop-blur-3xl shadow-xl shadow-slate-200/50 dark:shadow-black/40 relative overflow-hidden flex flex-col justify-between"
+          className="xl:col-span-5 bg-white/70 dark:bg-[#111B61]/70 border border-[#1434CB]/20 p-6 rounded-3xl backdrop-blur-3xl shadow-xl shadow-slate-200/50 dark:shadow-black/40 relative overflow-hidden flex flex-col justify-between"
         >
-          <div className="absolute top-0 right-0 p-4 opacity-10 pointer-events-none text-blue-900 dark:text-blue-600">
+          <div className="absolute top-0 right-0 p-4 opacity-10 pointer-events-none text-blue-900 dark:text-[#1434CB]">
             <Sparkles size={48} />
           </div>
           <div className="flex items-center justify-between border-b border-slate-300 dark:border-white/5 pb-2.5 mb-3">
-            <h4 className="text-xs font-bold uppercase tracking-widest text-blue-900 dark:text-blue-600 flex items-center gap-1.5 font-sans">
+            <h4 className="text-xs font-bold uppercase tracking-widest text-blue-900 dark:text-[#1434CB] flex items-center gap-1.5 font-sans">
               <Zap
                 size={13}
-                className="text-blue-900 dark:text-blue-600 animate-pulse"
+                className="text-blue-900 dark:text-[#1434CB] animate-pulse"
               />
               AI COACH INSIGHT
             </h4>
@@ -1392,7 +1392,7 @@ export default function App() {
               type="button"
               onClick={fetchAiInsight}
               disabled={isFetchingInsight}
-              className="text-[9px] font-mono px-2 py-0.5 rounded transition-all select-none font-bold bg-blue-700/10 border border-blue-700/40 dark:border-blue-700/20 text-blue-900 dark:text-blue-600 hover:bg-blue-700/20 disabled:opacity-50 cursor-pointer flex items-center gap-1.5"
+              className="text-[9px] font-mono px-2 py-0.5 rounded transition-all select-none font-bold bg-[#1434CB]/10 border border-[#1434CB]/40 dark:border-[#1434CB]/20 text-blue-900 dark:text-[#1434CB] hover:bg-[#1434CB]/20 disabled:opacity-50 cursor-pointer flex items-center gap-1.5"
             >
               {isFetchingInsight ? "ANALYZING..." : "GENERATE INSIGHT"}
             </button>
@@ -1412,23 +1412,23 @@ export default function App() {
         {/* Rep Entry Form Section */}
         <motion.div 
           initial="hidden" whileInView="show" viewport={{ once: true, amount: 0.05 }} variants={{ hidden: { opacity: 0, y: 40, scale: 0.96 }, show: { opacity: 1, y: 0, scale: 1, transition: { type: "spring", stiffness: 320, damping: 26 } } }}
-          className="xl:col-span-7 bg-white/70 dark:bg-[#080d19]/70 border border-slate-200 dark:border-white/10 p-6 rounded-3xl backdrop-blur-3xl shadow-xl shadow-slate-200/50 dark:shadow-black/40 relative overflow-hidden"
+          className="xl:col-span-7 bg-white/70 dark:bg-[#111B61]/70 border border-slate-200 dark:border-white/10 p-6 rounded-3xl backdrop-blur-3xl shadow-xl shadow-slate-200/50 dark:shadow-black/40 relative overflow-hidden"
         >
-          <div className="absolute top-0 left-0 right-0 h-[1.5px] bg-gradient-to-r from-transparent via-blue-700/15 to-transparent" />
+          <div className="absolute top-0 left-0 right-0 h-[1.5px] bg-gradient-to-r from-transparent via-[#1434CB]/15 to-transparent" />
 
           <form onSubmit={handleLogSubmit} className="space-y-4">
             <div className="flex items-center justify-between border-b border-slate-300 dark:border-white/5 pb-2.5">
               <h4 className="text-xs font-bold uppercase tracking-widest text-slate-900 dark:text-white flex items-center gap-1.5 font-sans">
                 <Calendar
                   size={13}
-                  className="text-blue-900 dark:text-blue-600"
+                  className="text-blue-900 dark:text-[#1434CB]"
                 />
                 LOG REPS BY DATE
               </h4>
               <span
                 className={`text-[9px] font-mono px-2 py-0.5 rounded transition-all select-none font-bold ${
                   formBadgeStatus === "MUTATE_RECORD"
-                    ? "bg-amber-500/10 border border-amber-500/20 text-amber-400"
+                    ? "bg-[#F7B600]/10 border border-[#F7B600]/20 text-[#F7B600]"
                     : "bg-slate-900 border border-white/5 text-slate-500"
                 }`}
               >
@@ -1454,7 +1454,7 @@ export default function App() {
                   required
                   value={activeDate}
                   onChange={(e) => setActiveDate(e.target.value)}
-                  className="flex-1 bg-white dark:bg-slate-950 border border-slate-300 dark:border-white/5 rounded-xl p-3 text-xs text-slate-900 dark:text-white text-center focus:outline-none focus:border-blue-600 font-mono cursor-pointer"
+                  className="flex-1 bg-white dark:bg-slate-950 border border-slate-300 dark:border-white/5 rounded-xl p-3 text-xs text-slate-900 dark:text-white text-center focus:outline-none focus:border-[#1434CB] font-mono cursor-pointer"
                 />
                 <button
                   type="button"
@@ -1468,7 +1468,7 @@ export default function App() {
 
             {/* Sets: Pushups */}
             <div className="space-y-1.5">
-              <label className="block text-[10px] font-bold uppercase tracking-wider text-blue-900 dark:text-blue-600 font-mono flex items-center gap-1">
+              <label className="block text-[10px] font-bold uppercase tracking-wider text-blue-900 dark:text-[#1434CB] font-mono flex items-center gap-1">
                 <Sparkles size={11} />
                 Pushups Sets [1, 2, 3] & Total
               </label>
@@ -1480,7 +1480,7 @@ export default function App() {
                   placeholder="Set 1"
                   value={p1}
                   onChange={(e) => setP1(e.target.value)}
-                  className="w-full bg-white dark:bg-slate-950 border border-slate-300 dark:border-white/5 focus:border-blue-700/30 rounded-xl p-3 text-center text-slate-900 dark:text-white font-mono text-sm focus:outline-none transition-all"
+                  className="w-full bg-white dark:bg-slate-950 border border-slate-300 dark:border-white/5 focus:border-[#1434CB]/30 rounded-xl p-3 text-center text-slate-900 dark:text-white font-mono text-sm focus:outline-none transition-all"
                 />
                 <input
                   type="number"
@@ -1489,7 +1489,7 @@ export default function App() {
                   placeholder="Set 2"
                   value={p2}
                   onChange={(e) => setP2(e.target.value)}
-                  className="w-full bg-white dark:bg-slate-950 border border-slate-300 dark:border-white/5 focus:border-blue-700/30 rounded-xl p-3 text-center text-slate-900 dark:text-white font-mono text-sm focus:outline-none transition-all"
+                  className="w-full bg-white dark:bg-slate-950 border border-slate-300 dark:border-white/5 focus:border-[#1434CB]/30 rounded-xl p-3 text-center text-slate-900 dark:text-white font-mono text-sm focus:outline-none transition-all"
                 />
                 <input
                   type="number"
@@ -1498,9 +1498,9 @@ export default function App() {
                   placeholder="Set 3"
                   value={p3}
                   onChange={(e) => setP3(e.target.value)}
-                  className="w-full bg-white dark:bg-slate-950 border border-slate-300 dark:border-white/5 focus:border-blue-700/30 rounded-xl p-3 text-center text-slate-900 dark:text-white font-mono text-sm focus:outline-none transition-all"
+                  className="w-full bg-white dark:bg-slate-950 border border-slate-300 dark:border-white/5 focus:border-[#1434CB]/30 rounded-xl p-3 text-center text-slate-900 dark:text-white font-mono text-sm focus:outline-none transition-all"
                 />
-                <div className="w-full bg-blue-950/20 border border-blue-700/40 dark:border-blue-700/20 rounded-xl flex flex-col items-center justify-center text-blue-900 dark:text-blue-600 font-mono shadow-inner sm:p-2 p-1 overflow-hidden">
+                <div className="w-full bg-[#0A0D36]/20 border border-[#1434CB]/40 dark:border-[#1434CB]/20 rounded-xl flex flex-col items-center justify-center text-blue-900 dark:text-[#1434CB] font-mono shadow-inner sm:p-2 p-1 overflow-hidden">
                   <span className="text-[7px] sm:text-[8px] font-bold uppercase tracking-widest opacity-60 mb-0.5">
                     TOTAL
                   </span>
@@ -1515,7 +1515,7 @@ export default function App() {
 
             {/* Sets: Crunches */}
             <div className="space-y-1.5">
-              <label className="block text-[10px] font-bold uppercase tracking-wider text-blue-950 dark:text-blue-700 font-mono flex items-center gap-1">
+              <label className="block text-[10px] font-bold uppercase tracking-wider text-[#0A0D36] dark:text-[#1434CB] font-mono flex items-center gap-1">
                 <Sparkles size={11} />
                 Crunches Sets [1, 2, 3] & Total
               </label>
@@ -1527,7 +1527,7 @@ export default function App() {
                   placeholder="Set 1"
                   value={c1}
                   onChange={(e) => setC1(e.target.value)}
-                  className="w-full bg-white dark:bg-slate-950 border border-slate-300 dark:border-white/5 focus:border-blue-800/30 rounded-xl p-3 text-center text-slate-900 dark:text-white font-mono text-sm focus:outline-none transition-all"
+                  className="w-full bg-white dark:bg-slate-950 border border-slate-300 dark:border-white/5 focus:border-[#1A1F71]/30 rounded-xl p-3 text-center text-slate-900 dark:text-white font-mono text-sm focus:outline-none transition-all"
                 />
                 <input
                   type="number"
@@ -1536,7 +1536,7 @@ export default function App() {
                   placeholder="Set 2"
                   value={c2}
                   onChange={(e) => setC2(e.target.value)}
-                  className="w-full bg-white dark:bg-slate-950 border border-slate-300 dark:border-white/5 focus:border-blue-800/30 rounded-xl p-3 text-center text-slate-900 dark:text-white font-mono text-sm focus:outline-none transition-all"
+                  className="w-full bg-white dark:bg-slate-950 border border-slate-300 dark:border-white/5 focus:border-[#1A1F71]/30 rounded-xl p-3 text-center text-slate-900 dark:text-white font-mono text-sm focus:outline-none transition-all"
                 />
                 <input
                   type="number"
@@ -1545,9 +1545,9 @@ export default function App() {
                   placeholder="Set 3"
                   value={c3}
                   onChange={(e) => setC3(e.target.value)}
-                  className="w-full bg-white dark:bg-slate-950 border border-slate-300 dark:border-white/5 focus:border-blue-800/30 rounded-xl p-3 text-center text-slate-900 dark:text-white font-mono text-sm focus:outline-none transition-all"
+                  className="w-full bg-white dark:bg-slate-950 border border-slate-300 dark:border-white/5 focus:border-[#1A1F71]/30 rounded-xl p-3 text-center text-slate-900 dark:text-white font-mono text-sm focus:outline-none transition-all"
                 />
-                <div className="w-full bg-slate-950/20 border border-blue-800/20 rounded-xl flex flex-col items-center justify-center text-blue-950 dark:text-blue-700 font-mono shadow-inner sm:p-2 p-1 overflow-hidden">
+                <div className="w-full bg-slate-950/20 border border-[#1A1F71]/20 rounded-xl flex flex-col items-center justify-center text-[#0A0D36] dark:text-[#1434CB] font-mono shadow-inner sm:p-2 p-1 overflow-hidden">
                   <span className="text-[7px] sm:text-[8px] font-bold uppercase tracking-widest opacity-60 mb-0.5">
                     TOTAL
                   </span>
@@ -1564,7 +1564,7 @@ export default function App() {
               <div className="flex gap-2">
                 <button
                   type="submit"
-                  className="flex-1 bg-slate-50 text-slate-950 font-extrabold py-4 rounded-xl text-xs uppercase tracking-widest font-mono hover:bg-slate-300 dark:hover:bg-slate-200 active:bg-slate-350 transition-all cursor-pointer shadow-md"
+                  className="flex-1 bg-[#F0F4FF] text-slate-950 font-extrabold py-4 rounded-xl text-xs uppercase tracking-widest font-mono hover:bg-slate-300 dark:hover:bg-slate-200 active:bg-slate-350 transition-all cursor-pointer shadow-md"
                 >
                   Save Active Changes
                 </button>
@@ -1587,7 +1587,7 @@ export default function App() {
             ) : (
               <button
                 type="submit"
-                className="w-full bg-slate-50 text-slate-950 font-extrabold py-4 rounded-xl text-xs uppercase tracking-widest font-mono hover:bg-slate-300 dark:hover:bg-slate-200 active:bg-slate-300 transition-all cursor-pointer shadow-md"
+                className="w-full bg-[#F0F4FF] text-slate-950 font-extrabold py-4 rounded-xl text-xs uppercase tracking-widest font-mono hover:bg-slate-300 dark:hover:bg-slate-200 active:bg-slate-300 transition-all cursor-pointer shadow-md"
               >
                 Commit Safe Session
               </button>
@@ -1600,12 +1600,12 @@ export default function App() {
           initial="hidden" whileInView="show" viewport={{ once: true, amount: 0.05 }} variants={{ hidden: { opacity: 0, y: 40, scale: 0.96 }, show: { opacity: 1, y: 0, scale: 1, transition: { type: "spring", stiffness: 320, damping: 26 } } }}
           className="xl:col-span-7 grid grid-cols-1 md:grid-cols-2 gap-4"
         >
-          <div className="p-5 bg-white/70 dark:bg-[#080d19]/70 border border-slate-200 dark:border-white/10 rounded-3xl flex flex-col justify-between backdrop-blur-3xl shadow-xl shadow-slate-200/50 dark:shadow-black/40 md:col-span-2">
+          <div className="p-5 bg-white/70 dark:bg-[#111B61]/70 border border-slate-200 dark:border-white/10 rounded-3xl flex flex-col justify-between backdrop-blur-3xl shadow-xl shadow-slate-200/50 dark:shadow-black/40 md:col-span-2">
             <div className="flex items-center justify-between border-b border-slate-300 dark:border-white/5 pb-2 mb-2">
               <h4 className="text-xs font-bold uppercase tracking-widest text-slate-900 dark:text-white flex items-center gap-1.5 font-sans">
                 <TrendingUp
                   size={14}
-                  className="text-blue-900 dark:text-blue-600"
+                  className="text-blue-900 dark:text-[#1434CB]"
                 />
                 PERFORMANCE TIMELINE
               </h4>
@@ -1707,13 +1707,13 @@ export default function App() {
 
           <motion.div 
             initial="hidden" whileInView="show" viewport={{ once: true, amount: 0.05 }} variants={{ hidden: { opacity: 0, y: 40, scale: 0.96 }, show: { opacity: 1, y: 0, scale: 1, transition: { type: "spring", stiffness: 320, damping: 26 } } }}
-            className="p-5 bg-white/70 dark:bg-[#080d19]/70 border border-slate-200 dark:border-white/10 rounded-3xl flex flex-col justify-between backdrop-blur-3xl shadow-xl shadow-slate-200/50 dark:shadow-black/40"
+            className="p-5 bg-white/70 dark:bg-[#111B61]/70 border border-slate-200 dark:border-white/10 rounded-3xl flex flex-col justify-between backdrop-blur-3xl shadow-xl shadow-slate-200/50 dark:shadow-black/40"
           >
             <div className="flex items-center justify-between border-b border-slate-300 dark:border-white/5 pb-2 mb-2">
               <h4 className="text-xs font-bold uppercase tracking-widest text-slate-900 dark:text-white flex items-center gap-1.5 font-sans">
                 <TrendingUp
                   size={14}
-                  className="text-amber-700 dark:text-amber-400"
+                  className="text-amber-700 dark:text-[#F7B600]"
                 />
                 VOLUME BREAKDOWN
               </h4>
@@ -1804,7 +1804,7 @@ export default function App() {
 
           <motion.div 
             initial="hidden" whileInView="show" viewport={{ once: true, amount: 0.05 }} variants={{ hidden: { opacity: 0, y: 40, scale: 0.96 }, show: { opacity: 1, y: 0, scale: 1, transition: { type: "spring", stiffness: 320, damping: 26 } } }}
-            className="p-5 bg-white/70 dark:bg-[#080d19]/70 border border-slate-200 dark:border-white/10 rounded-3xl flex flex-col justify-between backdrop-blur-3xl shadow-xl shadow-slate-200/50 dark:shadow-black/40"
+            className="p-5 bg-white/70 dark:bg-[#111B61]/70 border border-slate-200 dark:border-white/10 rounded-3xl flex flex-col justify-between backdrop-blur-3xl shadow-xl shadow-slate-200/50 dark:shadow-black/40"
           >
             <div className="flex items-center justify-between border-b border-slate-300 dark:border-white/5 pb-2 mb-2">
               <h4 className="text-xs font-bold uppercase tracking-widest text-slate-900 dark:text-white flex items-center gap-1.5 font-sans">
@@ -1888,13 +1888,13 @@ export default function App() {
         {/* WORKOUT DATABASE INDEX */}
         <motion.div 
           initial="hidden" whileInView="show" viewport={{ once: true, amount: 0.05 }} variants={{ hidden: { opacity: 0, y: 40, scale: 0.96 }, show: { opacity: 1, y: 0, scale: 1, transition: { type: "spring", stiffness: 320, damping: 26 } } }}
-          className="xl:col-span-5 bg-white/70 dark:bg-[#080d19]/70 border border-slate-200 dark:border-white/10 p-5 sm:p-6 rounded-3xl backdrop-blur-3xl shadow-xl shadow-slate-200/50 dark:shadow-black/40"
+          className="xl:col-span-5 bg-white/70 dark:bg-[#111B61]/70 border border-slate-200 dark:border-white/10 p-5 sm:p-6 rounded-3xl backdrop-blur-3xl shadow-xl shadow-slate-200/50 dark:shadow-black/40"
         >
           <div className="flex items-center justify-between border-b border-slate-300 dark:border-white/5 pb-2.5 mb-3">
             <h4 className="text-xs font-bold uppercase tracking-widest text-slate-900 dark:text-white flex items-center gap-1.5 font-sans">
               <History
                 size={13}
-                className="text-blue-950 dark:text-blue-700"
+                className="text-[#0A0D36] dark:text-[#1434CB]"
               />
               HISTORY DATABASE INDEX
             </h4>
@@ -1928,7 +1928,7 @@ export default function App() {
                       key={day.date}
                       className={`flex items-center justify-between p-2.5 rounded-xl border transition-all text-xs font-mono group ${
                         isSelected
-                          ? "border-blue-700/25 bg-blue-950/15"
+                          ? "border-[#1434CB]/25 bg-[#0A0D36]/15"
                           : "border-white/5 bg-black/10 hover:border-white/10 hover:bg-black/20"
                       }`}
                     >
@@ -1944,16 +1944,16 @@ export default function App() {
                       >
                         <div className="font-bold text-slate-300 flex items-center gap-1.5 min-w-[90px]">
                           <span
-                            className={`h-1.5 w-1.5 rounded-full ${isSelected ? "bg-blue-600 animate-pulse" : "bg-slate-600"}`}
+                            className={`h-1.5 w-1.5 rounded-full ${isSelected ? "bg-[#1434CB] animate-pulse" : "bg-slate-600"}`}
                           />
                           {day.date}
                         </div>
                         <div className="flex items-center gap-4 text-[10px]">
-                          <div className="flex items-center gap-1 text-blue-900 dark:text-blue-600 font-medium">
+                          <div className="flex items-center gap-1 text-blue-900 dark:text-[#1434CB] font-medium">
                             <span>PUSHUPS:</span>
                             <span className="font-bold">{dayPushups}</span>
                           </div>
-                          <div className="flex items-center gap-1 text-blue-950 dark:text-blue-700 font-medium">
+                          <div className="flex items-center gap-1 text-[#0A0D36] dark:text-[#1434CB] font-medium">
                             <span>CRUNCHES:</span>
                             <span className="font-bold">{dayCrunches}</span>
                           </div>
@@ -1985,13 +1985,13 @@ export default function App() {
         {/* Offline Diagnostic Feed */}
         <motion.div 
           initial="hidden" whileInView="show" viewport={{ once: true, amount: 0.05 }} variants={{ hidden: { opacity: 0, y: 40, scale: 0.96 }, show: { opacity: 1, y: 0, scale: 1, transition: { type: "spring", stiffness: 320, damping: 26 } } }}
-          className="xl:col-span-12 p-5 bg-white/70 dark:bg-[#080d19]/70 border border-slate-200 dark:border-white/10 rounded-3xl backdrop-blur-3xl shadow-xl shadow-slate-200/50 dark:shadow-black/40"
+          className="xl:col-span-12 p-5 bg-white/70 dark:bg-[#111B61]/70 border border-slate-200 dark:border-white/10 rounded-3xl backdrop-blur-3xl shadow-xl shadow-slate-200/50 dark:shadow-black/40"
         >
           <div className="flex items-center justify-between border-b border-slate-300 dark:border-white/5 pb-2 mb-2 select-none">
             <h4 className="text-[10px] font-semibold tracking-widest text-slate-440 font-mono flex items-center gap-1.5">
               <Cpu
                 size={12}
-                className="text-blue-900 dark:text-blue-600"
+                className="text-blue-900 dark:text-[#1434CB]"
               />
               SYSTEM LOG EVENTS
             </h4>
@@ -2019,7 +2019,7 @@ export default function App() {
                   className={
                     entry.isError
                       ? "text-red-400 font-semibold"
-                      : "text-blue-600/95"
+                      : "text-[#1434CB]/95"
                   }
                 >
                   [{entry.timestamp}] {entry.message}
