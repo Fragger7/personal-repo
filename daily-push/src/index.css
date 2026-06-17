@@ -41,6 +41,32 @@
   --brand-accent-hover: #0891b2; /* cyan-600 */
 }
 
+:root[data-theme="crimson"] {
+  --page-light: #fef2f2;
+  --page-dark: #000000;
+  --page-secondary: #0a0a0a;
+  --card-dark: #121212;
+  --brand-primary: #e50000;
+  --brand-primary-hover: #b30000;
+  --brand-primary-deep: #4d0000;
+  --brand-primary-text: #cc0000;
+  --brand-accent: #800000;
+  --brand-accent-hover: #4d0000;
+}
+
+:root[data-theme="product-red"] {
+  --page-light: #fff1f2;
+  --page-dark: #2a040b;
+  --page-secondary: #3f0914;
+  --card-dark: #4c1119;
+  --brand-primary: #e11d48;
+  --brand-primary-hover: #be123c;
+  --brand-primary-deep: #881337;
+  --brand-primary-text: #fda4af;
+  --brand-accent: #f43f5e;
+  --brand-accent-hover: #fb7185;
+}
+
 
 @custom-variant dark (&:is(.dark *));
 

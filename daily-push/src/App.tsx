@@ -23,6 +23,7 @@ import {
   History,
   Sun,
   Moon,
+  ChevronDown
 } from "lucide-react";
 import {
   ResponsiveContainer,
@@ -62,9 +63,10 @@ export default function App() {
     "OFFLINE_OPFS" | "LOCAL_STORAGE"
   >("OFFLINE_OPFS");
   const [rollingRangeWindow, setRollingRangeWindow] = useState<14 | 30>(30);
-  const [brandTheme, setBrandTheme] = useState<'visa' | 'emerald'>(() => {
+  const [brandTheme, setBrandTheme] = useState<'blue' | 'emerald' | 'crimson' | 'product-red'>(() => {
     const saved = localStorage.getItem('brandTheme');
-    return (saved as 'visa' | 'emerald') || 'visa';
+    if (saved === 'visa') return 'blue'; // migrate old
+    return (['blue', 'emerald', 'crimson', 'product-red'].includes(saved as string) ? saved : 'blue') as 'blue' | 'emerald' | 'crimson' | 'product-red';
   });
   
   useEffect(() => {
@@ -1136,15 +1138,6 @@ export default function App() {
 
           <button
             type="button"
-            onClick={() => setBrandTheme(brandTheme === 'visa' ? 'emerald' : 'visa')}
-            className="bg-white dark:bg-slate-950 border border-slate-300 dark:border-white/5 hover:bg-slate-100 dark:hover:bg-slate-900 text-brand-primary text-[9px] sm:text-[10px] px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl flex items-center gap-1 cursor-pointer font-bold transition-all uppercase"
-          >
-            <Sparkles size={10} />
-            {brandTheme} THEME
-          </button>
-
-          <button
-            type="button"
             onClick={triggerManualExport}
             className="bg-white dark:bg-slate-950 border border-slate-300 dark:border-white/5 hover:bg-slate-900 text-slate-700 dark:text-slate-350 text-[9px] sm:text-[10px] px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl flex items-center gap-1 cursor-pointer font-bold transition-all"
           >
@@ -1171,6 +1164,39 @@ export default function App() {
 
       <main className="max-w-7xl mx-auto px-4 lg:px-8 mt-8 mb-24 relative z-10 block w-full">
         <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 xl:gap-8">
+        
+        {/* App Theme Selection */}
+        <motion.div 
+          initial="hidden" whileInView="show" viewport={{ once: true, amount: 0.05 }} variants={{ hidden: { opacity: 0, y: 40, scale: 0.96 }, show: { opacity: 1, y: 0, scale: 1, transition: { type: "spring", stiffness: 320, damping: 26 } } }}
+          className="xl:col-span-12 bg-white/70 dark:bg-page-secondary/70 border border-slate-200 dark:border-white/10 p-5 sm:p-6 rounded-3xl backdrop-blur-3xl shadow-xl shadow-slate-200/50 dark:shadow-black/40 flex flex-col sm:flex-row items-center justify-between gap-4"
+        >
+          <div>
+            <h3 className="text-xs font-bold uppercase tracking-widest text-slate-900 dark:text-white flex items-center gap-1.5 font-sans">
+              <Sparkles size={14} className="text-brand-primary" />
+              Theme Engine
+            </h3>
+            <p className="text-[9px] font-mono text-slate-500 tracking-wide uppercase mt-1">
+              Select your personalized tracking layout palette
+            </p>
+          </div>
+          
+          <div className="relative">
+            <select
+              value={brandTheme}
+              onChange={(e) => setBrandTheme(e.target.value as any)}
+              className="appearance-none bg-slate-100 dark:bg-slate-900/50 border border-slate-300 dark:border-white/10 text-brand-primary text-xs font-bold uppercase tracking-widest rounded-xl pl-4 pr-10 py-3 outline-none focus:border-brand-primary/50 transition-colors w-full sm:w-auto"
+            >
+              <option value="blue">Blue Theme</option>
+              <option value="emerald">Emerald Theme</option>
+              <option value="crimson">Crimson Theme</option>
+              <option value="product-red">Product Red Theme</option>
+            </select>
+            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-brand-primary">
+              <ChevronDown size={14} />
+            </div>
+          </div>
+        </motion.div>
+
         {/* Google Drive Balance / Cloud Synchronization System */}
         <motion.div 
           initial="hidden" whileInView="show" viewport={{ once: true, amount: 0.05 }} variants={{ hidden: { opacity: 0, y: 40, scale: 0.96 }, show: { opacity: 1, y: 0, scale: 1, transition: { type: "spring", stiffness: 320, damping: 26 } } }}
