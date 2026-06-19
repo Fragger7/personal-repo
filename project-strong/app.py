@@ -195,7 +195,7 @@ async def fetch_lazy_details(base_url, user, password, action):
 
 # --- CORE USER INTERFACE ---
 st.title("🕵️‍♂️ IPTV Playlist Analytics Dashboard")
-st.caption("Host Constraints: Headless Low CPU Profile Optimization Active")
+st.caption("Host Constraints: Headless Low CPU Profile Optimization Active | 🚀 Enhanced via AI Studio Workspace")
 st.write("---")
 
 # Setup active asynchronous network client block
