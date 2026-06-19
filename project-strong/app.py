@@ -199,11 +199,14 @@ st.caption("Host Constraints: Headless Low CPU Profile Optimization Active | ðŸš
 st.write("---")
 
 # Setup active asynchronous network client block
-async def main_network_render():
-    async with httpx.AsyncClient(headers=EVASION_HEADERS, verify=False) as client:
-        return await check_network_shield(client)
+@st.cache_data(ttl=300, show_spinner=False)
+def get_network_info():
+    async def main_network_render():
+        async with httpx.AsyncClient(headers=EVASION_HEADERS, verify=False) as client:
+            return await check_network_shield(client)
+    return asyncio.run(main_network_render())
 
-network_info = asyncio.run(main_network_render())
+network_info = get_network_info()
 current_ip = network_info.get("ip", "Unknown")
 current_isp = network_info.get("isp", "Unknown")
 current_org = network_info.get("org", "Unknown")

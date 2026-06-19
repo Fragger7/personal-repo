@@ -49,6 +49,10 @@ Accidental exposure of a private home IP address during playlist checks can comp
 * **On-Demand Accordions**: Activating an expander for an active node spawns concurrent async tasks via [fetch_lazy_details](file:///C:/Development/Apps/Project%20Strong/app.py) to fetch `get_live_categories` and `get_live_streams` data.
 * **Server-Side Bypass**: Filters and counts category channels locally rather than requesting pre-filtered category URLs from the server, bypassing buggy IPTV endpoints and ensuring accurate listings with correct logos.
 
+### 3. Application Efficiency & UI Optimizations
+* **State Caching (st.cache_data)**: The application utilizes Streamlit's data caching (`@st.cache_data(ttl=300)`) strictly to cache outbound verification blocks (e.g. `ip-api.com`). This is absolutely critical because Streamlit executes top-to-bottom on every user interaction (clicks, toggles) which will otherwise rapidly hammer public rate-limited limits (45 reqs/min for ip-api.com) when navigating libraries.
+* **Tiered Loading**: All queries for actual heavy live tracking content are lazy evaluated asynchronously upon accordion click expansion to preserve extreme performance.
+
 ---
 
 ## 🛠️ Technology Stack

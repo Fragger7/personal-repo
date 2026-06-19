@@ -84,3 +84,10 @@ When this repository is loaded or cloned into a **Google AI Studio Cloud Run dev
      ```
    - This script creates a temporary clone, stages only modifications inside `project-strong/`, commits, pushes back to GitHub, and cleans up completely without breaking the production branch.
 
+---
+
+## 🛑 Rule 6: UI & App Optimizations (Caching)
+If adding new network fetch mechanisms to `app.py`:
+* **Streamlit Reruns**: Streamlit triggers a script re-run upon every button click, selection, or interactive element usage. Network logic on the top level must be safeguarded.
+* **MANDATORY Application Cache**: For any external diagnostics (like `ip-api.com` or other limit-sensitive tracking services), you **MUST** secure the execution blocks using `@st.cache_data`. This bypasses strict, low rate-limits (`429 Too Many Requests`) from third-party tools during consecutive clicks or accordion navigations.
+
