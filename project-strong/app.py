@@ -100,26 +100,101 @@ async def check_network_shield(client):
             "status": "failed"
         }
 
-def parse_m3u_urls(text_block):
-    """Uses regex to isolate Host, Port, Username, and Password from messy strings."""
-    logger.info("Scanning ingested block for Xtream Codes credential layouts...")
-    pattern = r'(https?://[^/:]+(?::\d+)?)/player_api\.php\?username=([^&\s]+)&password=([^&\s]+)'
-    matches = re.findall(pattern, text_block)
-    
-    # Fallback pattern for standard get.php lines
-    if not matches:
-        pattern_fallback = r'(https?://[^/:]+(?::\d+)?)/get\.php\?username=([^&\s]+)&password=([^&\s]+)'
-        matches = re.findall(pattern_fallback, text_block)
-        
+def parse_credentials(text_block):
+    """Uses regex to isolate Host, Port, Username, and Password for Xtream and Stalker from messy strings."""
+    logger.info("Scanning ingested block for Xtream Codes and Stalker Portal layouts...")
     extracted = []
-    for match in matches:
-        base_url, user, password = match
-        extracted.append({"base_url": base_url, "username": user, "password": password})
-    logger.info(f"Parsing complete. Extracted {len(extracted)} account URLs.")
+    
+    # Xtream Pattern
+    pattern_xtream = r'(https?://[^/:]+(?::\d+)?)/player_api\.php\?username=([^&\s]+)&password=([^&\s]+)'
+    for match in re.findall(pattern_xtream, text_block):
+        extracted.append({"type": "Xtream", "base_url": match[0], "username": match[1], "password": match[2]})
+        
+    pattern_xtream_fallback = r'(https?://[^/:]+(?::\d+)?)/get\.php\?username=([^&\s]+)&password=([^&\s]+)'
+    for match in re.findall(pattern_xtream_fallback, text_block):
+        # avoid duplicates if the string contains both player_api and get.php for the same account
+        if not any(a["base_url"] == match[0] and a["username"] == match[1] for a in extracted):
+            extracted.append({"type": "Xtream", "base_url": match[0], "username": match[1], "password": match[2]})
+
+    # Stalker Pattern (Line-by-line, look for URL ending in /c/ and MAC address)
+    for line in text_block.splitlines():
+        mac_match = re.search(r'([0-9a-fA-F]{2}(?::[0-9a-fA-F]{2}){5})', line, re.IGNORECASE)
+        url_match = re.search(r'(https?://[^/\s]+(?:/[^/\s]*)?)', line)
+        
+        if mac_match and url_match and ("player_api" not in line and "get.php" not in line):
+            mac = mac_match.group(1).upper()
+            raw_url = url_match.group(1)
+            # Extrapolate Host from URL
+            base_match = re.match(r'(https?://[^/:]+(?::\d+)?)', raw_url)
+            if base_match:
+                base = base_match.group(1)
+                if not any(a.get("type") == "Stalker" and a["base_url"] == base and a.get("mac") == mac for a in extracted):
+                    extracted.append({
+                        "type": "Stalker", 
+                        "base_url": base, 
+                        "mac": mac, 
+                        "username": mac, 
+                        "password": "MAC"
+                    })
+                    
+    logger.info(f"Parsing complete. Extracted {len(extracted)} account configurations.")
     return extracted
 
 async def evaluate_account(client, account):
     """Tier 1: High-speed handshake verification workflow."""
+    if account.get("type", "Xtream") == "Stalker":
+        # Stalker Handshake Workflow
+        target_url = f"{account['base_url']}/c/server/load.php?type=stb&action=handshake&type=itv"
+        logger.info(f"Evaluating Stalker connection status for: {account['base_url']} (MAC: {account['mac']})")
+        
+        # Override headers for Stalker MAG devices
+        stalker_headers = {
+            "User-Agent": "Mozilla/5.0 (QtEmbedded; U; Linux; C) AppleWebKit/533.3 (KHTML, like Gecko) MAG200 stbapp ver: 2 rev: 250 Safari/533.3",
+            "Cookie": f"mac={account['mac']}; stb_lang=en; timezone=Europe/Kiev;",
+            "Accept": "*/*",
+            "Connection": "keep-alive"
+        }
+        
+        try:
+            res = await client.get(target_url, headers=stalker_headers, timeout=6.0)
+            if res.status_code == 404:
+                # Sometimes load.php is placed at the root without /c/
+                target_url = f"{account['base_url']}/server/load.php?type=stb&action=handshake&type=itv"
+                res = await client.get(target_url, headers=stalker_headers, timeout=6.0)
+                
+            if res.status_code == 403:
+                return {**account, "Status": "🛡️ Cloud Blocked (HTTP 403)", "Expires": "N/A", "Days Left": 0, "Max Conn": "N/A", "Active Conn": "N/A", "Channels": "N/A", "VODs": "N/A"}
+            elif res.status_code == 521:
+                return {**account, "Status": "🔴 Offline (Server Dead)", "Expires": "N/A", "Days Left": 0, "Max Conn": "N/A", "Active Conn": "N/A", "Channels": "N/A", "VODs": "N/A"}
+            elif res.status_code != 200:
+                return {**account, "Status": "🛡️ Firewalled / Blocked", "Expires": "N/A", "Days Left": 0, "Max Conn": "N/A", "Active Conn": "N/A", "Channels": "N/A", "VODs": "N/A"}
+                
+            try:
+                data = res.json()
+                if "error" in data or ("js" in data and isinstance(data["js"], dict) and "error" in data["js"]):
+                    return {**account, "Status": "🟡 Expired / Invalid MAC", "Expires": "N/A", "Days Left": 0, "Max Conn": "N/A", "Active Conn": "N/A", "Channels": "N/A", "VODs": "N/A"}
+                
+                # If handshake returns 200 and no blatant error in JSON, consider it potentially active
+                logger.info(f"Stalker Connection active. Host: {account['base_url']}")
+                return {
+                    **account,
+                    "Status": "🟢 Active (Portal Online)",
+                    "Expires": "Unknown",
+                    "Days Left": 9999,
+                    "Max Conn": "N/A",
+                    "Active Conn": "N/A",
+                    "Channels": "N/A",
+                    "VODs": "N/A"
+                }
+            except Exception:
+                # Output might not be standard JSON if blocked by WAF challenge
+                return {**account, "Status": "🛡️ Firewalled / Blocked / Captcha", "Expires": "N/A", "Days Left": 0, "Max Conn": "N/A", "Active Conn": "N/A", "Channels": "N/A", "VODs": "N/A"}
+                
+        except Exception as e:
+            logger.error(f"Failed to connect to Stalker host {account['base_url']}: {str(e)}")
+            return {**account, "Status": "🛡️ Firewalled / Blocked", "Expires": "N/A", "Days Left": 0, "Max Conn": "N/A", "Active Conn": "N/A", "Channels": "N/A", "VODs": "N/A"}
+
+    # Default Xtream Handshake Workflow
     target_url = f"{account['base_url']}/player_api.php?username={account['username']}&password={account['password']}"
     logger.info(f"Evaluating connection status for: {account['base_url']} (User: {account['username']})")
     try:
@@ -249,10 +324,10 @@ if "playlist_results" not in st.session_state:
     st.session_state["playlist_results"] = None
 
 if st.button("Analyze Playlist Nodes", disabled=("UNKNOWN" in current_ip.upper() or current_ip.startswith("DISCONNECTED"))):
-    accounts = parse_m3u_urls(pasted_data)
+    accounts = parse_credentials(pasted_data)
     
     if not accounts:
-        st.warning("No valid Xtream Codes player or server parameters identified. Double-check your formatting input.")
+        st.warning("No valid Xtream Codes or Stalker Portal parameters identified. Double-check your formatting input.")
         st.session_state["playlist_results"] = None
     else:
         st.info(f"Identified {len(accounts)} layout strings. Initializing throttled async handshakes...")
@@ -274,7 +349,7 @@ if st.session_state["playlist_results"] is not None:
     
     display_df = df.copy()
     if show_only_active:
-        display_df = display_df[display_df["Status"] == "🟢 Active"]
+        display_df = display_df[display_df["Status"].str.contains("Active", na=False)]
     
     st.markdown("### 📊 Live Grid Infrastructure Manifest")
     st.dataframe(display_df, use_container_width=True)

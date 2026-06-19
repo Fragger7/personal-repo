@@ -33,11 +33,14 @@ Accidental exposure of a private home IP address during playlist checks can comp
 ### 2. Multi-Tiered Discovery Flow
 
 #### A. Ingestion Parser Engine
-* **Xtream Codes Layout Scanner**: Function [parse_m3u_urls](file:///C:/Development/Apps/Project%20Strong/app.py) uses regex patterns to parse Xtream credentials from unstructured text blocks.
-* **Patterns Supported**: Scans both standard player API layouts (`player_api.php?username=...&password=...`) and standard get fallbacks (`get.php?username=...&password=...`).
+* **Universal Credential Scanner**: Function `parse_credentials` uses regex patterns to parse both Xtream Codes and Stalker Portal credentials from unstructured text blocks.
+* **Patterns Supported**: 
+  * **Xtream Codes**: Scans standard player API layouts (`player_api.php?username=...&password=...`) and target fallbacks (`get.php?...`).
+  * **Stalker Portals**: Scans for standard MAC address sequences (`00:1A:79:...` and others) paired with portal URLs resolving to standard MAG devices.
 
 #### B. Tier 1: Asynchronous Handshake Verification
-* **Endpoint**: Initiates a GET request to the host's `/player_api.php` with credentials.
+* **Endpoint (Xtream)**: Initiates a GET request to the host's `/player_api.php` with username/password credentials.
+* **Endpoint (Stalker)**: Initiates a high-speed handshake to `/server/load.php?type=stb&action=handshake` injecting MAC cookies to test portal accessibility.
 * **HTTP Error & Block Detection**:
   * **HTTP 403**: Mapped to `🛡️ Cloud Blocked (HTTP 403)` to diagnose cloud hosting blocks.
   * **HTTP 521**: Mapped to `🔴 Offline (Server Dead)`.
