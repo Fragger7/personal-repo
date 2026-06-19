@@ -365,7 +365,7 @@ if st.session_state["playlist_results"] is not None:
     st.dataframe(display_df, use_container_width=True)
     
     # Lazy load channel and VOD count data to prevent initial handshake hangs
-    active_accounts = [acc for acc in st.session_state["playlist_results"] if acc.get("Status") == "🟢 Active"]
+    active_accounts = [acc for acc in st.session_state["playlist_results"] if "Active" in acc.get("Status", "") and acc.get("type", "Xtream") == "Xtream"]
     if active_accounts:
         needs_loading = any(acc.get("Channels") == "N/A" for acc in active_accounts)
         if needs_loading:
@@ -415,87 +415,90 @@ if st.session_state["playlist_results"] is not None:
     st.caption("Click individual drawers below to query deep metadata without overloading local threads.")
     
     for idx, row in display_df.iterrows():
-        if row["Status"] == "🟢 Active":
-            with st.expander(f"📁 Explore Structural Library for: {row['base_url']} [User: {row['username']}]"):
-                st.write("📡 Querying target asset classifications sequentially...")
-                
-                # Fetch categories and the full stream list concurrently on visual expander activation
-                # This guarantees that we can calculate counts accurately and perform local filtering
-                st.write("📡 Fetching stream catalogs from IPTV host...")
-                
-                async def fetch_tier2_data():
-                    return await asyncio.gather(
-                        fetch_lazy_details(row['base_url'], row['username'], row['password'], "get_live_categories"),
-                        fetch_lazy_details(row['base_url'], row['username'], row['password'], "get_live_streams"),
-                        return_exceptions=True
-                    )
-                
-                results = asyncio.run(fetch_tier2_data())
-                live_cats, live_streams = results[0], results[1]
-                
-                if isinstance(live_cats, list) and isinstance(live_streams, list):
-                    # Count streams per category locally
-                    cat_counts = {}
-                    for s in live_streams:
-                        cid = str(s.get("category_id"))
-                        cat_counts[cid] = cat_counts.get(cid, 0) + 1
-                    
-                    # Create dropdown options with counts in parentheses
-                    cat_options = []
-                    cat_map = {} # Maps display option back to category dictionary
-                    
-                    for c in live_cats:
-                        cid = str(c.get("category_id"))
-                        name = c.get("category_name", "Unknown")
-                        count = cat_counts.get(cid, 0)
-                        
-                        display_name = f"{name} ({count})"
-                        cat_options.append(display_name)
-                        cat_map[display_name] = c
-                    
-                    st.metric("Live Categories Found", len(live_cats))
-                    if cat_options:
-                        selected_option = st.selectbox(
-                            f"Active Live Packages ({row['username']})", 
-                            options=cat_options, 
-                            key=f"sel_{idx}"
-                        )
-                        
-                        selected_cat = cat_map.get(selected_option)
-                        if selected_cat:
-                            cat_id = str(selected_cat.get("category_id"))
-                            
-                            # Filter streams locally (bypasses server-side filtering bugs)
-                            matching_streams = [s for s in live_streams if str(s.get("category_id")) == cat_id]
-                            
-                            st.write(f"📡 Displaying **{len(matching_streams)}** channels in: **{selected_cat.get('category_name')}**")
-                            
-                            if matching_streams:
-                                # Prepare stream dataframe for display
-                                stream_data = []
-                                for s in matching_streams:
-                                    stream_data.append({
-                                        "Num": s.get("num"),
-                                        "Name": s.get("name"),
-                                        "Stream ID": s.get("stream_id"),
-                                        "Icon": s.get("stream_icon")
-                                    })
-                                
-                                streams_df = pd.DataFrame(stream_data)
-                                
-                                # Render interactive channels grid with logos
-                                st.dataframe(
-                                    streams_df,
-                                    column_config={
-                                        "Icon": st.column_config.ImageColumn("Logo", help="Channel Logo"),
-                                        "Num": st.column_config.NumberColumn("#"),
-                                        "Name": st.column_config.TextColumn("Channel Name"),
-                                        "Stream ID": st.column_config.NumberColumn("Stream ID")
-                                    },
-                                    use_container_width=True,
-                                    hide_index=True
-                                )
-                            else:
-                                st.info("No channels found in this group.")
+        if "Active" in row["Status"]:
+            with st.expander(f"📁 Explore Structural Library for: {row['base_url']} [{row.get('type', 'Xtream')}: {row['username']}]"):
+                if row.get("type", "Xtream") == "Stalker":
+                    st.info("⚠️ **Deep-Dive Discovery is constrained for Stalker Portals.**\n\nStalker Portals (Ministra) use dynamic, MAC-authenticated MAC schemas rather than standard Xtream flat lists. Fetching massive stream categories without full device emulation can trigger security bans on the host. Status verification is complete, but deep channel mining is restricted.")
                 else:
-                    st.text("Payload context restricted or limited by provider container setup.")
+                    st.write("📡 Querying target asset classifications sequentially...")
+                    
+                    # Fetch categories and the full stream list concurrently on visual expander activation
+                    # This guarantees that we can calculate counts accurately and perform local filtering
+                    st.write("📡 Fetching stream catalogs from IPTV host...")
+                    
+                    async def fetch_tier2_data(r):
+                        return await asyncio.gather(
+                            fetch_lazy_details(r['base_url'], r['username'], r['password'], "get_live_categories"),
+                            fetch_lazy_details(r['base_url'], r['username'], r['password'], "get_live_streams"),
+                            return_exceptions=True
+                        )
+                    
+                    results = asyncio.run(fetch_tier2_data(row))
+                    live_cats, live_streams = results[0], results[1]
+                
+                    if isinstance(live_cats, list) and isinstance(live_streams, list):
+                        # Count streams per category locally
+                        cat_counts = {}
+                        for s in live_streams:
+                            cid = str(s.get("category_id"))
+                            cat_counts[cid] = cat_counts.get(cid, 0) + 1
+                        
+                        # Create dropdown options with counts in parentheses
+                        cat_options = []
+                        cat_map = {} # Maps display option back to category dictionary
+                        
+                        for c in live_cats:
+                            cid = str(c.get("category_id"))
+                            name = c.get("category_name", "Unknown")
+                            count = cat_counts.get(cid, 0)
+                            
+                            display_name = f"{name} ({count})"
+                            cat_options.append(display_name)
+                            cat_map[display_name] = c
+                        
+                        st.metric("Live Categories Found", len(live_cats))
+                        if cat_options:
+                            selected_option = st.selectbox(
+                                f"Active Live Packages ({row['username']})", 
+                                options=cat_options, 
+                                key=f"sel_{idx}"
+                            )
+                            
+                            selected_cat = cat_map.get(selected_option)
+                            if selected_cat:
+                                cat_id = str(selected_cat.get("category_id"))
+                                
+                                # Filter streams locally (bypasses server-side filtering bugs)
+                                matching_streams = [s for s in live_streams if str(s.get("category_id")) == cat_id]
+                                
+                                st.write(f"📡 Displaying **{len(matching_streams)}** channels in: **{selected_cat.get('category_name')}**")
+                                
+                                if matching_streams:
+                                    # Prepare stream dataframe for display
+                                    stream_data = []
+                                    for s in matching_streams:
+                                        stream_data.append({
+                                            "Num": s.get("num"),
+                                            "Name": s.get("name"),
+                                            "Stream ID": s.get("stream_id"),
+                                            "Icon": s.get("stream_icon")
+                                        })
+                                    
+                                    streams_df = pd.DataFrame(stream_data)
+                                    
+                                    # Render interactive channels grid with logos
+                                    st.dataframe(
+                                        streams_df,
+                                        column_config={
+                                            "Icon": st.column_config.ImageColumn("Logo", help="Channel Logo"),
+                                            "Num": st.column_config.NumberColumn("#"),
+                                            "Name": st.column_config.TextColumn("Channel Name"),
+                                            "Stream ID": st.column_config.NumberColumn("Stream ID")
+                                        },
+                                        use_container_width=True,
+                                        hide_index=True
+                                    )
+                                else:
+                                    st.info("No channels found in this group.")
+                    else:
+                        st.text("Payload context restricted or limited by provider container setup.")
