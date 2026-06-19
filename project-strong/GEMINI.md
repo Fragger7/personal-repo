@@ -44,6 +44,7 @@ To run the local development server on demand:
 * **Directory Layout**: Mirroring the mono-repo structure, the project is committed under the `project-strong` subdirectory on the `main` branch, alongside sibling folders (e.g., `daily-push`).
 * **Authentication**: Fine-Grained Personal Access Token (PAT) with `Contents: Read and Write` access is used for secure repository pushes.
 * **Commit Procedure**: To prevent overwriting other projects at the root of the repository, updates should be cloned to a temporary directory (`personal-repo-temp`), files copied to `project-strong/`, committed, pushed, and the temporary folder cleaned.
+* **Session Sync Checklist**: At the start of every session, the agent must check the remote repository for updates inside `project-strong/` and synchronize them into the local workspace before editing code.
 
 ---
 
