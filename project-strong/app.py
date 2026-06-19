@@ -116,26 +116,36 @@ def parse_credentials(text_block):
         if not any(a["base_url"] == match[0] and a["username"] == match[1] for a in extracted):
             extracted.append({"type": "Xtream", "base_url": match[0], "username": match[1], "password": match[2]})
 
-    # Stalker Pattern (Line-by-line, look for URL ending in /c/ and MAC address)
+    # Stalker Pattern (Robust State-Machine Parser for Free Text)
+    current_url = None
+    current_mac = None
+
     for line in text_block.splitlines():
-        mac_match = re.search(r'([0-9a-fA-F]{2}(?::[0-9a-fA-F]{2}){5})', line, re.IGNORECASE)
+        # Reset state on empty lines or explicit custom text block separators
+        if not line.strip() or re.search(r'[-=_*#]{4,}|╰─|╭─|┌─|└─|\|', line):
+            current_url = None
+            current_mac = None
+
         url_match = re.search(r'(https?://[^/\s]+(?:/[^/\s]*)?)', line)
-        
-        if mac_match and url_match and ("player_api" not in line and "get.php" not in line):
-            mac = mac_match.group(1).upper()
-            raw_url = url_match.group(1)
-            # Extrapolate Host from URL
-            base_match = re.match(r'(https?://[^/:]+(?::\d+)?)', raw_url)
+        if url_match and "player_api" not in line and "get.php" not in line:
+            base_match = re.match(r'(https?://[^/:]+(?::\d+)?)', url_match.group(1))
             if base_match:
-                base = base_match.group(1)
-                if not any(a.get("type") == "Stalker" and a["base_url"] == base and a.get("mac") == mac for a in extracted):
-                    extracted.append({
-                        "type": "Stalker", 
-                        "base_url": base, 
-                        "mac": mac, 
-                        "username": mac, 
-                        "password": "MAC"
-                    })
+                current_url = base_match.group(1)
+
+        mac_match = re.search(r'([0-9a-fA-F]{2}(?::[0-9a-fA-F]{2}){5})', line, re.IGNORECASE)
+        if mac_match:
+            current_mac = mac_match.group(1).upper()
+
+        if current_url and current_mac:
+            if not any(a.get("type") == "Stalker" and a["base_url"] == current_url and a.get("mac") == current_mac for a in extracted):
+                extracted.append({
+                    "type": "Stalker", 
+                    "base_url": current_url, 
+                    "mac": current_mac, 
+                    "username": current_mac, 
+                    "password": "MAC"
+                })
+            current_mac = None # Clear mac to allow next mac to pair with the same portal
                     
     logger.info(f"Parsing complete. Extracted {len(extracted)} account configurations.")
     return extracted
