@@ -325,193 +325,240 @@ if is_cloud:
 
 st.write("---")
 
-# Data Entry Box
-st.markdown("### 📋 Bulk Ingest Master Links")
+# --- CUSTOM UI / UX STYLING ---
+st.markdown("""
+<style>
+/* Clean dark-mode aesthetic customizations */
+div[data-testid="stTabs"] button {
+    font-size: 1.15rem;
+    font-weight: 600;
+    padding-bottom: 12px;
+}
+div.stButton > button {
+    border-radius: 6px;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+div.stButton > button:hover {
+    border-color: #FF4B4B;
+    color: #FF4B4B;
+}
+.stExpander {
+    border: 1px solid #2e3035 !important;
+    border-radius: 8px !important;
+}
+h1 { font-family: 'Inter', sans-serif; font-weight: 800; }
+</style>
+""", unsafe_allow_html=True)
 
-if "raw_input" not in st.session_state:
-    st.session_state["raw_input"] = ""
+tab_scanner, tab_xtream, tab_stalker, tab_tools = st.tabs([
+    "📡 Multi-Payload Scanner", 
+    "📺 Xtream Code Playlists", 
+    "🛸 Stalker Portals", 
+    "🛠️ Base64 Decoder"
+])
 
-def clear_input():
-    st.session_state["raw_input"] = ""
+with tab_scanner:
+    st.markdown("### 📋 Bulk Ingest Master Links")
 
-col_input, col_clear = st.columns([5, 1])
-with col_clear:
-    st.markdown("<br>", unsafe_allow_html=True) # visual alignment padding
-    st.button("🧹 Clear Input", on_click=clear_input, use_container_width=True)
+    if "raw_input" not in st.session_state:
+        st.session_state["raw_input"] = ""
 
-with col_input:
-    pasted_data = st.text_area("Drop messy text, diagnostic blocks, or standard M3U configurations here:", height=150, key="raw_input", label_visibility="collapsed")
+    def clear_input():
+        st.session_state["raw_input"] = ""
 
-# Initialize session state for analysis results
-if "playlist_results" not in st.session_state:
-    st.session_state["playlist_results"] = None
+    col_input, col_clear = st.columns([5, 1])
+    with col_clear:
+        st.markdown("<br>", unsafe_allow_html=True) # visual alignment padding
+        st.button("🧹 Clear Input", on_click=clear_input, key="clear_btn", use_container_width=True)
 
-if st.button("Analyze Playlist Nodes", disabled=("UNKNOWN" in current_ip.upper() or current_ip.startswith("DISCONNECTED"))):
-    accounts = parse_credentials(pasted_data)
-    
-    if not accounts:
-        st.warning("No valid Xtream Codes or Stalker Portal parameters identified. Double-check your formatting input.")
+    with col_input:
+        pasted_data = st.text_area("Drop messy text, diagnostic blocks, or standard M3U configurations here:", height=150, key="raw_input", label_visibility="collapsed")
+
+    # Initialize session state for analysis results
+    if "playlist_results" not in st.session_state:
         st.session_state["playlist_results"] = None
-    else:
-        st.info(f"Identified {len(accounts)} layout strings. Initializing throttled async handshakes...")
+
+    if st.button("🚀 Analyze Playlist Nodes", type="primary", disabled=("UNKNOWN" in current_ip.upper() or current_ip.startswith("DISCONNECTED"))):
+        accounts = parse_credentials(pasted_data)
         
-        async def process_batch():
-            async with httpx.AsyncClient(headers=EVASION_HEADERS, verify=False) as client:
-                tasks = [evaluate_account(client, acc) for acc in accounts]
-                return await asyncio.gather(*tasks)
-                
-        results = asyncio.run(process_batch())
-        st.session_state["playlist_results"] = results
+        if not accounts:
+            st.warning("No valid Xtream Codes or Stalker Portal parameters identified. Double-check your formatting input.")
+            st.session_state["playlist_results"] = None
+        else:
+            st.info(f"Identified {len(accounts)} layout strings. Initializing throttled async handshakes...")
+            
+            async def process_batch():
+                async with httpx.AsyncClient(headers=EVASION_HEADERS, verify=False) as client:
+                    tasks = [evaluate_account(client, acc) for acc in accounts]
+                    return await asyncio.gather(*tasks)
+                    
+            results = asyncio.run(process_batch())
+            st.session_state["playlist_results"] = results
+            st.rerun()
+
+# Empty states for tabs before scan
+if st.session_state["playlist_results"] is None:
+    with tab_xtream:
+        st.info("👈 Please execute a scan in the 'Multi-Payload Scanner' tab to populate this dashboard.")
+    with tab_stalker:
+        st.info("👈 Please execute a scan in the 'Multi-Payload Scanner' tab to populate this dashboard.")
+    with tab_tools:
+        st.markdown("### 🛠️ Developer Utilities (Base 64)")
+        st.info("Under Construction. Utilities like Base64 decryption will be placed here to handle highly obfuscated layouts before bringing into the Multi-Payload Scanner.")
 
 # Render results from session state if they exist
 if st.session_state["playlist_results"] is not None:
     df = pd.DataFrame(st.session_state["playlist_results"])
     
-    # 1. Filter checkbox toggle
-    show_only_active = st.checkbox("Show only Active Connections", value=False)
+    xtream_df = df[df["type"] == "Xtream"]
+    stalker_df = df[df["type"] == "Stalker"]
     
-    display_df = df.copy()
-    if show_only_active:
-        display_df = display_df[display_df["Status"].str.contains("Active", na=False)]
-    
-    st.markdown("### 📊 Live Grid Infrastructure Manifest")
-    st.dataframe(display_df, use_container_width=True)
-    
-    # Lazy load channel and VOD count data to prevent initial handshake hangs
-    active_accounts = [acc for acc in st.session_state["playlist_results"] if "Active" in acc.get("Status", "") and acc.get("type", "Xtream") == "Xtream"]
-    if active_accounts:
-        needs_loading = any(acc.get("Channels") == "N/A" for acc in active_accounts)
-        if needs_loading:
-            if st.button("📊 Query Channels & VOD Counts (Active Only)"):
-                with st.spinner("Downloading active server catalogs (this might take a few seconds)..."):
-                    async def load_counts():
-                        async with httpx.AsyncClient(headers=EVASION_HEADERS, verify=False) as client:
-                            async def fetch_counts(acc):
-                                channels_count = 0
-                                vod_count = 0
-                                try:
-                                    logger.info(f"Downloading stream sizes for active node: {acc['base_url']}")
-                                    live_url = f"{acc['base_url']}/player_api.php?username={acc['username']}&password={acc['password']}&action=get_live_streams"
-                                    vod_url = f"{acc['base_url']}/player_api.php?username={acc['username']}&password={acc['password']}&action=get_vod_streams"
-                                    
-                                    live_res, vod_res = await asyncio.gather(
-                                        client.get(live_url, timeout=7.0),
-                                        client.get(vod_url, timeout=7.0),
-                                        return_exceptions=True
-                                    )
-                                    if not isinstance(live_res, Exception) and live_res.status_code == 200:
-                                        live_data = live_res.json()
-                                        if isinstance(live_data, list):
-                                            channels_count = len(live_data)
-                                    if not isinstance(vod_res, Exception) and vod_res.status_code == 200:
-                                        vod_data = vod_res.json()
-                                        if isinstance(vod_data, list):
-                                            vod_count = len(vod_data)
-                                    logger.info(f"Successfully counted libraries for {acc['base_url']} - Channels: {channels_count} | VODs: {vod_count}")
-                                except Exception as e:
-                                    logger.error(f"Failed to query sizing stats for {acc['base_url']}: {str(e)}")
-                                    pass
+    with tab_xtream:
+        st.markdown("### 📺 Xtream Codes Manifest")
+        if xtream_df.empty:
+            st.info("No Xtream Codes accounts discovered in the recent scan.")
+        else:
+            col_filter, col_counts = st.columns([1, 1])
+            with col_filter:
+                show_only_active_x = st.checkbox("Show only Active Connections", value=False, key="xtream_active")
+            
+            display_xtream = xtream_df.copy()
+            if show_only_active_x:
+                display_xtream = display_xtream[display_xtream["Status"].str.contains("Active", na=False)]
+            
+            st.dataframe(display_xtream, use_container_width=True)
+            
+            active_x = [acc for acc in st.session_state["playlist_results"] if "Active" in acc.get("Status", "") and acc.get("type", "Xtream") == "Xtream"]
+            if active_x:
+                needs_loading = any(acc.get("Channels") == "N/A" for acc in active_x)
+                if needs_loading:
+                    with col_counts:
+                        if st.button("📊 Query Channels & VOD Counts", use_container_width=True):
+                            with st.spinner("Downloading active server catalogs (this might take a few seconds)..."):
+                                async def load_counts():
+                                    async with httpx.AsyncClient(headers=EVASION_HEADERS, verify=False) as client:
+                                        async def fetch_counts(acc):
+                                            channels_count = 0
+                                            vod_count = 0
+                                            try:
+                                                logger.info(f"Downloading stream sizes for active node: {acc['base_url']}")
+                                                live_url = f"{acc['base_url']}/player_api.php?username={acc['username']}&password={acc['password']}&action=get_live_streams"
+                                                vod_url = f"{acc['base_url']}/player_api.php?username={acc['username']}&password={acc['password']}&action=get_vod_streams"
+                                                
+                                                live_res, vod_res = await asyncio.gather(
+                                                    client.get(live_url, timeout=7.0),
+                                                    client.get(vod_url, timeout=7.0),
+                                                    return_exceptions=True
+                                                )
+                                                if not isinstance(live_res, Exception) and live_res.status_code == 200:
+                                                    live_data = live_res.json()
+                                                    if isinstance(live_data, list):
+                                                        channels_count = len(live_data)
+                                                if not isinstance(vod_res, Exception) and vod_res.status_code == 200:
+                                                    vod_data = vod_res.json()
+                                                    if isinstance(vod_data, list):
+                                                        vod_count = len(vod_data)
+                                            except Exception as e:
+                                                pass
+                                            acc["Channels"] = channels_count
+                                            acc["VODs"] = vod_count
+                                        
+                                        tasks = [fetch_counts(acc) for acc in active_x]
+                                        await asyncio.gather(*tasks)
                                 
-                                acc["Channels"] = channels_count
-                                acc["VODs"] = vod_count
-                            
-                            tasks = [fetch_counts(acc) for acc in active_accounts]
-                            await asyncio.gather(*tasks)
-                    
-                    asyncio.run(load_counts())
-                    st.success("Library counts loaded successfully!")
-                    st.rerun()
-    
-    # --- TIER 2 LAZY LOADING ACCORDIONS ---
-    st.write("---")
-    st.markdown("### 🔍 On-Demand Deep-Dive Discovery")
-    st.caption("Click individual drawers below to query deep metadata without overloading local threads.")
-    
-    for idx, row in display_df.iterrows():
-        if "Active" in row["Status"]:
-            with st.expander(f"📁 Explore Structural Library for: {row['base_url']} [{row.get('type', 'Xtream')}: {row['username']}]"):
-                if row.get("type", "Xtream") == "Stalker":
-                    st.info("⚠️ **Deep-Dive Discovery is constrained for Stalker Portals.**\n\nStalker Portals (Ministra) use dynamic, MAC-authenticated MAC schemas rather than standard Xtream flat lists. Fetching massive stream categories without full device emulation can trigger security bans on the host. Status verification is complete, but deep channel mining is restricted.")
-                else:
-                    st.write("📡 Querying target asset classifications sequentially...")
-                    
-                    # Fetch categories and the full stream list concurrently on visual expander activation
-                    # This guarantees that we can calculate counts accurately and perform local filtering
-                    st.write("📡 Fetching stream catalogs from IPTV host...")
-                    
-                    async def fetch_tier2_data(r):
-                        return await asyncio.gather(
-                            fetch_lazy_details(r['base_url'], r['username'], r['password'], "get_live_categories"),
-                            fetch_lazy_details(r['base_url'], r['username'], r['password'], "get_live_streams"),
-                            return_exceptions=True
-                        )
-                    
-                    results = asyncio.run(fetch_tier2_data(row))
-                    live_cats, live_streams = results[0], results[1]
-                
-                    if isinstance(live_cats, list) and isinstance(live_streams, list):
-                        # Count streams per category locally
-                        cat_counts = {}
-                        for s in live_streams:
-                            cid = str(s.get("category_id"))
-                            cat_counts[cid] = cat_counts.get(cid, 0) + 1
+                                asyncio.run(load_counts())
+                                st.rerun()
+
+            st.write("---")
+            st.markdown("### 📋 Copy Quick Connects & Deep-Dive")
+            st.caption("Pre-formatted blocks ready to copy and paste into IPTV clients.")
+            
+            for idx, row in display_xtream.iterrows():
+                if "Active" in row["Status"]:
+                    with st.expander(f"🟢 Explore Structural Library for: {row['base_url']} [User: {row['username']}]"):
+                        st.code(f"Host: {row['base_url']}\nUsername: {row['username']}\nPassword: {row['password']}", language="text")
                         
-                        # Create dropdown options with counts in parentheses
-                        cat_options = []
-                        cat_map = {} # Maps display option back to category dictionary
+                        st.write("📡 Fetching stream catalogs from IPTV host...")
                         
-                        for c in live_cats:
-                            cid = str(c.get("category_id"))
-                            name = c.get("category_name", "Unknown")
-                            count = cat_counts.get(cid, 0)
-                            
-                            display_name = f"{name} ({count})"
-                            cat_options.append(display_name)
-                            cat_map[display_name] = c
-                        
-                        st.metric("Live Categories Found", len(live_cats))
-                        if cat_options:
-                            selected_option = st.selectbox(
-                                f"Active Live Packages ({row['username']})", 
-                                options=cat_options, 
-                                key=f"sel_{idx}"
+                        async def fetch_tier2_data(r):
+                            return await asyncio.gather(
+                                fetch_lazy_details(r['base_url'], r['username'], r['password'], "get_live_categories"),
+                                fetch_lazy_details(r['base_url'], r['username'], r['password'], "get_live_streams"),
+                                return_exceptions=True
                             )
+                        
+                        results = asyncio.run(fetch_tier2_data(row))
+                        live_cats, live_streams = results[0], results[1]
+                    
+                        if isinstance(live_cats, list) and isinstance(live_streams, list):
+                            cat_counts = {}
+                            for s in live_streams:
+                                cid = str(s.get("category_id"))
+                                cat_counts[cid] = cat_counts.get(cid, 0) + 1
                             
-                            selected_cat = cat_map.get(selected_option)
-                            if selected_cat:
-                                cat_id = str(selected_cat.get("category_id"))
-                                
-                                # Filter streams locally (bypasses server-side filtering bugs)
-                                matching_streams = [s for s in live_streams if str(s.get("category_id")) == cat_id]
-                                
-                                st.write(f"📡 Displaying **{len(matching_streams)}** channels in: **{selected_cat.get('category_name')}**")
-                                
-                                if matching_streams:
-                                    # Prepare stream dataframe for display
-                                    stream_data = []
-                                    for s in matching_streams:
-                                        stream_data.append({
-                                            "Num": s.get("num"),
-                                            "Name": s.get("name"),
-                                            "Stream ID": s.get("stream_id"),
-                                            "Icon": s.get("stream_icon")
-                                        })
+                            cat_options = []
+                            cat_map = {}
+                            
+                            for c in live_cats:
+                                cid = str(c.get("category_id"))
+                                name = c.get("category_name", "Unknown")
+                                count = cat_counts.get(cid, 0)
+                                display_name = f"{name} ({count})"
+                                cat_options.append(display_name)
+                                cat_map[display_name] = c
+                            
+                            st.metric("Live Categories Found", len(live_cats))
+                            if cat_options:
+                                selected_option = st.selectbox(
+                                    f"Active Live Packages ({row['username']})", 
+                                    options=cat_options, 
+                                    key=f"sel_x_{idx}"
+                                )
+                                selected_cat = cat_map.get(selected_option)
+                                if selected_cat:
+                                    cat_id = str(selected_cat.get("category_id"))
+                                    matching_streams = [s for s in live_streams if str(s.get("category_id")) == cat_id]
                                     
-                                    streams_df = pd.DataFrame(stream_data)
-                                    
-                                    # Render interactive channels grid with logos
-                                    st.dataframe(
-                                        streams_df,
-                                        column_config={
-                                            "Icon": st.column_config.ImageColumn("Logo", help="Channel Logo"),
-                                            "Num": st.column_config.NumberColumn("#"),
-                                            "Name": st.column_config.TextColumn("Channel Name"),
-                                            "Stream ID": st.column_config.NumberColumn("Stream ID")
-                                        },
-                                        use_container_width=True,
-                                        hide_index=True
-                                    )
-                                else:
-                                    st.info("No channels found in this group.")
-                    else:
-                        st.text("Payload context restricted or limited by provider container setup.")
+                                    st.write(f"📡 Displaying **{len(matching_streams)}** channels in: **{selected_cat.get('category_name')}**")
+                                    if matching_streams:
+                                        stream_data = [{"Num": s.get("num"), "Name": s.get("name"), "Stream ID": s.get("stream_id"), "Icon": s.get("stream_icon")} for s in matching_streams]
+                                        st.dataframe(
+                                            pd.DataFrame(stream_data),
+                                            column_config={
+                                                "Icon": st.column_config.ImageColumn("Logo", help="Channel Logo"),
+                                                "Num": st.column_config.NumberColumn("#"),
+                                                "Name": st.column_config.TextColumn("Channel Name"),
+                                                "Stream ID": st.column_config.NumberColumn("Stream ID")
+                                            },
+                                            use_container_width=True, hide_index=True
+                                        )
+                                    else:
+                                        st.info("No channels found in this group.")
+                        else:
+                            st.text("Payload context restricted or limited by provider container setup.")
+
+    with tab_stalker:
+        st.markdown("### 🛸 Stalker Portals Manifest")
+        if stalker_df.empty:
+            st.info("No Stalker accounts discovered in the recent scan.")
+        else:
+            show_only_active_s = st.checkbox("Show only Active Connections", value=False, key="stalker_active")
+            
+            display_stalker = stalker_df.copy()
+            if show_only_active_s:
+                display_stalker = display_stalker[display_stalker["Status"].str.contains("Active", na=False)]
+            
+            st.dataframe(display_stalker, use_container_width=True)
+            
+            st.write("---")
+            st.markdown("### 📋 Copy Quick Connects")
+            for idx, row in display_stalker.iterrows():
+                if "Active" in row["Status"]:
+                    with st.expander(f"🟢 {row['base_url']} - MAC: {row['mac']}"):
+                        st.code(f"Portal URL: {row['base_url']}\nMAC Address: {row['mac']}", language="text")
+                        st.info("⚠️ **Deep-Dive Discovery is constrained for Stalker Portals.**\n\nStalker Portals (Ministra) use dynamic, MAC-authenticated MAC schemas rather than standard Xtream flat lists. Fetching massive stream categories without full device emulation can trigger security bans on the host. Status verification is complete, but deep channel mining is restricted.")
+
+    with tab_tools:
+        st.markdown("### 🛠️ Developer Utilities (Base 64)")
+        st.info("Under Construction. Utilities like Base64 decryption will be placed here to handle highly obfuscated layouts before bringing into the Multi-Payload Scanner.")
