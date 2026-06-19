@@ -5,6 +5,7 @@ import re
 import pandas as pd
 import logging
 from datetime import datetime
+import base64
 
 # --- LOGGING CONFIGURATION ---
 logging.basicConfig(
@@ -351,12 +352,43 @@ h1 { font-family: 'Inter', sans-serif; font-weight: 800; }
 </style>
 """, unsafe_allow_html=True)
 
-tab_scanner, tab_xtream, tab_stalker, tab_tools = st.tabs([
+tab_tools, tab_scanner, tab_xtream, tab_stalker = st.tabs([
+    "🛠️ Base64 Decoder",
     "📡 Multi-Payload Scanner", 
     "📺 Xtream Code Playlists", 
-    "🛸 Stalker Portals", 
-    "🛠️ Base64 Decoder"
+    "🛸 Stalker Portals"
 ])
+
+with tab_tools:
+    st.markdown("### 🛠️ Base64 Encoding & Decoding Operations")
+    st.caption("Quickly extract hidden URLs or encapsulate data payloads before processing.")
+    
+    b64_action = st.radio("Select Operation:", ["Decode (Base64 -> Text)", "Encode (Text -> Base64)"], horizontal=True)
+    b64_input = st.text_area("Input Payload:", height=150, key="b64_input", label_visibility="collapsed")
+    
+    if st.button("🔄 Translate Payload", use_container_width=True):
+        if not b64_input.strip():
+            st.warning("Please provide input text to process.")
+        else:
+            try:
+                if "Decode" in b64_action:
+                    # Attempt to fix padding if missing
+                    pad = len(b64_input.strip()) % 4
+                    padded = b64_input.strip() + "=" * ((4 - pad) if pad else 0)
+                    result = base64.b64decode(padded).decode('utf-8', errors='replace')
+                    st.success("Successfully decoded. (Use the copy button in the top right of the code block below)")
+                else:
+                    result = base64.b64encode(b64_input.encode('utf-8')).decode('utf-8')
+                    st.success("Successfully encoded. (Use the copy button in the top right of the code block below)")
+                    
+                st.code(result, language="text")
+                
+                # If it's a URL, give a link button
+                if result.strip().startswith("http://") or result.strip().startswith("https://"):
+                    st.link_button("🌐 Launch Converted URL in New Tab", result.strip())
+                    
+            except Exception as e:
+                st.error(f"Failed to process payload: {str(e)}")
 
 with tab_scanner:
     st.markdown("### 📋 Bulk Ingest Master Links")
@@ -403,9 +435,6 @@ if st.session_state["playlist_results"] is None:
         st.info("👈 Please execute a scan in the 'Multi-Payload Scanner' tab to populate this dashboard.")
     with tab_stalker:
         st.info("👈 Please execute a scan in the 'Multi-Payload Scanner' tab to populate this dashboard.")
-    with tab_tools:
-        st.markdown("### 🛠️ Developer Utilities (Base 64)")
-        st.info("Under Construction. Utilities like Base64 decryption will be placed here to handle highly obfuscated layouts before bringing into the Multi-Payload Scanner.")
 
 # Render results from session state if they exist
 if st.session_state["playlist_results"] is not None:
@@ -559,6 +588,3 @@ if st.session_state["playlist_results"] is not None:
                         st.code(f"Portal URL: {row['base_url']}\nMAC Address: {row['mac']}", language="text")
                         st.info("⚠️ **Deep-Dive Discovery is constrained for Stalker Portals.**\n\nStalker Portals (Ministra) use dynamic, MAC-authenticated MAC schemas rather than standard Xtream flat lists. Fetching massive stream categories without full device emulation can trigger security bans on the host. Status verification is complete, but deep channel mining is restricted.")
 
-    with tab_tools:
-        st.markdown("### 🛠️ Developer Utilities (Base 64)")
-        st.info("Under Construction. Utilities like Base64 decryption will be placed here to handle highly obfuscated layouts before bringing into the Multi-Payload Scanner.")
