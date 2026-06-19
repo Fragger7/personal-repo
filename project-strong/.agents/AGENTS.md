@@ -68,3 +68,19 @@ This project is committed under the `project-strong/` folder of a mono-repo. **N
 * **Do NOT Hardcode Secrets**: Never commit access passwords, API keys, or raw credentials to the repository. Use `st.secrets["ACCESS_PASSWORD"]` for verification.
 * **Keep Throttling Disabled**: The concurrency throttling (semaphores) has been removed at the user's instruction. Keep queries unthrottled but lazy-loaded (Tiers 1 and 2) to preserve user-experience speeds.
 * **Preserve Logging**: Keep standard `logging` prints going to stdout so live diagnostics can be read inside Streamlit's dashboard logs.
+
+---
+
+## 🛑 Rule 5: Google AI Studio Cloud Workspace Compatibility (Docker/Linux Container)
+When this repository is loaded or cloned into a **Google AI Studio Cloud Run development workspace** (or any temporary Linux container):
+1. **Host Environment**: Commands are executed directly in a Linux shell, meaning standard commands like `git` and `node` are natively available (do not use the Windows absolute paths).
+2. **React Control Panel**: A React-Vite visual shell is configured at the workspace root (`/index.html`, `/src`, etc.) to provide an interactive dashboard summarizing the active sync files, setup configurations, and push triggers.
+3. **Automated Secure Push**: A specialized node script `git_push.cjs` is included at the workspace root to automate the isolated mono-repo commit and push process safely.
+4. **Authorizing Pushes**:
+   - The user must provide a secure `GITHUB_TOKEN` as a Secret/Environment variable in the AI Studio Settings.
+   - Run the automated sync & push script from the workstation terminal using:
+     ```bash
+     npx tsx git_push.cjs
+     ```
+   - This script creates a temporary clone, stages only modifications inside `project-strong/`, commits, pushes back to GitHub, and cleans up completely without breaking the production branch.
+

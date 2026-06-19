@@ -133,3 +133,19 @@ cd "C:\Development\Apps\Project Strong\personal-repo-temp"
 # Step 4: Clean up temporary folder
 Remove-Item -Recurse -Force "C:\Development\Apps\Project Strong\personal-repo-temp"
 ```
+
+---
+
+## 🌩️ Google AI Studio Cloud Container Architecture
+For developers and AI agents running within serverless container workspaces (e.g., Google AI Studio):
+
+* **Workspace Control Center**: A React-Vite visual shell is set up at the sandbox root to track tracked files, config status, and credentials.
+* **Automated Sync & Push Script (`git_push.cjs`)**: An automated Javascript script is placed in the workspace root to carry out standard Git publishes non-interactively.
+* **To Sync & Push on AI Studio**:
+  1. Add a `GITHUB_TOKEN` secret in the Google AI Studio Settings menu.
+  2. Execute the commit utility script:
+     ```bash
+     npx tsx git_push.cjs
+     ```
+  3. The utility performs isolated staging of only files in `project-strong/`, configures metadata safely, pushes, and executes total cleanup.
+
