@@ -927,6 +927,23 @@ export default function App() {
     const avgPushups = activeDays ? Math.round(grossPushups / activeDays) : 0;
     const avgCrunches = activeDays ? Math.round(grossCrunches / activeDays) : 0;
 
+    // Check if the streak is still active today
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, "0");
+    const dd = String(today.getDate()).padStart(2, "0");
+    const todayStr = `${yyyy}-${mm}-${dd}`;
+    const todayObj = new Date(todayStr + "T00:00:00Z");
+
+    let activeStreak = currentStreak;
+    if (prevDateObj) {
+      const diffTime = todayObj.getTime() - prevDateObj.getTime();
+      const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+      if (diffDays > 1) {
+        activeStreak = 0;
+      }
+    }
+
     return {
       grossPushups: grossPushups.toLocaleString(),
       grossCrunches: grossCrunches.toLocaleString(),
@@ -938,6 +955,7 @@ export default function App() {
       maxCrunchesInDay,
       maxCombinedInDay,
       longestStreak,
+      currentStreak: activeStreak,
     };
   };
 
@@ -1326,7 +1344,7 @@ export default function App() {
         {/* Personal Records panel */}
         <motion.div 
           initial="hidden" whileInView="show" viewport={{ once: true, amount: 0.05 }} variants={{ hidden: { opacity: 0, y: 40, scale: 0.96 }, show: { opacity: 1, y: 0, scale: 1, transition: { type: "spring", stiffness: 320, damping: 26 } } }}
-          className="xl:col-span-12 grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-3"
+          className="xl:col-span-12 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-3"
         >
           <div className="p-4 bg-white/70 dark:bg-card-dark/70 rounded-3xl border border-slate-200 dark:border-white/10 flex flex-col justify-center relative overflow-hidden group hover:border-brand-primary/30 transition-all shadow-xl shadow-slate-200/50 dark:shadow-black/40 backdrop-blur-3xl lg:col-span-1">
             <div className="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition-opacity">
@@ -1396,6 +1414,21 @@ export default function App() {
             </span>
             <span className="text-[9px] text-slate-500 font-mono mt-0.5">
               {kpis.maxCombinedInDay.date || "--"}
+            </span>
+          </div>
+        <div className="p-4 bg-white/70 dark:bg-card-dark/70 rounded-3xl border border-slate-200 dark:border-white/10 flex flex-col justify-center relative overflow-hidden group hover:border-orange-500/30 transition-all shadow-xl shadow-slate-200/50 dark:shadow-black/40 backdrop-blur-3xl lg:col-span-1">
+            <div className="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition-opacity">
+              <Sparkles size={24} />
+            </div>
+            <span className="text-[8px] font-bold text-slate-500 uppercase tracking-widest font-mono">
+              Current Streak
+            </span>
+            <span className="text-xl font-bold text-orange-400 font-sans leading-none mt-1">
+              {kpis.currentStreak}{" "}
+              <span className="text-[12px] text-orange-400/50">DAYS</span>
+            </span>
+            <span className="text-[9px] text-slate-500 font-mono mt-0.5">
+              {kpis.currentStreak > 0 ? "Active" : "None"}
             </span>
           </div>
           <div className="p-4 bg-white/70 dark:bg-card-dark/70 rounded-3xl border border-slate-200 dark:border-white/10 flex flex-col justify-center relative overflow-hidden group hover:border-orange-500/30 transition-all shadow-xl shadow-slate-200/50 dark:shadow-black/40 backdrop-blur-3xl lg:col-span-1">
