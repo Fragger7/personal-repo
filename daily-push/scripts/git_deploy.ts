@@ -75,7 +75,8 @@ try {
     "manifest.json",
     ".env.example",
     "sw.js",
-    "server.ts"
+    "server.ts",
+    "AGENTS.md"
   ];
 
   for (const folder of sourceFoldersToSync) {
