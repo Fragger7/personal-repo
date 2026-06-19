@@ -327,7 +327,20 @@ st.write("---")
 
 # Data Entry Box
 st.markdown("### 📋 Bulk Ingest Master Links")
-pasted_data = st.text_area("Drop messy text, diagnostic blocks, or standard M3U configurations here:", height=150)
+
+if "raw_input" not in st.session_state:
+    st.session_state["raw_input"] = ""
+
+def clear_input():
+    st.session_state["raw_input"] = ""
+
+col_input, col_clear = st.columns([5, 1])
+with col_clear:
+    st.markdown("<br>", unsafe_allow_html=True) # visual alignment padding
+    st.button("🧹 Clear Input", on_click=clear_input, use_container_width=True)
+
+with col_input:
+    pasted_data = st.text_area("Drop messy text, diagnostic blocks, or standard M3U configurations here:", height=150, key="raw_input", label_visibility="collapsed")
 
 # Initialize session state for analysis results
 if "playlist_results" not in st.session_state:

@@ -36,11 +36,11 @@ Accidental exposure of a private home IP address during playlist checks can comp
 * **Universal Credential Scanner**: Function `parse_credentials` uses regex patterns to parse both Xtream Codes and Stalker Portal credentials from unstructured text blocks.
 * **Patterns Supported**: 
   * **Xtream Codes**: Scans standard player API layouts (`player_api.php?username=...&password=...`) and target fallbacks (`get.php?...`).
-  * **Stalker Portals**: Scans for standard MAC address sequences (`00:1A:79:...` and others) paired with portal URLs resolving to standard MAG devices.
+  * **Stalker Portals**: Employs a robust state-machine parser to isolate disparate MAC addresses and Host URLs connected via unstructured block fragments or custom scanner headers without failing due to whitespace and formatting breaks.
 
 #### B. Tier 1: Asynchronous Handshake Verification
 * **Endpoint (Xtream)**: Initiates a GET request to the host's `/player_api.php` with username/password credentials.
-* **Endpoint (Stalker)**: Initiates a high-speed handshake to `/server/load.php?type=stb&action=handshake` injecting MAC cookies to test portal accessibility.
+* **Endpoint (Stalker)**: Initiates a high-speed handshake to `/server/load.php?type=stb&action=handshake` injecting MAC cookies and custom User-Agents (e.g., MAG200) to test portal accessibility.
 * **HTTP Error & Block Detection**:
   * **HTTP 403**: Mapped to `🛡️ Cloud Blocked (HTTP 403)` to diagnose cloud hosting blocks.
   * **HTTP 521**: Mapped to `🔴 Offline (Server Dead)`.
@@ -48,9 +48,10 @@ Accidental exposure of a private home IP address during playlist checks can comp
   * **Unauthorized Text body**: Mapped to `🟡 Expired / Invalid`.
 * **Catalog Stats Lazy Load**: Handshake results are stored in `st.session_state["playlist_results"]`. Overall channel and VOD catalog counts are lazy-loaded on demand via a **"Query Channels & VOD Counts"** button to optimize execution speeds.
 
-#### C. Tier 2: Local Category Explorer
-* **On-Demand Accordions**: Activating an expander for an active node spawns concurrent async tasks via [fetch_lazy_details](file:///C:/Development/Apps/Project%20Strong/app.py) to fetch `get_live_categories` and `get_live_streams` data.
-* **Server-Side Bypass**: Filters and counts category channels locally rather than requesting pre-filtered category URLs from the server, bypassing buggy IPTV endpoints and ensuring accurate listings with correct logos.
+#### C. Tier 2: Local Category Explorer & Stalker Constraints
+* **On-Demand Accordions**: Activating an expander for an active node spawns concurrent async tasks via fetch_lazy_details to fetch `get_live_categories` and `get_live_streams` data.
+* **Server-Side Bypass (Xtream)**: Filters and counts category channels locally rather than requesting pre-filtered category URLs from the server, bypassing buggy endpoints and ensuring accurate listings with correct logos.
+* **Stalker Limits (Ministra Framework)**: Deep-dive channel classification and VOD grid streaming is structurally blocked for Stalker Portals due to the requirements of the MAC-driven authentication payload dynamically expiring. Deep-dive discovery is explicitly restricted from accessing these nodes to avoid triggering the target server's firewall banning mechanisms. The dashboard will inform the provider.
 
 ### 3. Application Efficiency & UI Optimizations
 * **State Caching (st.cache_data)**: The application utilizes Streamlit's data caching (`@st.cache_data(ttl=300)`) strictly to cache outbound verification blocks (e.g. `ip-api.com`). This is absolutely critical because Streamlit executes top-to-bottom on every user interaction (clicks, toggles) which will otherwise rapidly hammer public rate-limited limits (45 reqs/min for ip-api.com) when navigating libraries.
