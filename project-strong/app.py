@@ -19,6 +19,41 @@ logger = logging.getLogger("iptv_analytics")
 # --- CONFIGURATION & CONSTANTS ---
 st.set_page_config(page_title="IPTV Playlist Analytics", layout="wide", page_icon="🕵️‍♂️")
 
+# --- SECURE ACCESS CHECK ---
+def check_password():
+    """Returns `True` if the user entered the correct password, or if no password is configured."""
+    if "ACCESS_PASSWORD" not in st.secrets:
+        return True
+
+    def password_entered():
+        """Checks whether a password entered by the user is correct."""
+        if st.session_state["password"] == st.secrets["ACCESS_PASSWORD"]:
+            st.session_state["password_correct"] = True
+            del st.session_state["password"]  # don't store password in session state
+        else:
+            st.session_state["password_correct"] = False
+
+    if "password_correct" not in st.session_state:
+        # First run, show input for password.
+        st.text_input(
+            "Enter Access Password", type="password", on_change=password_entered, key="password"
+        )
+        st.info("🔒 Secure Access Enabled. Please enter the password to unlock the dashboard.")
+        return False
+    elif not st.session_state["password_correct"]:
+        # Password incorrect, show input + error.
+        st.text_input(
+            "Enter Access Password", type="password", on_change=password_entered, key="password"
+        )
+        st.error("😕 Password incorrect. Please try again.")
+        return False
+    else:
+        # Password correct.
+        return True
+
+if not check_password():
+    st.stop()
+
 EVASION_HEADERS = {
     "User-Agent": "IPTVSmartersPro",
     "Accept": "*/*",
@@ -27,16 +62,43 @@ EVASION_HEADERS = {
 
 # --- HELPER FUNCTIONS ---
 async def check_network_shield(client):
-    """Pings a public utility to track outbound IP verification."""
+    """Pings a public utility to track outbound IP verification and geolocate ISP details."""
     logger.info("Verifying outbound network shield status...")
     try:
-        res = await client.get("https://api.ipify.org?format=json", timeout=3.0)
-        ip = res.json().get("ip", "Unknown")
-        logger.info(f"Outbound shield verification successful. Verified IP: {ip}")
-        return ip
+        # ip-api.com returns IP, ISP, Org, and Country information
+        res = await client.get("http://ip-api.com/json/", timeout=4.0)
+        if res.status_code == 200:
+            data = res.json()
+            ip = data.get("query", "Unknown")
+            isp = data.get("isp", "Unknown")
+            org = data.get("org", "Unknown")
+            country = data.get("country", "Unknown")
+            logger.info(f"Outbound shield verification successful. Verified IP: {ip} | ISP: {isp} | Org: {org}")
+            return {
+                "ip": ip,
+                "isp": isp,
+                "org": org,
+                "country": country,
+                "status": "success"
+            }
+        else:
+            logger.warning(f"IP geolocation API returned status: {res.status_code}")
+            return {
+                "ip": "Unknown",
+                "isp": "Unknown",
+                "org": "Unknown",
+                "country": "Unknown",
+                "status": f"HTTP {res.status_code}"
+            }
     except Exception as e:
         logger.warning(f"Outbound shield check failed. Network may be unprotected or disconnected: {str(e)}")
-        return "DISCONNECTED / UNKNOWN"
+        return {
+            "ip": "DISCONNECTED / UNKNOWN",
+            "isp": "Unknown",
+            "org": "Unknown",
+            "country": "Unknown",
+            "status": "failed"
+        }
 
 def parse_m3u_urls(text_block):
     """Uses regex to isolate Host, Port, Username, and Password from messy strings."""
@@ -62,6 +124,17 @@ async def evaluate_account(client, account):
     logger.info(f"Evaluating connection status for: {account['base_url']} (User: {account['username']})")
     try:
         res = await client.get(target_url, timeout=6.0)
+        
+        # Check HTTP Status Code first to handle firewall/cloud blockades explicitly
+        if res.status_code == 403:
+            logger.warning(f"Cloud Blocked (HTTP 403) for: {account['base_url']}")
+            return {**account, "Status": "🛡️ Cloud Blocked (HTTP 403)", "Expires": "N/A", "Days Left": 0, "Max Conn": 0, "Active Conn": 0, "Channels": "N/A", "VODs": "N/A"}
+        elif res.status_code == 521:
+            logger.warning(f"Server dead (HTTP 521) for: {account['base_url']}")
+            return {**account, "Status": "🔴 Offline (Server Dead)", "Expires": "N/A", "Days Left": 0, "Max Conn": 0, "Active Conn": 0, "Channels": "N/A", "VODs": "N/A"}
+        elif res.status_code != 200:
+            logger.warning(f"Unexpected status code {res.status_code} for: {account['base_url']}")
+            return {**account, "Status": "🛡️ Firewalled / Blocked", "Expires": "N/A", "Days Left": 0, "Max Conn": 0, "Active Conn": 0, "Channels": "N/A", "VODs": "N/A"}
         
         # Catch plain authorization rejections
         if "Unauthorized" in res.text:
@@ -98,12 +171,6 @@ async def evaluate_account(client, account):
             "VODs": "N/A"
         }
         
-    except httpx.HTTPStatusError as e:
-        status_code = e.response.status_code
-        logger.error(f"HTTP error status {status_code} encountered checking host {account['base_url']}")
-        if status_code == 521:
-            return {**account, "Status": "🔴 Offline (Server Dead)", "Expires": "N/A", "Days Left": 0, "Max Conn": 0, "Active Conn": 0, "Channels": "N/A", "VODs": "N/A"}
-        return {**account, "Status": "🛡️ Firewalled / Blocked", "Expires": "N/A", "Days Left": 0, "Max Conn": 0, "Active Conn": 0, "Channels": "N/A", "VODs": "N/A"}
     except Exception as e:
         logger.error(f"Failed to connect to host {account['base_url']}: {str(e)}")
         return {**account, "Status": "🛡️ Firewalled / Blocked", "Expires": "N/A", "Days Left": 0, "Max Conn": 0, "Active Conn": 0, "Channels": "N/A", "VODs": "N/A"}
@@ -115,9 +182,13 @@ async def fetch_lazy_details(base_url, user, password, action):
     try:
         async with httpx.AsyncClient(headers=EVASION_HEADERS, verify=False) as client:
             res = await client.get(target_url, timeout=8.0)
-            data = res.json()
-            logger.info(f"Lazy loading catalog fetch completed successfully. Type: {type(data)} | Elements: {len(data) if isinstance(data, list) else 1}")
-            return data
+            if res.status_code == 200:
+                data = res.json()
+                logger.info(f"Lazy loading catalog fetch completed successfully. Type: {type(data)} | Elements: {len(data) if isinstance(data, list) else 1}")
+                return data
+            else:
+                logger.warning(f"Lazy loading query returned status {res.status_code} for host {base_url} [Action: {action}]")
+                return []
     except Exception as e:
         logger.error(f"Lazy loading query failed for host {base_url} [Action: {action}]: {str(e)}")
         return []
@@ -132,17 +203,37 @@ async def main_network_render():
     async with httpx.AsyncClient(headers=EVASION_HEADERS, verify=False) as client:
         return await check_network_shield(client)
 
-current_ip = asyncio.run(main_network_render())
+network_info = asyncio.run(main_network_render())
+current_ip = network_info.get("ip", "Unknown")
+current_isp = network_info.get("isp", "Unknown")
+current_org = network_info.get("org", "Unknown")
+current_country = network_info.get("country", "Unknown")
+
+# Cloud detection logic (flags if running on typical public cloud / hosting ranges)
+cloud_keywords = ["amazon", "aws", "google", "azure", "cloudflare", "digitalocean", "linode", "ovh", "hosting", "server", "oracle", "m247", "scaleway", "vulcan", "leaseweb", "hetzner"]
+is_cloud = any(kw in current_isp.lower() or kw in current_org.lower() for kw in cloud_keywords)
 
 # Outbound Security Badge
 col_ip, col_status = st.columns([3, 1])
 with col_ip:
     st.markdown("### 🛡️ Outbound Network Shield Monitoring")
 with col_status:
-    if "UNKNOWN" in current_ip or current_ip.startswith("DISCONNECTED"):
+    if "UNKNOWN" in current_ip.upper() or current_ip.startswith("DISCONNECTED"):
         st.error(f"🔴 SHIELD INACTIVE\nIP: {current_ip}")
     else:
-        st.success(f"🟢 VPN PROTECTED\nIP: {current_ip}")
+        badge_text = f"🟢 VPN ACTIVE\nIP: {current_ip}\nISP: {current_isp}"
+        if is_cloud:
+            badge_text += " (Cloud)"
+        st.success(badge_text)
+
+# Cloud warning banner to assist users deploying on public platforms
+if is_cloud:
+    st.warning(
+        f"⚠️ **Public Cloud/Hosting Environment Detected**\n\n"
+        f"The dashboard is currently running on a network identified as **{current_isp}** ({current_org}). "
+        f"Many IPTV providers aggressively block connections from public cloud providers, hosting data centers, or VPN servers to prevent scrape traffic. "
+        f"If your link handshakes fail with **'🛡️ Cloud Blocked (HTTP 403)'** or **'🛡️ Firewalled / Blocked'**, this hosting network is likely banned by the target server."
+    )
 
 st.write("---")
 
@@ -154,7 +245,7 @@ pasted_data = st.text_area("Drop messy text, diagnostic blocks, or standard M3U 
 if "playlist_results" not in st.session_state:
     st.session_state["playlist_results"] = None
 
-if st.button("Analyze Playlist Nodes", disabled=("UNKNOWN" in current_ip)):
+if st.button("Analyze Playlist Nodes", disabled=("UNKNOWN" in current_ip.upper() or current_ip.startswith("DISCONNECTED"))):
     accounts = parse_m3u_urls(pasted_data)
     
     if not accounts:
