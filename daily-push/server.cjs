@@ -62,7 +62,7 @@ async function startServer() {
         Keep it to 2-3 sentences max. Be punchy and professional. Avoid emojis.
       `;
       const response = await ai.models.generateContent({
-        model: "gemini-2.5-flash",
+        model: "gemini-3.5-flash",
         contents: prompt
       });
       res.json({ tip: response.text });
