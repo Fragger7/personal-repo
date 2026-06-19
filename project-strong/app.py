@@ -1,4 +1,5 @@
 import streamlit as st
+import streamlit.components.v1 as components
 import httpx
 import asyncio
 import re
@@ -514,7 +515,7 @@ if st.session_state["playlist_results"] is not None:
                 on_select="rerun",
                 key="xtream_table",
                 column_config={
-                    "M3U Link": st.column_config.LinkColumn("Quick M3U URL", help="Click to open or right click to copy link")
+                    "M3U Link": st.column_config.LinkColumn("Quick M3U URL", help="Right click to copy link", display_text="🔗 Copy M3U")
                 }
             )
             
@@ -582,10 +583,36 @@ if st.session_state["playlist_results"] is not None:
             for i, (idx, row) in enumerate(display_xtream.iterrows()):
                 if "Active" in row["Status"]:
                     is_expanded = (i == selected_x_idx) if selected_x_idx is not None else False
+                    
+                    html_id = f"xtream_accordion_{i}"
+                    st.markdown(f'<div id="{html_id}"></div>', unsafe_allow_html=True)
+                    
+                    if is_expanded:
+                        components.html(
+                            f"""
+                            <script>
+                            setTimeout(function() {{
+                                const doc = window.parent.document;
+                                const anchor = doc.getElementById('{html_id}');
+                                if (anchor) {{
+                                    anchor.scrollIntoView({{behavior: 'smooth', block: 'start'}});
+                                }}
+                            }}, 150);
+                            </script>
+                            """,
+                            height=0, width=0
+                        )
+
                     with st.expander(f"🟢 Explore Structural Library for: {row['base_url']} [User: {row['username']}]", expanded=is_expanded):
-                        st.code(f"Host: {row['base_url']}\nUsername: {row['username']}\nPassword: {row['password']}", language="text")
-                        m3u_url = f"{row['base_url']}/get.php?username={row['username']}&password={row['password']}&type=m3u_plus&output=ts"
-                        st.code(m3u_url, language="text")
+                        st.markdown("Use the copy icon on the top right of the blocks below to quickly copy.")
+                        col1, col2 = st.columns(2)
+                        with col1:
+                            st.markdown("**🔐 Login Credentials**")
+                            st.code(f"Host: {row['base_url']}\nUsername: {row['username']}\nPassword: {row['password']}", language="text")
+                        with col2:
+                            st.markdown("**🔗 M3U Playlist URL**")
+                            m3u_url = f"{row['base_url']}/get.php?username={row['username']}&password={row['password']}&type=m3u_plus&output=ts"
+                            st.code(m3u_url, language="text")
                         
                         st.write("📡 Fetching stream catalogs from IPTV host...")
                         
@@ -676,7 +703,28 @@ if st.session_state["playlist_results"] is not None:
             for i, (idx, row) in enumerate(display_stalker.iterrows()):
                 if "Active" in row["Status"]:
                     is_expanded = (i == selected_s_idx) if selected_s_idx is not None else False
+                    
+                    html_id = f"stalker_accordion_{i}"
+                    st.markdown(f'<div id="{html_id}"></div>', unsafe_allow_html=True)
+
+                    if is_expanded:
+                        components.html(
+                            f"""
+                            <script>
+                            setTimeout(function() {{
+                                const doc = window.parent.document;
+                                const anchor = doc.getElementById('{html_id}');
+                                if (anchor) {{
+                                    anchor.scrollIntoView({{behavior: 'smooth', block: 'start'}});
+                                }}
+                            }}, 150);
+                            </script>
+                            """,
+                            height=0, width=0
+                        )
+
                     with st.expander(f"🟢 {row['base_url']} - MAC: {row['mac']}", expanded=is_expanded):
+                        st.markdown("**🔐 Stalker Credentials (Click top right to copy)**")
                         st.code(f"Portal URL (Host): {row['base_url']}\nMAC Address: {row['mac']}", language="text")
                         st.info("⚠️ **Deep-Dive Discovery is constrained for Stalker Portals.**\n\nStalker Portals (Ministra) use dynamic, MAC-authenticated MAC schemas rather than standard Xtream flat lists. Fetching massive stream categories without full device emulation can trigger security bans on the host. Status verification is complete, but deep channel mining is restricted.")
 
