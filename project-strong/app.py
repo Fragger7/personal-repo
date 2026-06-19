@@ -352,11 +352,17 @@ h1 { font-family: 'Inter', sans-serif; font-weight: 800; }
 </style>
 """, unsafe_allow_html=True)
 
+xt_count = 0
+st_count = 0
+if st.session_state.get("playlist_results"):
+    xt_count = len([x for x in st.session_state["playlist_results"] if x.get("type", "Xtream") == "Xtream"])
+    st_count = len([x for x in st.session_state["playlist_results"] if x.get("type") == "Stalker"])
+
 tab_tools, tab_scanner, tab_xtream, tab_stalker = st.tabs([
     "🛠️ Base64 Decoder",
     "📡 Multi-Payload Scanner", 
-    "📺 Xtream Code Playlists", 
-    "🛸 Stalker Portals"
+    f"📺 Xtream Codes ({xt_count})", 
+    f"🛸 Stalker Portals ({st_count})"
 ])
 
 with tab_tools:
@@ -372,11 +378,26 @@ with tab_tools:
         else:
             try:
                 if "Decode" in b64_action:
-                    # Attempt to fix padding if missing
-                    pad = len(b64_input.strip()) % 4
-                    padded = b64_input.strip() + "=" * ((4 - pad) if pad else 0)
-                    result = base64.b64decode(padded).decode('utf-8', errors='replace')
-                    st.success("Successfully decoded. (Use the copy button in the top right of the code block below)")
+                    # Find potential base64 strings (at least 20 chars long, valid chars, optional padding)
+                    potential_b64s = re.findall(r'[A-Za-z0-9+/]{20,}={0,2}', b64_input)
+                    if not potential_b64s:
+                        potential_b64s = [b64_input.strip()]
+                    
+                    decoded_results = []
+                    for p in potential_b64s:
+                        try:
+                            pad = len(p) % 4
+                            padded = p + "=" * ((4 - pad) if pad else 0)
+                            res = base64.b64decode(padded).decode('utf-8', errors='replace')
+                            decoded_results.append(res)
+                        except Exception:
+                            pass
+                    
+                    if decoded_results:
+                        result = "\n\n".join(decoded_results)
+                        st.success("Successfully decoded. (Use the copy button in the top right of the code block below)")
+                    else:
+                        raise ValueError("No valid Base64 encoded strings found in the payload.")
                 else:
                     result = base64.b64encode(b64_input.encode('utf-8')).decode('utf-8')
                     st.success("Successfully encoded. (Use the copy button in the top right of the code block below)")
@@ -420,14 +441,32 @@ with tab_scanner:
         else:
             st.info(f"Identified {len(accounts)} layout strings. Initializing throttled async handshakes...")
             
+            progress_bar = st.progress(0)
+            status_text = st.empty()
+
             async def process_batch():
                 async with httpx.AsyncClient(headers=EVASION_HEADERS, verify=False) as client:
                     tasks = [evaluate_account(client, acc) for acc in accounts]
-                    return await asyncio.gather(*tasks)
+                    results_list = []
+                    total = len(tasks)
+                    for i, coroutine in enumerate(asyncio.as_completed(tasks)):
+                        res = await coroutine
+                        results_list.append(res)
+                        progress = (i + 1) / total
+                        progress_bar.progress(progress)
+                        status_text.text(f"Processed {i + 1}/{total} connections...")
+                    return results_list
                     
             results = asyncio.run(process_batch())
+            progress_bar.empty()
+            status_text.empty()
             st.session_state["playlist_results"] = results
             st.rerun()
+
+    if st.session_state["playlist_results"] is not None:
+        xt_count = len([x for x in st.session_state["playlist_results"] if x.get("type", "Xtream") == "Xtream"])
+        st_count = len([x for x in st.session_state["playlist_results"] if x.get("type") == "Stalker"])
+        st.success(f"✅ **Scan Complete** - Discovered **{xt_count}** Xtream Codes layouts and **{st_count}** Stalker Portals.")
 
 # Empty states for tabs before scan
 if st.session_state["playlist_results"] is None:
@@ -456,7 +495,34 @@ if st.session_state["playlist_results"] is not None:
             if show_only_active_x:
                 display_xtream = display_xtream[display_xtream["Status"].str.contains("Active", na=False)]
             
-            st.dataframe(display_xtream, use_container_width=True)
+            # Add M3U Copy column
+            display_xtream["M3U Link"] = display_xtream.apply(
+                lambda row: f"{row['base_url']}/get.php?username={row['username']}&password={row['password']}&type=m3u_plus&output=ts",
+                axis=1
+            )
+
+            # Move M3U Link after password
+            cols = display_xtream.columns.tolist()
+            if "M3U Link" in cols:
+                cols.insert(cols.index("password") + 1, cols.pop(cols.index("M3U Link")))
+                display_xtream = display_xtream[cols]
+            
+            event_x = st.dataframe(
+                display_xtream,
+                use_container_width=True,
+                selection_mode="single-row",
+                on_select="rerun",
+                key="xtream_table",
+                column_config={
+                    "M3U Link": st.column_config.LinkColumn("Quick M3U URL", help="Click to open or right click to copy link")
+                }
+            )
+            
+            selected_x_idx = None
+            if event_x and hasattr(event_x, "selection") and event_x.selection.rows:
+                selected_x_idx = event_x.selection.rows[0]
+            elif isinstance(event_x, dict) and "selection" in event_x and "rows" in event_x["selection"] and event_x["selection"]["rows"]:
+                selected_x_idx = event_x["selection"]["rows"][0]
             
             active_x = [acc for acc in st.session_state["playlist_results"] if "Active" in acc.get("Status", "") and acc.get("type", "Xtream") == "Xtream"]
             if active_x:
@@ -493,8 +559,18 @@ if st.session_state["playlist_results"] is not None:
                                             acc["Channels"] = channels_count
                                             acc["VODs"] = vod_count
                                         
+                                        progress_bar_v = st.progress(0)
+                                        status_text_v = st.empty()
+                                        total = len(active_x)
                                         tasks = [fetch_counts(acc) for acc in active_x]
-                                        await asyncio.gather(*tasks)
+                                        for i, coroutine in enumerate(asyncio.as_completed(tasks)):
+                                            await coroutine
+                                            progress = (i + 1) / total
+                                            progress_bar_v.progress(progress)
+                                            status_text_v.text(f"Fetched catalogs for {i + 1}/{total} nodes...")
+                                            
+                                        progress_bar_v.empty()
+                                        status_text_v.empty()
                                 
                                 asyncio.run(load_counts())
                                 st.rerun()
@@ -503,10 +579,13 @@ if st.session_state["playlist_results"] is not None:
             st.markdown("### 📋 Copy Quick Connects & Deep-Dive")
             st.caption("Pre-formatted blocks ready to copy and paste into IPTV clients.")
             
-            for idx, row in display_xtream.iterrows():
+            for i, (idx, row) in enumerate(display_xtream.iterrows()):
                 if "Active" in row["Status"]:
-                    with st.expander(f"🟢 Explore Structural Library for: {row['base_url']} [User: {row['username']}]"):
+                    is_expanded = (i == selected_x_idx) if selected_x_idx is not None else False
+                    with st.expander(f"🟢 Explore Structural Library for: {row['base_url']} [User: {row['username']}]", expanded=is_expanded):
                         st.code(f"Host: {row['base_url']}\nUsername: {row['username']}\nPassword: {row['password']}", language="text")
+                        m3u_url = f"{row['base_url']}/get.php?username={row['username']}&password={row['password']}&type=m3u_plus&output=ts"
+                        st.code(m3u_url, language="text")
                         
                         st.write("📡 Fetching stream catalogs from IPTV host...")
                         
@@ -578,13 +657,26 @@ if st.session_state["playlist_results"] is not None:
             if show_only_active_s:
                 display_stalker = display_stalker[display_stalker["Status"].str.contains("Active", na=False)]
             
-            st.dataframe(display_stalker, use_container_width=True)
+            event_s = st.dataframe(
+                display_stalker,
+                use_container_width=True,
+                selection_mode="single-row",
+                on_select="rerun",
+                key="stalker_table"
+            )
+            
+            selected_s_idx = None
+            if event_s and hasattr(event_s, "selection") and event_s.selection.rows:
+                selected_s_idx = event_s.selection.rows[0]
+            elif isinstance(event_s, dict) and "selection" in event_s and "rows" in event_s["selection"] and event_s["selection"]["rows"]:
+                selected_s_idx = event_s["selection"]["rows"][0]
             
             st.write("---")
             st.markdown("### 📋 Copy Quick Connects")
-            for idx, row in display_stalker.iterrows():
+            for i, (idx, row) in enumerate(display_stalker.iterrows()):
                 if "Active" in row["Status"]:
-                    with st.expander(f"🟢 {row['base_url']} - MAC: {row['mac']}"):
-                        st.code(f"Portal URL: {row['base_url']}\nMAC Address: {row['mac']}", language="text")
+                    is_expanded = (i == selected_s_idx) if selected_s_idx is not None else False
+                    with st.expander(f"🟢 {row['base_url']} - MAC: {row['mac']}", expanded=is_expanded):
+                        st.code(f"Portal URL (Host): {row['base_url']}\nMAC Address: {row['mac']}", language="text")
                         st.info("⚠️ **Deep-Dive Discovery is constrained for Stalker Portals.**\n\nStalker Portals (Ministra) use dynamic, MAC-authenticated MAC schemas rather than standard Xtream flat lists. Fetching massive stream categories without full device emulation can trigger security bans on the host. Status verification is complete, but deep channel mining is restricted.")
 
