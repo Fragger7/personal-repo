@@ -53,9 +53,17 @@ Accidental exposure of a private home IP address during playlist checks can comp
 * **Server-Side Bypass (Xtream)**: Filters and counts category channels locally rather than requesting pre-filtered category URLs from the server, bypassing buggy endpoints and ensuring accurate listings with correct logos.
 * **Stalker Limits (Ministra Framework)**: Deep-dive channel classification and VOD grid streaming is structurally blocked for Stalker Portals due to the requirements of the MAC-driven authentication payload dynamically expiring. Deep-dive discovery is explicitly restricted from accessing these nodes to avoid triggering the target server's firewall banning mechanisms. The dashboard will inform the provider.
 
-### 3. Application Efficiency & UI Optimizations
+### 3. Application UI & Efficiency Optimizations
+* **Tab-Based Workspace**: The application is divided into a clean, tabbed hierarchy:
+  * **🛠️ Base64 Decoder**: Extracts hidden structural links embedded as text chunks inside unstructured text blocks, automatically stripping garbage or padding limits. Output enables one-click link launching or copying.
+  * **📡 Multi-Payload Scanner**: The main bulk ingest and tracking center.
+  * **📺 Xtream Codes & 🛸 Stalker Portals**: Dedicated manifest tabs, indicating real-time discovered node counts dynamically in their tab titles.
 * **State Caching (st.cache_data)**: The application utilizes Streamlit's data caching (`@st.cache_data(ttl=300)`) strictly to cache outbound verification blocks (e.g. `ip-api.com`). This is absolutely critical because Streamlit executes top-to-bottom on every user interaction (clicks, toggles) which will otherwise rapidly hammer public rate-limited limits (45 reqs/min for ip-api.com) when navigating libraries.
-* **Tiered Loading**: All queries for actual heavy live tracking content are lazy evaluated asynchronously upon accordion click expansion to preserve extreme performance.
+* **Tiered Loading & Master-Detail View**: All tabular views use a **Master-Detail interaction paradigm**. 
+  * The top data-grid is selected by clicking a row (`selection_mode="single-row"` and `on_select="rerun"`).
+  * Selection triggers an auto-scrolling Javascript injection to snap the browser down to the **Deep-Dive Drawer**.
+  * The deep detail drawer explicitly generates **Discrete Login Credentials** (separating Host, Username, and Password into their own easily copyable widgets) instead of just dropping an `M3U Playlist URL`. This provides an easy fallback for IPTV apps where standard M3U downloads (via `/get.php`) have been deliberately restricted.
+  * Tier 2 Live Catalogs and VODs are lazy-evaluated on-demand visually within the active Detail view to preserve global app performance.
 
 ---
 
