@@ -12,20 +12,21 @@ On this Windows host, the raw `git` command may not be in the default shell `PAT
 ---
 
 ## 🛑 Rule 2: Git Sync on Session Startup (Mandatory)
-Before you edit any files or make any commits, you must check for changes in the remote GitHub repository (`https://github.com/Fragger7/personal-repo.git`) and pull them down:
+Before you edit any files, make any enhancements, or start a new working session, you MUST download the latest Git files from the remote GitHub repository (`https://github.com/Fragger7/personal-repo.git`) and review the updated knowledge.
 
-1. **Clone to Temp**: Clone the repository to a temporary directory inside the workspace using `--depth 1` to save time/bandwidth:
+1. **Pull Latest Files**:
+   First, sync the local environment with the remote to prevent splitting histories.
+   **On Windows**:
    ```powershell
    & "C:\Program Files\Git\cmd\git.exe" clone https://github.com/Fragger7/personal-repo.git "C:\Development\Apps\Project Strong\personal-repo-temp" --depth 1
-   ```
-2. **Compare and Sync**: Compare files in `personal-repo-temp/project-strong/` with the active workspace `C:\Development\Apps\Project Strong\`. If the remote contains modifications not present locally, copy them into the active workspace to prevent split-brain code states:
-   ```powershell
    Copy-Item "C:\Development\Apps\Project Strong\personal-repo-temp\project-strong\*" "C:\Development\Apps\Project Strong\" -Recurse -Force
-   ```
-3. **Clean Up**: Delete the temporary directory immediately after syncing:
-   ```powershell
    Remove-Item -Recurse -Force "C:\Development\Apps\Project Strong\personal-repo-temp"
    ```
+   **On Linux/AI Studio**:
+   Use standard shell commands or node scripts to sync remote contents into the workspace root.
+
+2. **Review Knowledge Data**:
+   Once the repository files are pulled down, you **MUST** immediately read and review the contents of `GEMINI.md` and `.agents/AGENTS.md`. This ensures you are fully aligned with the latest architecture decisions, app flow, and deployment triggers before taking action.
 
 ---
 

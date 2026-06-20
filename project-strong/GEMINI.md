@@ -112,8 +112,8 @@ Since Git commands may not always be in the system PATH, always locate the git b
 
 To keep the repository clean and avoid polluting sister project files at the root of the repository, follow the two workflows below exactly:
 
-### 1. Session Startup Synchronization Flow (Pull/Sync)
-At the start of every session, verify and import updates from the remote repository before making any workspace changes:
+### 1. Mandatory Session Startup Synchronization Flow (Pull/Sync)
+At the start of every session—before working on any new enhancement, making code changes, or exploring the environment—you MUST download the latest Git files from the remote repository. Once synchronized, you MUST review the latest knowledge from `GEMINI.md` and `.agents/AGENTS.md`.
 
 ```powershell
 # Step 1: Clone remote repository to temporary folder
@@ -126,6 +126,9 @@ Copy-Item "C:\Development\Apps\Project Strong\personal-repo-temp\project-strong\
 # Step 4: Delete the temporary repository clone folder
 Remove-Item -Recurse -Force "C:\Development\Apps\Project Strong\personal-repo-temp"
 ```
+
+**(For Linux/AI Studio Workspaces)**:
+You can pull the latest files using shell commands or `git_clone.js`, replacing the active workspace files. After downloading, ALWAYS read the latest `GEMINI.md` and `.agents/AGENTS.md` to refresh constraints and project context.
 
 ### 2. Session Commit & Publish Flow (Push)
 When you are ready to commit and push changes, use a temporary directory clone to isolate changes and prevent pushing files to other root directories:
