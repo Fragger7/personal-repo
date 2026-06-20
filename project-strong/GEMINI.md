@@ -65,7 +65,7 @@ Accidental exposure of a private home IP address during playlist checks can comp
   * The top data-grid is selected by clicking a row (`selection_mode="single-row"` and `on_select="rerun"`).
   * Selection triggers an auto-scrolling Javascript injection to snap the browser down to the **Deep-Dive Drawer**.
   * The deep detail drawer explicitly generates **Discrete Login Credentials** (separating Host, Username, and Password into their own easily copyable widgets) instead of just dropping an `M3U Playlist URL`. This provides an easy fallback for IPTV apps where standard M3U downloads (via `/get.php`) have been deliberately restricted.
-  * Tier 2 Live Catalogs and VODs are lazy-evaluated on-demand visually within the active Detail view to preserve global app performance.
+  * Tier 2 Live Catalogs and VODs are lazy-evaluated on-demand visually within the active Detail view. To prevent Streamlit's aggressive re-runs from resetting the UI or making redundant network requests during category selection, Tier 2 fetch results are explicitly preserved inside `st.session_state` using unique compound keys (e.g., `t2_{base_url}_{username}`).
 
 ---
 
