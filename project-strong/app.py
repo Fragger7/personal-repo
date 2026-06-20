@@ -4,6 +4,9 @@ import httpx
 import asyncio
 import re
 import pandas as pd
+import json
+import os
+import subprocess
 import logging
 from datetime import datetime
 import base64
@@ -20,6 +23,66 @@ logger = logging.getLogger("iptv_analytics")
 
 # --- CONFIGURATION & CONSTANTS ---
 st.set_page_config(page_title="IPTV Playlist Analytics", layout="wide", page_icon="📡")
+
+# --- COMMITTED DATASET LOGIC ---
+COMMITTED_FILE = "committed.json"
+
+def load_committed_data():
+    if os.path.exists(COMMITTED_FILE):
+        with open(COMMITTED_FILE, "r", encoding="utf-8") as f:
+            try:
+                return json.load(f)
+            except json.JSONDecodeError:
+                return []
+    return []
+
+def save_committed_data(data_list):
+    with open(COMMITTED_FILE, "w", encoding="utf-8") as f:
+        json.dump(data_list, f, indent=4)
+        
+    # Auto-push to repo as requested
+    try:
+        subprocess.run(["npx", "tsx", "git_push.cjs"], check=False)
+    except Exception as e:
+        logger.error(f"Failed to auto-push: {e}")
+
+def commit_record(record, tab_type):
+    current = load_committed_data()
+    # Normalize record
+    base_url = record.get("base_url", "")
+    username = record.get("username", "")
+    mac = record.get("mac", "")
+    
+    # Check duplicates and delete latest/existing ensuring 1 record is kept.
+    # User rule: "if duplicate records are selected, the just delete the latest one, ensuring only 1 record is kept and date is traced from the original selection."
+    existing = None
+    for r in current:
+        if tab_type == "Xtream" and r.get("base_url") == base_url and r.get("username") == username:
+            existing = r
+            break
+        elif tab_type == "Stalker" and r.get("base_url") == base_url and r.get("mac") == mac:
+            existing = r
+            break
+            
+    if existing:
+        # Keep the original selection date and notes
+        orig_date = existing.get("Date Selected", datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+        orig_notes = existing.get("Notes", "")
+        # Remove old to replace with updated metadata, but persist original datetimes
+        current.remove(existing)
+        new_rec = {**record, "Source": tab_type, "Date Selected": orig_date, "Notes": orig_notes}
+    else:
+        new_rec = {**record, "Source": tab_type, "Date Selected": datetime.now().strftime("%Y-%m-%d %H:%M:%S"), "Notes": ""}
+        
+    current.append(new_rec)
+    save_committed_data(current)
+    return True
+
+def delete_committed_record(idx):
+    current = load_committed_data()
+    if 0 <= idx < len(current):
+        current.pop(idx)
+        save_committed_data(current)
 
 # --- CUSTOM UI / UX THEMES ---
 if "app_theme" not in st.session_state:
@@ -411,16 +474,16 @@ async def evaluate_account(client, account):
                 res = await client.get(target_url, headers=stalker_headers, timeout=6.0)
                 
             if res.status_code == 403:
-                return {**account, "Status": "🛡️ Cloud Blocked (HTTP 403)", "Expires": "N/A", "Days Left": 0, "Max Conn": "N/A", "Active Conn": "N/A", "Channels": "N/A", "VODs": "N/A"}
+                return {**account, "Status": "🛡️ Cloud Blocked (HTTP 403)", "Expires": "N/A", "Days Left": 0, "Max Conn": "N/A", "Active Conn": "N/A", "Channels": "N/A", "VODs": "N/A", "Server Timezone": "N/A", "Server Time": "N/A"}
             elif res.status_code == 521:
-                return {**account, "Status": "🔴 Offline (Server Dead)", "Expires": "N/A", "Days Left": 0, "Max Conn": "N/A", "Active Conn": "N/A", "Channels": "N/A", "VODs": "N/A"}
+                return {**account, "Status": "🔴 Offline (Server Dead)", "Expires": "N/A", "Days Left": 0, "Max Conn": "N/A", "Active Conn": "N/A", "Channels": "N/A", "VODs": "N/A", "Server Timezone": "N/A", "Server Time": "N/A"}
             elif res.status_code != 200:
-                return {**account, "Status": "🛡️ Firewalled / Blocked", "Expires": "N/A", "Days Left": 0, "Max Conn": "N/A", "Active Conn": "N/A", "Channels": "N/A", "VODs": "N/A"}
+                return {**account, "Status": "🛡️ Firewalled / Blocked", "Expires": "N/A", "Days Left": 0, "Max Conn": "N/A", "Active Conn": "N/A", "Channels": "N/A", "VODs": "N/A", "Server Timezone": "N/A", "Server Time": "N/A"}
                 
             try:
                 data = res.json()
                 if "error" in data or ("js" in data and isinstance(data["js"], dict) and "error" in data["js"]):
-                    return {**account, "Status": "🟡 Expired / Invalid MAC", "Expires": "N/A", "Days Left": 0, "Max Conn": "N/A", "Active Conn": "N/A", "Channels": "N/A", "VODs": "N/A"}
+                    return {**account, "Status": "🟡 Expired / Invalid MAC", "Expires": "N/A", "Days Left": 0, "Max Conn": "N/A", "Active Conn": "N/A", "Channels": "N/A", "VODs": "N/A", "Server Timezone": "N/A", "Server Time": "N/A"}
                 
                 # If handshake returns 200 and no blatant error in JSON, consider it potentially active
                 logger.info(f"Stalker Connection active. Host: {account['base_url']}")
@@ -432,15 +495,17 @@ async def evaluate_account(client, account):
                     "Max Conn": "N/A",
                     "Active Conn": "N/A",
                     "Channels": "N/A",
-                    "VODs": "N/A"
+                    "VODs": "N/A",
+                    "Server Timezone": res.headers.get("Server", "Unknown"),
+                    "Server Time": "Unknown"
                 }
             except Exception:
                 # Output might not be standard JSON if blocked by WAF challenge
-                return {**account, "Status": "🛡️ Firewalled / Blocked / Captcha", "Expires": "N/A", "Days Left": 0, "Max Conn": "N/A", "Active Conn": "N/A", "Channels": "N/A", "VODs": "N/A"}
+                return {**account, "Status": "🛡️ Firewalled / Blocked / Captcha", "Expires": "N/A", "Days Left": 0, "Max Conn": "N/A", "Active Conn": "N/A", "Channels": "N/A", "VODs": "N/A", "Server Timezone": "N/A", "Server Time": "N/A"}
                 
         except Exception as e:
             logger.error(f"Failed to connect to Stalker host {account['base_url']}: {str(e)}")
-            return {**account, "Status": "🛡️ Firewalled / Blocked", "Expires": "N/A", "Days Left": 0, "Max Conn": "N/A", "Active Conn": "N/A", "Channels": "N/A", "VODs": "N/A"}
+            return {**account, "Status": "🛡️ Firewalled / Blocked", "Expires": "N/A", "Days Left": 0, "Max Conn": "N/A", "Active Conn": "N/A", "Channels": "N/A", "VODs": "N/A", "Server Timezone": "N/A", "Server Time": "N/A"}
 
     # Default Xtream Handshake Workflow
     target_url = f"{account['base_url']}/player_api.php?username={account['username']}&password={account['password']}"
@@ -451,25 +516,26 @@ async def evaluate_account(client, account):
         # Check HTTP Status Code first to handle firewall/cloud blockades explicitly
         if res.status_code == 403:
             logger.warning(f"Cloud Blocked (HTTP 403) for: {account['base_url']}")
-            return {**account, "Status": "🛡️ Cloud Blocked (HTTP 403)", "Expires": "N/A", "Days Left": 0, "Max Conn": 0, "Active Conn": 0, "Channels": "N/A", "VODs": "N/A"}
+            return {**account, "Status": "🛡️ Cloud Blocked (HTTP 403)", "Expires": "N/A", "Days Left": 0, "Max Conn": 0, "Active Conn": 0, "Channels": "N/A", "VODs": "N/A", "Server Timezone": "N/A", "Server Time": "N/A"}
         elif res.status_code == 521:
             logger.warning(f"Server dead (HTTP 521) for: {account['base_url']}")
-            return {**account, "Status": "🔴 Offline (Server Dead)", "Expires": "N/A", "Days Left": 0, "Max Conn": 0, "Active Conn": 0, "Channels": "N/A", "VODs": "N/A"}
+            return {**account, "Status": "🔴 Offline (Server Dead)", "Expires": "N/A", "Days Left": 0, "Max Conn": 0, "Active Conn": 0, "Channels": "N/A", "VODs": "N/A", "Server Timezone": "N/A", "Server Time": "N/A"}
         elif res.status_code != 200:
             logger.warning(f"Unexpected status code {res.status_code} for: {account['base_url']}")
-            return {**account, "Status": "🛡️ Firewalled / Blocked", "Expires": "N/A", "Days Left": 0, "Max Conn": 0, "Active Conn": 0, "Channels": "N/A", "VODs": "N/A"}
+            return {**account, "Status": "🛡️ Firewalled / Blocked", "Expires": "N/A", "Days Left": 0, "Max Conn": 0, "Active Conn": 0, "Channels": "N/A", "VODs": "N/A", "Server Timezone": "N/A", "Server Time": "N/A"}
         
         # Catch plain authorization rejections
         if "Unauthorized" in res.text:
             logger.warning(f"Connection rejected (Unauthorized response body) for: {account['base_url']}")
-            return {**account, "Status": "🟡 Expired / Invalid", "Expires": "N/A", "Days Left": 0, "Max Conn": 0, "Active Conn": 0, "Channels": "N/A", "VODs": "N/A"}
+            return {**account, "Status": "🟡 Expired / Invalid", "Expires": "N/A", "Days Left": 0, "Max Conn": 0, "Active Conn": 0, "Channels": "N/A", "VODs": "N/A", "Server Timezone": "N/A", "Server Time": "N/A"}
             
         data = res.json()
         user_info = data.get("user_info", {})
+        server_info = data.get("server_info", {})
         
         if user_info.get("auth") == 0 or user_info.get("status") == "Expired":
             logger.warning(f"Authentication failed or account expired for: {account['base_url']}")
-            return {**account, "Status": "🟡 Expired / Invalid", "Expires": "N/A", "Days Left": 0, "Max Conn": 0, "Active Conn": 0, "Channels": "N/A", "VODs": "N/A"}
+            return {**account, "Status": "🟡 Expired / Invalid", "Expires": "N/A", "Days Left": 0, "Max Conn": 0, "Active Conn": 0, "Channels": "N/A", "VODs": "N/A", "Server Timezone": "N/A", "Server Time": "N/A"}
         
         # Parse Valid Dynamic Attributes
         exp_timestamp = user_info.get("exp_date")
@@ -491,12 +557,14 @@ async def evaluate_account(client, account):
             "Max Conn": user_info.get("max_connections", "0"),
             "Active Conn": user_info.get("active_cons", "0"),
             "Channels": "N/A",
-            "VODs": "N/A"
+            "VODs": "N/A",
+            "Server Timezone": server_info.get("timezone", "Unknown"),
+            "Server Time": server_info.get("time_now", "Unknown")
         }
         
     except Exception as e:
         logger.error(f"Failed to connect to host {account['base_url']}: {str(e)}")
-        return {**account, "Status": "🛡️ Firewalled / Blocked", "Expires": "N/A", "Days Left": 0, "Max Conn": 0, "Active Conn": 0, "Channels": "N/A", "VODs": "N/A"}
+        return {**account, "Status": "🛡️ Firewalled / Blocked", "Expires": "N/A", "Days Left": 0, "Max Conn": 0, "Active Conn": 0, "Channels": "N/A", "VODs": "N/A", "Server Timezone": "N/A", "Server Time": "N/A"}
 
 async def fetch_lazy_details(base_url, user, password, action):
     """Tier 2: On-Demand Lazy Loading details retrieval."""
@@ -569,11 +637,12 @@ if st.session_state.get("playlist_results"):
     xt_count = len([x for x in st.session_state["playlist_results"] if x.get("type", "Xtream") == "Xtream"])
     st_count = len([x for x in st.session_state["playlist_results"] if x.get("type") == "Stalker"])
 
-tab_tools, tab_scanner, tab_xtream, tab_stalker = st.tabs([
+tab_tools, tab_scanner, tab_xtream, tab_stalker, tab_committed = st.tabs([
     "🛠️ Base64 Decoder",
     "📡 Multi-Payload Scanner", 
     f"📺 Xtream Codes ({xt_count})", 
-    f"🛸 Stalker Portals ({st_count})"
+    f"🛸 Stalker Portals ({st_count})",
+    "💾 Committed Data"
 ])
 
 with tab_tools:
@@ -780,8 +849,16 @@ if st.session_state["playlist_results"] is not None:
             st.write("---")
             if selected_x_idx is not None:
                 row = display_xtream.iloc[selected_x_idx]
+                col_title, col_action = st.columns([4, 1])
+                with col_title:
+                    if "Active" in row["Status"]:
+                        st.markdown(f"### 🔍 Deep-Dive Discovery: `{row['base_url']}`")
+                with col_action:
+                    if st.button("💾 Commit Line", key="commit_x", use_container_width=True):
+                        commit_record(row.to_dict(), "Xtream")
+                        st.success("Saved!")
+                
                 if "Active" in row["Status"]:
-                    st.markdown(f"### 🔍 Deep-Dive Discovery: `{row['base_url']}`")
                     st.caption("Use the copy icon on the top right of the code blocks to quickly copy to your clipboard.")
                     
                     st.markdown("**🔐 Discrete Login Credentials**")
@@ -894,8 +971,16 @@ if st.session_state["playlist_results"] is not None:
             st.write("---")
             if selected_s_idx is not None:
                 row = display_stalker.iloc[selected_s_idx]
+                col_title, col_action = st.columns([4, 1])
+                with col_title:
+                    if "Active" in row["Status"]:
+                        st.markdown(f"### 🔍 Detailed Credentials: `{row['base_url']}`")
+                with col_action:
+                    if st.button("💾 Commit Line", key="commit_s", use_container_width=True):
+                        commit_record(row.to_dict(), "Stalker")
+                        st.success("Saved!")
+
                 if "Active" in row["Status"]:
-                    st.markdown(f"### 🔍 Detailed Credentials: `{row['base_url']}`")
                     st.caption("Use the copy icon on the top right of the code blocks to quickly copy to your clipboard.")
                     
                     st.markdown("**🔐 Stalker Login Configuration**")
@@ -911,4 +996,72 @@ if st.session_state["playlist_results"] is not None:
                     st.warning("⚠️ Valid credentials are only available for Active Stalker portals. This connection was verified as degraded or offline.")
             else:
                 st.info("👆 Select a row in the table above to open the easy-copy credentials panel for Stalker portals!")
+
+    with tab_committed:
+        st.markdown("### 💾 Committed Data Repository")
+        st.caption("Locally saved verification records pushing directly to remote GitHub repository.")
+        
+        committed_records = load_committed_data()
+        
+        if not committed_records:
+            st.info("No records committed yet. Analyze a payload and select a row in Xtream or Stalker tabs, then hit 'Commit Line' to save it here.")
+        else:
+            comm_df = pd.DataFrame(committed_records)
+            
+            # Reorder columns slightly for presentation
+            # Move mostly needed items to left
+            cols = comm_df.columns.tolist()
+            if "Date Selected" in cols:
+                cols.insert(0, cols.pop(cols.index("Date Selected")))
+            
+            comm_df = comm_df[cols]
+            
+            event_c = st.dataframe(
+                comm_df,
+                use_container_width=True,
+                selection_mode="single-row",
+                on_select="rerun",
+                key="committed_table",
+                hide_index=True
+            )
+            
+            selected_c_idx = None
+            if event_c and hasattr(event_c, "selection") and event_c.selection.rows:
+                selected_c_idx = event_c.selection.rows[0]
+            elif isinstance(event_c, dict) and "selection" in event_c and "rows" in event_c["selection"] and event_c["selection"]["rows"]:
+                selected_c_idx = event_c["selection"]["rows"][0]
+                
+            if selected_c_idx is not None:
+                st.write("---")
+                row = comm_df.iloc[selected_c_idx]
+                st.markdown(f"### ✏️ Edit Record: `{row.get('base_url')}`")
+                
+                col_n, col_d = st.columns([4, 1])
+                with col_n:
+                    notes_val = st.text_area("📝 Free Form Notes", value=row.get("Notes", ""), key="notes_input", height=100)
+                    if st.button("💾 Save Notes", key="save_notes_btn"):
+                        # Must get accurate index in actual data dictionary vs the dataframe output
+                        # We use matching on base_url, username, mac depending on source
+                        tgt_base_url = row.get("base_url")
+                        tgt_user = row.get("username", "")
+                        tgt_mac = row.get("mac", "")
+                        
+                        for i, r in enumerate(committed_records):
+                            if r.get("base_url") == tgt_base_url and r.get("username", "") == tgt_user and r.get("mac", "") == tgt_mac:
+                                committed_records[i]["Notes"] = notes_val
+                                save_committed_data(committed_records)
+                                st.success("Notes saved successfully!")
+                                break
+                with col_d:
+                    st.markdown("<br><br>", unsafe_allow_html=True)
+                    if st.button("🗑️ Delete Record", type="primary", key="del_commit_btn", use_container_width=True):
+                        tgt_base_url = row.get("base_url")
+                        tgt_user = row.get("username", "")
+                        tgt_mac = row.get("mac", "")
+                        for i, r in enumerate(committed_records):
+                            if r.get("base_url") == tgt_base_url and r.get("username", "") == tgt_user and r.get("mac", "") == tgt_mac:
+                                delete_committed_record(i)
+                                st.success("Record deleted successfully!")
+                                st.rerun()
+                                break
 
