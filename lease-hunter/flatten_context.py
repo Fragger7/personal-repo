@@ -22,4 +22,4 @@ def flatten_project():
 
 if __name__ == '__main__':
     flatten_project()
-    print("✓ Project context successfully flattened into project_context.txt!")
+    print("Success: Project context successfully flattened into project_context.txt!")
