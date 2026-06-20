@@ -75,6 +75,132 @@ VEHICLE_DATABASE = {
     }
 }
 
+# --- SYSTEM HELPER ENGINES & GRAPHIC LOGS ---
+def estimate_msrp(make, model, trim):
+    base = 35000  # Default fallback
+    make_lower = make.lower()
+    model_lower = model.lower()
+    trim_lower = trim.lower()
+    
+    if "bmw" in make_lower:
+        base = 52000
+        if "ix" in model_lower: base = 87000
+        elif "5 s" in model_lower: base = 60000
+        elif "i4" in model_lower: base = 57900
+    elif "audi" in make_lower:
+        base = 54000
+        if "gt" in model_lower: base = 106000
+        elif "q8" in model_lower: base = 75000
+    elif "mercedes" in make_lower:
+        base = 56000
+        if "eqs" in model_lower: base = 104000
+        elif "eqe" in model_lower: base = 78000
+    elif "tesla" in make_lower:
+        base = 42000
+        if "model s" in model_lower: base = 75000
+        elif "model x" in model_lower: base = 80000
+    elif "hyundai" in make_lower:
+        base = 32000
+        if "ioniq 5" in model_lower: base = 44000
+        elif "ioniq 6" in model_lower: base = 42000
+    elif "kia" in make_lower:
+        base = 31000
+        if "ev6" in model_lower: base = 45000
+        elif "ev9" in model_lower: base = 56000
+    elif "chevrolet" in make_lower:
+        base = 34000
+        if "silverado" in model_lower: base = 78000
+    elif "ford" in make_lower:
+        base = 36000
+        if "lightning" in model_lower: base = 58000
+    elif "lexus" in make_lower:
+        base = 46000
+        if "rz" in model_lower: base = 60000
+    elif "toyota" in make_lower:
+        base = 28000
+        if "bz4x" in model_lower: base = 43000
+        elif "prime" in model_lower: base = 35000
+        
+    # Trim configuration modifiers
+    if any(w in trim_lower for w in ["performance", "plaid", "ultimate", "m50", "m60", "gt", "rs"]):
+        base += 12000
+    elif any(w in trim_lower for w in ["long range", "premium", "luxury", "executive", "prestige"]):
+        base += 5500
+    elif any(w in trim_lower for w in ["awd", "4matic", "quattro", "xdrive"]):
+        base += 2500
+        
+    return base
+
+def get_mock_inventory(make, model, trim, zip_code):
+    base_price = estimate_msrp(make, model, trim)
+    zip_prefix = zip_code[:2] if zip_code else "78"
+    
+    # Locate regional dealers based on ZIP prefix
+    if zip_prefix in ['75', '76', '77', '78', '79']:
+         dealers = ["Lone Star Lease Hub (Austin)", "North Texas Premium Auto (Dallas)", "Gulf Coast Capital Vehicles (Houston)"]
+    elif zip_prefix in ['10', '11', '12', '13', '14']:
+         dealers = ["Manhattan Luxury Guild", "Empire State EV Central (Brooklyn)", "Tri-State Select Imports"]
+    elif zip_prefix in ['90', '91', '92', '93', '94', '95']:
+         dealers = ["Pacific Coast Auto Gallery (LA)", "Silicon Valley Green Motors", "Southern Cal Car Club"]
+    elif zip_prefix in ['30', '31', '32', '33', '34']:
+         dealers = ["Sun Coast Imports (Miami)", "Peach State Premium Auto (Atlanta)", "Orlando EV Direct"]
+    else:
+         dealers = ["Midwest Auto Exchange", "National Fleet Brokerage", "Premium Direct Network"]
+         
+    # Manufacturer VIN Prefixes
+    make_lower = make.lower()
+    if "bmw" in make_lower:
+        vin_prefix = "WBA"
+        colors = ["Alpine White", "Black Sapphire Metallic", "Phytonic Blue", "Dravit Grey"]
+    elif "audi" in make_lower:
+        vin_prefix = "WA1"
+        colors = ["Glacier White Metallic", "Mythos Black Metallic", "Nardo Gray", "Navarra Blue"]
+    elif "mercedes" in make_lower:
+        vin_prefix = "W1K"
+        colors = ["Polar White", "Obsidian Black Metallic", "Selenite Grey", "Manufaktur Alpine Grey"]
+    elif "tesla" in make_lower:
+        vin_prefix = "5YJ" if "model 3" in model.lower() or "model s" in model.lower() else "7SA"
+        colors = ["Pearl White Multi-Coat", "Solid Black", "Midnight Silver Metallic", "Ultra Red"]
+    elif "hyundai" in make_lower:
+        vin_prefix = "KM8"
+        colors = ["Atlas White", "Abyss Black Pearl", "Cyber Gray Metallic", "Shooting Star (Matte)"]
+    elif "kia" in make_lower:
+        vin_prefix = "KND"
+        colors = ["Snow White Pearl", "Aurora Black Pearl", "Interstellar Gray", "Yacht Blue"]
+    elif "chevrolet" in make_lower:
+        vin_prefix = "1G1"
+        colors = ["Summit White", "Black", "Red Hot", "Sterling Gray Metallic"]
+    elif "ford" in make_lower:
+        vin_prefix = "1FT"
+        colors = ["Oxford White", "Shadow Black", "Rapid Red Metallic", "Carbonized Gray"]
+    else:
+        vin_prefix = "1YV"
+        colors = ["Crystal White", "Jet Black", "Graphite Metallic", "Deep Crimson Blue"]
+        
+    # Generate unique pseudo-random seed based on properties to align consistent displays per selection
+    import hashlib
+    seed_hash = hashlib.sha256(f"{make}-{model}-{trim}-{zip_code}".encode()).hexdigest()
+    seed_val = int(seed_hash[:8], 16) % 10000
+    
+    units = []
+    for idx, dealer in enumerate(dealers[:3]):
+        msrp_offset = ((seed_val + idx * 37) % 19) * 100 + ((seed_val + idx * 2) % 3) * 50
+        days_on_lot = (seed_val + idx * 43) % 85 + 5
+        vin_suffix = f"{((seed_val + idx * 832) % 900000) + 100000}"
+        
+        full_vin = f"{vin_prefix}8A{idx}K{seed_val % 10}FA{vin_suffix}"
+        color = colors[(seed_val + idx) % len(colors)]
+        
+        units.append({
+            "Dealer": dealer,
+            "MSRP": int(base_price + msrp_offset),
+            "Color": color,
+            "Days on Lot": int(days_on_lot),
+            "VIN": full_vin
+        })
+        
+    return units
+
 # --- DATA SCHEMAS & UTILITIES ---
 class LeaseProgramDetails(BaseModel):
     money_factor: float = Field(description="The buy-rate Money Factor (MF) for this vehicle lease, e.g., 0.00210")
@@ -91,15 +217,15 @@ def fetch_live_lease_program(year, make, model, trim, zip_code, term=36):
     
     # Step 1: Query Gemini with Google Search tool to find raw data
     search_prompt = f"""
-    Find the official captive lender lease program details for:
+    Find the official captive lender lease program details (residual percentage and subvented money factor) for the following vehicle:
     Year: {year}
     Make: {make}
     Model: {model}
-    Trim: {trim}
+    Trim: {trim} (Note: If this exact trim name is slightly descriptive or formatted differently in manufacturer lists, do loose/fuzzy matching to find the closest match, such as basic standard AWD/RWD equivalents, rather than failing.)
     ZIP Code: {zip_code}
     Lease Term: {term} months
     
-    Search for the current month's subvented/buy-rate Money Factor (MF), Residual Percentage, and standard national or regional rebate/lease cash incentives.
+    Search for the current month's subvented/buy-rate Money Factor (MF), Residual Percentage, and standard national or regional rebate/lease cash incentives. If this exact trim is not found, list or match closely related trims.
     """
     
     search_response = client.models.generate_content(
@@ -202,10 +328,23 @@ with st.sidebar:
         st.session_state.active_year = year
         st.session_state.active_zip = zip_code
         st.session_state.active_radius = search_radius
+        
+        # Pull dynamic mock inventory based on new parameters to auto-populate default evaluation inputs
+        fresh_inventory = get_mock_inventory(make, model, trim, zip_code)
+        if fresh_inventory:
+            st.session_state.target_msrp = fresh_inventory[0]["MSRP"]
+            st.session_state.target_dealer = fresh_inventory[0]["Dealer"]
+            st.session_state.target_vin = fresh_inventory[0]["VIN"]
+        else:
+            st.session_state.target_msrp = estimate_msrp(make, model, trim)
+            st.session_state.target_dealer = "Primary Regional Center"
+            st.session_state.target_vin = "PENDING_SELECTION"
+            
         st.success(f"Parameters registered for {year} {make}!")
+        st.rerun()
         
     if st.session_state.get('params_locked', False):
-        st.success(f"🟢 Active Contract Locked: {st.session_state.get('active_year')} {st.session_state.get('active_make')} {st.session_state.get('active_model')}")
+        st.success(f"🟢 Active Contract Locked: {st.session_state.get('active_year')} {st.session_state.get('active_make')} {st.session_state.get('active_model')} ({st.session_state.get('active_trim')})")
     else:
         st.info("Awaiting parameters verification. Click registration above.")
 
@@ -225,19 +364,17 @@ tab1, tab2, tab3, tab4 = st.tabs(["🔍 Live Inventory Engine", "📊 AI Rate Fi
 
 # --- TAB 1: LIVE INVENTORY ---
 with tab1:
-    st.header(f"Live Location Mapping: {make} {model} inside {search_radius} miles")
+    st.header(f"Live Location Mapping: {make} {model} inside {search_radius}")
     st.info(f"Scanning localized API endpoints originating near ZIP {zip_code}...")
     
     st.markdown(f"### Target Units Located for {make} {model} {trim}")
     
-    mock_universe = [
-        {"Dealer": "Regional Luxury Center", "MSRP": 62500, "Color": "Alpine White", "Days on Lot": 72, "VIN": "WBA53AW00G829102"},
-        {"Dealer": "Metro Automotive Group", "MSRP": 64100, "Color": "Mineral Grey", "Days on Lot": 18, "VIN": "WBA53AW00G829554"},
-    ]
+    # Real-time generated vehicle list mapped to user parameter choices
+    mock_universe = get_mock_inventory(make, model, trim, zip_code)
     
     for idx, unit in enumerate(mock_universe):
         c1, c2, c3, c4, c5 = st.columns([2, 1, 1, 2, 1])
-        c1.write(f"🏢 **{unit['Dealer']}**")
+        c1.write(f"🏢 **{unit['Dealer']}** ({unit['Color']})")
         c2.write(f"${unit['MSRP']:,}")
         c3.write(f"⏳ {unit['Days on Lot']} Days")
         c4.write(f"`{unit['VIN']}`")
@@ -246,6 +383,7 @@ with tab1:
             st.session_state.target_dealer = unit['Dealer']
             st.session_state.target_vin = unit['VIN']
             st.success(f"Sent {unit['Dealer']} unit to calculation desk!")
+            st.rerun()
 
 # --- TAB 2: AI RATE FINDER ---
 with tab2:
