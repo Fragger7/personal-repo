@@ -100,3 +100,8 @@ When this repository is loaded or cloned into a **Google AI Studio Cloud Run dev
 If adding new network fetch mechanisms to `app.py`:
 * **Streamlit Reruns**: Streamlit triggers a script re-run upon every button click, selection, or interactive element usage. Network logic on the top level must be cached or protected.
 * **MANDATORY Application Cache**: For any external diagnostics or rate-limited API calls (such as search grounding or localized APIs), you **MUST** secure the execution blocks using `@st.cache_data` or check if the result is cached inside `st.session_state` to avoid hammering rate limits during consecutive clicks or accordion navigations.
+
+---
+
+## 🛑 Rule 7: Mandatory Documentation Synchronization
+Whenever you modify the application code (such as editing `app.py`), you **MUST** update the developer documentation (**[LEASE_HUNTER.md](file:///C:/Development/Apps/Lease%20Hunter/LEASE_HUNTER.md)**) in the same commit. You must document new states, parameters, logic pathways, or dependencies. This prevents "documentation drift" and ensures that the next agent starting a session has a perfectly mirrored context. Do not push code updates without updating the guides.

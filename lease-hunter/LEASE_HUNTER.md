@@ -12,20 +12,23 @@ The Universal Lease Hunter Engine is a parametric Streamlit application. It is d
 ## 🏗️ Architecture & Core Components
 
 ### 1. Parametric Input Controls
-All inputs originate in the Streamlit Sidebar:
-*   **Vehicle Specifications**: Manufacturer (`make`), Model Line (`model`), Trim Configuration (`trim`), and Model Year (`year`).
-*   **Geography**: Residential ZIP Code (`zip_code`) and Search Radius.
-*   **Credit Profile**: Credit score rating slider, mapping to Tier 1 (740+) or Standard Tier (below 740).
+All inputs originate in the Streamlit Sidebar and govern active session parameters:
+*   **Cascading Vehicle Selection**: Manufacturer (`make`), Model Line (`model`), and Trim Configuration (`trim`) are implemented as cascading dropdowns backed by a static catalog (`VEHICLE_DATABASE`). Choosing a manufacturer filters the model list, which dynamically filters the trims. Features a **"Custom / Other Brand"** manual input fallback option.
+*   **Model Year**: Selector for 2026/2025 (`year`).
+*   **Interactive Search Slider**: Replaced dropdowns with an interactive slider (`Search Radius`) ranging from 10 to 500 miles, with 500 mapping to a "Nationwide" sweep range.
+*   **Lock & Register Parameters Button**: Commits active selections into session state variables (`active_make`, `active_model`, `active_trim`, `active_year`, `active_zip`, `active_radius`) and locks the parameters. A successful commit triggers a calculation desk pre-population and app rerun.
 
 ### 2. Live Inventory Engine (Tab 1)
-Designed to locate actual target units. 
-*   **Current State**: Simulates inventory searches with a mock list of matching vehicles.
-*   **User Action**: Clicking "Load Unit" imports the vehicle's MSRP, dealership name, and VIN into `st.session_state` to seed calculations automatically.
+Designed to locate target units.
+*   **Dynamic Generator**: Uses `get_mock_inventory(make, model, trim, zip_code)` to dynamically generate simulated listings matching the registered sidebar parameters (calculating realistic MSRP ranges, colors, days on lot, and VIN layouts).
+*   **User Action**: Clicking "Load Unit" imports the specific mock vehicle's MSRP, dealer, and VIN to `st.session_state` and triggers a clean rerun to pre-fill the calculator.
 
 ### 3. AI Rate Finder (Tab 2)
 Provides automated lease rate extraction.
-*   **Objective**: Make a real call using the Google GenAI SDK (`google-genai`) using Gemini with Search Grounding (`google_search=True`) to scrape current-month captive lender rates (Residuals, Money Factors, Rebates) for the specific Make/Model/Trim/ZIP.
-*   **State Integration**: Fetched metrics should automatically save to `st.session_state` to feed the Custom Deal Matrix.
+*   **Objective**: Uses a **two-step pipeline** with `google-genai` SDK to fetch active lender rates safely:
+    *   *Step 1 (Search Grounding)*: Queries Gemini with Google Search tool enabled to find raw lease program details on Edmunds Forums and Leasehackr. Prompts instruct Gemini to perform loose/fuzzy matching if trim naming conventions slightly differ.
+    *   *Step 2 (Data Parsing)*: Queries Gemini *without tools* using a validated Pydantic model (`LeaseProgramDetails`) to cleanly parse the raw search text into Money Factor, Residual %, and Lease Cash.
+*   **State Integration**: Extracted rates are saved to session state (`target_mf`, `target_residual`, `target_rebate`) and flow automatically as defaults in the custom deal matrix inputs.
 
 ### 4. Deal Evaluator & Tax Engine (Tab 3)
 The heart of the lease calculator. It computes depreciation and rent charges, applying specific local tax regulations based on ZIP code:
