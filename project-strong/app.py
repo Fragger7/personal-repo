@@ -25,14 +25,6 @@ st.set_page_config(page_title="IPTV Playlist Analytics", layout="wide", page_ico
 if "app_theme" not in st.session_state:
     st.session_state.app_theme = "Midnight Purple (Focus)"
 
-with st.sidebar:
-    st.markdown("### 🎨 Appearance Skin")
-    st.selectbox(
-        "Select Theme", 
-        ["Midnight Purple (Focus)", "Ocean Blue (Glass)", "Crimson Red (Dark)", "Clean Light Mode"],
-        key="app_theme"
-    )
-
 def get_theme_css(theme_name):
     # Default variables (Midnight Purple)
     bg_col = "#0C0714"
@@ -255,6 +247,15 @@ st.markdown(get_theme_css(st.session_state.app_theme), unsafe_allow_html=True)
 # --- HERO HEADER ---
 st.markdown('<div class="hero-title">IPTV Analytics Dashboard</div>', unsafe_allow_html=True)
 st.markdown('<div class="hero-subtitle">High-performance manifest discovery, validation, and analytics engine</div>', unsafe_allow_html=True)
+
+with st.expander("⚙️ Dashboard Settings & Themes", expanded=False):
+    col1, col2 = st.columns([1, 2])
+    with col1:
+        st.selectbox(
+            "Select Appearance Theme", 
+            ["Midnight Purple (Focus)", "Ocean Blue (Glass)", "Crimson Red (Dark)", "Clean Light Mode"],
+            key="app_theme"
+        )
 
 # --- SECURE ACCESS CHECK ---
 def check_password():
