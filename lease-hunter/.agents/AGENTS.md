@@ -16,6 +16,8 @@ Before you edit any files or make any commits, you must check for changes in the
 
 > [!IMPORTANT]
 > **DO NOT CREATE A NEW WORKSPACE OR BRANCH STRUCTURALLY.** Do not run `git init` to initialize a new git repository inside `C:\Development\Apps\Lease Hunter`. You MUST connect to the existing remote repository, pull/clone the latest files, and continue the development on the current `main` branch. Use the existing consolidated context from the repository rather than creating independent branches or detached heads.
+> 
+> **MANDATORY KNOWLEDGE SYNC:** Before commencing any feature development, you MUST read all documentation and developer guides (specifically [LEASE_HUNTER.md](file:///C:/Development/Apps/Lease%20Hunter/LEASE_HUNTER.md) and this [AGENTS.md](file:///C:/Development/Apps/Lease%20Hunter/.agents/AGENTS.md)) to fully understand the project's architecture, state variables, and execution parameters.
 
 1. **Clone to Temp**: Clone the repository to a temporary directory inside the workspace using `--depth 1` to save time/bandwidth:
    ```powershell
