@@ -624,7 +624,20 @@ with tab_tools:
     st.caption("Quickly extract hidden URLs or encapsulate data payloads before processing.")
     
     b64_action = st.radio("Select Operation:", ["Decode (Base64 -> Text)", "Encode (Text -> Base64)"], horizontal=True)
-    b64_input = st.text_area("Input Payload:", height=150, key="b64_input", label_visibility="collapsed")
+    
+    if "b64_input" not in st.session_state:
+        st.session_state["b64_input"] = ""
+
+    def clear_b64_input():
+        st.session_state["b64_input"] = ""
+
+    col_b64_input, col_b64_clear = st.columns([5, 1])
+    with col_b64_clear:
+        st.markdown("<br>", unsafe_allow_html=True) # visual alignment padding
+        st.button("🧹 Clear Input", on_click=clear_b64_input, key="clear_b64_btn", use_container_width=True)
+
+    with col_b64_input:
+        b64_input = st.text_area("Input Payload:", height=150, key="b64_input", label_visibility="collapsed")
     
     if st.button("🔄 Translate Payload", use_container_width=True):
         if not b64_input.strip():
@@ -845,9 +858,26 @@ if st.session_state["playlist_results"] is not None:
                     st.code(m3u_url, language="text")
                     
                     st.write("---")
-                    st.write("📡 **Query Target Asset Classifications**")
-                    if st.button("Fetch Live Stream Catalogs", key=f"fetch_btn_{selected_x_idx}", type="primary", use_container_width=True):
-                        with st.spinner("Fetching stream catalogs from IPTV host. Please wait... (this only happens when you click)"):
+                    st.markdown("#### 📡 Query Target Asset Classifications")
+                    
+                    # Track host selections in session state to reset cache if selecting a different server
+                    current_host_key = f"{row['base_url']}_{row['username']}"
+                    if "cached_host_key" not in st.session_state or st.session_state["cached_host_key"] != current_host_key:
+                        st.session_state["cached_host_key"] = current_host_key
+                        st.session_state["cached_live_cats"] = None
+                        st.session_state["cached_live_streams"] = None
+
+                    # If data is not cached, show the Fetch button. If it is cached, show a Refresh button instead.
+                    col_fetch, col_clear_cache = st.columns([4, 1])
+                    btn_text = "Fetch Live Stream Catalogs" if not st.session_state["cached_live_cats"] else "🔄 Refresh Stream Catalogs"
+                    
+                    with col_fetch:
+                        trigger_fetch = st.button(btn_text, key=f"fetch_btn_{selected_x_idx}", type="primary", use_container_width=True)
+                    with col_clear_cache:
+                        st.button("❌ Close Catalogs", key=f"close_btn_{selected_x_idx}", use_container_width=True, on_click=lambda: st.session_state.update({"cached_live_cats": None, "cached_live_streams": None}))
+
+                    if trigger_fetch:
+                        with st.spinner("Fetching stream catalogs from IPTV host. Please wait..."):
                             async def fetch_tier2_data(r):
                                 return await asyncio.gather(
                                     fetch_lazy_details(r['base_url'], r['username'], r['password'], "get_live_categories"),
@@ -859,51 +889,62 @@ if st.session_state["playlist_results"] is not None:
                             live_cats, live_streams = results[0], results[1]
                         
                             if isinstance(live_cats, list) and isinstance(live_streams, list):
-                                cat_counts = {}
-                                for s in live_streams:
-                                    cid = str(s.get("category_id"))
-                                    cat_counts[cid] = cat_counts.get(cid, 0) + 1
-                                
-                                cat_options = []
-                                cat_map = {}
-                                
-                                for c in live_cats:
-                                    cid = str(c.get("category_id"))
-                                    name = c.get("category_name", "Unknown")
-                                    count = cat_counts.get(cid, 0)
-                                    display_name = f"{name} ({count})"
-                                    cat_options.append(display_name)
-                                    cat_map[display_name] = c
-                                
-                                st.metric("Live Categories Found", len(live_cats))
-                                if cat_options:
-                                    selected_option = st.selectbox(
-                                        f"Active Live Packages ({row['username']})", 
-                                        options=cat_options, 
-                                        key=f"sel_x_{selected_x_idx}"
-                                    )
-                                    selected_cat = cat_map.get(selected_option)
-                                    if selected_cat:
-                                        cat_id = str(selected_cat.get("category_id"))
-                                        matching_streams = [s for s in live_streams if str(s.get("category_id")) == cat_id]
-                                        
-                                        st.write(f"📡 Displaying **{len(matching_streams)}** channels in: **{selected_cat.get('category_name')}**")
-                                        if matching_streams:
-                                            stream_data = [{"Num": s.get("num"), "Name": s.get("name"), "Stream ID": s.get("stream_id"), "Icon": s.get("stream_icon")} for s in matching_streams]
-                                            st.dataframe(
-                                                pd.DataFrame(stream_data),
-                                                column_config={
-                                                    "Icon": st.column_config.ImageColumn("Logo", help="Channel Logo"),
-                                                    "Num": st.column_config.NumberColumn("#"),
-                                                    "Name": st.column_config.TextColumn("Channel Name"),
-                                                    "Stream ID": st.column_config.NumberColumn("Stream ID")
-                                                },
-                                                use_container_width=True, hide_index=True
-                                            )
-                                        else:
-                                            st.info("No channels found in this group.")
+                                st.session_state["cached_live_cats"] = live_cats
+                                st.session_state["cached_live_streams"] = live_streams
                             else:
-                                st.error("Payload context restricted or limited by provider container setup. Status verified, but deep mining disabled.")
+                                st.session_state["cached_live_cats"] = "error"
+                                st.session_state["cached_live_streams"] = "error"
+
+                    # If data has been successfully cached, render it
+                    if st.session_state["cached_live_cats"] and st.session_state["cached_live_cats"] != "error":
+                        live_cats = st.session_state["cached_live_cats"]
+                        live_streams = st.session_state["cached_live_streams"]
+                        
+                        cat_counts = {}
+                        for s in live_streams:
+                            cid = str(s.get("category_id"))
+                            cat_counts[cid] = cat_counts.get(cid, 0) + 1
+                        
+                        cat_options = []
+                        cat_map = {}
+                        
+                        for c in live_cats:
+                            cid = str(c.get("category_id"))
+                            name = c.get("category_name", "Unknown")
+                            count = cat_counts.get(cid, 0)
+                            display_name = f"{name} ({count})"
+                            cat_options.append(display_name)
+                            cat_map[display_name] = c
+                        
+                        st.metric("Live Categories Found", len(live_cats))
+                        if cat_options:
+                            selected_option = st.selectbox(
+                                f"Active Live Packages ({row['username']})", 
+                                options=cat_options, 
+                                key=f"sel_x_{selected_x_idx}"
+                            )
+                            selected_cat = cat_map.get(selected_option)
+                            if selected_cat:
+                                cat_id = str(selected_cat.get("category_id"))
+                                matching_streams = [s for s in live_streams if str(s.get("category_id")) == cat_id]
+                                
+                                st.write(f"📡 Displaying **{len(matching_streams)}** channels in: **{selected_cat.get('category_name')}**")
+                                if matching_streams:
+                                    stream_data = [{"Num": s.get("num"), "Name": s.get("name"), "Stream ID": s.get("stream_id"), "Icon": s.get("stream_icon")} for s in matching_streams]
+                                    st.dataframe(
+                                        pd.DataFrame(stream_data),
+                                        column_config={
+                                            "Icon": st.column_config.ImageColumn("Logo", help="Channel Logo"),
+                                            "Num": st.column_config.NumberColumn("#"),
+                                            "Name": st.column_config.TextColumn("Channel Name"),
+                                            "Stream ID": st.column_config.NumberColumn("Stream ID")
+                                        },
+                                        use_container_width=True, hide_index=True
+                                    )
+                                else:
+                                    st.info("No channels found in this group.")
+                    elif st.session_state["cached_live_cats"] == "error":
+                        st.error("Payload context restricted or limited by provider container setup. Status verified, but deep mining disabled.")
                 else:
                     st.warning("⚠️ Deep-Dive Discovery is only available for Active connections. The selected node is offline or blocked.")
             else:
