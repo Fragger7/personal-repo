@@ -71,6 +71,7 @@ To test or run the dashboard locally:
 
 Streamlit Community Cloud monitors the remote Git repository and hot-reloads changes automatically.
 
+*   **Live Web App URL**: [leasehunter.streamlit.app](https://leasehunter.streamlit.app)
 *   **Repository Address**: `https://github.com/Fragger7/personal-repo`
 *   **Target Branch**: `main`
 *   **Target App File**: `lease-hunter/app.py`
