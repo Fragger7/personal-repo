@@ -14,6 +14,9 @@ On this Windows host, the raw `git` command may not be in the default shell `PAT
 ## 🛑 Rule 2: Git Sync on Session Startup (Mandatory)
 Before you edit any files or make any commits, you must check for changes in the remote GitHub repository (`https://github.com/Fragger7/personal-repo.git`) and pull them down:
 
+> [!IMPORTANT]
+> **DO NOT CREATE A NEW WORKSPACE OR BRANCH STRUCTURALLY.** Do not run `git init` to initialize a new git repository inside `C:\Development\Apps\Lease Hunter`. You MUST connect to the existing remote repository, pull/clone the latest files, and continue the development on the current `main` branch. Use the existing consolidated context from the repository rather than creating independent branches or detached heads.
+
 1. **Clone to Temp**: Clone the repository to a temporary directory inside the workspace using `--depth 1` to save time/bandwidth:
    ```powershell
    & "C:\Program Files\Git\cmd\git.exe" clone https://github.com/Fragger7/personal-repo.git "C:\Development\Apps\Lease Hunter\personal-repo-temp" --depth 1
@@ -75,11 +78,17 @@ When this repository is loaded or cloned into a **Google AI Studio Cloud Run dev
 1. **Host Environment**: Commands are executed directly in a Linux shell, meaning standard commands like `git` and `node` are natively available.
 2. **React Control Panel**: A React-Vite visual shell is configured at the workspace root to provide an interactive dashboard summarizing the active sync files, setup configurations, and push triggers.
 3. **Automated Secure Push**: A specialized node script `git_push.cjs` is included at the workspace root to automate the isolated mono-repo commit and push process safely.
-4. **Authorizing Pushes**:
-   - The user must provide a secure `GITHUB_TOKEN` as a Secret/Environment variable in the AI Studio Settings.
+4. **Authorizing Pushes & PAT Setup Guide**:
+   - **How to configure GITHUB_TOKEN in AI Studio UI**:
+     1. Open your chat/prompt thread in **Google AI Studio**.
+     2. In the right-hand configurations sidebar, locate the **System Instructions** or **Secret Manager / API Keys / Environmental Settings**.
+     3. Click **Add Secret** (or **Manage Secrets**).
+     4. Set Key Name to: `GITHUB_TOKEN`
+     5. Paste your GitHub Personal Access Token (PAT) with write access to `https://github.com/Fragger7/personal-repo.git`.
+     6. Save the settings. The container environment will now load it natively under `process.env.GITHUB_TOKEN`.
    - Run the automated sync & push script from the workstation terminal using:
      ```bash
-     npx tsx git_push.cjs
+     npx tsx git_push.cjs "Your Commit Message Description"
      ```
    - This script creates a temporary clone, stages only modifications inside `lease-hunter/`, commits, pushes back to GitHub, and cleans up completely without breaking the production branch.
 
