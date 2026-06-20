@@ -10,7 +10,70 @@ from pydantic import BaseModel, Field
 # Load environment variables for local development
 load_dotenv()
 
-st.set_page_config(page_title="Universal Lease Engine", layout="wide", page_icon="🏎️")
+st.set_page_config(page_title="Universal Lease Engine", layout="wide", page_icon="🏎️", initial_sidebar_state="expanded")
+
+# --- CASCADE VEHICLE DATABASE OF LEASEABLE NORTH AMERICAN CARS ---
+VEHICLE_DATABASE = {
+    "BMW": {
+        "i4 Coupe/Sedan": ["eDrive35", "eDrive40", "xDrive40", "M50"],
+        "iX SUV": ["xDrive50", "M60"],
+        "3 Series Active": ["330i", "330e Hybrid", "M340i Performance"],
+        "5 Series Luxury": ["530i Premium", "i5 eDrive40 Electric", "i5 M60 Sport"],
+        "X5 Active SUV": ["sDrive40i Classic", "xDrive40i AWD", "xDrive50e Hybrid"]
+    },
+    "Audi": {
+        "Q4 e-tron Electric": ["Premium 40", "Premium Plus 40 S-Line", "Premium Plus 50 Quattro"],
+        "Q8 e-tron Electric SUV": ["Premium S AWD", "Premium Plus S S-Line", "Prestige luxury"],
+        "e-tron GT Electric": ["Premium Plus e-Quattro", "Prestige luxury S", "RS Performance GT"],
+        "Q5 Luxury Crossover": ["40 TFSI Premium", "45 TFSI S Line", "55 TFSI e plug-in hybrid"]
+    },
+    "Mercedes-Benz": {
+        "EQE Sedan/SUV": ["EQE 350+ Base", "EQE 350 4MATIC AWD", "EQE 500 Luxury"],
+        "EQS Sedan/SUV": ["EQS 450+ Luxury", "EQS 580 Executive 4MATIC"],
+        "C-Class Executive": ["C300 Premium S", "C300 4MATIC Sport"],
+        "GLC SUV Crossover": ["GLC300 Premium", "GLC300 4MATIC Sport Edition"]
+    },
+    "Tesla": {
+        "Model 3 Electric": ["Standard Range RWD", "Long Range AWD", "Performance Track AWD"],
+        "Model Y SUV": ["Rear-Wheel Drive Base", "Long Range AWD Utility", "Performance Track Sport"],
+        "Model S Sport Sedan": ["Dual Motor AWD Long Range", "Plaid Tri-Motor Performance"],
+        "Model X Sport Utility": ["Dual Motor AWD", "Plaid Tri-Motor Ultimate"]
+    },
+    "Hyundai": {
+        "IONIQ 5 Crossover": ["SE Standard", "SEL Executive", "Limited Ultimate Edition", "D100 Platinum"],
+        "IONIQ 6 Streamliner": ["SE Long Range", "SEL Mid Range", "Limited Sport"],
+        "Tucson Compact": ["SE Base", "SEL Comfort", "N Line Sport", "Limited Premium", "Plug-In Hybrid Sport"],
+        "Santa Fe Full SUV": ["SE Base", "SEL Adventure", "XRT Rugged", "Limited Luxury", "Calligraphy Ultimate"]
+    },
+    "Kia": {
+        "EV6 crossover": ["Light Long Range", "Wind AWD", "GT-Line Sport", "GT Track Performance"],
+        "EV9 Fullsize SUV": ["Light Long Range RWD", "Wind Utility AWD", "Land AWD Premium", "GT-Line Ultimate AWD"],
+        "Sportage Crossover": ["LX Standard", "EX Comfort", "SX Sport Utility", "Sportage Plug-In Hybrid"],
+        "Telluride Utility": ["LX Base", "S Premium", "EX Comfort Luxury", "SX Active Ride", "SX Prestige Nightfall"]
+    },
+    "Chevrolet": {
+        "Blazer EV Sport": ["LT Standard AWD", "RS Sport Edition AWD", "SS High Output Track"],
+        "Equinox EV Compact": ["2LT Standard RWD", "3LT Luxury", "2RS Active", "3RS Ultimate Performance"],
+        "Silverado EV Truck": ["4WT Work Truck AWD", "3WT Practical AWD", "RST First Edition Dynamic"]
+    },
+    "Ford": {
+        "Mustang Mach-E SUV": ["Select Entry AWD", "Premium Extended Range", "GT Performance Edition", "Rally Off-Road Sport"],
+        "F-150 Lightning Truck": ["Pro Commercial AWD", "XLT Active Ride", "Flash Utility Truck", "Lariat Premium AWD", "Platinum Ultimate"]
+    },
+    "Lexus": {
+        "RZ Electric Crossover": ["RZ 300e Premium RWD", "RZ 450e Premium AWD", "RZ 450e Luxury AWD"],
+        "RX Luxury Performance": ["RX 350 Premium F-Sport", "RX 350h Fuel-Efficient AWD", "RX 500h F Sport Performance"],
+        "NX Compact Premium": ["NX 250 Base FWD", "NX 350h Premium Hybrid", "NX 450h+ Plug-In Ultimate"]
+    },
+    "Toyota": {
+        "bZ4X Electric": ["XLE Standard AWD", "Limited High Grade Utility"],
+        "RAV4 Prime Sport": ["SE Mid Grade AWD", "XSE Sport Premium PHEV"],
+        "Prius Prime Hatch": ["SE Efficient PHEV", "XSE Sport PHEV", "XSE Premium Ultimate"]
+    },
+    "Custom / Other Brand": {
+        "Custom Model": ["Custom Trim"]
+    }
+}
 
 # --- DATA SCHEMAS & UTILITIES ---
 class LeaseProgramDetails(BaseModel):
@@ -83,22 +146,68 @@ st.caption("Parametric Acquisition Dashboard | Cross-Brand Inventory & Rate Matr
 with st.sidebar:
     st.header("🎯 Deal Parameters")
     
-    # 1. Vehicle Selection
-    make = st.text_input("Manufacturer", "BMW")
-    model = st.text_input("Model Line", "i4")
-    trim = st.text_input("Trim Configuration", "eDrive40")
-    year = st.selectbox("Model Year", [2026, 2025])
+    # 1. Vehicle Selection - Cascading Dropdowns from Public North America Database
+    manufacturers = list(VEHICLE_DATABASE.keys())
+    selected_make_index = 0
+    if 'active_make' in st.session_state and st.session_state.active_make in manufacturers:
+        selected_make_index = manufacturers.index(st.session_state.active_make)
+        
+    selected_make = st.selectbox("Manufacturer (Real-time DB)", manufacturers, index=selected_make_index)
+    
+    if selected_make == "Custom / Other Brand":
+        make = st.text_input("Manufacturer", st.session_state.get('active_make', "Porsche"))
+        model = st.text_input("Model Line", st.session_state.get('active_model', "Taycan"))
+        trim = st.text_input("Trim Configuration", st.session_state.get('active_trim', "Taycan 4S"))
+    else:
+        make = selected_make
+        models = list(VEHICLE_DATABASE[make].keys())
+        selected_model_index = 0
+        if 'active_model' in st.session_state and st.session_state.active_model in models:
+            selected_model_index = models.index(st.session_state.active_model)
+            
+        selected_model = st.selectbox("Model Line", models, index=selected_model_index)
+        model = selected_model
+        
+        trims = VEHICLE_DATABASE[make][model]
+        selected_trim_index = 0
+        if 'active_trim' in st.session_state and st.session_state.active_trim in trims:
+            selected_trim_index = trims.index(st.session_state.active_trim)
+            
+        selected_trim = st.selectbox("Trim Configuration", trims, index=selected_trim_index)
+        trim = selected_trim
+        
+    year = st.selectbox("Model Year", [2026, 2025], index=0 if st.session_state.get('active_year') == 2026 else 1)
     
     st.markdown("---")
-    # 2. Geography & Radius
-    zip_code = st.text_input("Residential ZIP Code", "78664")
-    search_radius = st.selectbox("Search Radius (Miles)", [50, 200, 500, "Nationwide"])
+    # 2. Geography & Radius - Replaced Radius with an Interactive Slider
+    zip_code = st.text_input("Residential ZIP Code", st.session_state.get('active_zip', "78664"))
+    
+    radius_val = st.slider("Search Radius (Miles)", min_value=10, max_value=500, value=200, step=10)
+    search_radius = "Nationwide" if radius_val == 500 else f"{radius_val} Miles"
+    st.caption(f"Active Sweep Range: **{search_radius}**")
     
     st.markdown("---")
     # 3. Credit Profile
     credit_score = st.slider("Credit Score Range", 600, 850, 750)
     tier = "Tier 1 (Top)" if credit_score >= 740 else "Tier 2/3 (Standard Rate)"
     st.caption(f"Estimated Profile: **{tier}**")
+
+    st.markdown("---")
+    # 4. Parameters Commit State and Active Session Lock Button
+    if st.button("🚀 Lock & Register Deal Parameters", use_container_width=True):
+        st.session_state.params_locked = True
+        st.session_state.active_make = make
+        st.session_state.active_model = model
+        st.session_state.active_trim = trim
+        st.session_state.active_year = year
+        st.session_state.active_zip = zip_code
+        st.session_state.active_radius = search_radius
+        st.success(f"Parameters registered for {year} {make}!")
+        
+    if st.session_state.get('params_locked', False):
+        st.success(f"🟢 Active Contract Locked: {st.session_state.get('active_year')} {st.session_state.get('active_make')} {st.session_state.get('active_model')}")
+    else:
+        st.info("Awaiting parameters verification. Click registration above.")
 
 # --- SYSTEM ENGINE LOGIC (Determining Tax Classifications) ---
 def get_tax_structure(zip_prefix):

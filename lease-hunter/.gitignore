@@ -1,14 +1,8 @@
-# Local environment variables
-.env
-
-# Project context and temporary files
-project_context.txt
-
-# Python virtual environments & caching
-venv/
-.venv/
-__pycache__/
-*.pyc
-
-# Streamlit local configurations
-.streamlit/
+node_modules/
+build/
+dist/
+coverage/
+.DS_Store
+*.log
+.env*
+!.env.example
