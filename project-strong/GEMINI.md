@@ -59,7 +59,7 @@ Accidental exposure of a private home IP address during playlist checks can comp
   * **🛠️ Base64 Decoder**: Extracts hidden structural links embedded as text chunks inside unstructured text blocks, automatically stripping garbage or padding limits. Output enables one-click link launching or copying.
   * **📡 Multi-Payload Scanner**: The main bulk ingest and tracking center.
   * **📺 Xtream Codes & 🛸 Stalker Portals**: Dedicated manifest tabs, indicating real-time discovered node counts dynamically in their tab titles. Records now capture target server Timezones and Server regional timings structurally when available.
-  * **💾 Committed Data**: A persistence layer data grid that allows users to permanently save ("Commit") verified lines from the Xtream or Stalker tabs. Data is locally saved to `committed.json` and synchronized seamlessly to Git. Free-form text note edits and targeted deletion features track active accounts for historical runs without duplicates.
+  * **💾 Committed Data**: A persistence layer data grid that allows users to permanently save ("Commit") verified lines from the Xtream or Stalker tabs. Data is locally saved to `committed.json` and synchronized seamlessly to Git. Free-form text note edits and targeted deletion features track active accounts for historical runs without duplicates. When running in Streamlit Community Cloud (or locally with `GITHUB_TOKEN` secrets configured in Streamlit), saving dynamically triggers a direct push of `committed.json` to the GitHub repository using the GitHub REST API to ensure permanent cloud persistence.
 * **State Caching (st.cache_data)**: The application utilizes Streamlit's data caching (`@st.cache_data(ttl=300)`) strictly to cache outbound verification blocks (e.g. `ip-api.com`). This is absolutely critical because Streamlit executes top-to-bottom on every user interaction (clicks, toggles) which will otherwise rapidly hammer public rate-limited limits (45 reqs/min for ip-api.com) when navigating libraries.
 * **Tiered Loading & Master-Detail View**: All tabular views use a **Master-Detail interaction paradigm**. 
   * The top data-grid is selected by clicking a row (`selection_mode="single-row"` and `on_select="rerun"`).
@@ -98,9 +98,10 @@ Streamlit Community Cloud monitors the remote Git repository and hot-reloads cha
 * **Repository Address**: `https://github.com/Fragger7/personal-repo`
 * **Target Branch**: `main`
 * **Target App File**: `project-strong/app.py`
-* **Secrets Configuration**: Accessible via the App Dashboard under **Advanced Settings > Secrets**. Add the following line to authorize secure access:
+* **Secrets Configuration**: Accessible via the App Dashboard under **Advanced Settings > Secrets**. Add the following lines to authorize secure access and auto-commits:
   ```toml
   ACCESS_PASSWORD = "your_chosen_secret_password"
+  GITHUB_TOKEN = "your_github_personal_access_token_for_auto_saves"
   ```
 * **Git Hot-Reload Trigger**: Any commit pushed to the `main` branch of the GitHub repository triggers Streamlit to pull the updates, install dependencies listed in `requirements.txt`, and redeploy the live application instantly.
 
