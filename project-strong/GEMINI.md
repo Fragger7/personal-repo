@@ -58,7 +58,8 @@ Accidental exposure of a private home IP address during playlist checks can comp
 * **Tab-Based Workspace**: The application is divided into a clean, tabbed hierarchy:
   * **🛠️ Base64 Decoder**: Extracts hidden structural links embedded as text chunks inside unstructured text blocks, automatically stripping garbage or padding limits. Output enables one-click link launching or copying.
   * **📡 Multi-Payload Scanner**: The main bulk ingest and tracking center.
-  * **📺 Xtream Codes & 🛸 Stalker Portals**: Dedicated manifest tabs, indicating real-time discovered node counts dynamically in their tab titles.
+  * **📺 Xtream Codes & 🛸 Stalker Portals**: Dedicated manifest tabs, indicating real-time discovered node counts dynamically in their tab titles. Records now capture target server Timezones and Server regional timings structurally when available.
+  * **💾 Committed Data**: A persistence layer data grid that allows users to permanently save ("Commit") verified lines from the Xtream or Stalker tabs. Data is locally saved to `committed.json` and synchronized seamlessly to Git. Free-form text note edits and targeted deletion features track active accounts for historical runs without duplicates.
 * **State Caching (st.cache_data)**: The application utilizes Streamlit's data caching (`@st.cache_data(ttl=300)`) strictly to cache outbound verification blocks (e.g. `ip-api.com`). This is absolutely critical because Streamlit executes top-to-bottom on every user interaction (clicks, toggles) which will otherwise rapidly hammer public rate-limited limits (45 reqs/min for ip-api.com) when navigating libraries.
 * **Tiered Loading & Master-Detail View**: All tabular views use a **Master-Detail interaction paradigm**. 
   * The top data-grid is selected by clicking a row (`selection_mode="single-row"` and `on_select="rerun"`).
@@ -140,6 +141,7 @@ Copy-Item "C:\Development\Apps\Project Strong\requirements.txt" "C:\Development\
 Copy-Item "C:\Development\Apps\Project Strong\GEMINI.md" "C:\Development\Apps\Project Strong\personal-repo-temp\project-strong\GEMINI.md" -Force
 Copy-Item "C:\Development\Apps\Project Strong\run.bat" "C:\Development\Apps\Project Strong\personal-repo-temp\project-strong\run.bat" -Force
 Copy-Item "C:\Development\Apps\Project Strong\.agents\AGENTS.md" "C:\Development\Apps\Project Strong\personal-repo-temp\project-strong\.agents\AGENTS.md" -Force
+Copy-Item "C:\Development\Apps\Project Strong\committed.json" "C:\Development\Apps\Project Strong\personal-repo-temp\project-strong\committed.json" -Force -ErrorAction SilentlyContinue
 
 # Step 3: Stage, commit, and push from personal-repo-temp
 cd "C:\Development\Apps\Project Strong\personal-repo-temp"
