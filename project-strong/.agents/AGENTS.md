@@ -14,6 +14,11 @@ On this Windows host, the raw `git` command may not be in the default shell `PAT
 ## 🛑 Rule 2: Git Sync on Session Startup (Mandatory)
 Before you edit any files or make any commits, you must check for changes in the remote GitHub repository (`https://github.com/Fragger7/personal-repo.git`) and pull them down:
 
+> [!IMPORTANT]
+> **DO NOT CREATE A NEW WORKSPACE OR BRANCH STRUCTURALLY.** Do not run `git init` to initialize a new git repository inside `C:\Development\Apps\Project Strong`. You MUST connect to the existing remote repository, pull/clone the latest files, and continue the development on the current `main` branch. Use the existing consolidated context from the repository rather than creating independent branches or detached heads.
+> 
+> **MANDATORY KNOWLEDGE SYNC:** Before commencing any feature development, you MUST read all documentation and developer guides (specifically [GEMINI.md](file:///C:/Development/Apps/Project%20Strong/GEMINI.md) and this [AGENTS.md](file:///C:/Development/Apps/Project%20Strong/.agents/AGENTS.md)) to fully understand the project's architecture, state variables, and execution parameters.
+
 1. **Clone to Temp**: Clone the repository to a temporary directory inside the workspace using `--depth 1` to save time/bandwidth:
    ```powershell
    & "C:\Program Files\Git\cmd\git.exe" clone https://github.com/Fragger7/personal-repo.git "C:\Development\Apps\Project Strong\personal-repo-temp" --depth 1
