@@ -54,6 +54,7 @@ Accidental exposure of a private home IP address during playlist checks can comp
 * **Stalker Limits (Ministra Framework)**: Deep-dive channel classification and VOD grid streaming is structurally blocked for Stalker Portals due to the requirements of the MAC-driven authentication payload dynamically expiring. Deep-dive discovery is explicitly restricted from accessing these nodes to avoid triggering the target server's firewall banning mechanisms. The dashboard will inform the provider.
 
 ### 3. Application UI & Efficiency Optimizations
+* **Dynamic Multi-Theming**: The app features a UI theme selection engine managed via `st.session_state` and a top-level expander ("⚙️ Dashboard Settings & Themes"). Users can dynamically swap CSS visual skins including *Midnight Purple (Focus)*, *Ocean Blue (Glass)*, *Crimson Red (Dark)*, and *Clean Light Mode*. The chosen CSS payload is automatically injected to re-style tabs, containers, and data graphics.
 * **Tab-Based Workspace**: The application is divided into a clean, tabbed hierarchy:
   * **🛠️ Base64 Decoder**: Extracts hidden structural links embedded as text chunks inside unstructured text blocks, automatically stripping garbage or padding limits. Output enables one-click link launching or copying.
   * **📡 Multi-Payload Scanner**: The main bulk ingest and tracking center.
