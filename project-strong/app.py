@@ -21,175 +21,236 @@ logger = logging.getLogger("iptv_analytics")
 # --- CONFIGURATION & CONSTANTS ---
 st.set_page_config(page_title="IPTV Playlist Analytics", layout="wide", page_icon="📡")
 
-# --- CUSTOM UI / UX STYLING ---
-st.markdown("""
+# --- CUSTOM UI / UX THEMES ---
+if "app_theme" not in st.session_state:
+    st.session_state.app_theme = "Midnight Purple (Focus)"
+
+with st.sidebar:
+    st.markdown("### 🎨 Appearance Skin")
+    st.selectbox(
+        "Select Theme", 
+        ["Midnight Purple (Focus)", "Ocean Blue (Glass)", "Crimson Red (Dark)", "Clean Light Mode"],
+        key="app_theme"
+    )
+
+def get_theme_css(theme_name):
+    # Default variables (Midnight Purple)
+    bg_col = "#0C0714"
+    text_col = "#E9E3F4"
+    text_muted = "#A79BBF"
+    primary1 = "#A855F7"
+    primary2 = "#7E22CE"
+    panel_bg = "rgba(43, 20, 60, 0.4)"
+    panel_hover = "rgba(43, 20, 60, 0.6)"
+    code_bg = "rgba(0,0,0,0.3)"
+    code_text = "#C084FC"
+
+    if theme_name == "Ocean Blue (Glass)":
+        bg_col = "#050F17"
+        text_col = "#E0F2FE"
+        text_muted = "#7DD3FC"
+        primary1 = "#0EA5E9"
+        primary2 = "#0284C7"
+        panel_bg = "rgba(14, 30, 45, 0.5)"
+        panel_hover = "rgba(14, 30, 45, 0.7)"
+        code_text = "#38BDF8"
+    elif theme_name == "Crimson Red (Dark)":
+        bg_col = "#11070A"
+        text_col = "#FCE7F3"
+        text_muted = "#F472B6"
+        primary1 = "#E11D48"
+        primary2 = "#BE123C"
+        panel_bg = "rgba(45, 14, 25, 0.5)"
+        panel_hover = "rgba(45, 14, 25, 0.7)"
+        code_text = "#FDA4AF"
+    elif theme_name == "Clean Light Mode":
+        bg_col = "#F1F5F9"
+        text_col = "#0F172A"
+        text_muted = "#475569"
+        primary1 = "#3B82F6"
+        primary2 = "#2563EB"
+        panel_bg = "rgba(255, 255, 255, 0.8)"
+        panel_hover = "rgba(255, 255, 255, 1.0)"
+        code_bg = "rgba(241,245,249,0.8)"
+        code_text = "#0369A1"
+
+    return f"""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
 
 /* Main Typography & Base */
-html, body, [class*="css"] {
+html, body, [class*="css"] {{
     font-family: 'Inter', sans-serif !important;
-    background-color: #0A0E17;
-    color: #E2E8F0;
-}
+    background-color: {bg_col} !important;
+    color: {text_col} !important;
+}}
 
-/* Make block container sleek with more breathing room */
-.main .block-container {
+/* Main container sleek spacing */
+.main .block-container {{
     padding-top: 1.5rem !important;
     padding-bottom: 4rem !important;
     max-width: 1200px;
-}
+}}
+.stApp {{
+    background-color: {bg_col} !important;
+}}
 
 /* Cool gradient title styling */
-.hero-title {
+.hero-title {{
     font-family: 'Inter', sans-serif;
     font-weight: 800;
     font-size: 3rem;
     letter-spacing: -0.03em;
-    background: linear-gradient(135deg, #FF4B4B 0%, #FF8A8A 100%);
+    background: linear-gradient(135deg, {primary1} 0%, {primary2} 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     margin-bottom: 0px;
     padding-bottom: 0px;
-}
-.hero-subtitle {
+}}
+.hero-subtitle {{
     font-family: 'Inter', sans-serif;
-    color: #94A3B8;
+    color: {text_muted};
     font-size: 1.1rem;
     font-weight: 400;
     margin-top: 5px;
     margin-bottom: 25px;
-}
+}}
 
 /* Tabs Redesign */
-div[data-testid="stTabs"] button {
+div[data-testid="stTabs"] button {{
     font-size: 1.05rem;
     font-weight: 600;
-    color: #94A3B8;
+    color: {text_muted};
     padding: 14px 20px;
     background: transparent;
     border: none;
     border-bottom: 2px solid transparent;
     transition: all 0.2s ease;
-}
-div[data-testid="stTabs"] button[data-baseweb="tab"][aria-selected="true"] {
-    color: #FF4B4B;
-    border-bottom: 2px solid #FF4B4B !important;
-    background-color: rgba(255, 75, 75, 0.05);
+}}
+div[data-testid="stTabs"] button[data-baseweb="tab"][aria-selected="true"] {{
+    color: {primary1};
+    border-bottom: 2px solid {primary1} !important;
+    background-color: rgba(128, 128, 128, 0.05);
     border-radius: 6px 6px 0 0;
-}
-div[data-testid="stTabs"] button:hover {
-    color: #F8FAFC;
-}
+}}
+div[data-testid="stTabs"] button:hover {{
+    color: {text_col};
+}}
 
 /* Sleek Buttons */
-div.stButton > button {
+div.stButton > button {{
     border-radius: 8px;
     font-weight: 600;
     padding: 0.6rem 1.2rem;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    background: linear-gradient(180deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.01) 100%);
-    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    border: 1px solid rgba(128, 128, 128, 0.2);
+    background: {panel_bg};
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    color: #E2E8F0;
-}
-div.stButton > button:hover {
-    border-color: #FF4B4B;
-    color: #FF4B4B;
+    color: {text_col};
+}}
+div.stButton > button:hover {{
+    border-color: {primary1};
+    color: {primary1};
     transform: translateY(-2px);
-    box-shadow: 0 6px 12px rgba(255, 75, 75, 0.15);
-}
-div.stButton > button[kind="primary"] {
-    background: linear-gradient(135deg, #FF4B4B 0%, #D43F3F 100%);
+    box-shadow: 0 6px 12px rgba(0,0,0,0.1);
+}}
+div.stButton > button[kind="primary"] {{
+    background: linear-gradient(135deg, {primary1} 0%, {primary2} 100%);
     border: none;
     color: white;
-    box-shadow: 0 4px 12px rgba(255, 75, 75, 0.3);
-}
-div.stButton > button[kind="primary"]:hover {
-    background: linear-gradient(135deg, #FF6B6B 0%, #E54545 100%);
-    box-shadow: 0 8px 20px rgba(255, 75, 75, 0.4);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}}
+div.stButton > button[kind="primary"]:hover {{
     transform: translateY(-2px);
-}
+    box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+    color: white;
+}}
 
 /* Glassmorphism DataFrames */
-div[data-testid="stDataFrame"] {
-    border: 1px solid rgba(255,255,255,0.08) !important;
+div[data-testid="stDataFrame"] {{
+    border: 1px solid rgba(128,128,128,0.15) !important;
     border-radius: 12px !important;
     overflow: hidden;
-    background: rgba(20, 28, 43, 0.6);
+    background: {panel_bg};
     backdrop-filter: blur(10px);
-    box-shadow: 0 8px 32px rgba(0,0,0,0.2);
-}
+    box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+}}
 
 /* Beautiful Expanders */
-.stExpander {
-    border: 1px solid rgba(255,255,255,0.08) !important;
+.stExpander {{
+    border: 1px solid rgba(128,128,128,0.15) !important;
     border-radius: 10px !important;
-    background: rgba(20, 28, 43, 0.4) !important;
+    background: {panel_bg} !important;
     backdrop-filter: blur(5px);
-    box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.05);
     transition: all 0.3s ease;
-}
-.stExpander:hover {
-    border-color: rgba(255, 75, 75, 0.3) !important;
-    background: rgba(20, 28, 43, 0.7) !important;
-}
-.stExpander summary {
+}}
+.stExpander:hover {{
+    border-color: {primary1} !important;
+    background: {panel_hover} !important;
+}}
+.stExpander summary {{
     font-weight: 600;
-    color: #F8FAFC;
+    color: {text_col};
     padding: 12px;
-}
+}}
 
 /* Code blocks & Texts */
-code {
+code {{
     font-family: 'JetBrains Mono', monospace !important;
-    background-color: rgba(0,0,0,0.3) !important;
-    border: 1px solid rgba(255,255,255,0.05);
+    background-color: {code_bg} !important;
+    border: 1px solid rgba(128,128,128,0.1);
     border-radius: 6px;
     padding: 2px 6px;
-    color: #38BDF8;
-}
-.stCodeBlock {
+    color: {code_text} !important;
+}}
+.stCodeBlock {{
     border-radius: 10px !important;
-    border: 1px solid rgba(255,255,255,0.08);
-    background-color: #0A0E17 !important;
-}
+    border: 1px solid rgba(128,128,128,0.2);
+    background-color: {bg_col} !important;
+}}
 
 /* Metrics */
-div[data-testid="stMetricValue"] {
+div[data-testid="stMetricValue"] {{
     font-weight: 800;
     font-size: 2.2rem;
     letter-spacing: -0.02em;
-    color: #F8FAFC;
-}
-div[data-testid="stMetricLabel"] {
-    color: #94A3B8;
+    color: {text_col};
+}}
+div[data-testid="stMetricLabel"] {{
+    color: {text_muted};
     font-weight: 500;
     font-size: 0.9rem;
     text-transform: uppercase;
     letter-spacing: 0.05em;
-}
+}}
 
 /* Input Fields */
-.stTextArea textarea, .stTextInput input {
-    background-color: rgba(20, 28, 43, 0.6) !important;
-    border: 1px solid rgba(255,255,255,0.1) !important;
+.stTextArea textarea, .stTextInput input {{
+    background-color: {panel_bg} !important;
+    border: 1px solid rgba(128,128,128,0.2) !important;
     border-radius: 8px !important;
-    color: #F8FAFC !important;
+    color: {text_col} !important;
     font-family: 'JetBrains Mono', monospace;
     transition: all 0.2s ease;
-}
-.stTextArea textarea:focus, .stTextInput input:focus {
-    border-color: #FF4B4B !important;
-    box-shadow: 0 0 0 1px #FF4B4B !important;
-}
+}}
+.stTextArea textarea:focus, .stTextInput input:focus {{
+    border-color: {primary1} !important;
+    box-shadow: 0 0 0 1px {primary1} !important;
+}}
+.stRadio label, .stCheckbox label {{
+    color: {text_col} !important;
+}}
 
-/* Top Hero Spacing Fix */
-div[data-testid="stVerticalBlock"] > div:first-child {
+div[data-testid="stVerticalBlock"] > div:first-child {{
     padding-top: 0 !important;
-}
+}}
 </style>
-""", unsafe_allow_html=True)
+"""
+
+# Inject Dynamic CSS
+st.markdown(get_theme_css(st.session_state.app_theme), unsafe_allow_html=True)
+
 
 # --- HERO HEADER ---
 st.markdown('<div class="hero-title">IPTV Analytics Dashboard</div>', unsafe_allow_html=True)
