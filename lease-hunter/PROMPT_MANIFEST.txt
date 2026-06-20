@@ -15,4 +15,9 @@ LIVE DATA GOALS:
 Query Gemini live-search to fetch current month's captive lender baseline (Residual %, Base MF, Regional Rebates) for any [Year + Make + Model + Trim + ZIP].
 
 Query live-search to check for active state-level EV incentives or manufacturer "Lender Tax Credits" for upfront tax states.
+
+MANDATORY AGENT WORKFLOW RULES:
+1. PULL & READ: Before starting any code edits, you must pull the latest files from Git and read LEASE_HUNTER.md, AGENTS.md, and this manifest.
+2. MONO-REPO PROTECTION: Do not run `git init` or create independent branches. Always pull from the remote repository, copy changes to `lease-hunter/`, and push using `git_push.cjs` (Cloud) or `git_push.ps1` (Local).
+3. NO DOCUMENTATION DRIFT: Every code modification to `app.py` MUST be accompanied by updates to `LEASE_HUNTER.md` in the same commit. Keep instructions, states, and parameters aligned.
 =====================================
