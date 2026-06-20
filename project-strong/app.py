@@ -37,14 +37,43 @@ def load_committed_data():
     return []
 
 def save_committed_data(data_list):
+    json_str = json.dumps(data_list, indent=4)
     with open(COMMITTED_FILE, "w", encoding="utf-8") as f:
-        json.dump(data_list, f, indent=4)
+        f.write(json_str)
         
-    # Auto-push to repo as requested
-    try:
-        subprocess.run(["npx", "tsx", "git_push.cjs"], check=False)
-    except Exception as e:
-        logger.error(f"Failed to auto-push: {e}")
+    # Auto-push to repo using Python GitHub API (Streamlit Cloud safe)
+    if "GITHUB_TOKEN" in st.secrets:
+        try:
+            import base64
+            token = st.secrets["GITHUB_TOKEN"]
+            repo_slug = "Fragger7/personal-repo" 
+            file_path = "project-strong/committed.json"
+            url = f"https://api.github.com/repos/{repo_slug}/contents/{file_path}"
+            headers = {
+                "Authorization": f"token {token}",
+                "Accept": "application/vnd.github.v3+json"
+            }
+            
+            # 1. Get the current file SHA (required by GitHub for updates)
+            r = httpx.get(url, headers=headers)
+            sha = r.json().get("sha") if r.status_code == 200 else None
+            
+            # 2. Push the updated content
+            payload = {
+                "message": "Update: committed.json (Streamlit Cloud Auto-Push)",
+                "content": base64.b64encode(json_str.encode("utf-8")).decode("utf-8"),
+                "branch": "main"
+            }
+            if sha:
+                payload["sha"] = sha
+                
+            put_r = httpx.put(url, headers=headers, json=payload)
+            if put_r.status_code not in [200, 201]:
+                logger.error(f"GitHub API push failed: {put_r.text}")
+        except Exception as e:
+            logger.error(f"Failed to auto-push to GitHub API: {e}")
+    else:
+        logger.warning("GITHUB_TOKEN not found in st.secrets. Skipping remote push.")
 
 def commit_record(record, tab_type):
     current = load_committed_data()
