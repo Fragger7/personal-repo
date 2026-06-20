@@ -34,6 +34,9 @@ if ($LASTEXITCODE -eq 0) {
     if (Test-Path "$workspace\git_push.cjs") {
         Copy-Item "$workspace\git_push.cjs" "$targetDir\git_push.cjs" -Force
     }
+    if (Test-Path "$workspace\PROMPT_MANIFEST.txt") {
+        Copy-Item "$workspace\PROMPT_MANIFEST.txt" "$targetDir\PROMPT_MANIFEST.txt" -Force
+    }
 
     Write-Host "Staging and committing files..." -ForegroundColor Cyan
     Push-Location $tempDir

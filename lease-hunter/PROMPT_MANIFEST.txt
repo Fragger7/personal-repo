@@ -1,0 +1,18 @@
+=== PROJECT COGNITIVE MANIFEST v3 ===
+ROLE: Universal Automotive Lease Broker Engine
+SCOPE: Dynamic Cross-Brand Multi-State Inventory Scraper & Program Evaluator
+
+TAX RULE BASELINES:
+
+TAX_ON_PAYMENT: Base tax calculated per month (e.g., CA, FL, AZ).
+
+TAX_ON_TOTAL_PAYMENTS: Tax calculated on sum of all lease payments upfront (e.g., NY, NJ, OH, GA).
+
+TAX_ON_FULL_PRICE: Tax calculated on entire selling price upfront (e.g., TX, MD, VA, OK).
+
+LIVE DATA GOALS:
+
+Query Gemini live-search to fetch current month's captive lender baseline (Residual %, Base MF, Regional Rebates) for any [Year + Make + Model + Trim + ZIP].
+
+Query live-search to check for active state-level EV incentives or manufacturer "Lender Tax Credits" for upfront tax states.
+=====================================

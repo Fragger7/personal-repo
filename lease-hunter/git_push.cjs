@@ -35,7 +35,8 @@ try {
         'run.bat',
         'git_push.ps1',
         'flatten_context.py',
-        'git_push.cjs'
+        'git_push.cjs',
+        'PROMPT_MANIFEST.txt'
     ];
 
     filesToCopy.forEach(file => {
