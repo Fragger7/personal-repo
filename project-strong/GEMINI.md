@@ -17,14 +17,10 @@ The IPTV Playlist Analytics Dashboard is a lightweight, high-performance Streaml
 To protect public cloud deployments from unauthorized access while maintaining ease of use for local development, the app includes a conditional password barrier:
 * **Production/Cloud Check**: The app inspects `st.secrets` for `ACCESS_PASSWORD`. If configured, it blocks page rendering and presents a password input gate. If the input matches `ACCESS_PASSWORD`, access is cached in `st.session_state["password_correct"]`. If verification fails or is empty, execution is terminated immediately using `st.stop()`.
 * **Developer Bypass (Local)**: If `ACCESS_PASSWORD` is absent in `st.secrets` (default state in fresh local development environments), the application automatically bypasses the password screen and launches in open mode.
-* **Local Security Testing / Run Script Injection**:
-  Developers can test the password gate locally in two ways:
-  1. Create a `local_password.txt` file in the project directory containing only your password. The modified `run.bat` will automatically read it and inject the `STREAMLIT_ACCESS_PASSWORD` environment variable.
-  2. Populate a local `.streamlit/secrets.toml` file with:
-     ```toml
-     ACCESS_PASSWORD = "your_test_password"
-     ```
-  Both `local_password.txt` and the `.streamlit/` directory are defined in `.gitignore` to prevent secret leakage. If no local password configuration is found, the gate will automatically bypass for seamless local development.
+* **Local Security Testing**: To test the security gate locally, developers can populate a local `.streamlit/secrets.toml` file with:
+  ```toml
+  ACCESS_PASSWORD = "your_test_password"
+  ```
 
 #### B. Geolocation Outbound Network Shield
 Accidental exposure of a private home IP address during playlist checks can compromise privacy. The system implements a strict safety shield:
@@ -53,15 +49,14 @@ Accidental exposure of a private home IP address during playlist checks can comp
 * **Catalog Stats Lazy Load**: Handshake results are stored in `st.session_state["playlist_results"]`. Overall channel and VOD catalog counts are lazy-loaded on demand via a **"Query Channels & VOD Counts"** button to optimize execution speeds.
 
 #### C. Tier 2: Local Category Explorer & Stalker Constraints
-* **On-Demand Loading & Session Caching**: Activating the **"Fetch Live Stream Catalogs"** button spawns concurrent async tasks to fetch `get_live_categories` and `get_live_streams`. To survive Streamlit's script reruns when toggling packages in the dropdown, the parsed catalogs are cached in `st.session_state` (`cached_live_cats` and `cached_live_streams`).
-* **Active Host Key Isolation**: To prevent channel leakage when switching between different active nodes, the cache uses `cached_host_key` (composite of `base_url` and `username`). If the user switches rows in the manifest, the cache is automatically cleared. A **"Close Catalogs"** button is provided to manually reset the active view, and a **"Refresh Stream Catalogs"** button handles manual re-downloads.
+* **On-Demand Accordions**: Activating an expander for an active node spawns concurrent async tasks via fetch_lazy_details to fetch `get_live_categories` and `get_live_streams` data.
 * **Server-Side Bypass (Xtream)**: Filters and counts category channels locally rather than requesting pre-filtered category URLs from the server, bypassing buggy endpoints and ensuring accurate listings with correct logos.
 * **Stalker Limits (Ministra Framework)**: Deep-dive channel classification and VOD grid streaming is structurally blocked for Stalker Portals due to the requirements of the MAC-driven authentication payload dynamically expiring. Deep-dive discovery is explicitly restricted from accessing these nodes to avoid triggering the target server's firewall banning mechanisms. The dashboard will inform the provider.
 
 ### 3. Application UI & Efficiency Optimizations
 * **Dynamic Multi-Theming**: The app features a UI theme selection engine managed via `st.session_state` and a top-level expander ("⚙️ Dashboard Settings & Themes"). Users can dynamically swap CSS visual skins including *Midnight Purple (Focus)*, *Ocean Blue (Glass)*, *Crimson Red (Dark)*, and *Clean Light Mode*. The chosen CSS payload is automatically injected to re-style tabs, containers, and data graphics.
 * **Tab-Based Workspace**: The application is divided into a clean, tabbed hierarchy:
-  * **🛠️ Base64 Decoder**: Extracts hidden structural links embedded as text chunks inside unstructured text blocks, automatically stripping garbage or padding limits. Features a **"Clear Input"** button to quickly reset data payloads. Output enables one-click link launching or copying.
+  * **🛠️ Base64 Decoder**: Extracts hidden structural links embedded as text chunks inside unstructured text blocks, automatically stripping garbage or padding limits. Output enables one-click link launching or copying.
   * **📡 Multi-Payload Scanner**: The main bulk ingest and tracking center.
   * **📺 Xtream Codes & 🛸 Stalker Portals**: Dedicated manifest tabs, indicating real-time discovered node counts dynamically in their tab titles.
 * **State Caching (st.cache_data)**: The application utilizes Streamlit's data caching (`@st.cache_data(ttl=300)`) strictly to cache outbound verification blocks (e.g. `ip-api.com`). This is absolutely critical because Streamlit executes top-to-bottom on every user interaction (clicks, toggles) which will otherwise rapidly hammer public rate-limited limits (45 reqs/min for ip-api.com) when navigating libraries.

@@ -14,11 +14,6 @@ On this Windows host, the raw `git` command may not be in the default shell `PAT
 ## 🛑 Rule 2: Git Sync on Session Startup (Mandatory)
 Before you edit any files or make any commits, you must check for changes in the remote GitHub repository (`https://github.com/Fragger7/personal-repo.git`) and pull them down:
 
-> [!IMPORTANT]
-> **DO NOT CREATE A NEW WORKSPACE OR BRANCH STRUCTURALLY.** Do not run `git init` to initialize a new git repository inside `C:\Development\Apps\Project Strong`. You MUST connect to the existing remote repository, pull/clone the latest files, and continue the development on the current `main` branch. Use the existing consolidated context from the repository rather than creating independent branches or detached heads.
-> 
-> **MANDATORY KNOWLEDGE SYNC:** Before commencing any feature development, you MUST read all documentation and developer guides (specifically [GEMINI.md](file:///C:/Development/Apps/Project%20Strong/GEMINI.md) and this [AGENTS.md](file:///C:/Development/Apps/Project%20Strong/.agents/AGENTS.md)) to fully understand the project's architecture, state variables, and execution parameters.
-
 1. **Clone to Temp**: Clone the repository to a temporary directory inside the workspace using `--depth 1` to save time/bandwidth:
    ```powershell
    & "C:\Program Files\Git\cmd\git.exe" clone https://github.com/Fragger7/personal-repo.git "C:\Development\Apps\Project Strong\personal-repo-temp" --depth 1
@@ -70,9 +65,9 @@ This project is committed under the `project-strong/` folder of a mono-repo. **N
 ---
 
 ## 🛑 Rule 4: Secret Management and Throttling Limits
-* **Do NOT Hardcode Secrets**: Never commit access passwords, API keys, or raw credentials to the repository. On cloud environments, utilize `st.secrets["ACCESS_PASSWORD"]` for security. For local development, passwords can be injected using the `STREAMLIT_ACCESS_PASSWORD` environment variable or placed in a local `local_password.txt` file (which is processed by `run.bat` and parsed natively by `app.py`). Both `local_password.txt` and the `.streamlit/` directory must remain git-ignored.
-* **Keep Throttling Disabled**: Concurrency throttling (semaphores) has been removed at the user's request. Keep queries unthrottled but lazy-loaded (Tiers 1 and 2) to optimize responsiveness.
-* **Preserve Logging**: Maintain standard Python logging outputs to stdout so runtime diagnostics are visible in log utilities.
+* **Do NOT Hardcode Secrets**: Never commit access passwords, API keys, or raw credentials to the repository. Use `st.secrets["ACCESS_PASSWORD"]` for verification.
+* **Keep Throttling Disabled**: The concurrency throttling (semaphores) has been removed at the user's instruction. Keep queries unthrottled but lazy-loaded (Tiers 1 and 2) to preserve user-experience speeds.
+* **Preserve Logging**: Keep standard `logging` prints going to stdout so live diagnostics can be read inside Streamlit's dashboard logs.
 
 ---
 
@@ -95,6 +90,4 @@ When this repository is loaded or cloned into a **Google AI Studio Cloud Run dev
 If adding new network fetch mechanisms to `app.py`:
 * **Streamlit Reruns**: Streamlit triggers a script re-run upon every button click, selection, or interactive element usage. Network logic on the top level must be safeguarded.
 * **MANDATORY Application Cache**: For any external diagnostics (like `ip-api.com` or other limit-sensitive tracking services), you **MUST** secure the execution blocks using `@st.cache_data`. This bypasses strict, low rate-limits (`429 Too Many Requests`) from third-party tools during consecutive clicks or accordion navigations.
-* **State Caching for Interactive Controls**: When displaying detailed sub-menus (like dropdown package selections) that are loaded on demand, you **MUST** cache the data in `st.session_state` (e.g., using `cached_live_cats`/`cached_live_streams` tied to a `cached_host_key`). If you do not cache them, the data will disappear on the subsequent rerun when the user interacts with the sub-menu dropdown controls.
-
 

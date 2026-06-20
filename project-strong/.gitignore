@@ -4,6 +4,3 @@ __pycache__/
 Thumbs.db
 ehthumbs.db
 Desktop.ini
-.streamlit/
-local_password.txt
-local_secrets.txt
