@@ -880,6 +880,8 @@ if st.session_state["playlist_results"] is not None:
                     
                     st.write("---")
                     st.write("📡 **Query Target Asset Classifications**")
+                    
+                    tier2_key = f"t2_{row['base_url']}_{row['username']}"
                     if st.button("Fetch Live Stream Catalogs", key=f"fetch_btn_{selected_x_idx}", type="primary", use_container_width=True):
                         with st.spinner("Fetching stream catalogs from IPTV host. Please wait... (this only happens when you click)"):
                             async def fetch_tier2_data(r):
@@ -889,55 +891,58 @@ if st.session_state["playlist_results"] is not None:
                                     return_exceptions=True
                                 )
                             
-                            results = asyncio.run(fetch_tier2_data(row))
-                            live_cats, live_streams = results[0], results[1]
-                        
-                            if isinstance(live_cats, list) and isinstance(live_streams, list):
-                                cat_counts = {}
-                                for s in live_streams:
-                                    cid = str(s.get("category_id"))
-                                    cat_counts[cid] = cat_counts.get(cid, 0) + 1
-                                
-                                cat_options = []
-                                cat_map = {}
-                                
-                                for c in live_cats:
-                                    cid = str(c.get("category_id"))
-                                    name = c.get("category_name", "Unknown")
-                                    count = cat_counts.get(cid, 0)
-                                    display_name = f"{name} ({count})"
-                                    cat_options.append(display_name)
-                                    cat_map[display_name] = c
-                                
-                                st.metric("Live Categories Found", len(live_cats))
-                                if cat_options:
-                                    selected_option = st.selectbox(
-                                        f"Active Live Packages ({row['username']})", 
-                                        options=cat_options, 
-                                        key=f"sel_x_{selected_x_idx}"
-                                    )
-                                    selected_cat = cat_map.get(selected_option)
-                                    if selected_cat:
-                                        cat_id = str(selected_cat.get("category_id"))
-                                        matching_streams = [s for s in live_streams if str(s.get("category_id")) == cat_id]
-                                        
-                                        st.write(f"📡 Displaying **{len(matching_streams)}** channels in: **{selected_cat.get('category_name')}**")
-                                        if matching_streams:
-                                            stream_data = [{"Num": s.get("num"), "Name": s.get("name"), "Stream ID": s.get("stream_id"), "Icon": s.get("stream_icon")} for s in matching_streams]
-                                            st.dataframe(
-                                                pd.DataFrame(stream_data),
-                                                column_config={
-                                                    "Icon": st.column_config.ImageColumn("Logo", help="Channel Logo"),
-                                                    "Num": st.column_config.NumberColumn("#"),
-                                                    "Name": st.column_config.TextColumn("Channel Name"),
-                                                    "Stream ID": st.column_config.NumberColumn("Stream ID")
-                                                },
-                                                use_container_width=True, hide_index=True
-                                            )
-                                        else:
-                                            st.info("No channels found in this group.")
-                            else:
-                                st.error("Payload context restricted or limited by provider container setup. Status verified, but deep mining disabled.")
+                            st.session_state[tier2_key] = asyncio.run(fetch_tier2_data(row))
+                            
+                    if tier2_key in st.session_state:
+                        results = st.session_state[tier2_key]
+                        live_cats, live_streams = results[0], results[1]
+                    
+                        if isinstance(live_cats, list) and isinstance(live_streams, list):
+                            cat_counts = {}
+                            for s in live_streams:
+                                cid = str(s.get("category_id"))
+                                cat_counts[cid] = cat_counts.get(cid, 0) + 1
+                            
+                            cat_options = []
+                            cat_map = {}
+                            
+                            for c in live_cats:
+                                cid = str(c.get("category_id"))
+                                name = c.get("category_name", "Unknown")
+                                count = cat_counts.get(cid, 0)
+                                display_name = f"{name} ({count})"
+                                cat_options.append(display_name)
+                                cat_map[display_name] = c
+                            
+                            st.metric("Live Categories Found", len(live_cats))
+                            if cat_options:
+                                selected_option = st.selectbox(
+                                    f"Active Live Packages ({row['username']})", 
+                                    options=cat_options, 
+                                    key=f"sel_x_{selected_x_idx}"
+                                )
+                                selected_cat = cat_map.get(selected_option)
+                                if selected_cat:
+                                    cat_id = str(selected_cat.get("category_id"))
+                                    matching_streams = [s for s in live_streams if str(s.get("category_id")) == cat_id]
+                                    
+                                    st.write(f"📡 Displaying **{len(matching_streams)}** channels in: **{selected_cat.get('category_name')}**")
+                                    if matching_streams:
+                                        stream_data = [{"Num": s.get("num"), "Name": s.get("name"), "Stream ID": s.get("stream_id"), "Icon": s.get("stream_icon")} for s in matching_streams]
+                                        st.dataframe(
+                                            pd.DataFrame(stream_data),
+                                            column_config={
+                                                "Icon": st.column_config.ImageColumn("Logo", help="Channel Logo"),
+                                                "Num": st.column_config.NumberColumn("#"),
+                                                "Name": st.column_config.TextColumn("Channel Name"),
+                                                "Stream ID": st.column_config.NumberColumn("Stream ID")
+                                            },
+                                            use_container_width=True, hide_index=True
+                                        )
+                                    else:
+                                        st.info("No channels found in this group.")
+                        else:
+                            st.error("Payload context restricted or limited by provider container setup. Status verified, but deep mining disabled.")
                 else:
                     st.warning("⚠️ Deep-Dive Discovery is only available for Active connections. The selected node is offline or blocked.")
             else:
@@ -1022,7 +1027,13 @@ if st.session_state["playlist_results"] is not None:
                 selection_mode="single-row",
                 on_select="rerun",
                 key="committed_table",
-                hide_index=True
+                hide_index=True,
+                column_config={
+                    "Notes": st.column_config.TextColumn(
+                        "Notes",
+                        width="large",
+                    )
+                }
             )
             
             selected_c_idx = None
