@@ -90,4 +90,6 @@ When this repository is loaded or cloned into a **Google AI Studio Cloud Run dev
 If adding new network fetch mechanisms to `app.py`:
 * **Streamlit Reruns**: Streamlit triggers a script re-run upon every button click, selection, or interactive element usage. Network logic on the top level must be safeguarded.
 * **MANDATORY Application Cache**: For any external diagnostics (like `ip-api.com` or other limit-sensitive tracking services), you **MUST** secure the execution blocks using `@st.cache_data`. This bypasses strict, low rate-limits (`429 Too Many Requests`) from third-party tools during consecutive clicks or accordion navigations.
+* **State Caching for Interactive Controls**: When displaying detailed sub-menus (like dropdown package selections) that are loaded on demand, you **MUST** cache the data in `st.session_state` (e.g., using `cached_live_cats`/`cached_live_streams` tied to a `cached_host_key`). If you do not cache them, the data will disappear on the subsequent rerun when the user interacts with the sub-menu dropdown controls.
+
 
