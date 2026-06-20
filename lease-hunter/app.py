@@ -26,7 +26,8 @@ def fetch_live_lease_program(year, make, model, trim, zip_code, term=36):
         
     client = genai.Client(api_key=api_key)
     
-    prompt = f"""
+    # Step 1: Query Gemini with Google Search tool to find raw data
+    search_prompt = f"""
     Find the official captive lender lease program details for:
     Year: {year}
     Make: {make}
@@ -38,17 +39,41 @@ def fetch_live_lease_program(year, make, model, trim, zip_code, term=36):
     Search for the current month's subvented/buy-rate Money Factor (MF), Residual Percentage, and standard national or regional rebate/lease cash incentives.
     """
     
-    response = client.models.generate_content(
+    search_response = client.models.generate_content(
         model='gemini-2.5-flash',
-        contents=prompt,
+        contents=search_prompt,
         config=types.GenerateContentConfig(
             tools=[types.Tool(google_search=types.GoogleSearch())],
+            temperature=0.0
+        )
+    )
+    
+    raw_search_text = search_response.text
+    
+    # Step 2: Use a separate schema-based call without tools to parse raw text into Pydantic model
+    parsing_prompt = f"""
+    You are an expert financial data extractor. Parse the following raw research text and extract the lease program parameters:
+    
+    Research Text:
+    {raw_search_text}
+    
+    Instructions:
+    - Money Factor (MF): MUST be a small decimal (e.g. 0.00210). If only expressed as an interest rate or APR (e.g. 5.04% APR), convert to MF by dividing the percentage by 2400 (e.g. 5.04 / 2400 = 0.00210).
+    - Residual Percentage: MUST be an integer representing percentage (e.g., 64).
+    - Lease Cash: Total national/regional lease cash, manufacturer rebates, and stackable EV incentives in dollars (e.g. 7500.0).
+    - Source Citation: A brief description of the source site or method of estimation.
+    """
+    
+    parsed_response = client.models.generate_content(
+        model='gemini-2.5-flash',
+        contents=parsing_prompt,
+        config=types.GenerateContentConfig(
             response_mime_type="application/json",
             response_schema=LeaseProgramDetails,
             temperature=0.0
         )
     )
-    return response.parsed
+    return parsed_response.parsed
 
 # --- PARAMETRIC INITIALIZATION ---
 st.title("🏎️ Universal AI Lease Broker Engine")
