@@ -649,10 +649,19 @@ with tab_tools:
     st.markdown("### 🛠️ Base64 Encoding & Decoding Operations")
     st.caption("Quickly extract hidden URLs or encapsulate data payloads before processing.")
     
+    if "b64_input" not in st.session_state:
+        st.session_state["b64_input"] = ""
+        
+    def clear_b64_input():
+        st.session_state["b64_input"] = ""
+
     b64_action = st.radio("Select Operation:", ["Decode (Base64 -> Text)", "Encode (Text -> Base64)"], horizontal=True)
     b64_input = st.text_area("Input Payload:", height=150, key="b64_input", label_visibility="collapsed")
     
-    if st.button("🔄 Translate Payload", use_container_width=True):
+    trans_pressed = st.button("🔄 Translate Payload", use_container_width=True)
+    st.button("🧹 Clear Input", on_click=clear_b64_input, key="clear_b64_btn", use_container_width=True)
+
+    if trans_pressed:
         if not b64_input.strip():
             st.warning("Please provide input text to process.")
         else:
@@ -700,19 +709,16 @@ with tab_scanner:
     def clear_input():
         st.session_state["raw_input"] = ""
 
-    col_input, col_clear = st.columns([5, 1])
-    with col_clear:
-        st.markdown("<br>", unsafe_allow_html=True) # visual alignment padding
-        st.button("🧹 Clear Input", on_click=clear_input, key="clear_btn", use_container_width=True)
-
-    with col_input:
-        pasted_data = st.text_area("Drop messy text, diagnostic blocks, or standard M3U configurations here:", height=150, key="raw_input", label_visibility="collapsed")
+    pasted_data = st.text_area("Drop messy text, diagnostic blocks, or standard M3U configurations here:", height=150, key="raw_input", label_visibility="collapsed")
 
     # Initialize session state for analysis results
     if "playlist_results" not in st.session_state:
         st.session_state["playlist_results"] = None
 
-    if st.button("🚀 Analyze Playlist Nodes", type="primary", disabled=("UNKNOWN" in current_ip.upper() or current_ip.startswith("DISCONNECTED"))):
+    analyze_pressed = st.button("🚀 Analyze Playlist Nodes", type="primary", disabled=("UNKNOWN" in current_ip.upper() or current_ip.startswith("DISCONNECTED")))
+    st.button("🧹 Clear Input", on_click=clear_input, key="clear_btn")
+
+    if analyze_pressed:
         accounts = parse_credentials(pasted_data)
         
         if not accounts:
@@ -882,18 +888,26 @@ if st.session_state["playlist_results"] is not None:
                     st.write("📡 **Query Target Asset Classifications**")
                     
                     tier2_key = f"t2_{row['base_url']}_{row['username']}"
-                    if st.button("Fetch Live Stream Catalogs", key=f"fetch_btn_{selected_x_idx}", type="primary", use_container_width=True):
-                        with st.spinner("Fetching stream catalogs from IPTV host. Please wait... (this only happens when you click)"):
-                            async def fetch_tier2_data(r):
-                                return await asyncio.gather(
-                                    fetch_lazy_details(r['base_url'], r['username'], r['password'], "get_live_categories"),
-                                    fetch_lazy_details(r['base_url'], r['username'], r['password'], "get_live_streams"),
-                                    return_exceptions=True
-                                )
-                            
-                            st.session_state[tier2_key] = asyncio.run(fetch_tier2_data(row))
-                            
-                    if tier2_key in st.session_state:
+                    
+                    if tier2_key not in st.session_state:
+                        if st.button("Fetch Live Stream Catalogs", key=f"fetch_btn_{selected_x_idx}", type="primary", use_container_width=True):
+                            with st.spinner("Fetching stream catalogs from IPTV host. Please wait..."):
+                                async def fetch_tier2_data(r):
+                                    return await asyncio.gather(
+                                        fetch_lazy_details(r['base_url'], r['username'], r['password'], "get_live_categories"),
+                                        fetch_lazy_details(r['base_url'], r['username'], r['password'], "get_live_streams"),
+                                        return_exceptions=True
+                                    )
+                                
+                                st.session_state[tier2_key] = asyncio.run(fetch_tier2_data(row))
+                                st.rerun()
+                    else:
+                        col_ref1, col_ref2 = st.columns([4, 1])
+                        with col_ref2:
+                            if st.button("🔄 Refresh", key=f"refetch_btn_{selected_x_idx}", use_container_width=True):
+                                del st.session_state[tier2_key]
+                                st.rerun()
+
                         results = st.session_state[tier2_key]
                         live_cats, live_streams = results[0], results[1]
                     
@@ -937,7 +951,8 @@ if st.session_state["playlist_results"] is not None:
                                                 "Name": st.column_config.TextColumn("Channel Name"),
                                                 "Stream ID": st.column_config.NumberColumn("Stream ID")
                                             },
-                                            use_container_width=True, hide_index=True
+                                            use_container_width=True, hide_index=True,
+                                            key=f"df_cat_streams_{selected_x_idx}"
                                         )
                                     else:
                                         st.info("No channels found in this group.")
@@ -1031,7 +1046,7 @@ if st.session_state["playlist_results"] is not None:
                 column_config={
                     "Notes": st.column_config.TextColumn(
                         "Notes",
-                        width="large",
+                        width=500,
                     )
                 }
             )
