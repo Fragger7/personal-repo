@@ -17,10 +17,14 @@ The IPTV Playlist Analytics Dashboard is a lightweight, high-performance Streaml
 To protect public cloud deployments from unauthorized access while maintaining ease of use for local development, the app includes a conditional password barrier:
 * **Production/Cloud Check**: The app inspects `st.secrets` for `ACCESS_PASSWORD`. If configured, it blocks page rendering and presents a password input gate. If the input matches `ACCESS_PASSWORD`, access is cached in `st.session_state["password_correct"]`. If verification fails or is empty, execution is terminated immediately using `st.stop()`.
 * **Developer Bypass (Local)**: If `ACCESS_PASSWORD` is absent in `st.secrets` (default state in fresh local development environments), the application automatically bypasses the password screen and launches in open mode.
-* **Local Security Testing**: To test the security gate locally, developers can populate a local `.streamlit/secrets.toml` file with:
-  ```toml
-  ACCESS_PASSWORD = "your_test_password"
-  ```
+* **Local Security Testing / Run Script Injection**:
+  Developers can test the password gate locally in two ways:
+  1. Create a `local_password.txt` file in the project directory containing only your password. The modified `run.bat` will automatically read it and inject the `STREAMLIT_ACCESS_PASSWORD` environment variable.
+  2. Populate a local `.streamlit/secrets.toml` file with:
+     ```toml
+     ACCESS_PASSWORD = "your_test_password"
+     ```
+  Both `local_password.txt` and the `.streamlit/` directory are defined in `.gitignore` to prevent secret leakage. If no local password configuration is found, the gate will automatically bypass for seamless local development.
 
 #### B. Geolocation Outbound Network Shield
 Accidental exposure of a private home IP address during playlist checks can compromise privacy. The system implements a strict safety shield:

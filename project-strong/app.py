@@ -7,6 +7,7 @@ import pandas as pd
 import logging
 from datetime import datetime
 import base64
+import os
 
 # --- LOGGING CONFIGURATION ---
 logging.basicConfig(
@@ -260,12 +261,54 @@ with st.expander("⚙️ Dashboard Settings & Themes", expanded=False):
 # --- SECURE ACCESS CHECK ---
 def check_password():
     """Returns `True` if the user entered the correct password, or if no password is configured."""
-    if "ACCESS_PASSWORD" not in st.secrets:
+    access_password = None
+    
+    # 1. Check environment variable (injected by local runner or OS env)
+    if "STREAMLIT_ACCESS_PASSWORD" in os.environ:
+        access_password = os.environ["STREAMLIT_ACCESS_PASSWORD"]
+        
+    # 2. Check local secrets files manually using Python (bypasses Streamlit version API/secrets conflicts)
+    if not access_password:
+        secrets_paths = [
+            ".streamlit/secrets.toml",
+            "secrets.toml",
+            "local_secrets.txt",
+            "local_password.txt"
+        ]
+        for path in secrets_paths:
+            if os.path.exists(path):
+                try:
+                    with open(path, "r", encoding="utf-8") as f:
+                        content = f.read()
+                        # Extract ACCESS_PASSWORD = "value" or ACCESS_PASSWORD="value"
+                        match = re.search(r'ACCESS_PASSWORD\s*=\s*["\']([^"\']+)["\']', content)
+                        if match:
+                            access_password = match.group(1)
+                            break
+                        # Also support plain text password if the file contains only the password
+                        elif "local_secrets.txt" in path or "local_password.txt" in path:
+                            plain_val = content.strip()
+                            if plain_val:
+                                access_password = plain_val
+                                break
+                except Exception:
+                    pass
+
+    # 3. Check Streamlit's native secrets as a fallback (for Streamlit Community Cloud)
+    if not access_password:
+        try:
+            if "ACCESS_PASSWORD" in st.secrets:
+                access_password = st.secrets["ACCESS_PASSWORD"]
+        except Exception:
+            pass
+
+    # If no password is set anywhere, bypass the password gate for local development
+    if not access_password:
         return True
 
     def password_entered():
         """Checks whether a password entered by the user is correct."""
-        if st.session_state["password"] == st.secrets["ACCESS_PASSWORD"]:
+        if st.session_state["password"] == access_password:
             st.session_state["password_correct"] = True
             del st.session_state["password"]  # don't store password in session state
         else:

@@ -65,9 +65,9 @@ This project is committed under the `project-strong/` folder of a mono-repo. **N
 ---
 
 ## 🛑 Rule 4: Secret Management and Throttling Limits
-* **Do NOT Hardcode Secrets**: Never commit access passwords, API keys, or raw credentials to the repository. Use `st.secrets["ACCESS_PASSWORD"]` for verification.
-* **Keep Throttling Disabled**: The concurrency throttling (semaphores) has been removed at the user's instruction. Keep queries unthrottled but lazy-loaded (Tiers 1 and 2) to preserve user-experience speeds.
-* **Preserve Logging**: Keep standard `logging` prints going to stdout so live diagnostics can be read inside Streamlit's dashboard logs.
+* **Do NOT Hardcode Secrets**: Never commit access passwords, API keys, or raw credentials to the repository. On cloud environments, utilize `st.secrets["ACCESS_PASSWORD"]` for security. For local development, passwords can be injected using the `STREAMLIT_ACCESS_PASSWORD` environment variable or placed in a local `local_password.txt` file (which is processed by `run.bat` and parsed natively by `app.py`). Both `local_password.txt` and the `.streamlit/` directory must remain git-ignored.
+* **Keep Throttling Disabled**: Concurrency throttling (semaphores) has been removed at the user's request. Keep queries unthrottled but lazy-loaded (Tiers 1 and 2) to optimize responsiveness.
+* **Preserve Logging**: Maintain standard Python logging outputs to stdout so runtime diagnostics are visible in log utilities.
 
 ---
 
