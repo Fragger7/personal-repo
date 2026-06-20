@@ -574,14 +574,22 @@ if st.session_state["playlist_results"] is not None:
                     st.markdown(f"### 🔍 Deep-Dive Discovery: `{row['base_url']}`")
                     st.caption("Use the copy icon on the top right of the code blocks to quickly copy to your clipboard.")
                     
-                    col1, col2 = st.columns(2)
-                    with col1:
-                        st.markdown("**🔐 Login Credentials**")
-                        st.code(f"Host: {row['base_url']}\nUsername: {row['username']}\nPassword: {row['password']}", language="text")
-                    with col2:
-                        st.markdown("**🔗 M3U Playlist URL**")
-                        m3u_url = f"{row['base_url']}/get.php?username={row['username']}&password={row['password']}&type=m3u_plus&output=ts"
-                        st.code(m3u_url, language="text")
+                    st.markdown("**🔐 Discrete Login Credentials**")
+                    st.info("💡 **Pro Tip:** If the M3U link doesn't work in your player but discrete credentials do, your host likely disabled standard M3U `/get.php` downloads to force users onto API-based player apps.")
+                    col_h, col_u, col_p = st.columns(3)
+                    with col_h:
+                        st.markdown("**🌐 Server Host**")
+                        st.code(row['base_url'], language="text")
+                    with col_u:
+                        st.markdown("**👤 Username**")
+                        st.code(row['username'], language="text")
+                    with col_p:
+                        st.markdown("**🔑 Password**")
+                        st.code(row['password'], language="text")
+                    
+                    st.markdown("**🔗 M3U Playlist URL**")
+                    m3u_url = f"{row['base_url']}/get.php?username={row['username']}&password={row['password']}&type=m3u_plus&output=ts"
+                    st.code(m3u_url, language="text")
                     
                     st.write("---")
                     st.write("📡 **Query Target Asset Classifications**")
@@ -681,7 +689,13 @@ if st.session_state["playlist_results"] is not None:
                     st.caption("Use the copy icon on the top right of the code blocks to quickly copy to your clipboard.")
                     
                     st.markdown("**🔐 Stalker Login Configuration**")
-                    st.code(f"Portal URL (Host): {row['base_url']}\nMAC Address: {row['mac']}", language="text")
+                    col_sh, col_sm = st.columns(2)
+                    with col_sh:
+                        st.markdown("**🌐 Portal URL**")
+                        st.code(row['base_url'], language="text")
+                    with col_sm:
+                        st.markdown("**🏷️ MAC Address**")
+                        st.code(row['mac'], language="text")
                     st.info("⚠️ **Deep-Dive Discovery is constrained for Stalker Portals.**\n\nStalker Portals (Ministra) use dynamic, MAC-authenticated MAC schemas rather than standard Xtream flat lists. Fetching massive stream categories without full device emulation can trigger security bans on the host. Status verification is complete, but deep channel mining is restricted.")
                 else:
                     st.warning("⚠️ Valid credentials are only available for Active Stalker portals. This connection was verified as degraded or offline.")
