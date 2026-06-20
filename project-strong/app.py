@@ -330,26 +330,125 @@ st.write("---")
 # --- CUSTOM UI / UX STYLING ---
 st.markdown("""
 <style>
-/* Clean dark-mode aesthetic customizations */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+
+/* Typography overhauls */
+html, body, [class*="css"] {
+    font-family: 'Inter', sans-serif !important;
+}
+h1, h2, h3, h4, h5, h6 {
+    font-weight: 700 !important;
+    letter-spacing: -0.02em !important;
+}
+
+/* Backgrounds & Main Container */
+.stApp {
+    background-color: #0E1117; 
+}
+.main .block-container {
+    padding-top: 2rem !important;
+    padding-bottom: 4rem !important;
+    max-width: 1200px;
+}
+
+/* Clean dark-mode aesthetic customizations for Tabs */
 div[data-testid="stTabs"] button {
-    font-size: 1.15rem;
+    font-size: 1.1rem;
     font-weight: 600;
     padding-bottom: 12px;
+    padding-top: 12px;
+    border-radius: 8px 8px 0px 0px;
+    transition: all 0.2s ease-in-out;
 }
+div[data-testid="stTabs"] button:hover {
+    color: #FF4B4B;
+    background-color: rgba(255, 75, 75, 0.05);
+}
+
+/* Modernizing Buttons */
 div.stButton > button {
-    border-radius: 6px;
-    font-weight: 500;
-    transition: all 0.2s;
+    border-radius: 8px;
+    font-weight: 600;
+    padding: 0.5rem 1rem;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: linear-gradient(180deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0) 100%);
 }
 div.stButton > button:hover {
     border-color: #FF4B4B;
     color: #FF4B4B;
+    box-shadow: 0 4px 12px rgba(255, 75, 75, 0.15);
+    transform: translateY(-1px);
 }
-.stExpander {
-    border: 1px solid #2e3035 !important;
+
+/* Primary Button Highlighting */
+div.stButton > button[kind="primary"] {
+    background: linear-gradient(135deg, #FF4B4B 0%, #D43F3F 100%);
+    border: none;
+    color: white;
+}
+div.stButton > button[kind="primary"]:hover {
+    box-shadow: 0 6px 16px rgba(255, 75, 75, 0.3);
+    color: white;
+}
+
+/* Alert Boxes & Status Banners */
+.stAlert {
+    border-radius: 10px;
+    border: 1px solid rgba(255,255,255,0.05);
+}
+
+/* Base64 & Code Blocks */
+code {
+    font-family: 'JetBrains Mono', monospace !important;
+    background-color: rgba(255,255,255,0.05) !important;
+    border-radius: 6px;
+    padding: 2px 6px;
+    font-size: 0.9em;
+}
+.stCodeBlock {
+    border-radius: 12px !important;
+    border: 1px solid rgba(255,255,255,0.1);
+    overflow: hidden;
+}
+
+/* Metric Display enhancements */
+div[data-testid="stMetricValue"] {
+    font-weight: 800;
+    font-size: 2.2rem;
+    letter-spacing: -0.02em;
+}
+
+/* DataFrame Customization */
+div[data-testid="stDataFrame"] {
+    border: 1px solid rgba(255,255,255,0.1) !important;
+    border-radius: 12px !important;
+    overflow: hidden;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+}
+
+/* Text Inputs / Text Areas */
+.stTextArea textarea, .stTextInput input {
     border-radius: 8px !important;
+    border: 1px solid rgba(255,255,255,0.15) !important;
+    transition: border-color 0.2s;
+    font-family: 'JetBrains Mono', monospace;
 }
-h1 { font-family: 'Inter', sans-serif; font-weight: 800; }
+.stTextArea textarea:focus, .stTextInput input:focus {
+    border-color: #FF4B4B !important;
+    box-shadow: 0 0 0 1px #FF4B4B !important;
+}
+
+/* Expanders */
+.stExpander {
+    border: 1px solid rgba(255,255,255,0.1) !important;
+    border-radius: 12px !important;
+    background-color: rgba(255,255,255,0.02);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+.stExpander summary {
+    font-weight: 600;
+}
 </style>
 """, unsafe_allow_html=True)
 
