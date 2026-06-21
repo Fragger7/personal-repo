@@ -36,7 +36,8 @@ try {
         'git_push.ps1',
         'flatten_context.py',
         'git_push.cjs',
-        'PROMPT_MANIFEST.txt'
+        'PROMPT_MANIFEST.txt',
+        'GEMINI.md'
     ];
 
     filesToCopy.forEach(file => {
