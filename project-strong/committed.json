@@ -1,1 +1,21 @@
-[]
+[
+    {
+        "type": "Xtream",
+        "base_url": "http://doubleclicktv.live:80",
+        "username": "Micky",
+        "password": "Micky",
+        "Status": "\ud83d\udfe2 Active",
+        "Expires": "2026-12-17",
+        "Days Left": 179,
+        "Max Conn": "1",
+        "Active Conn": "0",
+        "Channels": 30832,
+        "VODs": 42714,
+        "Server Timezone": "America/New_York",
+        "Server Time": "2026-06-20 23:24:22",
+        "M3U Link": "http://doubleclicktv.live:80/get.php?username=Micky&password=Micky&type=m3u_plus&output=ts",
+        "Source": "Xtream",
+        "Date Selected": "2026-06-21 03:26:25",
+        "Notes": ""
+    }
+]
