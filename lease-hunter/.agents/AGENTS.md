@@ -35,38 +35,11 @@ Before you edit any files or make any commits, you must check for changes in the
 ---
 
 ## 🛑 Rule 3: Isolated Git Commits and Pushes (Mono-Repo Safety)
-This project is committed under the `lease-hunter/` folder of a mono-repo. **NEVER** initialize Git directly inside `C:\Development\Apps\Lease Hunter` or perform commits from the workspace root. Instead, follow this exact workflow:
+This project is committed under the `lease-hunter/` folder of a mono-repo. **NEVER** initialize Git directly inside `C:\Development\Apps\Lease Hunter` or perform commits from the workspace root. Instead, use the automated tooling.
 
-1. **Clone Remote**: Clone the full repo to a temporary directory:
-   ```powershell
-   & "C:\Program Files\Git\cmd\git.exe" clone https://github.com/Fragger7/personal-repo.git "C:\Development\Apps\Lease Hunter\personal-repo-temp"
-   ```
-2. **Copy Working Files**: Copy your edited workspace files into the repository's `lease-hunter/` subdirectory:
-   ```powershell
-   Copy-Item "C:\Development\Apps\Lease Hunter\app.py" "C:\Development\Apps\Lease Hunter\personal-repo-temp\lease-hunter\app.py" -Force
-   Copy-Item "C:\Development\Apps\Lease Hunter\.gitignore" "C:\Development\Apps\Lease Hunter\personal-repo-temp\lease-hunter\.gitignore" -Force
-   Copy-Item "C:\Development\Apps\Lease Hunter\requirements.txt" "C:\Development\Apps\Lease Hunter\personal-repo-temp\lease-hunter\requirements.txt" -Force
-   Copy-Item "C:\Development\Apps\Lease Hunter\LEASE_HUNTER.md" "C:\Development\Apps\Lease Hunter\personal-repo-temp\lease-hunter\LEASE_HUNTER.md" -Force
-   Copy-Item "C:\Development\Apps\Lease Hunter\run.bat" "C:\Development\Apps\Lease Hunter\personal-repo-temp\lease-hunter\run.bat" -Force
-   Copy-Item "C:\Development\Apps\Lease Hunter\.agents\AGENTS.md" "C:\Development\Apps\Lease Hunter\personal-repo-temp\lease-hunter\.agents\AGENTS.md" -Force
-   Copy-Item "C:\Development\Apps\Lease Hunter\flatten_context.py" "C:\Development\Apps\Lease Hunter\personal-repo-temp\lease-hunter\flatten_context.py" -Force
-   ```
-3. **Configure details (if unset)**: Set local configurations inside the temp directory:
-   ```powershell
-   cd "C:\Development\Apps\Lease Hunter\personal-repo-temp"
-   & "C:\Program Files\Git\cmd\git.exe" config user.name "Antigravity (AI)"
-   & "C:\Program Files\Git\cmd\git.exe" config user.email "antigravity@google.com"
-   ```
-4. **Stage, Commit, and Push**: Stage ONLY the `lease-hunter/` folder, commit, and push:
-   ```powershell
-   & "C:\Program Files\Git\cmd\git.exe" add lease-hunter/
-   & "C:\Program Files\Git\cmd\git.exe" commit -m "Commit description"
-   & "C:\Program Files\Git\cmd\git.exe" push origin main
-   ```
-5. **Clean Up**: Delete the temporary directory:
-   ```powershell
-   Remove-Item -Recurse -Force "C:\Development\Apps\Lease Hunter\personal-repo-temp"
-   ```
+When executing in Google AI Studio Cloud Container, use the automated `git_push.cjs` utility for pushing back to Github.
+
+`npx tsx git_push.cjs "Your Commit Message"`
 
 ---
 
@@ -96,12 +69,12 @@ When this repository is loaded or cloned into a **Google AI Studio Cloud Run dev
 
 ---
 
-## 🛑 Rule 6: UI & App Caching
-If adding new network fetch mechanisms to `app.py`:
-* **Streamlit Reruns**: Streamlit triggers a script re-run upon every button click, selection, or interactive element usage. Network logic on the top level must be cached or protected.
-* **MANDATORY Application Cache**: For any external diagnostics or rate-limited API calls (such as search grounding or localized APIs), you **MUST** secure the execution blocks using `@st.cache_data` or check if the result is cached inside `st.session_state` to avoid hammering rate limits during consecutive clicks or accordion navigations.
+## 🛑 Rule 6: Full-Stack Considerations (React + Express)
+The repository now runs a full-stack React and Express app. 
+* **API Routing**: Create API routes under `/api/*` in `server.ts` or corresponding backend controllers rather than exposing API payloads entirely in the client-side code.
+* **Component Modularity**: Refrain from cramming logic into `App.tsx`. Extract files out into properly modularized React structures.
 
 ---
 
 ## 🛑 Rule 7: Mandatory Documentation Synchronization
-Whenever you modify the application code (such as editing `app.py`), you **MUST** update the developer documentation (**[LEASE_HUNTER.md](file:///C:/Development/Apps/Lease%20Hunter/LEASE_HUNTER.md)**) in the same commit. You must document new states, parameters, logic pathways, or dependencies. This prevents "documentation drift" and ensures that the next agent starting a session has a perfectly mirrored context. Do not push code updates without updating the guides.
+Whenever you modify the application code or state boundaries, you **MUST** update the developer documentation (**LEASE_HUNTER.md** and **GEMINI.md**) in the same commit. You must document new states, parameters, logic pathways, or dependencies. This prevents "documentation drift" and ensures that the next agent starting a session has a perfectly mirrored context. Do not push code updates without updating the guides.

@@ -5,83 +5,43 @@ This document contains the complete system architecture, operational decisions, 
 ---
 
 ## 📌 Project Overview
-The Universal Lease Hunter Engine is a parametric Streamlit application. It is designed to find active vehicle inventory, retrieve live lease terms (residual percentages, subvented money factors, incentives) via the Gemini API, and compute precise lease payments across different jurisdictions with complex, multi-state tax rules.
+The Universal Lease Hunter Engine is an autonomous AI lease broker protocol currently in its **Phase 1 Proof of Concept** targeting the **Kia EV9 GT-Line**. We have fully transitioned from a legacy Streamlit prototype to a **modern full-stack React and Express architecture**. It is designed to find active vehicle inventory, retrieve live lease terms (MSRPs, residuals, money factors, incentives) via custom backend scraping architectures and Gemini AI extraction, and compute precise lease payments across different jurisdictions with complex, multi-state tax rules.
 
 ---
 
-## 🏗️ Architecture & Core Components
+## 🏗️ Phase 1 Architecture & Core Components
 
-### 1. Parametric Input Controls
-All inputs originate in the Streamlit Sidebar and govern active session parameters:
-*   **Cascading Vehicle Selection**: Manufacturer (`make`), Model Line (`model`), and Trim Configuration (`trim`) are implemented as cascading dropdowns backed by a static catalog (`VEHICLE_DATABASE`). Choosing a manufacturer filters the model list, which dynamically filters the trims. Features a **"Custom / Other Brand"** manual input fallback option.
-*   **Model Year**: Selector for 2026/2025 (`year`).
-*   **Interactive Search Slider**: Replaced dropdowns with an interactive slider (`Search Radius`) ranging from 10 to 500 miles, with 500 mapping to a "Nationwide" sweep range.
-*   **Lock & Register Parameters Button**: Commits active selections into session state variables (`active_make`, `active_model`, `active_trim`, `active_year`, `active_zip`, `active_radius`) and locks the parameters. A successful commit triggers a calculation desk pre-population and app rerun.
+### 1. Market Intel & Scraping Pipeline (High-ROI Cost Strategy)
+The core aggregation engine relies on backend Node.js fetching logic combined with `@google/genai`. 
+*   **Sequential Scraping**: 1) Extract baselines (MSRP, Residuals, Money Factor) from Edmunds/forums, 2) Search regional dealership endpoints for matching inventory, 3) Qualify targets using market momentum and AI reasoning derived from Leasehackr/Reddit chatter.
+*   **Zero-Cost Bias**: Prioritizes public domains (dealerships, Edmunds) to fetch live data at $0 cost. Minor, low-latency API costs are permissible strictly if they fall within micro-transaction budgets suitable for a solo developer.
 
-### 2. Live Inventory Engine (Tab 1)
-Designed to locate target units.
-*   **Dynamic Generator**: Uses `get_mock_inventory(make, model, trim, zip_code)` to dynamically generate simulated listings matching the registered sidebar parameters (calculating realistic MSRP ranges, colors, days on lot, and VIN layouts).
-*   **User Action**: Clicking "Load Unit" imports the specific mock vehicle's MSRP, dealer, and VIN to `st.session_state` and triggers a clean rerun to pre-fill the calculator.
+### 2. Deal Engine & Tax Trap Simulator
+Computes depreciation, rent charges, and state-specific tax burdens (prioritizing the ultimate bottom-line monthly number).
+*   **Tax Trap Focus (ZIP 78665, Texas)**: Evaluates scenarios where taxes are levied on the entire vehicle purchase price. The engine actively researches and applies manufacturer tax credits (e.g. from Kia Finance) to combat this.
+*   **Value Metric**: Utilizes the **Leasehackr Score** combined with current market momentum, eschewing generic boilerplate rules.
+*   **Intelligent Trim Pivots**: The engine autonomously evaluates alternative AWD variants (Land AWD, Wind AWD) and pivots if alternative trims yield significantly higher overall deal scores.
 
-### 3. AI Rate Finder (Tab 2)
-Provides automated lease rate extraction.
-*   **Objective**: Uses a **two-step pipeline** with `google-genai` SDK to fetch active lender rates safely:
-    *   *Step 1 (Search Grounding)*: Queries Gemini with Google Search tool enabled to find raw lease program details on Edmunds Forums and Leasehackr. Prompts instruct Gemini to perform loose/fuzzy matching if trim naming conventions slightly differ.
-    *   *Step 2 (Data Parsing)*: Queries Gemini *without tools* using a validated Pydantic model (`LeaseProgramDetails`) to cleanly parse the raw search text into Money Factor, Residual %, and Lease Cash.
-*   **State Integration**: Extracted rates are saved to session state (`target_mf`, `target_residual`, `target_rebate`) and flow automatically as defaults in the custom deal matrix inputs.
-
-### 4. Deal Evaluator & Tax Engine (Tab 3)
-The heart of the lease calculator. It computes depreciation and rent charges, applying specific local tax regulations based on ZIP code:
-*   **`TAX_ON_FULL_PRICE`** (Texas focus: prefixes `75`, `76`, `77`, `78`, `79`): 
-    *   Taxes are calculated on the full pre-incentive selling price of the car upfront.
-    *   Standard Rate: `6.25%`.
-    *   *Lender Tax Credit Bypass*: If a manufacturer tax credit certificate is active, the effective tax rate is reduced to `1.25%`.
-*   **`TAX_ON_TOTAL_PAYMENTS`** (New York focus: prefixes `10`, `11`, `12`, `13`, `14`):
-    *   Taxes are calculated upfront on the sum of all monthly base lease payments.
-    *   Standard Rate: `8.87%`.
-*   **`TAX_ON_PAYMENT`** (Default: e.g., CA, FL, AZ):
-    *   Taxes are applied monthly on top of the base lease payment.
-    *   Standard Rate: `7.75%`.
-
-### 5. Active Leads CRM (Tab 4)
-A simple interactive tracker for negotiating deals. Uses a Pandas `data_editor` to allow users to dynamically input notes, VINs, dealership names, and negotiation status.
+### 3. CRM & Autnomous Outreach
+A robust module for tracking active leads and negotiating deals.
+*   **Firebase Persistence**: Firestore serves as the session cache for heavy data computations and the foundational CRM for tracking dealer outreach.
+*   **AI Broker Negotiation**: Once a top-tier deal is targeted, the system generates highly intelligent, precise, data-driven first-contact emails to dealers.
 
 ---
 
 ## 🛠️ Technology Stack
-*   **UI Framework**: Streamlit (Python)
-*   **AI Integration**: Google GenAI Python SDK (`google-genai`)
-*   **Data Handling**: Pandas, JSON
-*   **State Management**: Streamlit Session State (`st.session_state`)
+*   **Frontend**: React, Tailwind CSS, Vite (Dark-mode, high-fidelity UI).
+*   **Backend**: Node.js & Express (TypeScript).
+*   **Database/CRM**: Firebase Firestore.
+*   **AI Integration**: Google GenAI TypeScript SDK (`@google/genai`).
 
 ---
 
-## 🚀 Running Locally
-To test or run the dashboard locally:
-1.  **Install Dependencies**:
-    ```bash
-    pip install -r requirements.txt
-    ```
-2.  **Execute App**:
-    ```bash
-    python -m streamlit run app.py
-    ```
-3.  **Shortcut**: Double-click [run.bat](file:///C:/Development/Apps/Lease%20Hunter/run.bat) to launch in windowless mode.
-
----
-
-## ☁️ Cloud Deployment Pipeline (Streamlit Community Cloud)
-
-Streamlit Community Cloud monitors the remote Git repository and hot-reloads changes automatically.
-
-*   **Live Web App URL**: [leasehunter.streamlit.app](https://leasehunter.streamlit.app)
-*   **Repository Address**: `https://github.com/Fragger7/personal-repo`
-*   **Target Branch**: `main`
-*   **Target App File**: `lease-hunter/app.py`
-*   **Secrets Configuration**: Streamlit App Settings > Secrets:
-    ```toml
-    GEMINI_API_KEY = "your_google_studio_api_key"
-    ```
+## ☁️ Cloud Deployment Pipeline
+The application runs as a modern Vite+Express full-stack application.
+*   **Development**: Run `npm run dev` to start the local `vite` and `express` dev servers in AI Studio or local node environments.
+*   **Build**: Run `npm run build` to compile the React frontend into static assets and bundle the server into a standard CommonJS target.
+*   **Production Start**: `npm run start` launches the node backend serving the API routes and static frontend.
 
 ---
 
