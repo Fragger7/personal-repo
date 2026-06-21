@@ -37,11 +37,7 @@ def load_committed_data():
     return []
 
 def save_committed_data(data_list):
-    json_str = json.dumps(data_list, indent=4)
-    with open(COMMITTED_FILE, "w", encoding="utf-8") as f:
-        f.write(json_str)
-        
-    # Auto-push to repo using Python GitHub API (Streamlit Cloud safe)
+    # Fetch remote first to avoid wiping out records from preview environments that are out-of-sync
     if "GITHUB_TOKEN" in st.secrets:
         try:
             import base64
@@ -54,11 +50,37 @@ def save_committed_data(data_list):
                 "Accept": "application/vnd.github.v3+json"
             }
             
-            # 1. Get the current file SHA (required by GitHub for updates)
+            # Get remote content and SHA
             r = httpx.get(url, headers=headers)
-            sha = r.json().get("sha") if r.status_code == 200 else None
-            
-            # 2. Push the updated content
+            sha = None
+            if r.status_code == 200:
+                resp_json = r.json()
+                sha = resp_json.get("sha")
+                remote_content_b64 = resp_json.get("content", "")
+                if remote_content_b64:
+                    try:
+                        remote_json_str = base64.b64decode(remote_content_b64).decode("utf-8")
+                        remote_data = json.loads(remote_json_str)
+                        # Merge remote data with data_list to prevent dropping records
+                        for rm_rec in remote_data:
+                            # Keep if we don't already have it
+                            exists = any(
+                                (l_rec.get("base_url") == rm_rec.get("base_url")) and 
+                                (l_rec.get("username", "x") == rm_rec.get("username", "y") or l_rec.get("mac", "x") == rm_rec.get("mac", "y"))
+                                for l_rec in data_list
+                            )
+                            if not exists:
+                                data_list.append(rm_rec)
+                    except Exception as merge_err:
+                        logger.error(f"Failed to merge remote data: {merge_err}")
+
+            # Prepare merged string
+            json_str = json.dumps(data_list, indent=4)
+            # Write to disk so it updates the local state natively
+            with open(COMMITTED_FILE, "w", encoding="utf-8") as f:
+                f.write(json_str)
+
+            # Push the updated content
             payload = {
                 "message": "Update: committed.json (Streamlit Cloud Auto-Push)",
                 "content": base64.b64encode(json_str.encode("utf-8")).decode("utf-8"),
@@ -72,7 +94,14 @@ def save_committed_data(data_list):
                 logger.error(f"GitHub API push failed: {put_r.text}")
         except Exception as e:
             logger.error(f"Failed to auto-push to GitHub API: {e}")
+            # Ensure local write still happens on network fail
+            json_str = json.dumps(data_list, indent=4)
+            with open(COMMITTED_FILE, "w", encoding="utf-8") as f:
+                f.write(json_str)
     else:
+        json_str = json.dumps(data_list, indent=4)
+        with open(COMMITTED_FILE, "w", encoding="utf-8") as f:
+            f.write(json_str)
         logger.warning("GITHUB_TOKEN not found in st.secrets. Skipping remote push.")
 
 def commit_record(record, tab_type):
