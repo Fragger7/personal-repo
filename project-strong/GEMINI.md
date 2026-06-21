@@ -184,3 +184,8 @@ For developers and AI agents running within serverless container workspaces (e.g
      ```
   3. The utility performs isolated staging of only files in `project-strong/`, configures metadata safely, pushes, and executes total cleanup.
 
+---
+
+## 📅 Future Backlog
+* **Persistent Themes**: Save user theme preferences (e.g., in `localStorage` via Streamlit cookie managers or custom components) to remember the chosen aesthetic across page reloads and future visits without needing to re-select it in the UI/sidebar each time.
+
