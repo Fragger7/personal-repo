@@ -1131,77 +1131,77 @@ if st.session_state["playlist_results"] is not None:
             else:
                 st.info("👆 Select a row in the table above to open the easy-copy credentials panel for Stalker portals!")
 
-    with tab_committed:
-        st.markdown("### 💾 Committed Data Repository")
-        col_c_text, col_c_btn = st.columns([4, 1])
-        with col_c_text:
-            st.caption("Locally saved verification records pushing directly to remote GitHub repository.")
-        with col_c_btn:
-            if st.button("🔄 Reload from Cloud", use_container_width=True):
-                with st.spinner("Syncing..."):
-                    pull_committed_data(force=True)
-                st.rerun()
+with tab_committed:
+    st.markdown("### 💾 Committed Data Repository")
+    col_c_text, col_c_btn = st.columns([4, 1])
+    with col_c_text:
+        st.caption("Locally saved verification records pushing directly to remote GitHub repository.")
+    with col_c_btn:
+        if st.button("🔄 Reload from Cloud", use_container_width=True):
+            with st.spinner("Syncing..."):
+                pull_committed_data(force=True)
+            st.rerun()
+    
+    committed_records = load_committed_data()
+    
+    if not committed_records:
+        st.info("No records committed yet. Analyze a payload and select a row in Xtream or Stalker tabs, then hit 'Commit Line' to save it here.")
+    else:
+        comm_df = pd.DataFrame(committed_records)
         
-        committed_records = load_committed_data()
+        # Reorder columns slightly for presentation
+        # Move mostly needed items to left
+        cols = comm_df.columns.tolist()
+        if "Date Selected" in cols:
+            cols.insert(0, cols.pop(cols.index("Date Selected")))
         
-        if not committed_records:
-            st.info("No records committed yet. Analyze a payload and select a row in Xtream or Stalker tabs, then hit 'Commit Line' to save it here.")
-        else:
-            comm_df = pd.DataFrame(committed_records)
+        comm_df = comm_df[cols]
+        
+        event_c = st.dataframe(
+            comm_df,
+            use_container_width=True,
+            selection_mode="single-row",
+            on_select="rerun",
+            key="committed_table",
+            hide_index=True,
+            column_config={
+                "Notes": st.column_config.TextColumn(
+                    "Notes",
+                    width=500,
+                )
+            }
+        )
+        
+        selected_c_idx = None
+        if event_c and hasattr(event_c, "selection") and event_c.selection.rows:
+            selected_c_idx = event_c.selection.rows[0]
+        elif isinstance(event_c, dict) and "selection" in event_c and "rows" in event_c["selection"] and event_c["selection"]["rows"]:
+            selected_c_idx = event_c["selection"]["rows"][0]
             
-            # Reorder columns slightly for presentation
-            # Move mostly needed items to left
-            cols = comm_df.columns.tolist()
-            if "Date Selected" in cols:
-                cols.insert(0, cols.pop(cols.index("Date Selected")))
+        if selected_c_idx is not None:
+            st.write("---")
+            row = comm_df.iloc[selected_c_idx]
+            st.markdown(f"### ✏️ Edit Record: `{row.get('base_url')}`")
             
-            comm_df = comm_df[cols]
-            
-            event_c = st.dataframe(
-                comm_df,
-                use_container_width=True,
-                selection_mode="single-row",
-                on_select="rerun",
-                key="committed_table",
-                hide_index=True,
-                column_config={
-                    "Notes": st.column_config.TextColumn(
-                        "Notes",
-                        width=500,
-                    )
-                }
-            )
-            
-            selected_c_idx = None
-            if event_c and hasattr(event_c, "selection") and event_c.selection.rows:
-                selected_c_idx = event_c.selection.rows[0]
-            elif isinstance(event_c, dict) and "selection" in event_c and "rows" in event_c["selection"] and event_c["selection"]["rows"]:
-                selected_c_idx = event_c["selection"]["rows"][0]
-                
-            if selected_c_idx is not None:
-                st.write("---")
-                row = comm_df.iloc[selected_c_idx]
-                st.markdown(f"### ✏️ Edit Record: `{row.get('base_url')}`")
-                
-                col_n, col_d = st.columns([4, 1])
-                with col_n:
-                    notes_val = st.text_area("📝 Free Form Notes", value=row.get("Notes", ""), key="notes_input", height=100)
-                    if st.button("💾 Save Notes", key="save_notes_btn"):
-                        tgt_base_url = row.get("base_url")
-                        tgt_user = row.get("username", "")
-                        tgt_mac = row.get("mac", "")
-                        
-                        update_committed_notes(tgt_base_url, tgt_user, tgt_mac, notes_val)
-                        st.success("Notes saved successfully!")
-                        st.rerun()
-                with col_d:
-                    st.markdown("<br><br>", unsafe_allow_html=True)
-                    if st.button("🗑️ Delete Record", type="primary", key="del_commit_btn", use_container_width=True):
-                        tgt_base_url = row.get("base_url")
-                        tgt_user = row.get("username", "")
-                        tgt_mac = row.get("mac", "")
-                        
-                        delete_committed_record(tgt_base_url, tgt_user, tgt_mac)
-                        st.success("Record deleted successfully!")
-                        st.rerun()
+            col_n, col_d = st.columns([4, 1])
+            with col_n:
+                notes_val = st.text_area("📝 Free Form Notes", value=row.get("Notes", ""), key="notes_input", height=100)
+                if st.button("💾 Save Notes", key="save_notes_btn"):
+                    tgt_base_url = row.get("base_url")
+                    tgt_user = row.get("username", "")
+                    tgt_mac = row.get("mac", "")
+                    
+                    update_committed_notes(tgt_base_url, tgt_user, tgt_mac, notes_val)
+                    st.success("Notes saved successfully!")
+                    st.rerun()
+            with col_d:
+                st.markdown("<br><br>", unsafe_allow_html=True)
+                if st.button("🗑️ Delete Record", type="primary", key="del_commit_btn", use_container_width=True):
+                    tgt_base_url = row.get("base_url")
+                    tgt_user = row.get("username", "")
+                    tgt_mac = row.get("mac", "")
+                    
+                    delete_committed_record(tgt_base_url, tgt_user, tgt_mac)
+                    st.success("Record deleted successfully!")
+                    st.rerun()
 
