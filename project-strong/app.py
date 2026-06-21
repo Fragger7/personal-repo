@@ -431,19 +431,23 @@ div[data-testid="stVerticalBlock"] > div:first-child {{
 # Inject Dynamic CSS
 st.markdown(get_theme_css(st.session_state.app_theme), unsafe_allow_html=True)
 
+# --- SIDEBAR: DASHBOARD CONFIGURATION ---
+with st.sidebar:
+    st.markdown("### ⚙️ Engine Settings")
+    
+    st.selectbox(
+        "Appearance Theme", 
+        ["Midnight Purple (Focus)", "Ocean Blue (Glass)", "Crimson Red (Dark)", "Clean Light Mode"],
+        key="app_theme",
+        help="Select the UI aesthetic. Note: Will trigger a quick refresh."
+    )
+    st.write("---")
 
 # --- HERO HEADER ---
-st.markdown('<div class="hero-title">IPTV Analytics Dashboard</div>', unsafe_allow_html=True)
-st.markdown('<div class="hero-subtitle">High-performance manifest discovery, validation, and analytics engine</div>', unsafe_allow_html=True)
-
-with st.expander("⚙️ Dashboard Settings & Themes", expanded=False):
-    col1, col2 = st.columns([1, 2])
-    with col1:
-        st.selectbox(
-            "Select Appearance Theme", 
-            ["Midnight Purple (Focus)", "Ocean Blue (Glass)", "Crimson Red (Dark)", "Clean Light Mode"],
-            key="app_theme"
-        )
+col_head, col_action = st.columns([4, 1])
+with col_head:
+    st.markdown('<div class="hero-title">IPTV Analytics Dashboard</div>', unsafe_allow_html=True)
+    st.markdown('<div class="hero-subtitle">High-performance manifest discovery, validation, and analytics engine</div>', unsafe_allow_html=True)
 
 # --- SECURE ACCESS CHECK ---
 def check_password():
@@ -709,11 +713,6 @@ async def fetch_lazy_details(base_url, user, password, action):
         logger.error(f"Lazy loading query failed for host {base_url} [Action: {action}]: {str(e)}")
         return []
 
-# --- CORE USER INTERFACE ---
-st.title("🕵️‍♂️ IPTV Playlist Analytics Dashboard")
-st.caption("Host Constraints: Headless Low CPU Profile Optimization Active | 🚀 Enhanced via AI Studio Workspace")
-st.write("---")
-
 # Setup active asynchronous network client block
 @st.cache_data(ttl=300, show_spinner=False)
 def get_network_info():
@@ -732,29 +731,22 @@ current_country = network_info.get("country", "Unknown")
 cloud_keywords = ["amazon", "aws", "google", "azure", "cloudflare", "digitalocean", "linode", "ovh", "hosting", "server", "oracle", "m247", "scaleway", "vulcan", "leaseweb", "hetzner"]
 is_cloud = any(kw in current_isp.lower() or kw in current_org.lower() for kw in cloud_keywords)
 
-# Outbound Security Badge
-col_ip, col_status = st.columns([3, 1])
-with col_ip:
-    st.markdown("### 🛡️ Outbound Network Shield Monitoring")
-with col_status:
+with st.sidebar:
+    st.markdown("### 🛡️ Network Shield")
     if "UNKNOWN" in current_ip.upper() or current_ip.startswith("DISCONNECTED"):
-        st.error(f"🔴 SHIELD INACTIVE\nIP: {current_ip}")
+        st.error(f"🔴 **SHIELD INACTIVE**\n\nIP: {current_ip}")
     else:
-        badge_text = f"🟢 VPN ACTIVE\nIP: {current_ip}\nISP: {current_isp}"
+        st.success(f"🟢 **NETWORK ACTIVE**\n\n**IP:** {current_ip}\n\n**ISP:** {current_isp}")
         if is_cloud:
-            badge_text += " (Cloud)"
-        st.success(badge_text)
+            st.warning("⚠️ **Cloud Node Detected**\nMany IPTV targets block cloud IP ranges.")
 
-# Cloud warning banner to assist users deploying on public platforms
+# Cloud warning banner to assist users deploying on public platforms (kept in main for visibility if cloud)
 if is_cloud:
-    st.warning(
-        f"⚠️ **Public Cloud/Hosting Environment Detected**\n\n"
-        f"The dashboard is currently running on a network identified as **{current_isp}** ({current_org}). "
-        f"Many IPTV providers aggressively block connections from public cloud providers, hosting data centers, or VPN servers to prevent scrape traffic. "
-        f"If your link handshakes fail with **'🛡️ Cloud Blocked (HTTP 403)'** or **'🛡️ Firewalled / Blocked'**, this hosting network is likely banned by the target server."
+    st.info(
+        f"⚠️ **Public Cloud/Hosting Environment Detected:** You are running on **{current_isp}** ({current_org}). "
+        f"If connections fail with **'HTTP 403'** or **'Blocked'**, this hosting network is likely banned by the target server."
     )
 
-st.write("---")
 
 def render_xtream_details(row, key_idx, show_commit_button=True):
     col_title, col_action = st.columns([4, 1])
@@ -905,8 +897,8 @@ tab_tools, tab_scanner, tab_xtream, tab_stalker, tab_committed = st.tabs([
 ])
 
 with tab_tools:
-    st.markdown("### 🛠️ Base64 Encoding & Decoding Operations")
-    st.caption("Quickly extract hidden URLs or encapsulate data payloads before processing.")
+    st.markdown("### 🛠️ Data Translation & Base64 Decoder")
+    st.caption("Extract hidden URLs or encapsulate raw data payloads before processing.")
     
     if "b64_input" not in st.session_state:
         st.session_state["b64_input"] = ""
@@ -915,10 +907,13 @@ with tab_tools:
         st.session_state["b64_input"] = ""
 
     b64_action = st.radio("Select Operation:", ["Decode (Base64 -> Text)", "Encode (Text -> Base64)"], horizontal=True)
-    b64_input = st.text_area("Input Payload:", height=150, key="b64_input", label_visibility="collapsed")
+    b64_input = st.text_area("Input Payload:", height=180, key="b64_input", label_visibility="collapsed")
     
-    trans_pressed = st.button("🔄 Translate Payload", use_container_width=True)
-    st.button("🧹 Clear Input", on_click=clear_b64_input, key="clear_b64_btn", use_container_width=True)
+    col_tools_1, col_tools_2, _ = st.columns([2, 1, 3])
+    with col_tools_1:
+        trans_pressed = st.button("🔄 Execute Translation", type="primary", use_container_width=True)
+    with col_tools_2:
+        st.button("🧹 Clear", on_click=clear_b64_input, key="clear_b64_btn", use_container_width=True)
 
     if trans_pressed:
         if not b64_input.strip():
@@ -943,12 +938,12 @@ with tab_tools:
                     
                     if decoded_results:
                         result = "\n\n".join(decoded_results)
-                        st.success("Successfully decoded. (Use the copy button in the top right of the code block below)")
+                        st.success("✅ Successfully decoded. (Use the copy button in the top right of the block)")
                     else:
                         raise ValueError("No valid Base64 encoded strings found in the payload.")
                 else:
                     result = base64.b64encode(b64_input.encode('utf-8')).decode('utf-8')
-                    st.success("Successfully encoded. (Use the copy button in the top right of the code block below)")
+                    st.success("✅ Successfully encoded. (Use the copy button in the top right of the block)")
                     
                 st.code(result, language="text")
                 
@@ -960,7 +955,8 @@ with tab_tools:
                 st.error(f"Failed to process payload: {str(e)}")
 
 with tab_scanner:
-    st.markdown("### 📋 Bulk Ingest Master Links")
+    st.markdown("### 📡 Payload Ingestion Engine")
+    st.caption("Drop messy text, diagnostic blocks, or standard M3U configurations. The engine will auto-detect Xtream Codes and Stalker Portal formats.")
 
     if "raw_input" not in st.session_state:
         st.session_state["raw_input"] = ""
@@ -968,14 +964,20 @@ with tab_scanner:
     def clear_input():
         st.session_state["raw_input"] = ""
 
-    pasted_data = st.text_area("Drop messy text, diagnostic blocks, or standard M3U configurations here:", height=150, key="raw_input", label_visibility="collapsed")
+    pasted_data = st.text_area("Ingestion Area:", height=200, key="raw_input", label_visibility="collapsed")
 
     # Initialize session state for analysis results
     if "playlist_results" not in st.session_state:
         st.session_state["playlist_results"] = None
+    
+    col_scan_1, col_scan_2, _ = st.columns([2, 1, 3])
+    with col_scan_1:
+        analyze_pressed = st.button("🚀 Analyze Discovered Nodes", type="primary", disabled=("UNKNOWN" in current_ip.upper() or current_ip.startswith("DISCONNECTED")), use_container_width=True)
+    with col_scan_2:
+        st.button("🧹 Clear", on_click=clear_input, key="clear_btn", use_container_width=True)
 
-    analyze_pressed = st.button("🚀 Analyze Playlist Nodes", type="primary", disabled=("UNKNOWN" in current_ip.upper() or current_ip.startswith("DISCONNECTED")))
-    st.button("🧹 Clear Input", on_click=clear_input, key="clear_btn")
+    st.write("---")
+
 
     if analyze_pressed:
         accounts = parse_credentials(pasted_data)
@@ -1028,13 +1030,16 @@ if st.session_state["playlist_results"] is not None:
     stalker_df = df[df["type"] == "Stalker"]
     
     with tab_xtream:
-        st.markdown("### 📺 Xtream Codes Manifest")
+        col_x_head, col_x_action = st.columns([3, 1])
+        with col_x_head:
+            st.markdown("### 📺 Xtream Codes Manifest")
+        
         if xtream_df.empty:
             st.info("No Xtream Codes accounts discovered in the recent scan.")
         else:
-            col_filter, col_counts = st.columns([1, 1])
+            col_filter, col_counts = st.columns([2, 1])
             with col_filter:
-                show_only_active_x = st.checkbox("Show only Active Connections", value=False, key="xtream_active")
+                show_only_active_x = st.toggle("Show only Active Connections", value=False, key="xtream_active")
             
             display_xtream = xtream_df.copy()
             if show_only_active_x:
@@ -1120,11 +1125,14 @@ if st.session_state["playlist_results"] is not None:
                 st.info("👆 Select a row in the table above to reveal Master-Detail deep insight panel, copy easy credentials, and browse channels!")
 
     with tab_stalker:
-        st.markdown("### 🛸 Stalker Portals Manifest")
+        col_s_head, col_s_action = st.columns([3, 1])
+        with col_s_head:
+            st.markdown("### 🛸 Stalker Portals Manifest")
+            
         if stalker_df.empty:
             st.info("No Stalker accounts discovered in the recent scan.")
         else:
-            show_only_active_s = st.checkbox("Show only Active Connections", value=False, key="stalker_active")
+            show_only_active_s = st.toggle("Show only Active Connections", value=False, key="stalker_active")
             
             display_stalker = stalker_df.copy()
             if show_only_active_s:
@@ -1214,10 +1222,11 @@ with tab_committed:
             row = comm_df.iloc[selected_c_idx]
             st.markdown(f"### ✏️ Edit Record: `{row.get('base_url')}`")
             
-            col_n, col_d = st.columns([4, 1])
-            with col_n:
-                notes_val = st.text_area("📝 Free Form Notes", value=row.get("Notes", ""), key="notes_input", height=100)
-                if st.button("💾 Save Notes", key="save_notes_btn"):
+            notes_val = st.text_area("📝 Free Form Notes", value=row.get("Notes", ""), key="notes_input", height=100)
+            
+            col_action1, col_action2, _ = st.columns([2, 2, 4])
+            with col_action1:
+                if st.button("💾 Save Notes", key="save_notes_btn", use_container_width=True):
                     tgt_base_url = row.get("base_url")
                     tgt_user = row.get("username", "")
                     tgt_mac = row.get("mac", "")
@@ -1225,8 +1234,7 @@ with tab_committed:
                     update_committed_notes(tgt_base_url, tgt_user, tgt_mac, notes_val)
                     st.success("Notes saved successfully!")
                     st.rerun()
-            with col_d:
-                st.markdown("<br><br>", unsafe_allow_html=True)
+            with col_action2:
                 if st.button("🗑️ Delete Record", type="primary", key="del_commit_btn", use_container_width=True):
                     tgt_base_url = row.get("base_url")
                     tgt_user = row.get("username", "")
