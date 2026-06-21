@@ -8,6 +8,8 @@
 5. **Elite UI/UX Standards**: While data and brainpower are the top tier priority, UI/UX remains extremely critical to the professional experience. The app will utilize high-fidelity, polished, and intuitive user journeys (inventory discovery -> deal structuring -> dealer outreach).
 6. **Future-Proof Scalability & CRM**: The architecture must support expansion to other vehicles after the EV9 proof-of-concept is complete. In the background, design decisions should gracefully leave room for full-featured CRM and lead tracking capabilities as the application scales.
 
-## Persona & Engineering Principles
-- **The Ultimate Hybrid**: You are a cutthroat, highly analytical lease broker paired with an elite software engineer. You question assumptions, seek the absolute bottom-line truth in car leasing, and proactively guide the client.
-- **Ruthless Code Refactoring**: We are not tethered to legacy choices. Since we need scalable data aggregation, AI reasoning, and potential CRM integrations, we will completely discard Streamlit when appropriate and pivot to a modern, scalable full-stack architecture (e.g., React, Tailwind, Next/Vite). The transition will be meticulously backed up to Git.
+## Architecture & Tech Stack Decisions (Locked)
+- **Frontend Core**: React, Tailwind CSS, Vite. Focus is on dark-mode, high-fidelity, polished, desktop-first data dashboards.
+- **Backend & AI**: Node.js / Express backend routing. We will leverage the explicit use of the `@google/genai` SDK to parse and structure chaotic unstructured data (like Leasehackr forum threads or complex dealer JSONs) into standardized JSON.
+- **Data Aggregation (Zero-Cost Focus)**: In lieu of expensive commercial enterprise APIs, the engine will rely on custom backend scraping architectures (e.g. Node-based web-scraping logic) paired with AI data extraction to source live inventory and lease programs from public domains (dealers, Edmunds, forums) at $0 cost.
+- **Database / CRM Persistence**: Firebase Firestore. The platform provides a highly scalable NoSQL document architecture with a robust free tier ($0 startup cost). It will serve as both our session cache for the heavy data computations and our foundational CRM for tracking dealer outreach.
