@@ -36,8 +36,57 @@ def load_committed_data():
                 return []
     return []
 
-def save_committed_data(data_list):
-    # Fetch remote first to avoid wiping out records from preview environments that are out-of-sync
+def pull_committed_data(force=False):
+    """ 
+    Fetches the latest JSON from GitHub, writes to local disk, 
+    and returns (data_list, sha). 
+    If no GITHUB_TOKEN or fetch fails, returns local load_committed_data() and None.
+    """
+    local_data = load_committed_data()
+    if "GITHUB_TOKEN" not in st.secrets:
+        return local_data, None
+        
+    try:
+        import base64
+        token = st.secrets["GITHUB_TOKEN"]
+        repo_slug = "Fragger7/personal-repo" 
+        file_path = "project-strong/committed.json"
+        url = f"https://api.github.com/repos/{repo_slug}/contents/{file_path}"
+        headers = {
+            "Authorization": f"token {token}",
+            "Accept": "application/vnd.github.v3+json"
+        }
+        
+        r = httpx.get(url, headers=headers)
+        if r.status_code == 200:
+            resp_json = r.json()
+            sha = resp_json.get("sha")
+            content_b64 = resp_json.get("content", "")
+            if content_b64:
+                try:
+                    remote_json_str = base64.b64decode(content_b64).decode("utf-8")
+                    remote_data = json.loads(remote_json_str)
+                    
+                    # Update local state if remote has changing contents
+                    with open(COMMITTED_FILE, "w", encoding="utf-8") as f:
+                        f.write(json.dumps(remote_data, indent=4))
+                    return remote_data, sha
+                except Exception as merge_err:
+                    logger.error(f"Failed to parse remote JSON: {merge_err}")
+    except Exception as e:
+        logger.error(f"Failed to pull remote data: {e}")
+        
+    return load_committed_data(), None
+
+def save_committed_data(data_list, sha=None):
+    """
+    Writes data_list to local disk immediately and forces a push to GitHub 
+    with the exact dataset, using the provided SHA.
+    """
+    json_str = json.dumps(data_list, indent=4)
+    with open(COMMITTED_FILE, "w", encoding="utf-8") as f:
+        f.write(json_str)
+        
     if "GITHUB_TOKEN" in st.secrets:
         try:
             import base64
@@ -50,37 +99,11 @@ def save_committed_data(data_list):
                 "Accept": "application/vnd.github.v3+json"
             }
             
-            # Get remote content and SHA
-            r = httpx.get(url, headers=headers)
-            sha = None
-            if r.status_code == 200:
-                resp_json = r.json()
-                sha = resp_json.get("sha")
-                remote_content_b64 = resp_json.get("content", "")
-                if remote_content_b64:
-                    try:
-                        remote_json_str = base64.b64decode(remote_content_b64).decode("utf-8")
-                        remote_data = json.loads(remote_json_str)
-                        # Merge remote data with data_list to prevent dropping records
-                        for rm_rec in remote_data:
-                            # Keep if we don't already have it
-                            exists = any(
-                                (l_rec.get("base_url") == rm_rec.get("base_url")) and 
-                                (l_rec.get("username", "x") == rm_rec.get("username", "y") or l_rec.get("mac", "x") == rm_rec.get("mac", "y"))
-                                for l_rec in data_list
-                            )
-                            if not exists:
-                                data_list.append(rm_rec)
-                    except Exception as merge_err:
-                        logger.error(f"Failed to merge remote data: {merge_err}")
-
-            # Prepare merged string
-            json_str = json.dumps(data_list, indent=4)
-            # Write to disk so it updates the local state natively
-            with open(COMMITTED_FILE, "w", encoding="utf-8") as f:
-                f.write(json_str)
-
-            # Push the updated content
+            if not sha:
+                r = httpx.get(url, headers=headers)
+                if r.status_code == 200:
+                    sha = r.json().get("sha")
+            
             payload = {
                 "message": "Update: committed.json (Streamlit Cloud Auto-Push)",
                 "content": base64.b64encode(json_str.encode("utf-8")).decode("utf-8"),
@@ -94,18 +117,13 @@ def save_committed_data(data_list):
                 logger.error(f"GitHub API push failed: {put_r.text}")
         except Exception as e:
             logger.error(f"Failed to auto-push to GitHub API: {e}")
-            # Ensure local write still happens on network fail
-            json_str = json.dumps(data_list, indent=4)
-            with open(COMMITTED_FILE, "w", encoding="utf-8") as f:
-                f.write(json_str)
     else:
-        json_str = json.dumps(data_list, indent=4)
-        with open(COMMITTED_FILE, "w", encoding="utf-8") as f:
-            f.write(json_str)
         logger.warning("GITHUB_TOKEN not found in st.secrets. Skipping remote push.")
 
 def commit_record(record, tab_type):
-    current = load_committed_data()
+    # Fetch from Git first to eliminate race conditions
+    current, sha = pull_committed_data()
+    
     # Normalize record
     base_url = record.get("base_url", "")
     username = record.get("username", "")
@@ -133,14 +151,36 @@ def commit_record(record, tab_type):
         new_rec = {**record, "Source": tab_type, "Date Selected": datetime.now().strftime("%Y-%m-%d %H:%M:%S"), "Notes": ""}
         
     current.append(new_rec)
-    save_committed_data(current)
+    save_committed_data(current, sha=sha)
     return True
 
-def delete_committed_record(idx):
-    current = load_committed_data()
-    if 0 <= idx < len(current):
-        current.pop(idx)
-        save_committed_data(current)
+def delete_committed_record(tgt_base_url, tgt_user, tgt_mac):
+    current, sha = pull_committed_data()
+    to_remove = None
+    for r in current:
+        if r.get("base_url") == tgt_base_url and r.get("username", "") == tgt_user and r.get("mac", "") == tgt_mac:
+            to_remove = r
+            break
+            
+    if to_remove:
+        current.remove(to_remove)
+        save_committed_data(current, sha=sha)
+        return True
+    return False
+
+def update_committed_notes(tgt_base_url, tgt_user, tgt_mac, notes_val):
+    current, sha = pull_committed_data()
+    updated = False
+    for r in current:
+        if r.get("base_url") == tgt_base_url and r.get("username", "") == tgt_user and r.get("mac", "") == tgt_mac:
+            r["Notes"] = notes_val
+            updated = True
+            break
+            
+    if updated:
+        save_committed_data(current, sha=sha)
+        return True
+    return False
 
 # --- CUSTOM UI / UX THEMES ---
 if "app_theme" not in st.session_state:
@@ -1077,7 +1117,14 @@ if st.session_state["playlist_results"] is not None:
 
     with tab_committed:
         st.markdown("### 💾 Committed Data Repository")
-        st.caption("Locally saved verification records pushing directly to remote GitHub repository.")
+        col_c_text, col_c_btn = st.columns([4, 1])
+        with col_c_text:
+            st.caption("Locally saved verification records pushing directly to remote GitHub repository.")
+        with col_c_btn:
+            if st.button("🔄 Reload from Cloud", use_container_width=True):
+                with st.spinner("Syncing..."):
+                    pull_committed_data(force=True)
+                st.rerun()
         
         committed_records = load_committed_data()
         
@@ -1124,28 +1171,21 @@ if st.session_state["playlist_results"] is not None:
                 with col_n:
                     notes_val = st.text_area("📝 Free Form Notes", value=row.get("Notes", ""), key="notes_input", height=100)
                     if st.button("💾 Save Notes", key="save_notes_btn"):
-                        # Must get accurate index in actual data dictionary vs the dataframe output
-                        # We use matching on base_url, username, mac depending on source
                         tgt_base_url = row.get("base_url")
                         tgt_user = row.get("username", "")
                         tgt_mac = row.get("mac", "")
                         
-                        for i, r in enumerate(committed_records):
-                            if r.get("base_url") == tgt_base_url and r.get("username", "") == tgt_user and r.get("mac", "") == tgt_mac:
-                                committed_records[i]["Notes"] = notes_val
-                                save_committed_data(committed_records)
-                                st.success("Notes saved successfully!")
-                                break
+                        update_committed_notes(tgt_base_url, tgt_user, tgt_mac, notes_val)
+                        st.success("Notes saved successfully!")
+                        st.rerun()
                 with col_d:
                     st.markdown("<br><br>", unsafe_allow_html=True)
                     if st.button("🗑️ Delete Record", type="primary", key="del_commit_btn", use_container_width=True):
                         tgt_base_url = row.get("base_url")
                         tgt_user = row.get("username", "")
                         tgt_mac = row.get("mac", "")
-                        for i, r in enumerate(committed_records):
-                            if r.get("base_url") == tgt_base_url and r.get("username", "") == tgt_user and r.get("mac", "") == tgt_mac:
-                                delete_committed_record(i)
-                                st.success("Record deleted successfully!")
-                                st.rerun()
-                                break
+                        
+                        delete_committed_record(tgt_base_url, tgt_user, tgt_mac)
+                        st.success("Record deleted successfully!")
+                        st.rerun()
 
