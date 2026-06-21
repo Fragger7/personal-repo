@@ -9,13 +9,14 @@
 6. **Future-Proof Scalability & CRM**: The architecture must support expansion to other vehicles after the EV9 proof-of-concept is complete. In the background, design decisions should gracefully leave room for full-featured CRM and lead tracking capabilities as the application scales.
 
 ## Phase 1 Proof of Concept Constraints (Locked)
-- **Target Customer Profile**: ZIP 78665, 300-mile search radius, top-tier credit score (Tier 1).
+- **Target Customer Profile**: ZIP 78665 (Round Rock, TX region - a known "tax trap" state), 300-mile search radius, top-tier credit score (Tier 1). No conditional rebates (military/grad) for this PoC.
 - **Target Vehicle**: Kia EV9. Target Trim: **GT-Line**. The engine MUST autonomously evaluate all AWD variants (e.g. Land AWD, Wind AWD) and pivot if the alternative trims yield a significantly higher overall deal score.
+- **Tax Trap States & Bottom Line**: The system will flag "tax trap" states (where tax is levied on the entire vehicle purchase price, not just the leased portion). The engine must actively research and apply manufacturer tax credits (e.g. from Kia Finance) to combat this and prioritize the ultimate bottom-line monthly number.
 - **Value Metric (The Secret Sauce)**: We do not use generic boilerplate rules (e.g., "1% of MSRP"). The ultimate metric of a good deal is the **Leasehackr Score** (years of lease value) paired with qualitative current market momentum scraped from forums.
 - **Autonomous Outreach**: The system will not simply crunch numbers. Once a top-tier deal is identified, the application will generate a highly intelligent, precise, data-driven first-contact email to the dealer to initiate the negotiation on behalf of the user.
 
 ## Architecture & Tech Stack Decisions (Locked)
 - **Frontend Core**: React, Tailwind CSS, Vite. Focus is on dark-mode, high-fidelity, polished, desktop-first data dashboards.
 - **Backend & AI**: Node.js / Express backend routing. We will leverage the explicit use of the `@google/genai` SDK to parse and structure chaotic unstructured data (like Leasehackr forum threads or complex dealer JSONs) into standardized JSON.
-- **Data Aggregation (Zero-Cost Focus)**: In lieu of expensive commercial enterprise APIs, the engine will rely on custom backend scraping architectures (e.g. Node-based web-scraping logic) paired with AI data extraction to source live inventory and lease programs from public domains (dealers, Edmunds, forums) at $0 cost.
+- **Data Aggregation (Zero-Cost Focus)**: In lieu of expensive commercial enterprise APIs, the engine will rely on custom backend scraping architectures (e.g. Node-based web-scraping logic) paired with AI data extraction to source live inventory and lease programs from public domains (dealers, Edmunds, forums) at $0 cost. This is the **highest priority development task**: proving we can pull real, accurate inventory and programs before finalizing the math engine.
 - **Database / CRM Persistence**: Firebase Firestore. The platform provides a highly scalable NoSQL document architecture with a robust free tier ($0 startup cost). It will serve as both our session cache for the heavy data computations and our foundational CRM for tracking dealer outreach.
