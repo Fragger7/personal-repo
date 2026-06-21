@@ -28,7 +28,7 @@ try {
     fs.mkdirSync(targetAgentsDir, { recursive: true });
 
     const filesToCopy = [
-        'app.py',
+        'app_legacy_streamlit.py',
         '.gitignore',
         'requirements.txt',
         'LEASE_HUNTER.md',
@@ -36,8 +36,15 @@ try {
         'git_push.ps1',
         'flatten_context.py',
         'git_push.cjs',
+        'git_pull.cjs',
         'PROMPT_MANIFEST.txt',
-        'GEMINI.md'
+        'GEMINI.md',
+        'package.json',
+        'package-lock.json',
+        'vite.config.ts',
+        'tsconfig.json',
+        'server.ts',
+        'index.html'
     ];
 
     filesToCopy.forEach(file => {
@@ -47,6 +54,12 @@ try {
             fs.copyFileSync(src, dest);
         }
     });
+
+    const srcDir = path.join(workspace, 'src');
+    const destSrcDir = path.join(targetDir, 'src');
+    if (fs.existsSync(srcDir)) {
+        fs.cpSync(srcDir, destSrcDir, { recursive: true });
+    }
 
     const srcAgents = path.join(workspace, '.agents', 'AGENTS.md');
     const destAgents = path.join(targetAgentsDir, 'AGENTS.md');
