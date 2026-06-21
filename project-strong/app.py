@@ -756,6 +756,140 @@ if is_cloud:
 
 st.write("---")
 
+def render_xtream_details(row, key_idx, show_commit_button=True):
+    col_title, col_action = st.columns([4, 1])
+    with col_title:
+        if "Active" in row["Status"]:
+            st.markdown(f"### 🔍 Deep-Dive Discovery: `{row['base_url']}`")
+    with col_action:
+        if show_commit_button:
+            if st.button("💾 Commit Line", key=f"c_x_{key_idx}", use_container_width=True):
+                commit_record(row.to_dict() if hasattr(row, "to_dict") else row, "Xtream")
+                st.success("Saved!")
+    
+    if "Active" in row["Status"]:
+        st.caption("Use the copy icon on the top right of the code blocks to quickly copy to your clipboard.")
+        
+        st.markdown("**🔐 Discrete Login Credentials**")
+        st.info("💡 **Pro Tip:** If the M3U link doesn't work in your player but discrete credentials do, your host likely disabled standard M3U `/get.php` downloads to force users onto API-based player apps.")
+        col_h, col_u, col_p = st.columns(3)
+        with col_h:
+            st.markdown("**🌐 Server Host**")
+            st.code(row['base_url'], language="text")
+        with col_u:
+            st.markdown("**👤 Username**")
+            st.code(row['username'], language="text")
+        with col_p:
+            st.markdown("**🔑 Password**")
+            st.code(row['password'], language="text")
+        
+        st.markdown("**🔗 M3U Playlist URL**")
+        m3u_url = f"{row['base_url']}/get.php?username={row['username']}&password={row['password']}&type=m3u_plus&output=ts"
+        st.code(m3u_url, language="text")
+        
+        st.write("---")
+        st.write("📡 **Query Target Asset Classifications**")
+        
+        tier2_key = f"t2_{row['base_url']}_{row['username']}"
+        
+        if tier2_key not in st.session_state:
+            if st.button("Fetch Live Stream Catalogs", key=f"f_b_{key_idx}", type="primary", use_container_width=True):
+                with st.spinner("Fetching stream catalogs from IPTV host. Please wait..."):
+                    async def fetch_tier2_data(r):
+                        return await asyncio.gather(
+                            fetch_lazy_details(r['base_url'], r['username'], r['password'], "get_live_categories"),
+                            fetch_lazy_details(r['base_url'], r['username'], r['password'], "get_live_streams"),
+                            return_exceptions=True
+                        )
+                    
+                    st.session_state[tier2_key] = asyncio.run(fetch_tier2_data(row))
+                    st.rerun()
+        else:
+            col_ref1, col_ref2 = st.columns([4, 1])
+            with col_ref2:
+                if st.button("🔄 Refresh", key=f"r_b_{key_idx}", use_container_width=True):
+                    del st.session_state[tier2_key]
+                    st.rerun()
+
+            results = st.session_state[tier2_key]
+            live_cats, live_streams = results[0], results[1]
+        
+            if isinstance(live_cats, list) and isinstance(live_streams, list):
+                cat_counts = {}
+                for s in live_streams:
+                    cid = str(s.get("category_id"))
+                    cat_counts[cid] = cat_counts.get(cid, 0) + 1
+                
+                cat_options = []
+                cat_map = {}
+                
+                for c in live_cats:
+                    cid = str(c.get("category_id"))
+                    name = c.get("category_name", "Unknown")
+                    count = cat_counts.get(cid, 0)
+                    display_name = f"{name} ({count})"
+                    cat_options.append(display_name)
+                    cat_map[display_name] = c
+                
+                st.metric("Live Categories Found", len(live_cats))
+                if cat_options:
+                    selected_option = st.selectbox(
+                        f"Active Live Packages ({row['username']})", 
+                        options=cat_options, 
+                        key=f"s_x_{key_idx}"
+                    )
+                    selected_cat = cat_map.get(selected_option)
+                    if selected_cat:
+                        cat_id = str(selected_cat.get("category_id"))
+                        matching_streams = [s for s in live_streams if str(s.get("category_id")) == cat_id]
+                        
+                        st.write(f"📡 Displaying **{len(matching_streams)}** channels in: **{selected_cat.get('category_name')}**")
+                        if matching_streams:
+                            stream_data = [{"Num": s.get("num"), "Name": s.get("name"), "Stream ID": s.get("stream_id"), "Icon": s.get("stream_icon")} for s in matching_streams]
+                            st.dataframe(
+                                pd.DataFrame(stream_data),
+                                column_config={
+                                    "Icon": st.column_config.ImageColumn("Logo", help="Channel Logo"),
+                                    "Num": st.column_config.NumberColumn("#"),
+                                    "Name": st.column_config.TextColumn("Channel Name"),
+                                    "Stream ID": st.column_config.NumberColumn("Stream ID")
+                                },
+                                use_container_width=True, hide_index=True,
+                                key=f"d_c_s_{key_idx}"
+                            )
+                        else:
+                            st.info("No channels found in this group.")
+            else:
+                st.error("Payload context restricted or limited by provider container setup. Status verified, but deep mining disabled.")
+    else:
+        st.warning("⚠️ Deep-Dive Discovery is only available for Active connections. The selected node is offline or blocked.")
+
+def render_stalker_details(row, key_idx, show_commit_button=True):
+    col_title, col_action = st.columns([4, 1])
+    with col_title:
+        if "Active" in row["Status"]:
+            st.markdown(f"### 🔍 Detailed Credentials: `{row['base_url']}`")
+    with col_action:
+        if show_commit_button:
+            if st.button("💾 Commit Line", key=f"c_s_{key_idx}", use_container_width=True):
+                commit_record(row.to_dict() if hasattr(row, "to_dict") else row, "Stalker")
+                st.success("Saved!")
+
+    if "Active" in row["Status"]:
+        st.caption("Use the copy icon on the top right of the code blocks to quickly copy to your clipboard.")
+        
+        st.markdown("**🔐 Stalker Login Configuration**")
+        col_sh, col_sm = st.columns(2)
+        with col_sh:
+            st.markdown("**🌐 Portal URL**")
+            st.code(row['base_url'], language="text")
+        with col_sm:
+            st.markdown("**🏷️ MAC Address**")
+            st.code(row['mac'], language="text")
+        st.info("⚠️ **Deep-Dive Discovery is constrained for Stalker Portals.**\n\nStalker Portals (Ministra) use dynamic, MAC-authenticated MAC schemas rather than standard Xtream flat lists. Fetching massive stream categories without full device emulation can trigger security bans on the host. Status verification is complete, but deep channel mining is restricted.")
+    else:
+        st.warning("⚠️ Valid credentials are only available for Active Stalker portals. This connection was verified as degraded or offline.")
+
 xt_count = 0
 st_count = 0
 if st.session_state.get("playlist_results"):
@@ -981,111 +1115,7 @@ if st.session_state["playlist_results"] is not None:
             st.write("---")
             if selected_x_idx is not None:
                 row = display_xtream.iloc[selected_x_idx]
-                col_title, col_action = st.columns([4, 1])
-                with col_title:
-                    if "Active" in row["Status"]:
-                        st.markdown(f"### 🔍 Deep-Dive Discovery: `{row['base_url']}`")
-                with col_action:
-                    if st.button("💾 Commit Line", key="commit_x", use_container_width=True):
-                        commit_record(row.to_dict(), "Xtream")
-                        st.success("Saved!")
-                
-                if "Active" in row["Status"]:
-                    st.caption("Use the copy icon on the top right of the code blocks to quickly copy to your clipboard.")
-                    
-                    st.markdown("**🔐 Discrete Login Credentials**")
-                    st.info("💡 **Pro Tip:** If the M3U link doesn't work in your player but discrete credentials do, your host likely disabled standard M3U `/get.php` downloads to force users onto API-based player apps.")
-                    col_h, col_u, col_p = st.columns(3)
-                    with col_h:
-                        st.markdown("**🌐 Server Host**")
-                        st.code(row['base_url'], language="text")
-                    with col_u:
-                        st.markdown("**👤 Username**")
-                        st.code(row['username'], language="text")
-                    with col_p:
-                        st.markdown("**🔑 Password**")
-                        st.code(row['password'], language="text")
-                    
-                    st.markdown("**🔗 M3U Playlist URL**")
-                    m3u_url = f"{row['base_url']}/get.php?username={row['username']}&password={row['password']}&type=m3u_plus&output=ts"
-                    st.code(m3u_url, language="text")
-                    
-                    st.write("---")
-                    st.write("📡 **Query Target Asset Classifications**")
-                    
-                    tier2_key = f"t2_{row['base_url']}_{row['username']}"
-                    
-                    if tier2_key not in st.session_state:
-                        if st.button("Fetch Live Stream Catalogs", key=f"fetch_btn_{selected_x_idx}", type="primary", use_container_width=True):
-                            with st.spinner("Fetching stream catalogs from IPTV host. Please wait..."):
-                                async def fetch_tier2_data(r):
-                                    return await asyncio.gather(
-                                        fetch_lazy_details(r['base_url'], r['username'], r['password'], "get_live_categories"),
-                                        fetch_lazy_details(r['base_url'], r['username'], r['password'], "get_live_streams"),
-                                        return_exceptions=True
-                                    )
-                                
-                                st.session_state[tier2_key] = asyncio.run(fetch_tier2_data(row))
-                                st.rerun()
-                    else:
-                        col_ref1, col_ref2 = st.columns([4, 1])
-                        with col_ref2:
-                            if st.button("🔄 Refresh", key=f"refetch_btn_{selected_x_idx}", use_container_width=True):
-                                del st.session_state[tier2_key]
-                                st.rerun()
-
-                        results = st.session_state[tier2_key]
-                        live_cats, live_streams = results[0], results[1]
-                    
-                        if isinstance(live_cats, list) and isinstance(live_streams, list):
-                            cat_counts = {}
-                            for s in live_streams:
-                                cid = str(s.get("category_id"))
-                                cat_counts[cid] = cat_counts.get(cid, 0) + 1
-                            
-                            cat_options = []
-                            cat_map = {}
-                            
-                            for c in live_cats:
-                                cid = str(c.get("category_id"))
-                                name = c.get("category_name", "Unknown")
-                                count = cat_counts.get(cid, 0)
-                                display_name = f"{name} ({count})"
-                                cat_options.append(display_name)
-                                cat_map[display_name] = c
-                            
-                            st.metric("Live Categories Found", len(live_cats))
-                            if cat_options:
-                                selected_option = st.selectbox(
-                                    f"Active Live Packages ({row['username']})", 
-                                    options=cat_options, 
-                                    key=f"sel_x_{selected_x_idx}"
-                                )
-                                selected_cat = cat_map.get(selected_option)
-                                if selected_cat:
-                                    cat_id = str(selected_cat.get("category_id"))
-                                    matching_streams = [s for s in live_streams if str(s.get("category_id")) == cat_id]
-                                    
-                                    st.write(f"📡 Displaying **{len(matching_streams)}** channels in: **{selected_cat.get('category_name')}**")
-                                    if matching_streams:
-                                        stream_data = [{"Num": s.get("num"), "Name": s.get("name"), "Stream ID": s.get("stream_id"), "Icon": s.get("stream_icon")} for s in matching_streams]
-                                        st.dataframe(
-                                            pd.DataFrame(stream_data),
-                                            column_config={
-                                                "Icon": st.column_config.ImageColumn("Logo", help="Channel Logo"),
-                                                "Num": st.column_config.NumberColumn("#"),
-                                                "Name": st.column_config.TextColumn("Channel Name"),
-                                                "Stream ID": st.column_config.NumberColumn("Stream ID")
-                                            },
-                                            use_container_width=True, hide_index=True,
-                                            key=f"df_cat_streams_{selected_x_idx}"
-                                        )
-                                    else:
-                                        st.info("No channels found in this group.")
-                        else:
-                            st.error("Payload context restricted or limited by provider container setup. Status verified, but deep mining disabled.")
-                else:
-                    st.warning("⚠️ Deep-Dive Discovery is only available for Active connections. The selected node is offline or blocked.")
+                render_xtream_details(row, selected_x_idx, show_commit_button=True)
             else:
                 st.info("👆 Select a row in the table above to reveal Master-Detail deep insight panel, copy easy credentials, and browse channels!")
 
@@ -1118,29 +1148,7 @@ if st.session_state["playlist_results"] is not None:
             st.write("---")
             if selected_s_idx is not None:
                 row = display_stalker.iloc[selected_s_idx]
-                col_title, col_action = st.columns([4, 1])
-                with col_title:
-                    if "Active" in row["Status"]:
-                        st.markdown(f"### 🔍 Detailed Credentials: `{row['base_url']}`")
-                with col_action:
-                    if st.button("💾 Commit Line", key="commit_s", use_container_width=True):
-                        commit_record(row.to_dict(), "Stalker")
-                        st.success("Saved!")
-
-                if "Active" in row["Status"]:
-                    st.caption("Use the copy icon on the top right of the code blocks to quickly copy to your clipboard.")
-                    
-                    st.markdown("**🔐 Stalker Login Configuration**")
-                    col_sh, col_sm = st.columns(2)
-                    with col_sh:
-                        st.markdown("**🌐 Portal URL**")
-                        st.code(row['base_url'], language="text")
-                    with col_sm:
-                        st.markdown("**🏷️ MAC Address**")
-                        st.code(row['mac'], language="text")
-                    st.info("⚠️ **Deep-Dive Discovery is constrained for Stalker Portals.**\n\nStalker Portals (Ministra) use dynamic, MAC-authenticated MAC schemas rather than standard Xtream flat lists. Fetching massive stream categories without full device emulation can trigger security bans on the host. Status verification is complete, but deep channel mining is restricted.")
-                else:
-                    st.warning("⚠️ Valid credentials are only available for Active Stalker portals. This connection was verified as degraded or offline.")
+                render_stalker_details(row, selected_s_idx, show_commit_button=True)
             else:
                 st.info("👆 Select a row in the table above to open the easy-copy credentials panel for Stalker portals!")
 
@@ -1227,4 +1235,11 @@ with tab_committed:
                     delete_committed_record(tgt_base_url, tgt_user, tgt_mac)
                     st.success("Record deleted successfully!")
                     st.rerun()
+            
+            st.write("---")
+            source_type = row.get("Source", "")
+            if source_type == "Xtream" or (not source_type and not row.get("mac", "")):
+                render_xtream_details(row, f"c_view_{selected_c_idx}", show_commit_button=False)
+            else:
+                render_stalker_details(row, f"c_view_{selected_c_idx}", show_commit_button=False)
 
