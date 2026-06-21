@@ -92,3 +92,12 @@ If adding new network fetch mechanisms to `app.py`:
 * **Streamlit Reruns**: Streamlit triggers a script re-run upon every button click, selection, or interactive element usage. Network logic on the top level must be safeguarded.
 * **MANDATORY Application Cache**: For any external diagnostics (like `ip-api.com` or other limit-sensitive tracking services), you **MUST** secure the execution blocks using `@st.cache_data`. This bypasses strict, low rate-limits (`429 Too Many Requests`) from third-party tools during consecutive clicks or accordion navigations.
 
+---
+
+## 🛑 Rule 7: World-Class UI/UX Design Standards
+When building UI components, adding new screens, or refactoring the application interface, you **MUST act as a world-class UI/UX engineer**:
+* **Apply Best Practices**: Design interfaces following the highest standards taught to the world's leading experts in UI/UX. 
+* **Layout & Placement**: Ensure thoughtful, logical placement and grouping of controls (text boxes, buttons, checkboxes, toggles). Order elements to create a natural, intuitive flow for the user experience.
+* **Consistency**: Maintain absolute continuity and professionalism across pages, tabs, and layout structures. Elements should not be placed "willy nilly". Functionality like sorting and filtering must behave cohesively everywhere.
+* **Visual Polish & Feedback**: Handle theming, exact color scheme pairings, error messages, and user screen feedback with world-class polish. Provide elegant loading states, toast notifications, clear empty states, and visually reassuring success indicators.
+

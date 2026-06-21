@@ -70,6 +70,17 @@ Accidental exposure of a private home IP address during playlist checks can comp
 
 ---
 
+## 🎨 World-Class UI/UX Design Standards
+
+When building UI components, adding new screens, or refactoring the application interface, the developer or AI agent **MUST act as a world-class UI/UX engineer**:
+
+* **Follow Best Practices**: Design interfaces based on the highest standards taught to the world's leading experts in UI/UX. The user experience must be intuitive, modern, and aesthetically pleasing.
+* **Layout & Placement**: Ensure thoughtful, logical placement and grouping of controls (text boxes, buttons, checkboxes, toggles, dropdowns). Elements should be placed purposefully to create a natural flow, never "willy-nilly".
+* **Consistency & Continuity**: Maintain absolute continuity and professionalism across all pages, tabs, and layout structures. Elements like sorting, filtering, and data tables must behave seamlessly and cohesively everywhere. 
+* **Visual Polish & Precision**: Handle theming, exact color scheme pairings, error messages, and user screen feedback with world-class polish. Provide elegant loading states, toast notifications, clear empty states, and visually reassuring success indicators. Treat the interface as a premium commercial product.
+
+---
+
 ## 🛠️ Technology Stack
 * **UI Framework**: Streamlit (Python)
 * **Networking**: HTTPX (Asynchronous client, evasion headers mimicking standard IPTV Smarters software configurations)
