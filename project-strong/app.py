@@ -72,7 +72,8 @@ def pull_committed_data(force=False):
                     for l_rec in local_data:
                         exists = any(
                             (r_rec.get("base_url") == l_rec.get("base_url")) and 
-                            (r_rec.get("username", "x") == l_rec.get("username", "y") and r_rec.get("mac", "x") == l_rec.get("mac", "y"))
+                            (r_rec.get("username", "") == l_rec.get("username", "")) and 
+                            (r_rec.get("mac", "") == l_rec.get("mac", ""))
                             for r_rec in remote_data
                         )
                         if not exists:
@@ -110,10 +111,20 @@ def save_committed_data(data_list, sha=None):
                 "Accept": "application/vnd.github.v3+json"
             }
             
-            if not sha:
-                r = httpx.get(url, headers=headers)
-                if r.status_code == 200:
-                    sha = r.json().get("sha")
+            r = httpx.get(url, headers=headers)
+            if r.status_code == 200:
+                resp_json = r.json()
+                sha = resp_json.get("sha")
+                content_b64 = resp_json.get("content", "")
+                if content_b64:
+                    try:
+                        remote_json_str = base64.b64decode(content_b64).decode("utf-8")
+                        remote_data = json.loads(remote_json_str)
+                        if json.dumps(remote_data, sort_keys=True) == json.dumps(data_list, sort_keys=True):
+                            logger.info("Remote data matches local exactly. Skipping push.")
+                            return
+                    except Exception as parse_err:
+                        pass
             
             payload = {
                 "message": "Update: committed.json (Streamlit Cloud Auto-Push)",
@@ -901,6 +912,7 @@ if st.session_state["playlist_results"] is not None:
                 axis=1
             )
 
+            st.caption(f"Showing **{len(display_xtream)}** records.")
             event_x = st.dataframe(
                 display_xtream.drop(columns=["M3U Link"], errors='ignore'),
                 use_container_width=True,
@@ -1088,6 +1100,7 @@ if st.session_state["playlist_results"] is not None:
             if show_only_active_s:
                 display_stalker = display_stalker[display_stalker["Status"].str.contains("Active", na=False)]
             
+            st.caption(f"Showing **{len(display_stalker)}** records.")
             event_s = st.dataframe(
                 display_stalker,
                 use_container_width=True,
@@ -1138,8 +1151,17 @@ with tab_committed:
         st.caption("Locally saved verification records pushing directly to remote GitHub repository.")
     with col_c_btn:
         if st.button("🔄 Reload from Cloud", use_container_width=True):
-            with st.spinner("Syncing..."):
+            with st.spinner("Downloading and merging cloud updates..."):
+                # Simulating a progress bar to show some visual execution, as sync can be fast and missable
+                progress_bar = st.progress(0)
+                for percent in range(100):
+                    import time
+                    time.sleep(0.01)
+                    progress_bar.progress(percent + 1)
+                
                 pull_committed_data(force=True)
+                
+            st.toast("✅ Cloud records fetched and merged successfully!", icon="🎉")
             st.rerun()
     
     committed_records = load_committed_data()
@@ -1157,6 +1179,7 @@ with tab_committed:
         
         comm_df = comm_df[cols]
         
+        st.caption(f"Showing **{len(comm_df)}** committed records.")
         event_c = st.dataframe(
             comm_df,
             use_container_width=True,
