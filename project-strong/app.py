@@ -67,10 +67,21 @@ def pull_committed_data(force=False):
                     remote_json_str = base64.b64decode(content_b64).decode("utf-8")
                     remote_data = json.loads(remote_json_str)
                     
+                    # Merge local data into remote data so no unpushed local records are lost
+                    merged_data = list(remote_data)
+                    for l_rec in local_data:
+                        exists = any(
+                            (r_rec.get("base_url") == l_rec.get("base_url")) and 
+                            (r_rec.get("username", "x") == l_rec.get("username", "y") and r_rec.get("mac", "x") == l_rec.get("mac", "y"))
+                            for r_rec in remote_data
+                        )
+                        if not exists:
+                            merged_data.append(l_rec)
+                    
                     # Update local state if remote has changing contents
                     with open(COMMITTED_FILE, "w", encoding="utf-8") as f:
-                        f.write(json.dumps(remote_data, indent=4))
-                    return remote_data, sha
+                        f.write(json.dumps(merged_data, indent=4))
+                    return merged_data, sha
                 except Exception as merge_err:
                     logger.error(f"Failed to parse remote JSON: {merge_err}")
     except Exception as e:
@@ -181,6 +192,11 @@ def update_committed_notes(tgt_base_url, tgt_user, tgt_mac, notes_val):
         save_committed_data(current, sha=sha)
         return True
     return False
+
+# --- COMMITTED DATASET SYNC ---
+if "has_pulled_initially" not in st.session_state:
+    st.session_state["has_pulled_initially"] = True
+    pull_committed_data()
 
 # --- CUSTOM UI / UX THEMES ---
 if "app_theme" not in st.session_state:
