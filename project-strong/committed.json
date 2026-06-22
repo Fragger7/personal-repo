@@ -93,34 +93,5 @@
         "Source": "Xtream",
         "Date Selected": "2026-06-21 03:26:25",
         "Notes": "Living Room add. All content 30K+ and Amazing VOD like SB material"
-    },
-    {
-        "type": "Xtream",
-        "base_url": "http://vvinnietv5.com:80",
-        "username": "9512206810727937",
-        "password": "JW545SCMLSMZ",
-        "Status": "\ud83d\udfe2 Active",
-        "Expires": "2026-11-10",
-        "Days Left": 141,
-        "Max Conn": "1",
-        "Active Conn": "0",
-        "Channels": 28396,
-        "VODs": 150883,
-        "Server Timezone": "UTC",
-        "Server Time": "2026-06-22 06:30:50",
-        "fingerprint": {
-            "server": "nginx/1.27.0",
-            "x_powered_by": "Unknown",
-            "cors": "Unknown",
-            "cloudflare": "No",
-            "timezone": "UTC",
-            "metadata_message": "",
-            "server_protocol": "http"
-        },
-        "Provider": "Identified: nginx/1.27.0",
-        "M3U Link": "http://vvinnietv5.com:80/get.php?username=9512206810727937&password=JW545SCMLSMZ&type=m3u_plus&output=ts",
-        "Source": "Xtream",
-        "Date Selected": "2026-06-22 06:36:12",
-        "Notes": ""
     }
 ]

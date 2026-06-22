@@ -337,15 +337,15 @@ def update_provider_intelligence_from_results(results):
         needs_update = False
         
         provider_name = existing.get("provider_name")
-        if not provider_name:
-            provider_name = f"Host: {domain}"
+        if not provider_name or not provider_name.startswith("🎯"):
+            provider_name = f"👤 Host: {domain}"
             
         merged_fp = dict(existing)
         merged_fp["provider_name"] = provider_name
         
         for k, v in fp.items():
-            if v and v != "Unknown":
-                if existing.get(k) != v:
+            if v and str(v).lower() not in ["none", "unknown", ""]:
+                if str(existing.get(k)) != str(v):
                     needs_update = True
                     merged_fp[k] = v
                     
@@ -356,9 +356,17 @@ def update_provider_intelligence_from_results(results):
             
             # Simple identity hinting based on server value if it's bespoke
             srv = fp.get("server", "")
+            msg = fp.get("metadata_message", "")
+            
+            identity_hint = None
             if srv and srv not in ["Unknown", "nginx", "Apache", "LiteSpeed", "cloudflare"]:
-                if "Identified" not in merged_fp["provider_name"]:
-                    merged_fp["provider_name"] = f"Identified: {srv}"
+                identity_hint = srv
+            elif msg and len(msg) > 5 and "Welcome" not in msg:
+                # Some panels set the welcome message to their provider name
+                identity_hint = msg[:30]
+                
+            if identity_hint and "🎯 Identified" not in merged_fp["provider_name"]:
+                merged_fp["provider_name"] = f"🎯 Identified: {identity_hint}"
                     
             local_intel[domain] = merged_fp
             dirty = True
@@ -754,7 +762,11 @@ async def evaluate_account(client, account):
             "cloudflare": "No",
             "timezone": s_info.get("timezone", "Unknown"),
             "metadata_message": u_info.get("message", ""),
-            "server_protocol": s_info.get("server_protocol", "Unknown")
+            "server_protocol": s_info.get("server_protocol", "Unknown"),
+            "server_version": str(s_info.get("version", "Unknown")),
+            "https_port": str(s_info.get("https_port", "Unknown")),
+            "rtmp_port": str(s_info.get("rtmp_port", "Unknown")),
+            "allowed_formats": str(u_info.get("allowed_output_formats", "Unknown"))
         }
         if res and hasattr(res, 'headers'):
             fp["server"] = res.headers.get("Server", "Unknown")
@@ -1254,13 +1266,25 @@ if st.session_state["playlist_results"] is not None:
             
             display_xtream = xtream_df.copy()
             if show_only_active_x:
-                display_xtream = display_xtream[display_xtream["Status"].str.contains("Active", na=False)]
+                display_xtream = display_xtream[display_xtream["Status"].str.contains("Active|🟢", case=False, na=False)]
             
             # Add M3U Copy column
             display_xtream["M3U Link"] = display_xtream.apply(
                 lambda row: f"{row['base_url']}/get.php?username={row['username']}&password={row['password']}&type=m3u_plus&output=ts",
                 axis=1
             )
+            
+            # Sort by Channels desc
+            display_xtream["_sort_ch"] = pd.to_numeric(display_xtream["Channels"], errors='coerce').fillna(-1)
+            display_xtream = display_xtream.sort_values(by="_sort_ch", ascending=False).drop(columns=["_sort_ch"])
+
+            # Reorder columns: Move Days Left after VODs
+            cols = list(display_xtream.columns)
+            if "Days Left" in cols and "VODs" in cols:
+                cols.remove("Days Left")
+                vod_idx = cols.index("VODs")
+                cols.insert(vod_idx + 1, "Days Left")
+                display_xtream = display_xtream[cols]
 
             st.caption(f"Showing **{len(display_xtream)}** records.")
             event_x = st.dataframe(
@@ -1347,8 +1371,20 @@ if st.session_state["playlist_results"] is not None:
             
             display_stalker = stalker_df.copy()
             if show_only_active_s:
-                display_stalker = display_stalker[display_stalker["Status"].str.contains("Active", na=False)]
+                display_stalker = display_stalker[display_stalker["Status"].str.contains("Active|🟢", case=False, na=False)]
             
+            # Sort by Channels desc
+            display_stalker["_sort_ch"] = pd.to_numeric(display_stalker["Channels"], errors='coerce').fillna(-1)
+            display_stalker = display_stalker.sort_values(by="_sort_ch", ascending=False).drop(columns=["_sort_ch"])
+
+            # Reorder columns: Move Days Left after VODs
+            cols_s = list(display_stalker.columns)
+            if "Days Left" in cols_s and "VODs" in cols_s:
+                cols_s.remove("Days Left")
+                vod_idx = cols_s.index("VODs")
+                cols_s.insert(vod_idx + 1, "Days Left")
+                display_stalker = display_stalker[cols_s]
+
             st.caption(f"Showing **{len(display_stalker)}** records.")
             event_s = st.dataframe(
                 display_stalker.drop(columns=["fingerprint"], errors='ignore'),
@@ -1416,6 +1452,8 @@ with tab_committed:
         cols = comm_df.columns.tolist()
         if "Date Selected" in cols:
             cols.insert(0, cols.pop(cols.index("Date Selected")))
+            # Default sort by Date Selected descending
+            comm_df = comm_df.sort_values(by="Date Selected", ascending=False)
         
         comm_df = comm_df[cols]
         
