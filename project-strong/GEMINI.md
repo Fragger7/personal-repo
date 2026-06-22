@@ -53,7 +53,12 @@ Accidental exposure of a private home IP address during playlist checks can comp
 * **Server-Side Bypass (Xtream)**: Filters and counts category channels locally rather than requesting pre-filtered category URLs from the server, bypassing buggy endpoints and ensuring accurate listings with correct logos.
 * **Stalker Limits (Ministra Framework)**: Deep-dive channel classification and VOD grid streaming is structurally blocked for Stalker Portals due to the requirements of the MAC-driven authentication payload dynamically expiring. Deep-dive discovery is explicitly restricted from accessing these nodes to avoid triggering the target server's firewall banning mechanisms. The dashboard will inform the provider.
 
-### 3. Application UI & Efficiency Optimizations
+### 3. Provider Intelligence Engine
+* **Fingerprint Extraction**: During Tier 1 scans, the engine analyzes HTTP response headers (`Server`, `Date` for timezone, `CF-RAY` for Cloudflare, `X-Powered-By`), protocol configurations, and active JSON metadata responses (`allowed_output_formats`, server versions) to build a technical identity for the domain.
+* **Branding Recognition (Tier 2)**: The engine searches the lazy-loaded VOD / Live Stream arrays for recognizable channel branding patterns. This includes detecting embedded community URLs (e.g. Telegram `t.me`, Discord, WhatsApp) and "dummy"/separator channels (e.g., `### Strong 8K ###`, `=== Movies ===`). Pattern weighting identifies the most likely official provider name from the noise.
+* **Persistent Knowledge Base**: All learnings are mapped to a clean domain key in `provider_intelligence.json`. Like committed data, this JSON file synchronizes automatically via the GitHub REST API whenever a new fingerprint is gathered during scanning or Tier 2 deep-diving. The system natively merges findings to constantly expand its knowledge graph.
+
+### 4. Application UI & Efficiency Optimizations
 * **Dynamic Multi-Theming**: The app features a UI theme selection engine managed via `st.session_state` and a top-level expander ("⚙️ Dashboard Settings & Themes"). Users can dynamically swap CSS visual skins including *Midnight Purple (Focus)*, *Ocean Blue (Glass)*, *Crimson Red (Dark)*, and *Clean Light Mode*. The chosen CSS payload is automatically injected to re-style tabs, containers, and data graphics.
 * **Tab-Based Workspace**: The application is divided into a clean, tabbed hierarchy:
   * **🛠️ Base64 Decoder**: Extracts hidden structural links embedded as text chunks inside unstructured text blocks, automatically stripping garbage or padding limits. Output enables one-click link launching or copying.
@@ -158,6 +163,7 @@ Copy-Item "C:\Development\Apps\Project Strong\GEMINI.md" "C:\Development\Apps\Pr
 Copy-Item "C:\Development\Apps\Project Strong\run.bat" "C:\Development\Apps\Project Strong\personal-repo-temp\project-strong\run.bat" -Force
 Copy-Item "C:\Development\Apps\Project Strong\.agents\AGENTS.md" "C:\Development\Apps\Project Strong\personal-repo-temp\project-strong\.agents\AGENTS.md" -Force
 Copy-Item "C:\Development\Apps\Project Strong\committed.json" "C:\Development\Apps\Project Strong\personal-repo-temp\project-strong\committed.json" -Force -ErrorAction SilentlyContinue
+Copy-Item "C:\Development\Apps\Project Strong\provider_intelligence.json" "C:\Development\Apps\Project Strong\personal-repo-temp\project-strong\provider_intelligence.json" -Force -ErrorAction SilentlyContinue
 
 # Step 3: Stage, commit, and push from personal-repo-temp
 cd "C:\Development\Apps\Project Strong\personal-repo-temp"
