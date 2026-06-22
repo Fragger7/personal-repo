@@ -378,6 +378,58 @@ def update_provider_intelligence_from_results(results):
         
     return dirty, new_learnings_count
 
+def mine_provider_branding_from_streams(base_url, streams_data):
+    """
+    Looks for recurring branding patterns in Tier 2 channel names, e.g. '### Strong 8K ###'.
+    """
+    if not isinstance(streams_data, list):
+        return None
+        
+    import re
+    import urllib.parse
+    
+    try:
+        parsed = urllib.parse.urlparse(base_url)
+        domain = parsed.netloc if parsed.netloc else base_url
+    except Exception:
+        domain = base_url
+        
+    branding_names = {}
+    for s in streams_data:
+        name = str(s.get("name", "")).strip()
+        
+        # Identify dummy channels wrapping text in ###, ===, or ~~~
+        match = re.search(r'[#=~]{2,}\s*(.+?)\s*[#=~]{2,}', name)
+        if match:
+            brand = match.group(1).strip()
+            # Ignore purely generic names or dates that accidentally match
+            if len(brand) > 3 and "---" not in brand and "***" not in brand:
+                branding_names[brand] = branding_names.get(brand, 0) + 1
+                
+        # Hardcoded pattern recognition for specific known giants 
+        if "Strong 8K" in name:
+            branding_names["Strong 8K"] = branding_names.get("Strong 8K", 0) + 10
+            
+    if branding_names:
+        best_brand = max(branding_names, key=branding_names.get)
+        if branding_names[best_brand] > 0:
+            local_intel = load_provider_intel()
+            existing = local_intel.get(domain, {})
+            current_name = existing.get("provider_name", "")
+            
+            # If we don't already have an Identified status, or if we have a lesser one
+            if f"🎯 Identified: {best_brand}" != current_name:
+                existing["provider_name"] = f"🎯 Identified: {best_brand}"
+                existing["last_seen"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                if "first_seen" not in existing:
+                    existing["first_seen"] = existing["last_seen"]
+                    
+                local_intel[domain] = existing
+                _, sha = pull_provider_intel()
+                save_provider_intel(local_intel, sha=sha)
+                return best_brand
+    return None
+
 # --- CUSTOM UI / UX THEMES ---
 if "app_theme" not in st.session_state:
     st.session_state.app_theme = "Midnight Purple (Focus)"
@@ -991,9 +1043,20 @@ def render_xtream_details(row, key_idx, show_commit_button=True):
                             return_exceptions=True
                         )
                     
-                    st.session_state[tier2_key] = asyncio.run(fetch_tier2_data(row))
+                    lazy_results = asyncio.run(fetch_tier2_data(row))
+                    st.session_state[tier2_key] = lazy_results
+                    
+                    if not isinstance(lazy_results[1], Exception):
+                        brand_intel = mine_provider_branding_from_streams(row['base_url'], lazy_results[1])
+                        if brand_intel:
+                            st.session_state["show_brand_toast"] = f"🎯 Provider Branding Discovered in dummy channels: {brand_intel}"
+
                     st.rerun()
         else:
+            if "show_brand_toast" in st.session_state:
+                st.toast(st.session_state["show_brand_toast"], icon="🧠")
+                del st.session_state["show_brand_toast"]
+                
             col_ref1, col_ref2 = st.columns([4, 1])
             with col_ref2:
                 if st.button("🔄 Refresh", key=f"r_b_{key_idx}", use_container_width=True):
