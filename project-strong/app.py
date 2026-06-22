@@ -378,13 +378,11 @@ def update_provider_intelligence_from_results(results):
         
     return dirty, new_learnings_count
 
-def mine_provider_branding_from_streams(base_url, streams_data):
+def mine_provider_branding_from_payloads(base_url, categories_data, streams_data):
     """
-    Looks for recurring branding patterns in Tier 2 channel names, e.g. '### Strong 8K ###'.
+    Looks for recurring branding patterns in Tier 2 channels/categories, e.g. '### Strong 8K ###', 
+    Telegram/Discord links, etc.
     """
-    if not isinstance(streams_data, list):
-        return None
-        
     import re
     import urllib.parse
     
@@ -395,20 +393,52 @@ def mine_provider_branding_from_streams(base_url, streams_data):
         domain = base_url
         
     branding_names = {}
-    for s in streams_data:
-        name = str(s.get("name", "")).strip()
+    
+    # 1. Inspect telegram / discord / whatsapp / general URLs in names
+    contact_pattern = re.compile(r'(t\.me/\w+|discord\.gg/\w+|wa\.me/\d+|https?://[^\s]+)', re.IGNORECASE)
+    
+    # 2. Inspect decorated dummy channels
+    deco_pattern = re.compile(r'^[#=~\|\*]{2,}\s*(.+?)\s*[#=~\|\*]{2,}$')
+    
+    def analyze_item(name):
+        if not name: return
+        name = str(name).strip()
         
-        # Identify dummy channels wrapping text in ###, ===, or ~~~
-        match = re.search(r'[#=~]{2,}\s*(.+?)\s*[#=~]{2,}', name)
+        # Contacts
+        contacts = contact_pattern.findall(name)
+        for c in contacts:
+            brand = f"Link: {c}"
+            branding_names[brand] = branding_names.get(brand, 0) + 15
+            
+        # decorated names like ### Provider ###
+        match = deco_pattern.search(name)
         if match:
             brand = match.group(1).strip()
-            # Ignore purely generic names or dates that accidentally match
-            if len(brand) > 3 and "---" not in brand and "***" not in brand:
-                branding_names[brand] = branding_names.get(brand, 0) + 1
+            # filter out common false positives
+            if len(brand) > 3 and not bool(re.search(r'^[-_*~=#|]+$', brand)) and brand.lower() not in ['vip', 'vod', 'series', 'movies', 'live', 'channels', 'sport', 'sports', 'kids', 'news', 'catchup', 'all', 'xxx']:
+                branding_names[brand] = branding_names.get(brand, 0) + 2
                 
-        # Hardcoded pattern recognition for specific known giants 
-        if "Strong 8K" in name:
-            branding_names["Strong 8K"] = branding_names.get("Strong 8K", 0) + 10
+        # Known giants
+        if "Strong 8K" in name or "Strong8K" in name:
+            branding_names["Strong 8K"] = branding_names.get("Strong 8K", 0) + 20
+        if "Trex" in name or "Trexiptv" in name.lower():
+            branding_names["Trex IPTV"] = branding_names.get("Trex IPTV", 0) + 20
+        if "Mega" in name and "IPTV" in name:
+            branding_names["Mega IPTV"] = branding_names.get("Mega IPTV", 0) + 15
+        if "Cobra" in name:
+            branding_names["Cobra IPTV"] = branding_names.get("Cobra IPTV", 0) + 15
+        if "Xtreme HD" in name or "XtremeHD" in name:
+            branding_names["Xtreme HD"] = branding_names.get("Xtreme HD", 0) + 15
+        if "Apollo" in name and "Group" in name:
+            branding_names["Apollo Group TV"] = branding_names.get("Apollo Group TV", 0) + 15
+
+    if isinstance(categories_data, list):
+        for c in categories_data:
+            analyze_item(c.get("category_name", ""))
+            
+    if isinstance(streams_data, list):
+        for s in streams_data:
+            analyze_item(s.get("name", ""))
             
     if branding_names:
         best_brand = max(branding_names, key=branding_names.get)
@@ -417,9 +447,12 @@ def mine_provider_branding_from_streams(base_url, streams_data):
             existing = local_intel.get(domain, {})
             current_name = existing.get("provider_name", "")
             
-            # If we don't already have an Identified status, or if we have a lesser one
-            if f"🎯 Identified: {best_brand}" != current_name:
-                existing["provider_name"] = f"🎯 Identified: {best_brand}"
+            new_name = f"🎯 Identified: {best_brand}"
+            
+            # Allow upgrading identification if we found a better clue (higher weight >= 15)
+            # Contact links are strong clues.
+            if new_name != current_name and ("Link:" in new_name or "🎯 Identified" not in current_name or branding_names[best_brand] >= 15):
+                existing["provider_name"] = new_name
                 existing["last_seen"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                 if "first_seen" not in existing:
                     existing["first_seen"] = existing["last_seen"]
@@ -1046,10 +1079,10 @@ def render_xtream_details(row, key_idx, show_commit_button=True):
                     lazy_results = asyncio.run(fetch_tier2_data(row))
                     st.session_state[tier2_key] = lazy_results
                     
-                    if not isinstance(lazy_results[1], Exception):
-                        brand_intel = mine_provider_branding_from_streams(row['base_url'], lazy_results[1])
+                    if not isinstance(lazy_results[0], Exception) and not isinstance(lazy_results[1], Exception):
+                        brand_intel = mine_provider_branding_from_payloads(row['base_url'], lazy_results[0], lazy_results[1])
                         if brand_intel:
-                            st.session_state["show_brand_toast"] = f"🎯 Provider Branding Discovered in dummy channels: {brand_intel}"
+                            st.session_state["show_brand_toast"] = f"🎯 Provider Branding Discovered in payloads: {brand_intel}"
 
                     st.rerun()
         else:
