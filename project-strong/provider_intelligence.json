@@ -23,5 +23,19 @@
         "server_protocol": "http",
         "first_seen": "2026-06-22 06:30:57",
         "last_seen": "2026-06-22 06:30:57"
+    },
+    "3vilcorp.uk:80": {
+        "provider_name": "\ud83d\udc64 Host: 3vilcorp.uk:80",
+        "server": "cloudflare",
+        "cors": "*",
+        "cloudflare": "Yes",
+        "timezone": "Europe/London",
+        "metadata_message": "Welcome to the Rebirth",
+        "server_protocol": "http",
+        "https_port": "443",
+        "rtmp_port": "8003",
+        "allowed_formats": "['m3u8', 'ts']",
+        "first_seen": "2026-06-22 06:55:13",
+        "last_seen": "2026-06-22 06:55:13"
     }
 }
