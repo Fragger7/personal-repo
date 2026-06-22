@@ -209,6 +209,167 @@ if "has_pulled_initially" not in st.session_state:
     st.session_state["has_pulled_initially"] = True
     pull_committed_data()
 
+PROVIDER_INTEL_FILE = "provider_intelligence.json"
+
+def load_provider_intel():
+    if os.path.exists(PROVIDER_INTEL_FILE):
+        with open(PROVIDER_INTEL_FILE, "r", encoding="utf-8") as f:
+            try:
+                return json.load(f)
+            except json.JSONDecodeError:
+                return {}
+    return {}
+
+def pull_provider_intel(force=False):
+    local_data = load_provider_intel()
+    if "GITHUB_TOKEN" not in st.secrets:
+        return local_data, None
+        
+    try:
+        import base64
+        token = st.secrets["GITHUB_TOKEN"]
+        repo_slug = "Fragger7/personal-repo" 
+        file_path = "project-strong/provider_intelligence.json"
+        url = f"https://api.github.com/repos/{repo_slug}/contents/{file_path}"
+        headers = {
+            "Authorization": f"token {token}",
+            "Accept": "application/vnd.github.v3+json"
+        }
+        
+        r = httpx.get(url, headers=headers)
+        if r.status_code == 200:
+            resp_json = r.json()
+            sha = resp_json.get("sha")
+            content_b64 = resp_json.get("content", "")
+            if content_b64:
+                try:
+                    remote_json_str = base64.b64decode(content_b64).decode("utf-8")
+                    remote_data = json.loads(remote_json_str)
+                    
+                    merged_data = dict(remote_data)
+                    for k, v in local_data.items():
+                        if k not in merged_data:
+                            merged_data[k] = v
+                        else:
+                            merged_data[k].update(v)
+                    
+                    with open(PROVIDER_INTEL_FILE, "w", encoding="utf-8") as f:
+                        f.write(json.dumps(merged_data, indent=4))
+                    return merged_data, sha
+                except Exception as merge_err:
+                    logger.error(f"Failed to parse remote provider intel JSON: {merge_err}")
+    except Exception as e:
+        logger.error(f"Failed to pull remote provider intel: {e}")
+        
+    return load_provider_intel(), None
+
+def save_provider_intel(data_dict, sha=None):
+    json_str = json.dumps(data_dict, indent=4)
+    with open(PROVIDER_INTEL_FILE, "w", encoding="utf-8") as f:
+        f.write(json_str)
+        
+    if "GITHUB_TOKEN" in st.secrets:
+        try:
+            import base64
+            token = st.secrets["GITHUB_TOKEN"]
+            repo_slug = "Fragger7/personal-repo" 
+            file_path = "project-strong/provider_intelligence.json"
+            url = f"https://api.github.com/repos/{repo_slug}/contents/{file_path}"
+            headers = {
+                "Authorization": f"token {token}",
+                "Accept": "application/vnd.github.v3+json"
+            }
+            
+            r = httpx.get(url, headers=headers)
+            if r.status_code == 200:
+                resp_json = r.json()
+                sha = resp_json.get("sha")
+                content_b64 = resp_json.get("content", "")
+                if content_b64:
+                    try:
+                        remote_json_str = base64.b64decode(content_b64).decode("utf-8")
+                        remote_data = json.loads(remote_json_str)
+                        if json.dumps(remote_data, sort_keys=True) == json.dumps(data_dict, sort_keys=True):
+                            logger.info("Remote provider data matches local exactly. Skipping push.")
+                            return
+                    except Exception as parse_err:
+                        pass
+            
+            payload = {
+                "message": "Update: provider_intelligence.json (Auto-Learning)",
+                "content": base64.b64encode(json_str.encode("utf-8")).decode("utf-8"),
+                "branch": "main"
+            }
+            if sha:
+                payload["sha"] = sha
+                
+            put_r = httpx.put(url, headers=headers, json=payload)
+            if put_r.status_code not in [200, 201]:
+                logger.error(f"GitHub API push failed for intel: {put_r.text}")
+        except Exception as e:
+            logger.error(f"Failed to auto-push intel to GitHub API: {e}")
+
+if "provider_intel_loaded" not in st.session_state:
+    st.session_state["provider_intel_loaded"] = True
+    pull_provider_intel()
+
+import urllib.parse
+def update_provider_intelligence_from_results(results):
+    local_intel = load_provider_intel()
+    dirty = False
+    new_learnings_count = 0
+    
+    for r in results:
+        fp = r.get("fingerprint", {})
+        if not fp:
+            continue
+            
+        base_url = r.get("base_url", "")
+        try:
+            parsed = urllib.parse.urlparse(base_url)
+            domain = parsed.netloc
+            if not domain:
+                domain = base_url
+        except Exception:
+            domain = base_url
+            
+        existing = local_intel.get(domain, {})
+        needs_update = False
+        
+        provider_name = existing.get("provider_name")
+        if not provider_name:
+            provider_name = f"Host: {domain}"
+            
+        merged_fp = dict(existing)
+        merged_fp["provider_name"] = provider_name
+        
+        for k, v in fp.items():
+            if v and v != "Unknown":
+                if existing.get(k) != v:
+                    needs_update = True
+                    merged_fp[k] = v
+                    
+        if needs_update or not existing:
+            if not existing:
+                merged_fp["first_seen"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            merged_fp["last_seen"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            
+            # Simple identity hinting based on server value if it's bespoke
+            srv = fp.get("server", "")
+            if srv and srv not in ["Unknown", "nginx", "Apache", "LiteSpeed", "cloudflare"]:
+                if "Identified" not in merged_fp["provider_name"]:
+                    merged_fp["provider_name"] = f"Identified: {srv}"
+                    
+            local_intel[domain] = merged_fp
+            dirty = True
+            new_learnings_count += 1
+            
+    if dirty:
+        _, sha = pull_provider_intel() # Refresh against cloud before overwrite
+        save_provider_intel(local_intel, sha=sha)
+        
+    return dirty, new_learnings_count
+
 # --- CUSTOM UI / UX THEMES ---
 if "app_theme" not in st.session_state:
     st.session_state.app_theme = "Midnight Purple (Focus)"
@@ -581,7 +742,29 @@ def parse_credentials(text_block):
     return extracted
 
 async def evaluate_account(client, account):
-    """Tier 1: High-speed handshake verification workflow."""
+    """Tier 1: High-speed handshake verification workflow with Provider Intelligence Extraction."""
+    
+    def extract_fingerprint(res=None, s_info=None, u_info=None):
+        s_info = s_info or {}
+        u_info = u_info or {}
+        fp = {
+            "server": "Unknown",
+            "x_powered_by": "Unknown",
+            "cors": "Unknown",
+            "cloudflare": "No",
+            "timezone": s_info.get("timezone", "Unknown"),
+            "metadata_message": u_info.get("message", ""),
+            "server_protocol": s_info.get("server_protocol", "Unknown")
+        }
+        if res and hasattr(res, 'headers'):
+            fp["server"] = res.headers.get("Server", "Unknown")
+            fp["x_powered_by"] = res.headers.get("X-Powered-By", "Unknown")
+            fp["cors"] = res.headers.get("Access-Control-Allow-Origin", "Unknown")
+            fp["cloudflare"] = "Yes" if "CF-RAY" in res.headers else "No"
+            if fp["timezone"] == "Unknown":
+                fp["timezone"] = res.headers.get("Date", "Unknown")
+        return fp
+
     if account.get("type", "Xtream") == "Stalker":
         # Stalker Handshake Workflow
         target_url = f"{account['base_url']}/c/server/load.php?type=stb&action=handshake&type=itv"
@@ -603,16 +786,16 @@ async def evaluate_account(client, account):
                 res = await client.get(target_url, headers=stalker_headers, timeout=6.0)
                 
             if res.status_code == 403:
-                return {**account, "Status": "🛡️ Cloud Blocked (HTTP 403)", "Expires": "N/A", "Days Left": 0, "Max Conn": "N/A", "Active Conn": "N/A", "Channels": "N/A", "VODs": "N/A", "Server Timezone": "N/A", "Server Time": "N/A"}
+                return {**account, "Status": "🛡️ Cloud Blocked (HTTP 403)", "Expires": "N/A", "Days Left": 0, "Max Conn": "N/A", "Active Conn": "N/A", "Channels": "N/A", "VODs": "N/A", "Server Timezone": "N/A", "Server Time": "N/A", "fingerprint": extract_fingerprint(res)}
             elif res.status_code == 521:
-                return {**account, "Status": "🔴 Offline (Server Dead)", "Expires": "N/A", "Days Left": 0, "Max Conn": "N/A", "Active Conn": "N/A", "Channels": "N/A", "VODs": "N/A", "Server Timezone": "N/A", "Server Time": "N/A"}
+                return {**account, "Status": "🔴 Offline (Server Dead)", "Expires": "N/A", "Days Left": 0, "Max Conn": "N/A", "Active Conn": "N/A", "Channels": "N/A", "VODs": "N/A", "Server Timezone": "N/A", "Server Time": "N/A", "fingerprint": extract_fingerprint(res)}
             elif res.status_code != 200:
-                return {**account, "Status": "🛡️ Firewalled / Blocked", "Expires": "N/A", "Days Left": 0, "Max Conn": "N/A", "Active Conn": "N/A", "Channels": "N/A", "VODs": "N/A", "Server Timezone": "N/A", "Server Time": "N/A"}
+                return {**account, "Status": "🛡️ Firewalled / Blocked", "Expires": "N/A", "Days Left": 0, "Max Conn": "N/A", "Active Conn": "N/A", "Channels": "N/A", "VODs": "N/A", "Server Timezone": "N/A", "Server Time": "N/A", "fingerprint": extract_fingerprint(res)}
                 
             try:
                 data = res.json()
                 if "error" in data or ("js" in data and isinstance(data["js"], dict) and "error" in data["js"]):
-                    return {**account, "Status": "🟡 Expired / Invalid MAC", "Expires": "N/A", "Days Left": 0, "Max Conn": "N/A", "Active Conn": "N/A", "Channels": "N/A", "VODs": "N/A", "Server Timezone": "N/A", "Server Time": "N/A"}
+                    return {**account, "Status": "🟡 Expired / Invalid MAC", "Expires": "N/A", "Days Left": 0, "Max Conn": "N/A", "Active Conn": "N/A", "Channels": "N/A", "VODs": "N/A", "Server Timezone": "N/A", "Server Time": "N/A", "fingerprint": extract_fingerprint(res)}
                 
                 # If handshake returns 200 and no blatant error in JSON, consider it potentially active
                 logger.info(f"Stalker Connection active. Host: {account['base_url']}")
@@ -626,15 +809,16 @@ async def evaluate_account(client, account):
                     "Channels": "N/A",
                     "VODs": "N/A",
                     "Server Timezone": res.headers.get("Server", "Unknown"),
-                    "Server Time": "Unknown"
+                    "Server Time": "Unknown",
+                    "fingerprint": extract_fingerprint(res)
                 }
             except Exception:
                 # Output might not be standard JSON if blocked by WAF challenge
-                return {**account, "Status": "🛡️ Firewalled / Blocked / Captcha", "Expires": "N/A", "Days Left": 0, "Max Conn": "N/A", "Active Conn": "N/A", "Channels": "N/A", "VODs": "N/A", "Server Timezone": "N/A", "Server Time": "N/A"}
+                return {**account, "Status": "🛡️ Firewalled / Blocked / Captcha", "Expires": "N/A", "Days Left": 0, "Max Conn": "N/A", "Active Conn": "N/A", "Channels": "N/A", "VODs": "N/A", "Server Timezone": "N/A", "Server Time": "N/A", "fingerprint": extract_fingerprint(res)}
                 
         except Exception as e:
             logger.error(f"Failed to connect to Stalker host {account['base_url']}: {str(e)}")
-            return {**account, "Status": "🛡️ Firewalled / Blocked", "Expires": "N/A", "Days Left": 0, "Max Conn": "N/A", "Active Conn": "N/A", "Channels": "N/A", "VODs": "N/A", "Server Timezone": "N/A", "Server Time": "N/A"}
+            return {**account, "Status": "🛡️ Firewalled / Blocked", "Expires": "N/A", "Days Left": 0, "Max Conn": "N/A", "Active Conn": "N/A", "Channels": "N/A", "VODs": "N/A", "Server Timezone": "N/A", "Server Time": "N/A", "fingerprint": extract_fingerprint()}
 
     # Default Xtream Handshake Workflow
     target_url = f"{account['base_url']}/player_api.php?username={account['username']}&password={account['password']}"
@@ -645,18 +829,18 @@ async def evaluate_account(client, account):
         # Check HTTP Status Code first to handle firewall/cloud blockades explicitly
         if res.status_code == 403:
             logger.warning(f"Cloud Blocked (HTTP 403) for: {account['base_url']}")
-            return {**account, "Status": "🛡️ Cloud Blocked (HTTP 403)", "Expires": "N/A", "Days Left": 0, "Max Conn": 0, "Active Conn": 0, "Channels": "N/A", "VODs": "N/A", "Server Timezone": "N/A", "Server Time": "N/A"}
+            return {**account, "Status": "🛡️ Cloud Blocked (HTTP 403)", "Expires": "N/A", "Days Left": 0, "Max Conn": 0, "Active Conn": 0, "Channels": "N/A", "VODs": "N/A", "Server Timezone": "N/A", "Server Time": "N/A", "fingerprint": extract_fingerprint(res)}
         elif res.status_code == 521:
             logger.warning(f"Server dead (HTTP 521) for: {account['base_url']}")
-            return {**account, "Status": "🔴 Offline (Server Dead)", "Expires": "N/A", "Days Left": 0, "Max Conn": 0, "Active Conn": 0, "Channels": "N/A", "VODs": "N/A", "Server Timezone": "N/A", "Server Time": "N/A"}
+            return {**account, "Status": "🔴 Offline (Server Dead)", "Expires": "N/A", "Days Left": 0, "Max Conn": 0, "Active Conn": 0, "Channels": "N/A", "VODs": "N/A", "Server Timezone": "N/A", "Server Time": "N/A", "fingerprint": extract_fingerprint(res)}
         elif res.status_code != 200:
             logger.warning(f"Unexpected status code {res.status_code} for: {account['base_url']}")
-            return {**account, "Status": "🛡️ Firewalled / Blocked", "Expires": "N/A", "Days Left": 0, "Max Conn": 0, "Active Conn": 0, "Channels": "N/A", "VODs": "N/A", "Server Timezone": "N/A", "Server Time": "N/A"}
+            return {**account, "Status": "🛡️ Firewalled / Blocked", "Expires": "N/A", "Days Left": 0, "Max Conn": 0, "Active Conn": 0, "Channels": "N/A", "VODs": "N/A", "Server Timezone": "N/A", "Server Time": "N/A", "fingerprint": extract_fingerprint(res)}
         
         # Catch plain authorization rejections
         if "Unauthorized" in res.text:
             logger.warning(f"Connection rejected (Unauthorized response body) for: {account['base_url']}")
-            return {**account, "Status": "🟡 Expired / Invalid", "Expires": "N/A", "Days Left": 0, "Max Conn": 0, "Active Conn": 0, "Channels": "N/A", "VODs": "N/A", "Server Timezone": "N/A", "Server Time": "N/A"}
+            return {**account, "Status": "🟡 Expired / Invalid", "Expires": "N/A", "Days Left": 0, "Max Conn": 0, "Active Conn": 0, "Channels": "N/A", "VODs": "N/A", "Server Timezone": "N/A", "Server Time": "N/A", "fingerprint": extract_fingerprint(res)}
             
         data = res.json()
         user_info = data.get("user_info", {})
@@ -664,7 +848,7 @@ async def evaluate_account(client, account):
         
         if user_info.get("auth") == 0 or user_info.get("status") == "Expired":
             logger.warning(f"Authentication failed or account expired for: {account['base_url']}")
-            return {**account, "Status": "🟡 Expired / Invalid", "Expires": "N/A", "Days Left": 0, "Max Conn": 0, "Active Conn": 0, "Channels": "N/A", "VODs": "N/A", "Server Timezone": "N/A", "Server Time": "N/A"}
+            return {**account, "Status": "🟡 Expired / Invalid", "Expires": "N/A", "Days Left": 0, "Max Conn": 0, "Active Conn": 0, "Channels": "N/A", "VODs": "N/A", "Server Timezone": "N/A", "Server Time": "N/A", "fingerprint": extract_fingerprint(res, server_info, user_info)}
         
         # Parse Valid Dynamic Attributes
         exp_timestamp = user_info.get("exp_date")
@@ -688,12 +872,13 @@ async def evaluate_account(client, account):
             "Channels": "N/A",
             "VODs": "N/A",
             "Server Timezone": server_info.get("timezone", "Unknown"),
-            "Server Time": server_info.get("time_now", "Unknown")
+            "Server Time": server_info.get("time_now", "Unknown"),
+            "fingerprint": extract_fingerprint(res, server_info, user_info)
         }
         
     except Exception as e:
         logger.error(f"Failed to connect to host {account['base_url']}: {str(e)}")
-        return {**account, "Status": "🛡️ Firewalled / Blocked", "Expires": "N/A", "Days Left": 0, "Max Conn": 0, "Active Conn": 0, "Channels": "N/A", "VODs": "N/A", "Server Timezone": "N/A", "Server Time": "N/A"}
+        return {**account, "Status": "🛡️ Firewalled / Blocked", "Expires": "N/A", "Days Left": 0, "Max Conn": 0, "Active Conn": 0, "Channels": "N/A", "VODs": "N/A", "Server Timezone": "N/A", "Server Time": "N/A", "fingerprint": extract_fingerprint()}
 
 async def fetch_lazy_details(base_url, user, password, action):
     """Tier 2: On-Demand Lazy Loading details retrieval."""
@@ -1008,7 +1193,18 @@ with tab_scanner:
             progress_bar.empty()
             status_text.empty()
             st.session_state["playlist_results"] = results
+            
+            # Fire intelligence gathering
+            dirty, learnings_count = update_provider_intelligence_from_results(results)
+            if dirty:
+                st.session_state["show_intel_toast"] = True
+                
             st.rerun()
+
+    if "show_intel_toast" in st.session_state and st.session_state["show_intel_toast"]:
+        st.toast("🧠 Dirty state of provider knowledge detected! Core intelligence updated.", icon="🔄")
+        st.toast("✅ Success! New provider learnings committed to cloud.", icon="✅")
+        st.session_state["show_intel_toast"] = False
 
     if st.session_state["playlist_results"] is not None:
         xt_count = len([x for x in st.session_state["playlist_results"] if x.get("type", "Xtream") == "Xtream"])
@@ -1024,6 +1220,21 @@ if st.session_state["playlist_results"] is None:
 
 # Render results from session state if they exist
 if st.session_state["playlist_results"] is not None:
+    import urllib.parse
+    local_intel = load_provider_intel()
+    for acc in st.session_state["playlist_results"]:
+        base_url = acc.get("base_url", "")
+        try:
+            parsed = urllib.parse.urlparse(base_url)
+            domain = parsed.netloc
+            if not domain:
+                domain = base_url
+        except Exception:
+            domain = base_url
+            
+        existing = local_intel.get(domain, {})
+        acc["Provider"] = existing.get("provider_name", "Unknown Provider")
+
     df = pd.DataFrame(st.session_state["playlist_results"])
     
     xtream_df = df[df["type"] == "Xtream"]
@@ -1053,7 +1264,7 @@ if st.session_state["playlist_results"] is not None:
 
             st.caption(f"Showing **{len(display_xtream)}** records.")
             event_x = st.dataframe(
-                display_xtream.drop(columns=["M3U Link"], errors='ignore'),
+                display_xtream.drop(columns=["M3U Link", "fingerprint"], errors='ignore'),
                 use_container_width=True,
                 selection_mode="single-row",
                 on_select="rerun",
@@ -1140,7 +1351,7 @@ if st.session_state["playlist_results"] is not None:
             
             st.caption(f"Showing **{len(display_stalker)}** records.")
             event_s = st.dataframe(
-                display_stalker,
+                display_stalker.drop(columns=["fingerprint"], errors='ignore'),
                 use_container_width=True,
                 selection_mode="single-row",
                 on_select="rerun",
@@ -1185,7 +1396,20 @@ with tab_committed:
     if not committed_records:
         st.info("No records committed yet. Analyze a payload and select a row in Xtream or Stalker tabs, then hit 'Commit Line' to save it here.")
     else:
+        import urllib.parse
+        local_intel = load_provider_intel()
+        for c_rec in committed_records:
+            base_url = c_rec.get("base_url", "")
+            try:
+                parsed = urllib.parse.urlparse(base_url)
+                domain = parsed.netloc if parsed.netloc else base_url
+            except:
+                domain = base_url
+            existing = local_intel.get(domain, {})
+            c_rec["Provider"] = existing.get("provider_name", "Unknown Provider")
+
         comm_df = pd.DataFrame(committed_records)
+        comm_df = comm_df.drop(columns=["fingerprint"], errors="ignore")
         
         # Reorder columns slightly for presentation
         # Move mostly needed items to left
