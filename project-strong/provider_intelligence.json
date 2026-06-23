@@ -78,7 +78,7 @@
         "last_seen": "2026-06-22 06:59:37"
     },
     "tv-premium-pro.com:80": {
-        "provider_name": "\ud83d\udc64 Host: tv-premium-pro.com:80",
+        "provider_name": "\ud83c\udfaf Identified: Cobra IPTV",
         "server": "cloudflare",
         "cors": "*",
         "cloudflare": "Yes",
@@ -87,7 +87,7 @@
         "rtmp_port": "8001",
         "allowed_formats": "['m3u8', 'ts', 'rtmp']",
         "first_seen": "2026-06-23 00:53:02",
-        "last_seen": "2026-06-23 00:53:02"
+        "last_seen": "2026-06-23 00:56:46"
     },
     "zk85.hofcepesp1.top:8080": {
         "provider_name": "\ud83d\udc64 Host: zk85.hofcepesp1.top:8080",
