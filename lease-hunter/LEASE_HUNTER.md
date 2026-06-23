@@ -17,13 +17,13 @@ The core aggregation engine relies on backend Node.js fetching logic combined wi
 *   **Zero-Cost Bias**: Prioritizes public domains (dealerships, Edmunds) to fetch live data at $0 cost. Minor, low-latency API costs are permissible strictly if they fall within micro-transaction budgets suitable for a solo developer.
 
 ### 2. Deal Engine & Tax Trap Simulator
-Computes depreciation, rent charges, and state-specific tax burdens (prioritizing the ultimate bottom-line monthly number).
+Computes depreciation, rent charges, and state-specific tax burdens (prioritizing the ultimate bottom-line monthly number). (Simulator UI complete).
 *   **Tax Trap Focus (ZIP 78665, Texas)**: Evaluates scenarios where taxes are levied on the entire vehicle purchase price. The engine actively researches and applies manufacturer tax credits (e.g. from Kia Finance) to combat this.
 *   **Value Metric**: Utilizes the **Leasehackr Score** combined with current market momentum, eschewing generic boilerplate rules.
 *   **Intelligent Trim Pivots**: The engine autonomously evaluates alternative AWD variants (Land AWD, Wind AWD) and pivots if alternative trims yield significantly higher overall deal scores.
 
 ### 3. CRM & Autnomous Outreach
-A robust module for tracking active leads and negotiating deals.
+A robust module for tracking active leads and negotiating deals. (Tracker UI complete).
 *   **Firebase Persistence**: Firestore serves as the session cache for heavy data computations and the foundational CRM for tracking dealer outreach.
 *   **AI Broker Negotiation**: Once a top-tier deal is targeted, the system generates highly intelligent, precise, data-driven first-contact emails to dealers.
 
