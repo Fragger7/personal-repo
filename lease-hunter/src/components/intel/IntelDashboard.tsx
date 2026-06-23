@@ -71,7 +71,20 @@ export default function IntelDashboard() {
           </div>
           
           <div className="p-6">
-            {step === 0 && (
+            {error && (
+              <div className="mb-6 p-4 rounded-xl border border-red-500/30 bg-red-500/10 text-red-400 text-sm">
+                <p className="font-semibold mb-1">Scraper Protocol Error</p>
+                <p>{error}</p>
+                <button 
+                  onClick={() => { setStep(0); setError(''); }}
+                  className="mt-3 px-3 py-1.5 bg-red-500/20 hover:bg-red-500/30 text-red-300 rounded text-xs font-medium transition-colors"
+                >
+                  Reset Engine
+                </button>
+              </div>
+            )}
+            
+            {step === 0 && !error && (
               <div className="py-12 text-center flex flex-col items-center justify-center">
                 <Database className="h-12 w-12 text-slate-700 mb-4" />
                 <p className="text-slate-400 text-sm max-w-md">
@@ -85,11 +98,10 @@ export default function IntelDashboard() {
                   <Zap className="h-4 w-4" />
                   Initialize Aggregator Engine
                 </button>
-                {error && <p className="text-red-400 mt-4 text-sm">{error}</p>}
               </div>
             )}
 
-            {step > 0 && (
+            {step > 0 && !error && (
               <div className="space-y-6">
                 <div className="flex items-center gap-4 text-sm">
                   <div className={`px-3 py-1.5 rounded-lg border flex items-center gap-2 ${step >= 1 ? 'border-indigo-500/30 bg-indigo-500/10 text-indigo-300' : 'border-slate-800 bg-slate-900 text-slate-500'}`}>

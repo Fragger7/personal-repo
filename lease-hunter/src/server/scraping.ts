@@ -39,7 +39,7 @@ router.post('/extract-baselines', async (req, res) => {
     Use Google Search to find the most current data.`;
 
     const response = await aiClient.models.generateContent({
-      model: "gemini-3.5-flash",
+      model: "gemini-1.5-flash",
       contents: prompt,
       config: {
         tools: [{ googleSearch: {} }],
@@ -80,7 +80,7 @@ router.post('/search-inventory', async (req, res) => {
     DO NOT MAKE UP VINS. Provide real data from your search results.`;
 
     const response = await aiClient.models.generateContent({
-      model: "gemini-3.5-flash",
+      model: "gemini-1.5-flash",
       contents: prompt,
       config: {
         tools: [{ googleSearch: {} }],
@@ -135,7 +135,7 @@ router.post('/score-targets', async (req, res) => {
     Do not mention the Leasehackr score in the email itself. Make the email sound like it's from a professional, highly informed buyer.`;
 
     const response = await aiClient.models.generateContent({
-      model: "gemini-3.5-flash",
+      model: "gemini-1.5-flash",
       contents: prompt,
       config: {
         responseMimeType: "application/json",
