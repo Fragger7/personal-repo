@@ -17,6 +17,36 @@ async function startServer() {
   // Mount API routes
   app.use('/api/scrape', scrapingRouter);
 
+  // Tax Simulator API
+  app.post('/api/tax-simulate', (req, res) => {
+    const { zipCode } = req.body;
+    if (!zipCode) return res.status(400).json({ error: 'Zip required' });
+
+    const zipStr = String(zipCode);
+    if (zipStr.match(/^(75|76|77|78|79)/)) {
+      return res.json({
+        taxType: 'TAX_ON_FULL_PRICE',
+        defaultRate: 0.0625,
+        description: 'Texas (Tax Trap): Taxes are levied on the entire vehicle purchase price upfront.',
+        showsTaxCredits: true
+      });
+    } else if (zipStr.match(/^(10|11|12|13|14)/)) {
+      return res.json({
+        taxType: 'TAX_ON_TOTAL_PAYMENTS',
+        defaultRate: 0.08875,
+        description: 'NY: Sales tax is levied upfront on the total sum of all lease payments.',
+        showsTaxCredits: false
+      });
+    } else {
+      return res.json({
+        taxType: 'TAX_ON_PAYMENT',
+        defaultRate: 0.0775,
+        description: 'Standard: Tax is levied monthly on the base lease payment.',
+        showsTaxCredits: false
+      });
+    }
+  });
+
   // GET API Status & Setup checks
   app.get('/api/status', (req, res) => {
     res.json({

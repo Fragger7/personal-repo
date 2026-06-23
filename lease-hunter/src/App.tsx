@@ -5,6 +5,8 @@ import {
   ChevronRight, Activity, Database, Bot, Zap
 } from 'lucide-react';
 import IntelDashboard from './components/intel/IntelDashboard';
+import TaxSimulator from './components/TaxSimulator';
+import OutreachCRM from './components/outreach/OutreachCRM';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<'intel' | 'structuring' | 'outreach'>('intel');
@@ -116,13 +118,8 @@ export default function App() {
                initial={{ opacity: 0, y: 10 }}
                animate={{ opacity: 1, y: 0 }}
                exit={{ opacity: 0, y: -10 }}
-               className="h-96 w-full flex items-center justify-center border border-white/5 rounded-2xl bg-slate-900/30"
             >
-              <div className="text-center">
-                <Calculator className="h-8 w-8 text-slate-600 mx-auto mb-4" />
-                <p className="text-slate-400 font-medium">Deal Engine Architecture Pending</p>
-                <p className="text-slate-500 text-sm mt-2 font-mono">Awaiting mathematical framework constraints.</p>
-              </div>
+              <TaxSimulator />
             </motion.div>
           )}
           
@@ -132,13 +129,8 @@ export default function App() {
                initial={{ opacity: 0, y: 10 }}
                animate={{ opacity: 1, y: 0 }}
                exit={{ opacity: 0, y: -10 }}
-               className="h-96 w-full flex items-center justify-center border border-white/5 rounded-2xl bg-slate-900/30"
             >
-              <div className="text-center">
-                <MessageSquare className="h-8 w-8 text-slate-600 mx-auto mb-4" />
-                <p className="text-slate-400 font-medium">CRM Initialization Pending</p>
-                <p className="text-slate-500 text-sm mt-2 font-mono">Evaluating persistence requirements (Firestore/PostgreSQL).</p>
-              </div>
+              <OutreachCRM />
             </motion.div>
           )}
 
