@@ -21,3 +21,16 @@
 - **Data Aggregation (High-ROI Cost Strategy)**: In lieu of defaulting to expensive enterprise APIs, the engine will rely heavily on custom backend scraping architectures paired with AI data extraction. However, we are willing to introduce economical, low-latency API costs (e.g., specialized dealer APIs, reliable proxy networks) if they provide a major product win and drastically improve reliability. Any introduced costs must be strictly manageable for a single individual on an average salary (focusing on micro-transactions and pay-as-you-go, avoiding hefty enterprise subscriptions). This is the **highest priority development task**: proving we can pull real, accurate inventory and programs. The scraping pipeline will run sequentially: 1) Extract baselines (MSRP, Residuals, Money Factor) from Edmunds/forums via Gemini search grounding (`/api/scrape/extract-baselines`), 2) Search regional dealership endpoints for matching inventory, 3) Qualify targets using market momentum and AI reasoning derived from Leasehackr/Reddit chatter. (Phase 1 UI Dashboard constructed).
 - **Ultrathinking Architecture & Future Traps**: The architecture must anticipate severe scraping blocks, rapid state changes, and dealership inventory API shifts. We will design the backend with modular abstraction layers so data sources can be swapped or upgraded without breaking the core deal engine.
 - **Database / CRM Persistence**: Firebase Firestore. The platform provides a highly scalable NoSQL document architecture with a robust free tier. It will serve as both our session cache for the heavy data computations and our foundational CRM for tracking dealer outreach.
+
+## Current Project State (As of Last Session)
+- **UI Progress**: The `IntelDashboard` has been constructed and wired up to the scraping engine APIs (`/api/scrape/*`). Loading states and error handling for rate limits have been added.
+- **Backend/Scraping Engine (`server/scraping.ts`)**: 
+  - Integrated with the `@google/genai` API using the `gemini-2.5-flash` model for search grounding and parsing car lease baselines, inventory, and market momentum.
+  - Successfully handles API rate limit errors (429 RESOURCE_EXHAUSTED) gracefully by sending clean error messages directly to the frontend UI so users are aware of quota issues.
+- **Bugs/Issues to Resolve**:
+  - The application gives a "Page not found" error when accessed directly. Need to investigate the Express Vite middleware or route handling for the client (checking `server.ts` SPA routing vs server API routing).
+  - Rate limiting issues with the Gemini API quota.
+
+## Next Steps for the AI Assistant upon Resuming
+1. **Fix routing issues**: Resolve the "Page not found" / "404" errors so the React SPA loads correctly on the public preview URL. Ensure `server.ts` correctly falls back to Vite middleware or static `index.html` depending on the environment.
+2. **Continue Scraping Refinement**: Look into alternative caching mechanisms, mock data placeholders, or fallback APIs if the Gemini API quota continues to be a blocker for testing the full `baselines -> inventory -> analysis` pipeline.
