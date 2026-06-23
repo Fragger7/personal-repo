@@ -73,11 +73,11 @@ export default function IntelDashboard() {
           <div className="p-6">
             {error && (
               <div className="mb-6 p-4 rounded-xl border border-red-500/30 bg-red-500/10 text-red-400 text-sm">
-                <p className="font-semibold mb-1">Scraper Protocol Error</p>
-                <p>{error}</p>
+                <p className="font-semibold mb-1 flex items-center gap-2"><Zap className="w-4 h-4" /> Scraper Protocol Error</p>
+                <p className="opacity-90">{error}</p>
                 <button 
                   onClick={() => { setStep(0); setError(''); }}
-                  className="mt-3 px-3 py-1.5 bg-red-500/20 hover:bg-red-500/30 text-red-300 rounded text-xs font-medium transition-colors"
+                  className="mt-3 px-3 py-1.5 bg-red-500/20 hover:bg-red-500/30 text-red-300 rounded text-xs font-medium transition-colors border border-red-500/30"
                 >
                   Reset Engine
                 </button>
@@ -103,25 +103,41 @@ export default function IntelDashboard() {
 
             {step > 0 && !error && (
               <div className="space-y-6">
-                <div className="flex items-center gap-4 text-sm">
-                  <div className={`px-3 py-1.5 rounded-lg border flex items-center gap-2 ${step >= 1 ? 'border-indigo-500/30 bg-indigo-500/10 text-indigo-300' : 'border-slate-800 bg-slate-900 text-slate-500'}`}>
-                    {step > 1 ? <CheckCircle2 className="h-4 w-4 text-emerald-400" /> : <div className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-pulse" />}
-                    1. Extract Baselines
+                <div className="flex flex-col gap-3">
+                  <div className={`p-4 rounded-xl border flex items-center justify-between ${step >= 1 ? 'border-indigo-500/30 bg-indigo-500/10' : 'border-slate-800 bg-slate-900 opacity-50'}`}>
+                    <div className="flex items-center gap-3">
+                      {step > 1 ? <CheckCircle2 className="h-5 w-5 text-indigo-400" /> : <div className="w-2 h-2 ml-1.5 rounded-full bg-indigo-400 animate-pulse" />}
+                      <div>
+                        <p className={`text-sm font-medium ${step >= 1 ? 'text-indigo-300' : 'text-slate-500'}`}>1. Extract Baselines via Search Grounding</p>
+                        {step === 1 && <p className="text-xs text-indigo-400/70 mt-1">Prompting Gemini to structure latest Leasehackr Edmunds rates...</p>}
+                      </div>
+                    </div>
                   </div>
-                  <ChevronRight className="h-4 w-4 text-slate-700" />
-                  <div className={`px-3 py-1.5 rounded-lg border flex items-center gap-2 ${step >= 2 ? 'border-blue-500/30 bg-blue-500/10 text-blue-300' : 'border-slate-800 bg-slate-900 text-slate-500'}`}>
-                    {step > 2 ? <CheckCircle2 className="h-4 w-4 text-emerald-400" /> : step === 2 ? <div className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse" /> : <div className="w-1.5 h-1.5 rounded-full bg-slate-700" />}
-                    2. Query Dealer APIs
+
+                  <div className={`p-4 rounded-xl border flex items-center justify-between ${step >= 2 ? 'border-blue-500/30 bg-blue-500/10' : 'border-slate-800 bg-slate-900 opacity-50'}`}>
+                    <div className="flex items-center gap-3">
+                      {step > 2 ? <CheckCircle2 className="h-5 w-5 text-blue-400" /> : step === 2 ? <div className="w-2 h-2 ml-1.5 rounded-full bg-blue-400 animate-pulse" /> : <div className="w-2 h-2 ml-1.5 rounded-full bg-slate-700" />}
+                      <div>
+                        <p className={`text-sm font-medium ${step >= 2 ? 'text-blue-300' : 'text-slate-500'}`}>2. Regional Inventory Search</p>
+                        {step === 2 && <p className="text-xs text-blue-400/70 mt-1">Searching dealer sites in target ZIP boundary...</p>}
+                      </div>
+                    </div>
                   </div>
-                  <ChevronRight className="h-4 w-4 text-slate-700" />
-                  <div className={`px-3 py-1.5 rounded-lg border flex items-center gap-2 ${step >= 3 ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300' : 'border-slate-800 bg-slate-900 text-slate-500'}`}>
-                    {step === 3 ? <CheckCircle2 className="h-4 w-4 text-emerald-400" /> : <div className="w-1.5 h-1.5 rounded-full bg-slate-700" />}
-                    3. Target Analysis
+
+                  <div className={`p-4 rounded-xl border flex items-center justify-between ${step >= 3 ? 'border-emerald-500/30 bg-emerald-500/10' : 'border-slate-800 bg-slate-900 opacity-50'}`}>
+                    <div className="flex items-center gap-3">
+                      {step === 3 ? <CheckCircle2 className="h-5 w-5 text-emerald-400" /> : <div className="w-2 h-2 ml-1.5 rounded-full bg-slate-700" />}
+                      <div>
+                        <p className={`text-sm font-medium ${step >= 3 ? 'text-emerald-300' : 'text-slate-500'}`}>3. Target Analysis</p>
+                        {step === 3 && <p className="text-xs text-emerald-400/70 mt-1">Acquired valid inventory listings.</p>}
+                      </div>
+                    </div>
                   </div>
                 </div>
 
                 {inventory.length > 0 && (
-                  <div className="space-y-3 mt-6">
+                  <div className="space-y-3 mt-8">
+                    <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-4 border-b border-white/5 pb-2">Acquired Targets</h4>
                     {inventory.map((inv, idx) => (
                       <div key={idx} className="p-4 rounded-xl bg-slate-950 border border-white/5 flex items-center justify-between">
                         <div className="flex items-center gap-4">
