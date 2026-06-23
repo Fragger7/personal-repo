@@ -66,36 +66,55 @@ router.post('/extract-baselines', async (req, res) => {
   }
 });
 
-// 2. Search Dealership Endpoints (Mock representation for PoC)
+// 2. Search Dealership Endpoints (Powered by Gemini Search Grounding)
 router.post('/search-inventory', async (req, res) => {
   const { make, model, trim, zipCode, radius } = req.body;
-  // In a full implementation, this uses custom scraping to hit dealer websites.
-  // For now, we simulate finding units.
   
   try {
-    res.json({
-      status: 'success',
-      results: [
-        {
-          vin: "KNDCE3LXXXXXXXXX1",
-          dealerName: "Round Rock Kia",
-          distance: "5.2 miles",
-          msrp: 75395,
-          color: "Ocean Blue",
-          daysOnLot: 45
-        },
-        {
-          vin: "KNDCE3LXXXXXXXXX2",
-          dealerName: "Capitol Auto",
-          distance: "18.4 miles",
-          msrp: 76100,
-          color: "Snow White Pearl",
-          daysOnLot: 12
+    const aiClient = getGenAI();
+    
+    const prompt = `Use Google Search to find 3 REAL, CURRENT ${make} ${model} vehicles for sale at dealerships near ZIP code ${zipCode}.
+    Focus specifically on the ${trim} trim if possible. 
+    You must return actual vehicles found on dealership websites (e.g. Kia of South Austin, Round Rock Kia).
+    Find the VIN, the specific Dealer's Name, the listed MSRP or Price, the exterior color, and estimate how many days it might have been on the lot (guess if not listed, based on typical inventory age).
+    DO NOT MAKE UP VINS. Provide real data from your search results.`;
+
+    const response = await aiClient.models.generateContent({
+      model: "gemini-3.5-flash",
+      contents: prompt,
+      config: {
+        tools: [{ googleSearch: {} }],
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            status: { type: Type.STRING },
+            notations: { type: Type.STRING },
+            results: {
+              type: Type.ARRAY,
+              items: {
+                type: Type.OBJECT,
+                properties: {
+                  vin: { type: Type.STRING },
+                  dealerName: { type: Type.STRING },
+                  distance: { type: Type.STRING },
+                  msrp: { type: Type.NUMBER },
+                  color: { type: Type.STRING },
+                  daysOnLot: { type: Type.NUMBER }
+                },
+                required: ["vin", "dealerName", "msrp", "color"]
+              }
+            }
+          },
+          required: ["status", "results", "notations"]
         }
-      ],
-      notations: "Dealership scraping phase complete."
+      }
     });
+
+    const data = JSON.parse(response.text || '{}');
+    res.json(data);
   } catch (error: any) {
+    console.error('Error searching inventory:', error);
     res.status(500).json({ error: error.message });
   }
 });
