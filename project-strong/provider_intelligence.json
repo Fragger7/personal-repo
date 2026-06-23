@@ -121,12 +121,12 @@
         "cloudflare": "No",
         "timezone": "America/New_York",
         "first_seen": "2026-06-23 02:26:09",
-        "last_seen": "2026-06-23 02:26:09",
+        "last_seen": "2026-06-23 02:33:34",
         "cors": "*",
         "metadata_message": "Welcome",
         "server_protocol": "http",
         "https_port": "443",
         "rtmp_port": "8880",
-        "allowed_formats": "['m3u8', 'ts', 'rtmp']"
+        "allowed_formats": "['m3u8', 'ts']"
     }
 }
