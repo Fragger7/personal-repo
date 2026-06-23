@@ -4,6 +4,7 @@ import fs from 'fs';
 import { exec } from 'child_process';
 import dotenv from 'dotenv';
 import { createServer as createViteServer } from 'vite';
+import scrapingRouter from './src/server/scraping.js';
 
 dotenv.config();
 
@@ -12,6 +13,9 @@ async function startServer() {
   const PORT = 3000;
 
   app.use(express.json());
+
+  // Mount API routes
+  app.use('/api/scrape', scrapingRouter);
 
   // GET API Status & Setup checks
   app.get('/api/status', (req, res) => {

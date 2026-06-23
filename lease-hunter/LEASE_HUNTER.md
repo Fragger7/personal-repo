@@ -13,7 +13,7 @@ The Universal Lease Hunter Engine is an autonomous AI lease broker protocol curr
 
 ### 1. Market Intel & Scraping Pipeline (High-ROI Cost Strategy)
 The core aggregation engine relies on backend Node.js fetching logic combined with `@google/genai`. 
-*   **Sequential Scraping**: 1) Extract baselines (MSRP, Residuals, Money Factor) from Edmunds/forums, 2) Search regional dealership endpoints for matching inventory, 3) Qualify targets using market momentum and AI reasoning derived from Leasehackr/Reddit chatter.
+*   **Sequential Scraping**: 1) Extract baselines (MSRP, Residuals, Money Factor) from Edmunds/forums via Gemini search grounding (`/api/scrape/extract-baselines`), 2) Search regional dealership endpoints for matching inventory (`/api/scrape/search-inventory`), 3) Qualify targets using market momentum and AI reasoning derived from Leasehackr/Reddit chatter. (PoC Dashboard UI complete).
 *   **Zero-Cost Bias**: Prioritizes public domains (dealerships, Edmunds) to fetch live data at $0 cost. Minor, low-latency API costs are permissible strictly if they fall within micro-transaction budgets suitable for a solo developer.
 
 ### 2. Deal Engine & Tax Trap Simulator
