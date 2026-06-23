@@ -22,6 +22,20 @@ function getGenAI() {
   return ai;
 }
 
+function formatAiError(error: any): string {
+  let errorMessage = error.message || 'Unknown AI Provider Error';
+  if (errorMessage.includes('RESOURCE_EXHAUSTED') || errorMessage.includes('429')) {
+    return 'Gemini API Rate Limit Exceeded. The scraping engine requires access to the Gemini Search Grounding API, but the quota has been exhausted. Please check your AI Studio billing or try again later.';
+  }
+  if (errorMessage.includes('{')) {
+    try {
+      const parsed = JSON.parse(errorMessage);
+      if (parsed.error?.message) return parsed.error.message;
+    } catch (e) {}
+  }
+  return errorMessage;
+}
+
 // 1. Extract baselines
 router.post('/extract-baselines', async (req, res) => {
   const { make, model, trim, year, zipCode } = req.body;
@@ -39,7 +53,7 @@ router.post('/extract-baselines', async (req, res) => {
     Use Google Search to find the most current data.`;
 
     const response = await aiClient.models.generateContent({
-      model: "gemini-1.5-flash",
+      model: "gemini-3.5-flash",
       contents: prompt,
       config: {
         tools: [{ googleSearch: {} }],
@@ -62,7 +76,7 @@ router.post('/extract-baselines', async (req, res) => {
     res.json(data);
   } catch (error: any) {
     console.error('Error extracting baselines:', error);
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: formatAiError(error) });
   }
 });
 
@@ -80,7 +94,7 @@ router.post('/search-inventory', async (req, res) => {
     DO NOT MAKE UP VINS. Provide real data from your search results.`;
 
     const response = await aiClient.models.generateContent({
-      model: "gemini-1.5-flash",
+      model: "gemini-3.5-flash",
       contents: prompt,
       config: {
         tools: [{ googleSearch: {} }],
@@ -115,7 +129,7 @@ router.post('/search-inventory', async (req, res) => {
     res.json(data);
   } catch (error: any) {
     console.error('Error searching inventory:', error);
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: formatAiError(error) });
   }
 });
 
@@ -135,7 +149,7 @@ router.post('/score-targets', async (req, res) => {
     Do not mention the Leasehackr score in the email itself. Make the email sound like it's from a professional, highly informed buyer.`;
 
     const response = await aiClient.models.generateContent({
-      model: "gemini-1.5-flash",
+      model: "gemini-3.5-flash",
       contents: prompt,
       config: {
         responseMimeType: "application/json",
@@ -154,7 +168,7 @@ router.post('/score-targets', async (req, res) => {
     const data = JSON.parse(response.text || '{}');
     res.json(data);
   } catch (error: any) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: formatAiError(error) });
   }
 });
 
