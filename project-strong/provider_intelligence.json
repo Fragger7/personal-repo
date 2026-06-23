@@ -6,13 +6,16 @@
         "last_seen": "2026-06-22 06:30:57"
     },
     "vvinnietv5.com:80": {
-        "provider_name": "Identified: nginx/1.27.0",
+        "provider_name": "\ud83c\udfaf Identified: nginx/1.27.0",
         "server": "nginx/1.27.0",
         "cloudflare": "No",
         "timezone": "UTC",
         "first_seen": "2026-06-22 06:30:57",
-        "last_seen": "2026-06-22 06:30:57",
-        "server_protocol": "http"
+        "last_seen": "2026-06-23 00:53:02",
+        "server_protocol": "http",
+        "https_port": "25460",
+        "rtmp_port": "25462",
+        "allowed_formats": "['m3u8', 'ts']"
     },
     "reydereyes.xyz:8080": {
         "provider_name": "Host: reydereyes.xyz:8080",
@@ -73,5 +76,44 @@
         "allowed_formats": "['m3u8', 'ts']",
         "first_seen": "2026-06-22 06:59:37",
         "last_seen": "2026-06-22 06:59:37"
+    },
+    "tv-premium-pro.com:80": {
+        "provider_name": "\ud83d\udc64 Host: tv-premium-pro.com:80",
+        "server": "cloudflare",
+        "cors": "*",
+        "cloudflare": "Yes",
+        "timezone": "Africa/Casablanca",
+        "server_protocol": "http",
+        "rtmp_port": "8001",
+        "allowed_formats": "['m3u8', 'ts', 'rtmp']",
+        "first_seen": "2026-06-23 00:53:02",
+        "last_seen": "2026-06-23 00:53:02"
+    },
+    "zk85.hofcepesp1.top:8080": {
+        "provider_name": "\ud83d\udc64 Host: zk85.hofcepesp1.top:8080",
+        "server": "cloudflare",
+        "cloudflare": "Yes",
+        "timezone": "Europe/London",
+        "metadata_message": "Welcome to Xtream Codes Reborn",
+        "server_protocol": "http",
+        "https_port": "25469",
+        "rtmp_port": "25462",
+        "allowed_formats": "['m3u8', 'ts', 'rtmp']",
+        "first_seen": "2026-06-23 00:53:02",
+        "last_seen": "2026-06-23 00:53:02"
+    },
+    "limited-name.com:80": {
+        "provider_name": "\ud83c\udfaf Identified: openresty",
+        "server": "openresty",
+        "cloudflare": "No",
+        "timezone": "UTC",
+        "metadata_message": "Welcome",
+        "server_protocol": "http",
+        "server_version": "1.5.5",
+        "https_port": "443",
+        "rtmp_port": "8880",
+        "allowed_formats": "['m3u8', 'ts', 'rtmp']",
+        "first_seen": "2026-06-23 00:53:02",
+        "last_seen": "2026-06-23 00:53:02"
     }
 }
