@@ -117,11 +117,11 @@
         "last_seen": "2026-06-23 00:53:02"
     },
     "vocotv.app:80": {
-        "provider_name": "\ud83d\udc64 Host: vocotv.app:80",
+        "provider_name": "\ud83c\udfaf Identified: Link: http://138.199.27.237:8080/ITALY/PLUTO.png\"",
         "cloudflare": "No",
         "timezone": "America/New_York",
         "first_seen": "2026-06-23 02:26:09",
-        "last_seen": "2026-06-23 02:33:34",
+        "last_seen": "2026-06-23 02:34:35",
         "cors": "*",
         "metadata_message": "Welcome",
         "server_protocol": "http",
