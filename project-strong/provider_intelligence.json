@@ -155,11 +155,11 @@
         "allowed_formats": "['m3u8', 'ts']"
     },
     "myxpanel.pro:80": {
-        "provider_name": "\ud83d\udc64 Host: myxpanel.pro:80",
+        "provider_name": "\ud83c\udfaf Identified: Link: http://138.199.27.237:8080/ITALY/PLUTO.png\"",
         "cloudflare": "No",
         "timezone": "America/New_York",
         "first_seen": "2026-06-25 23:51:52",
-        "last_seen": "2026-06-25 23:51:52",
+        "last_seen": "2026-06-25 23:57:49",
         "cors": "*",
         "metadata_message": "Welcome",
         "server_protocol": "http",
