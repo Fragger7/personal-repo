@@ -126,5 +126,38 @@
         "Source": "Xtream",
         "Date Selected": "2026-06-25 23:57:05",
         "Notes": ""
+    },
+    {
+        "type": "Xtream",
+        "base_url": "http://myxpanel.pro:80",
+        "username": "jeff12",
+        "password": "jeff12",
+        "Status": "\ud83d\udfe2 Active",
+        "Expires": "2026-12-18",
+        "Max Conn": "1",
+        "Active Conn": "0",
+        "Channels": 30832,
+        "VODs": 42735,
+        "Days Left": 175,
+        "Server Timezone": "America/New_York",
+        "Server Time": "2026-06-25 19:51:49",
+        "fingerprint": {
+            "server": "Unknown",
+            "x_powered_by": "Unknown",
+            "cors": "*",
+            "cloudflare": "No",
+            "timezone": "America/New_York",
+            "metadata_message": "Welcome",
+            "server_protocol": "http",
+            "server_version": "Unknown",
+            "https_port": "443",
+            "rtmp_port": "8880",
+            "allowed_formats": "['m3u8', 'ts']"
+        },
+        "Provider": "\ud83c\udfaf Identified: Link: http://138.199.27.237:8080/ITALY/PLUTO.png\"",
+        "M3U Link": "http://myxpanel.pro:80/get.php?username=jeff12&password=jeff12&type=m3u_plus&output=ts",
+        "Source": "Xtream",
+        "Date Selected": "2026-06-25 23:58:40",
+        "Notes": ""
     }
 ]
