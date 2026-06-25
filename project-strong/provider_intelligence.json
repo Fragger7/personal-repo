@@ -128,5 +128,43 @@
         "https_port": "443",
         "rtmp_port": "8880",
         "allowed_formats": "['m3u8', 'ts']"
+    },
+    "bestrktv.xyz": {
+        "provider_name": "\ud83c\udfaf Identified: nginx/1.18.0 (Ubuntu)",
+        "server": "nginx/1.18.0 (Ubuntu)",
+        "cloudflare": "No",
+        "timezone": "Thu, 25 Jun 2026 23:51:51 GMT",
+        "server_protocol": "http",
+        "https_port": "25460",
+        "rtmp_port": "25462",
+        "allowed_formats": "['m3u8', 'ts']",
+        "first_seen": "2026-06-25 23:51:52",
+        "last_seen": "2026-06-25 23:51:52"
+    },
+    "yx0nd0d0h0.cava90.xyz": {
+        "provider_name": "\ud83d\udc64 Host: yx0nd0d0h0.cava90.xyz",
+        "server": "nginx",
+        "cloudflare": "No",
+        "timezone": "Europe/Rome",
+        "first_seen": "2026-06-25 23:51:52",
+        "last_seen": "2026-06-25 23:51:52",
+        "metadata_message": "Welcome to Exclusive",
+        "server_protocol": "http",
+        "https_port": "25463",
+        "rtmp_port": "25462",
+        "allowed_formats": "['m3u8', 'ts']"
+    },
+    "myxpanel.pro:80": {
+        "provider_name": "\ud83d\udc64 Host: myxpanel.pro:80",
+        "cloudflare": "No",
+        "timezone": "America/New_York",
+        "first_seen": "2026-06-25 23:51:52",
+        "last_seen": "2026-06-25 23:51:52",
+        "cors": "*",
+        "metadata_message": "Welcome",
+        "server_protocol": "http",
+        "https_port": "443",
+        "rtmp_port": "8880",
+        "allowed_formats": "['m3u8', 'ts']"
     }
 }
