@@ -195,11 +195,11 @@
         "last_seen": "2026-06-26 00:02:24"
     },
     "doubleclicktv.live": {
-        "provider_name": "\ud83d\udc64 Host: doubleclicktv.live",
+        "provider_name": "\ud83c\udfaf Identified: Link: http://138.199.27.237:8080/ITALY/PLUTO.png\"",
         "cloudflare": "No",
         "timezone": "America/New_York",
         "first_seen": "2026-06-26 00:02:24",
-        "last_seen": "2026-06-26 00:02:24",
+        "last_seen": "2026-06-26 00:04:45",
         "cors": "*",
         "metadata_message": "Welcome",
         "server_protocol": "http",
