@@ -147,7 +147,7 @@
         "cloudflare": "No",
         "timezone": "Europe/Rome",
         "first_seen": "2026-06-25 23:51:52",
-        "last_seen": "2026-06-25 23:51:52",
+        "last_seen": "2026-06-26 00:02:24",
         "metadata_message": "Welcome to Exclusive",
         "server_protocol": "http",
         "https_port": "25463",
@@ -166,5 +166,45 @@
         "https_port": "443",
         "rtmp_port": "8880",
         "allowed_formats": "['m3u8', 'ts']"
+    },
+    "smarterstv99.dyndns.tv:25461": {
+        "provider_name": "\ud83d\udc64 Host: smarterstv99.dyndns.tv:25461",
+        "server": "nginx",
+        "cloudflare": "No",
+        "timezone": "America/Mazatlan",
+        "metadata_message": "Welcome to NANOTECH Copyright 2020 - 2026 All rights reserved.",
+        "server_protocol": "http",
+        "https_port": "25443",
+        "rtmp_port": "25462",
+        "allowed_formats": "['m3u8', 'ts', 'rtmp']",
+        "first_seen": "2026-06-26 00:02:24",
+        "last_seen": "2026-06-26 00:02:24"
+    },
+    "wickediptv.xyz:2086": {
+        "provider_name": "\ud83c\udfaf Identified: nginx/1.26.2",
+        "server": "nginx/1.26.2",
+        "x_powered_by": "RoadRunner",
+        "cors": "*",
+        "cloudflare": "No",
+        "timezone": "UTC",
+        "server_protocol": "http",
+        "https_port": "0",
+        "rtmp_port": "0",
+        "allowed_formats": "['m3u8', 'ts']",
+        "first_seen": "2026-06-26 00:02:24",
+        "last_seen": "2026-06-26 00:02:24"
+    },
+    "doubleclicktv.live": {
+        "provider_name": "\ud83d\udc64 Host: doubleclicktv.live",
+        "cloudflare": "No",
+        "timezone": "America/New_York",
+        "first_seen": "2026-06-26 00:02:24",
+        "last_seen": "2026-06-26 00:02:24",
+        "cors": "*",
+        "metadata_message": "Welcome",
+        "server_protocol": "http",
+        "https_port": "443",
+        "rtmp_port": "8880",
+        "allowed_formats": "['m3u8', 'ts', 'rtmp']"
     }
 }
