@@ -33,10 +33,9 @@
 - **UI Progress**: The `IntelDashboard` has been constructed and wired up to the scraping engine APIs (`/api/scrape/*`). Loading states and error handling for rate limits have been added.
 - **Backend/Scraping Engine (`server/scraping.ts`)**: 
   - Integrated with the `@google/genai` API using the `gemini-2.5-flash` model for search grounding and parsing car lease baselines, inventory, and market momentum.
-  - Successfully handles API rate limit errors (429 RESOURCE_EXHAUSTED) gracefully by sending clean error messages directly to the frontend UI so users are aware of quota issues.
-- **Bugs/Issues to Resolve**:
-  - The application gives a "Page not found" error when accessed directly. Need to investigate the Express Vite middleware or route handling for the client (checking `server.ts` SPA routing vs server API routing).
-  - Rate limiting issues with the Gemini API quota.
+  - Implemented an in-memory server cache (12-hour expiry) to prevent spamming the Gemini API on repeated searches.
+  - Implemented local JSON file snapshotting (`data/snapshots/`) to preserve historical pulls for long-term learning without incurring Firebase costs.
+- **Dual-Track API Strategy**: We are currently utilizing Gemini Search Grounding as our V1 baseline for inventory discovery. However, due to dealer manipulation of listings and strict rate limits, we are prepared to pivot to a multi-key backup strategy (using 3 fallback dummy accounts) and dedicated third-party DOM scrapers (e.g., Apify) as we scale testing.
 
 ## Next Steps for the AI Assistant upon Resuming
 1. **Fix routing issues**: Resolve the "Page not found" / "404" errors so the React SPA loads correctly on the public preview URL. Ensure `server.ts` correctly falls back to Vite middleware or static `index.html` depending on the environment.
