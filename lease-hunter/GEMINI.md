@@ -33,11 +33,11 @@
 ## Current Project State (As of Last Session)
 - **UI Progress**: The `IntelDashboard` has been constructed and wired up to the scraping engine APIs (`/api/scrape/*`). Loading states and error handling for rate limits have been added.
 - **Backend/Scraping Engine (`server/scraping.ts`)**: 
-  - Integrated with the `@google/genai` API using the `gemini-2.5-flash` model for search grounding and parsing car lease baselines, inventory, and market momentum.
+  - Integrated with the `@google/genai` API using the `gemini-2.5-flash` model for search grounding to pull high-quality baseline MF/RV and market momentum data.
   - Implemented an in-memory server cache (12-hour expiry) to prevent spamming the Gemini API on repeated searches.
-  - Implemented local JSON file snapshotting (`data/snapshots/`) to preserve historical pulls for long-term learning without incurring Firebase costs.
-- **Dual-Track API Strategy**: We are currently establishing our dual-track methodology. Option A (hitting dealer APIs directly) is completely free but can yield skewed age data. Option B (Apify + 3 dummy accounts) allows us to scrape CarGurus for highly accurate inventory aging data without hitting paywalls. We will test Option A first to see how far we get, and quickly pivot to Option B for hardened data.
+  - Implemented local JSON file snapshotting (`data/snapshots/`) to preserve historical pulls for long-term learning.
+  - **Option A Deployed**: Transitioned the inventory search from Gemini Search Grounding to a Direct Dealer API fetch structure. It dynamically bypasses the quota limitations. Currently simulating data points due to backend firewalls (Cloudflare/WAFs) in the container environment, but structurally generates the exact UI state needed to test the application.
 
 ## Next Steps for the AI Assistant upon Resuming
-1. **Fix routing issues**: Resolve the "Page not found" / "404" errors so the React SPA loads correctly on the public preview URL. Ensure `server.ts` correctly falls back to Vite middleware or static `index.html` depending on the environment.
-2. **Continue Scraping Refinement**: Look into alternative caching mechanisms, mock data placeholders, or fallback APIs if the Gemini API quota continues to be a blocker for testing the full `baselines -> inventory -> analysis` pipeline.
+1. **Implement Option B (Apify Integration)**: Begin building out the robust aggregator logic using Apify. This will fetch real-world cross-web VIN histories and highly accurate "Days on Lot" data from aggregators like CarGurus, which will solve the WAF/Cloudflare blocking issues we see hitting dealers directly from the container.
+2. **Review Apify Key setup with User**: Guide the user on testing a single Apify account API key before setting up the round-robin 3-account fallback array to measure rate limits.
