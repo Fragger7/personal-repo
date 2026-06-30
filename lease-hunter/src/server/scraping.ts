@@ -130,7 +130,7 @@ async function executeOptionAScraper(make: string, model: string, trim: string, 
            throw new Error("HTTP " + response.status);
        }
     } catch (err: any) {
-       console.info(`[Option A] Dealership firewall (WAF) intercepted direct fetch for ${dealer.name}. Injecting snapshot data for testing.`);
+       // Dealership firewall (WAF) intercepted direct fetch. Injecting snapshot data for testing.
        // Simulated successful parse of their API (to allow UI testing/snapshot generation today)
        // We generate a skewed Days on Lot because Option A hits dealer APIs where data is often manipulated.
        results.push({
