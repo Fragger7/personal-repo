@@ -5,6 +5,11 @@ const router = Router();
 
 // Shared Gemini instance
 let ai: GoogleGenAI | null = null;
+
+// Global in-memory cache for scraping hits
+const scrapeCache = new Map<string, { data: any, timestamp: number }>();
+const CACHE_DURATION = 12 * 60 * 60 * 1000; // 12 hours
+
 function getGenAI() {
   if (!ai) {
     if (!process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY === 'MY_GEMINI_API_KEY') {
@@ -44,6 +49,13 @@ router.post('/extract-baselines', async (req, res) => {
     return res.status(400).json({ error: 'Missing required parameters' });
   }
 
+  const cacheKey = `baselines-${make}-${model}-${trim}-${year}-${zipCode}`;
+  const cached = scrapeCache.get(cacheKey);
+  if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+    console.log(`[CACHE HIT] Returning cached baselines for ${cacheKey}`);
+    return res.json(cached.data);
+  }
+
   try {
     const aiClient = getGenAI();
     
@@ -67,6 +79,7 @@ router.post('/extract-baselines', async (req, res) => {
       rawText = rawText.replace(/\`\`\`json/g, '').replace(/\`\`\`/g, '');
     }
     const data = JSON.parse(rawText);
+    scrapeCache.set(cacheKey, { data, timestamp: Date.now() });
     res.json(data);
   } catch (error: any) {
     if (error.message?.includes('RESOURCE_EXHAUSTED') || error.message?.includes('429')) {
@@ -86,8 +99,15 @@ router.post('/extract-baselines', async (req, res) => {
 
 // 2. Search Dealership Endpoints (Powered by Gemini Search Grounding)
 router.post('/search-inventory', async (req, res) => {
-  const { make, model, trim, zipCode, radius } = req.body;
+  const { make, model, trim, year, zipCode, radius } = req.body;
   
+  const cacheKey = `inventory-${make}-${model}-${trim}-${year}-${zipCode}`;
+  const cached = scrapeCache.get(cacheKey);
+  if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+    console.log(`[CACHE HIT] Returning cached inventory for ${cacheKey}`);
+    return res.json(cached.data);
+  }
+
   try {
     const aiClient = getGenAI();
     
@@ -114,6 +134,7 @@ router.post('/search-inventory', async (req, res) => {
       rawText = rawText.replace(/\`\`\`json/g, '').replace(/\`\`\`/g, '');
     }
     const data = JSON.parse(rawText);
+    scrapeCache.set(cacheKey, { data, timestamp: Date.now() });
     res.json(data);
   } catch (error: any) {
     if (error.message?.includes('RESOURCE_EXHAUSTED') || error.message?.includes('429')) {
