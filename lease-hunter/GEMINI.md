@@ -22,10 +22,11 @@
 ## Architecture & Tech Stack Decisions (Locked)
 - **Frontend Core**: React, Tailwind CSS, Vite. Focus is on dark-mode, high-fidelity, polished, desktop-first data dashboards.
 - **Backend & AI**: Node.js / Express backend routing. We will leverage the explicit use of the `@google/genai` SDK to parse and structure chaotic unstructured data (like Leasehackr forum threads or complex dealer JSONs) into standardized JSON.
-- **Data Aggregation (High-ROI Cost Strategy)**: 
-  - **Gemini Quota Management**: Gemini Search Grounding is brilliant but quota-heavy. It will be strictly reserved for "Brain" tasks: parsing unstructured forums for baseline MF/RV and market momentum (`/api/scrape/extract-baselines`).
-  - **Inventory Scraping**: To avoid `429 RESOURCE_EXHAUSTED` limits, heavy inventory scraping will transition toward dedicated, low-cost DOM parsers or proxy APIs (e.g., Apify, Firecrawl) rather than burning Gemini tokens. Any introduced costs must be strictly manageable (micro-transactions).
-  - **Workflow**: 1) Extract baselines via Gemini, 2) Search regional inventory via dedicated parsers, 3) Qualify targets using AI reasoning.
+- **Data Aggregation & Quota Strategy**: 
+  - **Gemini Quota Management (Strict limit)**: There are NO backup accounts for Gemini Pro. Gemini Search Grounding is brilliant but quota-heavy. It will be strictly reserved for "Brain" tasks: parsing unstructured Leasehackr forums for baseline MF/RV and market momentum (`/api/scrape/extract-baselines`). It will NOT be used for bulk inventory scraping.
+  - **Option A - Dealer Backend Reverse Engineering**: Building custom scrapers to hit individual dealer inventory APIs directly. This is free and requires zero setup, but data can be skewed (dealers doctor/remove listings, hiding true "Days on Lot") and it is brittle to API changes.
+  - **Option B - Dedicated Third-Party Scrapers (e.g., Apify) with Dummy Accounts**: Using dedicated scraping platforms to hit aggregators like CarGurus. This provides highly reliable cross-web VIN tracking and true "Days on Lot". To keep costs at absolute zero, we will operate a round-robin strategy utilizing ~3 fallback dummy accounts to bypass free tier rate limits.
+  - **Workflow**: 1) Extract baselines via Gemini, 2) Search regional inventory via Option A or B, 3) Qualify targets using AI reasoning.
 - **Ultrathinking Architecture & Future Traps**: The architecture must anticipate severe scraping blocks, rapid state changes, and dealership inventory API shifts. We will design the backend with modular abstraction layers so data sources can be swapped or upgraded without breaking the core deal engine.
 - **Database / CRM Persistence**: Firebase Firestore. The platform provides a highly scalable NoSQL document architecture with a robust free tier. It will serve as both our session cache for the heavy data computations and our foundational CRM for tracking dealer outreach.
 
@@ -35,7 +36,7 @@
   - Integrated with the `@google/genai` API using the `gemini-2.5-flash` model for search grounding and parsing car lease baselines, inventory, and market momentum.
   - Implemented an in-memory server cache (12-hour expiry) to prevent spamming the Gemini API on repeated searches.
   - Implemented local JSON file snapshotting (`data/snapshots/`) to preserve historical pulls for long-term learning without incurring Firebase costs.
-- **Dual-Track API Strategy**: We are currently utilizing Gemini Search Grounding as our V1 baseline for inventory discovery. However, due to dealer manipulation of listings and strict rate limits, we are prepared to pivot to a multi-key backup strategy (using 3 fallback dummy accounts) and dedicated third-party DOM scrapers (e.g., Apify) as we scale testing.
+- **Dual-Track API Strategy**: We are currently establishing our dual-track methodology. Option A (hitting dealer APIs directly) is completely free but can yield skewed age data. Option B (Apify + 3 dummy accounts) allows us to scrape CarGurus for highly accurate inventory aging data without hitting paywalls. We will test Option A first to see how far we get, and quickly pivot to Option B for hardened data.
 
 ## Next Steps for the AI Assistant upon Resuming
 1. **Fix routing issues**: Resolve the "Page not found" / "404" errors so the React SPA loads correctly on the public preview URL. Ensure `server.ts` correctly falls back to Vite middleware or static `index.html` depending on the environment.
