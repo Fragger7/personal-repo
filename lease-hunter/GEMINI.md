@@ -10,9 +10,13 @@
 
 ## Phase 1 Proof of Concept Constraints (Locked)
 - **Target Customer Profile**: ZIP 78665 (Round Rock, TX region - a known "tax trap" state), 300-mile search radius, top-tier credit score (Tier 1). No conditional rebates (military/grad) for this PoC.
-- **Target Vehicle**: Kia EV9. Target Trim: **GT-Line**. The engine MUST autonomously evaluate all AWD variants (e.g. Land AWD, Wind AWD) and pivot if the alternative trims yield a significantly higher overall deal score.
+- **Target Vehicle**: Kia EV9. Target Trim: **GT-Line** (but actively open to **Wind AWD** based on human intelligence showing recent strong deals in TX for $461/mo). The engine MUST autonomously evaluate all AWD variants (e.g. Land AWD, Wind AWD) and pivot if the alternative trims yield a significantly higher overall deal score.
 - **Tax Trap States & Bottom Line**: The system will flag "tax trap" states (where tax is levied on the entire vehicle purchase price, not just the leased portion). The engine must actively research and apply manufacturer tax credits (e.g. from Kia Finance) to combat this and prioritize the ultimate bottom-line monthly number.
 - **Value Metric (The Secret Sauce)**: We do not use generic boilerplate rules (e.g., "1% of MSRP"). The ultimate metric of a good deal is the **Leasehackr Score** (years of lease value) paired with qualitative current market momentum scraped from forums.
+- **Human Intelligence & Advanced Strategies**:
+  - **Aged Inventory Targeting**: The scraping engine MUST explicitly seek out vehicles that have been on the lot for **longer than 6 months (180+ days)**. Sources like CarGurus.com should be targeted for this specific metric.
+  - **True Cost Baseline**: Knowing the exact Buy Rate Money Factor (MF), Residual Value (RV), and exact manufacturer rebates for the current month is the source of all negotiating power. (e.g., via Leasehackr Rate Findr).
+  - **Anti-Padding Negotiation**: The outreach and deal structuring must negotiate a "reasonable % off MSRP" *before* rebates are applied, and explicitly demand the "buy rate MF" to ensure the dealer is not padding the numbers.
 - **Autonomous Outreach**: The system will not simply crunch numbers. Once a top-tier deal is identified, the application will generate a highly intelligent, precise, data-driven first-contact email to the dealer to initiate the negotiation on behalf of the user.
 
 ## Architecture & Tech Stack Decisions (Locked)
