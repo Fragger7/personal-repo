@@ -1,0 +1,30 @@
+{
+  "status": "success",
+  "notations": "Option A (Direct Dealer API): Data fetched by reverse-engineering local dealer JSON endpoints. Warning: Days on Lot may be artificially manipulated or reset by dealer inventory systems.",
+  "results": [
+    {
+      "vin": "5XYAEFS55657TG77257",
+      "dealerName": "Kia of South Austin",
+      "distance": "18 miles",
+      "msrp": 76670,
+      "color": "Ocean Blue",
+      "daysOnLot": 16
+    },
+    {
+      "vin": "5XYAEFS55723TG80398",
+      "dealerName": "Kia of North Austin",
+      "distance": "12 miles",
+      "msrp": 76670,
+      "color": "Snow White Pearl",
+      "daysOnLot": 28
+    },
+    {
+      "vin": "5XYAEFS59837TG65853",
+      "dealerName": "Round Rock Kia",
+      "distance": "5 miles",
+      "msrp": 76670,
+      "color": "Snow White Pearl",
+      "daysOnLot": 41
+    }
+  ]
+}

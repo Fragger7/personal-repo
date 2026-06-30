@@ -61,6 +61,12 @@ try {
         fs.cpSync(srcDir, destSrcDir, { recursive: true });
     }
 
+    const dataDir = path.join(workspace, 'data');
+    const destDataDir = path.join(targetDir, 'data');
+    if (fs.existsSync(dataDir)) {
+        fs.cpSync(dataDir, destDataDir, { recursive: true });
+    }
+
     const srcAgents = path.join(workspace, '.agents', 'AGENTS.md');
     const destAgents = path.join(targetAgentsDir, 'AGENTS.md');
     if (fs.existsSync(srcAgents)) {
