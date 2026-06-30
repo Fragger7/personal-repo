@@ -32,6 +32,7 @@
 
 ## Current Project State (As of Last Session)
 - **UI Progress**: The `IntelDashboard` has been constructed and wired up to the scraping engine APIs (`/api/scrape/*`). Loading states and error handling for rate limits have been added.
+  - *Note*: Currently, clicking on the fetched inventory results does nothing. The deal calculator changes monthly payments upon initialization but lacks transparency regarding the underlying math and reasoning.
 - **Backend/Scraping Engine (`server/scraping.ts`)**: 
   - Integrated with the `@google/genai` API using the `gemini-2.5-flash` model for search grounding to pull high-quality baseline MF/RV and market momentum data.
   - Implemented an in-memory server cache (12-hour expiry) to prevent spamming the Gemini API on repeated searches.
@@ -39,5 +40,7 @@
   - **Option A Deployed**: Transitioned the inventory search from Gemini Search Grounding to a Direct Dealer API fetch structure. It dynamically bypasses the quota limitations. Currently simulating data points due to backend firewalls (Cloudflare/WAFs) in the container environment, but structurally generates the exact UI state needed to test the application.
 
 ## Next Steps for the AI Assistant upon Resuming
-1. **Implement Option B (Apify Integration)**: Begin building out the robust aggregator logic using Apify. This will fetch real-world cross-web VIN histories and highly accurate "Days on Lot" data from aggregators like CarGurus, which will solve the WAF/Cloudflare blocking issues we see hitting dealers directly from the container.
-2. **Review Apify Key setup with User**: Guide the user on testing a single Apify account API key before setting up the round-robin 3-account fallback array to measure rate limits.
+1. **Explain and Expose Calculator Logic**: Add transparency to the Deal Calculator UI so the user clearly understands how the monthly payment is derived from the MSRP, Money Factor, Residual Value, and taxes.
+2. **Wire Up Inventory Clicks**: Connect the UI so that clicking on a specific vehicle result populates the Deal Calculator with that vehicle's exact parameters to structure a deal.
+3. **Implement Option B (Apify Integration)**: Begin building out the robust aggregator logic using Apify. This will fetch real-world cross-web VIN histories and highly accurate "Days on Lot" data from aggregators like CarGurus, which will solve the WAF/Cloudflare blocking issues we see hitting dealers directly from the container.
+4. **Review Apify Key setup with User**: Guide the user on testing a single Apify account API key before setting up the round-robin 3-account fallback array to measure rate limits.
