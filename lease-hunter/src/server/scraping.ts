@@ -1,5 +1,7 @@
 import { Router } from 'express';
 import { GoogleGenAI, Type } from '@google/genai';
+import fs from 'fs';
+import path from 'path';
 
 const router = Router();
 
@@ -9,6 +11,12 @@ let ai: GoogleGenAI | null = null;
 // Global in-memory cache for scraping hits
 const scrapeCache = new Map<string, { data: any, timestamp: number }>();
 const CACHE_DURATION = 12 * 60 * 60 * 1000; // 12 hours
+
+// Snapshot directory setup
+const SNAPSHOT_DIR = path.join(process.cwd(), 'data', 'snapshots');
+if (!fs.existsSync(SNAPSHOT_DIR)) {
+  fs.mkdirSync(SNAPSHOT_DIR, { recursive: true });
+}
 
 function getGenAI() {
   if (!ai) {
@@ -80,6 +88,7 @@ router.post('/extract-baselines', async (req, res) => {
     }
     const data = JSON.parse(rawText);
     scrapeCache.set(cacheKey, { data, timestamp: Date.now() });
+    try { fs.writeFileSync(path.join(SNAPSHOT_DIR, `${cacheKey}-${Date.now()}.json`), JSON.stringify(data, null, 2)); } catch (e) {}
     res.json(data);
   } catch (error: any) {
     if (error.message?.includes('RESOURCE_EXHAUSTED') || error.message?.includes('429')) {
@@ -135,6 +144,7 @@ router.post('/search-inventory', async (req, res) => {
     }
     const data = JSON.parse(rawText);
     scrapeCache.set(cacheKey, { data, timestamp: Date.now() });
+    try { fs.writeFileSync(path.join(SNAPSHOT_DIR, `${cacheKey}-${Date.now()}.json`), JSON.stringify(data, null, 2)); } catch (e) {}
     res.json(data);
   } catch (error: any) {
     if (error.message?.includes('RESOURCE_EXHAUSTED') || error.message?.includes('429')) {
