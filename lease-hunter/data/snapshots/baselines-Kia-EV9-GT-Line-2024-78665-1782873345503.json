@@ -1,0 +1,9 @@
+{
+  "moneyFactor": 0.00194,
+  "residualValue": 67,
+  "leaseCash": 12600,
+  "reasonableDiscountPercent": 7.52,
+  "confidenceScore": 90,
+  "marketMomentum": "Strong incentives, favorable for lessees.",
+  "sourceNotes": "The provided lease parameters are for the 2026 Kia EV9 GT-Line, as current (July 2026) data for the 2024 model year is largely unavailable and outdated. Money Factor and Residual Value are for 10,000 miles/year. Lease cash is specifically for the GT-Line trim. Reasonable pre-incentive discount is based on a recent signed Leasehackr deal for the 2026 GT-Line. Data is gathered from Edmunds forums and Leasehackr discussions active in June/July 2026."
+}

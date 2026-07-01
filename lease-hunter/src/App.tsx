@@ -10,7 +10,12 @@ import OutreachCRM from './components/outreach/OutreachCRM';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<'intel' | 'structuring' | 'outreach'>('intel');
+  const [dealConfig, setDealConfig] = useState<any>(null);
 
+  const handleDealSelect = (deal: any) => {
+    setDealConfig(deal);
+    setActiveTab('structuring');
+  };
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 font-sans selection:bg-indigo-600/30">
@@ -108,7 +113,7 @@ export default function App() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
             >
-              <IntelDashboard />
+              <IntelDashboard onDealSelect={handleDealSelect} />
             </motion.div>
           )}
 
@@ -119,7 +124,7 @@ export default function App() {
                animate={{ opacity: 1, y: 0 }}
                exit={{ opacity: 0, y: -10 }}
             >
-              <TaxSimulator />
+              <TaxSimulator dealConfig={dealConfig} />
             </motion.div>
           )}
           
@@ -130,7 +135,7 @@ export default function App() {
                animate={{ opacity: 1, y: 0 }}
                exit={{ opacity: 0, y: -10 }}
             >
-              <OutreachCRM />
+              <OutreachCRM dealConfig={dealConfig} />
             </motion.div>
           )}
 

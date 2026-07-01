@@ -1,0 +1,9 @@
+{
+  "moneyFactor": 0.00194,
+  "residualValue": 67,
+  "leaseCash": 12600,
+  "reasonableDiscountPercent": 5.5,
+  "confidenceScore": 85,
+  "marketMomentum": "Strong incentives and lease support, especially for the latest model year, indicate a push for EV9 leases.",
+  "sourceNotes": "The lease parameters (Money Factor, Residual Value, and Lease Cash) are for the 2026 Kia EV9 GT-Line AWD, as specific current lease programs for the 2025 model year were not explicitly available as of July 2026. These 2026 parameters are effective from June 2, 2026, to July 6, 2026, and are applicable to Tier 1 or 2 credit customers. The residual value is based on a 10,000 miles per year lease term. \n\nThe 'reasonableDiscountPercent' is an estimated pre-incentive dealer discount based on observed user and broker deals for both 2025 and 2026 Kia EV9 GT-Line models, typically ranging from 5% to 6% off MSRP. The geographic area of 90210 (Los Angeles) is covered by general regional and national programs, and the 2026 data is the most current and relevant for this period."
+}

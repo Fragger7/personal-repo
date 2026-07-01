@@ -6,16 +6,28 @@ import {
 } from 'lucide-react';
 import { TaxRuleResult } from '../types';
 
-export default function TaxSimulator() {
+export default function TaxSimulator({ dealConfig }: { dealConfig?: any }) {
   // Inputs
-  const [zipCode, setZipCode] = useState('78664');
-  const [msrp, setMsrp] = useState(62500);
-  const [discount, setDiscount] = useState(6.5);
-  const [rebates, setRebates] = useState(7500);
-  const [term, setTerm] = useState(36);
-  const [moneyFactor, setMoneyFactor] = useState(0.00210);
-  const [residualPercent, setResidualPercent] = useState(64);
+  const [zipCode, setZipCode] = useState(dealConfig?.zipCode || '78664');
+  const [msrp, setMsrp] = useState(dealConfig?.msrp || 62500);
+  const [discount, setDiscount] = useState(dealConfig?.discount || 6.5);
+  const [rebates, setRebates] = useState(dealConfig?.rebates || 7500);
+  const [term, setTerm] = useState(dealConfig?.term || 36);
+  const [moneyFactor, setMoneyFactor] = useState(dealConfig?.moneyFactor || 0.00210);
+  const [residualPercent, setResidualPercent] = useState(dealConfig?.residualPercent || 64);
   const [taxCreditActive, setTaxCreditActive] = useState(true);
+
+  useEffect(() => {
+    if (dealConfig) {
+      if (dealConfig.zipCode) setZipCode(dealConfig.zipCode);
+      if (dealConfig.msrp) setMsrp(dealConfig.msrp);
+      if (dealConfig.discount) setDiscount(dealConfig.discount);
+      if (dealConfig.rebates) setRebates(dealConfig.rebates);
+      if (dealConfig.term) setTerm(dealConfig.term);
+      if (dealConfig.moneyFactor) setMoneyFactor(dealConfig.moneyFactor);
+      if (dealConfig.residualPercent) setResidualPercent(dealConfig.residualPercent);
+    }
+  }, [dealConfig]);
 
   // Simulated results of Tax Rules fetch
   const [taxDetails, setTaxDetails] = useState<TaxRuleResult | null>(null);
@@ -96,6 +108,24 @@ export default function TaxSimulator() {
           <Calculator className="h-5 w-5 text-emerald-400" />
           <h3 className="font-semibold text-white tracking-tight">Parametric Deal Contract</h3>
         </div>
+
+        {dealConfig?.dealerName && (
+          <div className="bg-indigo-500/10 border border-indigo-500/20 rounded-xl p-3 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-indigo-500/20 rounded-lg">
+                <Building2 className="h-4 w-4 text-indigo-400" />
+              </div>
+              <div>
+                <p className="text-xs text-indigo-300 font-medium">Target Dealership</p>
+                <p className="text-sm text-white font-semibold">{dealConfig.dealerName}</p>
+              </div>
+            </div>
+            <div className="text-right">
+              <p className="text-[10px] text-slate-500 font-mono tracking-wider">VIN IDENTIFIER</p>
+              <p className="text-xs font-mono text-slate-300">{dealConfig.vin || 'N/A'}</p>
+            </div>
+          </div>
+        )}
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           
@@ -301,7 +331,10 @@ export default function TaxSimulator() {
             </div>
 
             <div className="flex items-center justify-between py-1.5 border-b border-slate-900 text-slate-400">
-              <span>Monthly rent (Interest Fee):</span>
+              <span className="flex items-center gap-1">
+                Monthly rent (Interest Fee):
+                <span className="text-[9px] text-slate-500" title="(Net Cap + Residual) * MF">Math</span>
+              </span>
               <span className="font-mono text-slate-200 font-semibold">${monthlyRent.toFixed(2)}/mo</span>
             </div>
 
@@ -315,11 +348,29 @@ export default function TaxSimulator() {
               </span>
             </div>
 
-            <div className="flex items-center justify-between py-1.5 text-slate-400">
+            <div className="flex items-center justify-between py-1.5 text-slate-400 border-b border-slate-900">
               <span>Monthly Combined Tax Portion:</span>
               <span className="font-mono text-sky-400 font-semibold">${monthlyTax.toFixed(2)}/mo</span>
             </div>
 
+          </div>
+
+          {/* Mathematical Breakdown */}
+          <div className="bg-slate-950 p-3 rounded-lg border border-slate-800 text-[10px] text-slate-500 font-mono space-y-2 mt-4">
+            <h4 className="text-slate-400 font-sans font-semibold uppercase tracking-wider mb-2 text-xs">Mathematical Breakdown</h4>
+            <div className="grid grid-cols-[1fr_auto] gap-x-2 gap-y-1">
+              <span>Net Cap Cost = (MSRP * (1 - Discount)) + $650 Acq - Rebates</span>
+              <span className="text-slate-300">${netCap.toFixed(2)}</span>
+              
+              <span>Depreciation = (Net Cap - Residual) / Term</span>
+              <span className="text-slate-300">${monthlyDepreciation.toFixed(2)}/mo</span>
+              
+              <span>Rent Charge = (Net Cap + Residual) * MF</span>
+              <span className="text-slate-300">${monthlyRent.toFixed(2)}/mo</span>
+
+              <span>Base Payment = Depreciation + Rent Charge</span>
+              <span className="text-slate-300">${basePmt.toFixed(2)}/mo</span>
+            </div>
           </div>
         </div>
 

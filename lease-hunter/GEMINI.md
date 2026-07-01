@@ -14,9 +14,15 @@
 - **Tax Trap States & Bottom Line**: The system will flag "tax trap" states (where tax is levied on the entire vehicle purchase price, not just the leased portion). The engine must actively research and apply manufacturer tax credits (e.g. from Kia Finance) to combat this and prioritize the ultimate bottom-line monthly number.
 - **Value Metric (The Secret Sauce)**: We do not use generic boilerplate rules (e.g., "1% of MSRP"). The ultimate metric of a good deal is the **Leasehackr Score** (years of lease value) paired with qualitative current market momentum scraped from forums.
 - **Human Intelligence & Advanced Strategies (Vetted)**:
+  - **Calculator Back-Solving**: Users should be able to input a target "% off MSRP" into the deal calculator to instantly back-calculate their expected monthly payments. This is the primary lever for deal structuring.
+  - **Aggregator Supremacy**: Human success explicitly validates **CarGurus** as the optimal platform for finding comprehensive dealer inventory and executing initial contact.
+  - **Trim-Level Agility**: Recent human intelligence confirmed a massive payment drop (e.g., ~$741 down to ~$471) by pivoting from GT-Line to Wind trim. The engine MUST actively model these trim step-downs and surface them if the value delta is this extreme.
   - **Aged Inventory Targeting**: Dealer websites notoriously hide intake dates. To reliably scrape "Days on Lot" (targeting 180+ days), the engine MUST target aggregators (like CarGurus, CarEdge) that track cross-web VIN history, rather than individual dealer sites.
   - **True Cost Baseline**: Knowing the exact Buy Rate Money Factor (MF), Residual Value (RV), and exact manufacturer rebates for the current month is the source of all negotiating power. (e.g., via Leasehackr Rate Findr). We will not blindly trust human anecdotes; the AI must mathematically reconstruct and verify deals using live baselines.
   - **Anti-Padding Negotiation**: The outreach and deal structuring must negotiate a "reasonable % off MSRP" *before* rebates are applied, and explicitly demand the "buy rate MF" to ensure the dealer is not padding the numbers.
+  - **Baseline Validation & Confidence Scoring**: Because forums (Leasehackr/Edmunds) can be noisy or contain outdated information, the scraping engine must *cross-reference* multiple sources (e.g. Edmunds vs. Leasehackr vs. Reddit). The engine will output a dynamic `Confidence Score` (0-100) and explicitly cite whether the data points agree across platforms. We will NOT rely on single unverified anecdotes.
+  - **Transparent Negotiation Leverage**: Bringing structural deal knowledge (e.g., showing the app's deal calculator) directly to dealerships, either in person or via chat, bypasses traditional sales tactics. Demonstrating that you have the baseline numbers mathematically reconstructed forces them to compete on the actual "% off MSRP" rather than hiding margin in the MF or accessories.
+  - **The "Golden" Outreach Template**: Initial contact should be made via CarGurus or Dealer Website Chat using this exact data-driven structure: *"I just paid my last payment on a [Previous Vehicle] lease. Looking for another lease on an [Target Vehicle] by the end of the month. [Term]mo/[Mileage]k mi/yr lease. Base money factor ([MF]). RV [RV]% [Tax Credit Details if applicable]. 1st month payment down. Reasonable % off MSRP, after $[Lease Cash] manufacturer lease cash."*
 - **Autonomous Outreach**: The system will not simply crunch numbers. Once a top-tier deal is identified, the application will generate a highly intelligent, precise, data-driven first-contact email to the dealer to initiate the negotiation on behalf of the user.
 
 ## Architecture & Tech Stack Decisions (Locked)
@@ -31,16 +37,25 @@
 - **Database / CRM Persistence**: Firebase Firestore. The platform provides a highly scalable NoSQL document architecture with a robust free tier. It will serve as both our session cache for the heavy data computations and our foundational CRM for tracking dealer outreach.
 
 ## Current Project State (As of Last Session)
-- **UI Progress**: The `IntelDashboard` has been constructed and wired up to the scraping engine APIs (`/api/scrape/*`). Loading states and error handling for rate limits have been added.
-  - *Note*: Currently, clicking on the fetched inventory results does nothing. The deal calculator changes monthly payments upon initialization but lacks transparency regarding the underlying math and reasoning.
+- **UI Progress**: 
+  - The `IntelDashboard` provides dynamic input parameters for Make, Model, Trim, Year, and Target ZIP.
+  - Added "Manual Intel Dump" feature to accept raw Ctrl+A text pastes from CarGurus.
+  - **Needs Refactor**: The UI workflow is getting messy and the user journey between searching, pasting, and analyzing is disjointed. A structural UX refactor is needed to make the flow intuitive.
+  - Clicking an acquired target from the dashboard successfully wires the deal parameters (MSRP, Target Discount, Baseline MF, Baseline RV, Dealer Name, and VIN) directly into the `TaxSimulator` (Deal Structuring) tab.
+  - **Calculator Logic Exposed**: The `TaxSimulator` now explicitly displays the mathematical breakdown (Net Cap Cost, Depreciation, Rent Charge, Base Payment) to empower the user during negotiations.
 - **Backend/Scraping Engine (`server/scraping.ts`)**: 
-  - Integrated with the `@google/genai` API using the `gemini-2.5-flash` model for search grounding to pull high-quality baseline MF/RV and market momentum data.
-  - Implemented an in-memory server cache (12-hour expiry) to prevent spamming the Gemini API on repeated searches.
-  - Implemented local JSON file snapshotting (`data/snapshots/`) to preserve historical pulls for long-term learning.
-  - **Option A Deployed**: Transitioned the inventory search from Gemini Search Grounding to a Direct Dealer API fetch structure. It dynamically bypasses the quota limitations. Currently simulating data points due to backend firewalls (Cloudflare/WAFs) in the container environment, but structurally generates the exact UI state needed to test the application.
+  - Gemini Search Grounding accurately extracts baseline numbers, utilizing `gemini-3.5-flash` with JSON schema enforcement. It includes a `Confidence Score` and a `Reasonable Discount %`.
+  - **Apify Integration Note**: The live Apify call to `scraper-engine/cargurus-com-scraper` threw access errors due to cost/tier limits.
+  - **Option C (Copy-Paste Intelligence)**: Implemented an endpoint to parse unstructured text dumps from CarGurus using Gemini. It yields some results but struggles to accurately capture "Days on Lot", "Dealer", and "VIN" from a standard frontend text selection due to aggregator DOM structures hiding data.
+- **Database / CRM Foundation**: 
+  - Firebase setup was declined. The `OutreachCRM` currently relies on local JSON file storage (`data/crm.json`) via the Express backend.
+  - `localStorage` was implemented as an interim solution to persist manually scraped inventory on the frontend across reloads.
 
 ## Next Steps for the AI Assistant upon Resuming
-1. **Explain and Expose Calculator Logic**: Add transparency to the Deal Calculator UI so the user clearly understands how the monthly payment is derived from the MSRP, Money Factor, Residual Value, and taxes.
-2. **Wire Up Inventory Clicks**: Connect the UI so that clicking on a specific vehicle result populates the Deal Calculator with that vehicle's exact parameters to structure a deal.
-3. **Implement Option B (Apify Integration)**: Begin building out the robust aggregator logic using Apify. This will fetch real-world cross-web VIN histories and highly accurate "Days on Lot" data from aggregators like CarGurus, which will solve the WAF/Cloudflare blocking issues we see hitting dealers directly from the container.
-4. **Review Apify Key setup with User**: Guide the user on testing a single Apify account API key before setting up the round-robin 3-account fallback array to measure rate limits.
+1. **Inventory Collection Brainstorming & Fixes**: Option C's dirty parsing needs improvement. Investigate alternative smart options: 
+   - Option 1 Refined: A manual entry form or a bookmarklet that cleanly captures specific URLs, dates, and vehicle details into our storage, with a background check for dead links.
+   - Option 2: Explore parsing daily automated email alerts from CarGurus.
+   - Option 3: Improve the Gemini parsing prompt/strategy to handle the dirty CarGurus DOM text better.
+2. **UI/UX Workflow Refactor**: Clean up the `IntelDashboard` and the transition to the Deal Calculator. The flow must be pristine, logical, and less messy.
+3. **Refine OutreachCRM & The "Golden" Template**: Ensure the UI gracefully displays saved leads, allows the user to copy the "Golden" template, and track the status of dealer responses.
+4. **Handle Tax Scenarios**: Implement robust logic in the Tax Simulator to handle "tax trap" states (like TX, ZIP 78665) where tax is levied on the entire vehicle purchase price.

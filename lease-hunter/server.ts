@@ -195,6 +195,46 @@ async function startServer() {
     });
   });
 
+  // CRM JSON Endpoints
+  const crmFilePath = path.join(process.cwd(), 'data', 'crm.json');
+
+  app.get('/api/crm/leads', (req, res) => {
+    try {
+      if (!fs.existsSync(crmFilePath)) {
+        return res.json([]);
+      }
+      const data = fs.readFileSync(crmFilePath, 'utf-8');
+      res.json(JSON.parse(data));
+    } catch (e: any) {
+      res.status(500).json({ error: e.message });
+    }
+  });
+
+  app.post('/api/crm/leads', (req, res) => {
+    try {
+      const { lead } = req.body;
+      let leads = [];
+      if (fs.existsSync(crmFilePath)) {
+        leads = JSON.parse(fs.readFileSync(crmFilePath, 'utf-8'));
+      } else {
+        const dir = path.dirname(crmFilePath);
+        if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+      }
+
+      const existingIndex = leads.findIndex((l: any) => l.vin === lead.vin);
+      if (existingIndex >= 0) {
+        leads[existingIndex] = { ...leads[existingIndex], ...lead, updatedAt: new Date().toISOString() };
+      } else {
+        leads.push({ ...lead, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() });
+      }
+
+      fs.writeFileSync(crmFilePath, JSON.stringify(leads, null, 2), 'utf-8');
+      res.json({ success: true, leads });
+    } catch (e: any) {
+      res.status(500).json({ error: e.message });
+    }
+  });
+
   // POST Git Push Flow Trigger
   app.post('/api/git-push', (req, res) => {
     const { commitMsg } = req.body;
