@@ -238,5 +238,13 @@
         "https_port": "25463",
         "rtmp_port": "25462",
         "allowed_formats": "['m3u8', 'ts']"
+    },
+    "bgdc.live:25461": {
+        "provider_name": "\ud83d\udc64 Host: bgdc.live:25461",
+        "server": "nginx",
+        "cloudflare": "No",
+        "timezone": "Sun, 05 Jul 2026 08:32:46 GMT",
+        "first_seen": "2026-07-05 08:32:46",
+        "last_seen": "2026-07-05 08:32:46"
     }
 }
