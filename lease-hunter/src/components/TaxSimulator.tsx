@@ -53,6 +53,8 @@ export default function TaxSimulator({ dealConfig }: { dealConfig?: any }) {
     }
   };
 
+  const [capitalizeTaxes, setCapitalizeTaxes] = useState(true);
+
   useEffect(() => {
     // Debounce zip input to avoid hammering api
     const timer = setTimeout(() => {
@@ -65,38 +67,47 @@ export default function TaxSimulator({ dealConfig }: { dealConfig?: any }) {
 
   // Derived Calculations
   const sellPrice = msrp * (1 - (discount / 100));
-  const grossCap = sellPrice + 650; // Add 650 standard acquisition fee
-  const netCap = grossCap - rebates;
+  const safeTerm = term || 1;
   const residualAmt = msrp * (residualPercent / 100);
 
-  // Avoid dividing by zero or infinite loop
-  const safeTerm = term || 1;
+  let calculatedTaxRate = taxDetails?.defaultRate || 0.0775;
+  let taxType = taxDetails?.taxType || 'TAX_ON_PAYMENT';
+
+  // 1. Initial base lease (without taxes) to estimate total payments for NY rule
+  const initialGrossCap = sellPrice + 650; // standard $650 acquisition fee
+  const initialNetCap = initialGrossCap - rebates;
+  const initialDepreciation = Math.max(0, (initialNetCap - residualAmt) / safeTerm);
+  const initialRent = Math.max(0, (initialNetCap + residualAmt) * moneyFactor);
+  const initialBasePmt = initialDepreciation + initialRent;
+
+  let totalTaxDue = 0;
+
+  if (taxType === 'TAX_ON_FULL_PRICE') {
+    const rate = taxCreditActive ? 0.0125 : calculatedTaxRate;
+    totalTaxDue = sellPrice * rate;
+  } else if (taxType === 'TAX_ON_TOTAL_PAYMENTS') {
+    // upfront sales tax on sum of base payments
+    let estTotalPayments = initialBasePmt * safeTerm;
+    totalTaxDue = estTotalPayments * calculatedTaxRate;
+  }
+
+  // 2. Finalize Cap Costs
+  let finalGrossCap = initialGrossCap;
+  if (capitalizeTaxes && (taxType === 'TAX_ON_FULL_PRICE' || taxType === 'TAX_ON_TOTAL_PAYMENTS')) {
+    finalGrossCap += totalTaxDue;
+  }
+  
+  const netCap = finalGrossCap - rebates;
   const monthlyDepreciation = Math.max(0, (netCap - residualAmt) / safeTerm);
   const monthlyRent = Math.max(0, (netCap + residualAmt) * moneyFactor);
   const basePmt = monthlyDepreciation + monthlyRent;
 
-  // Compute multi-state tax rules
-  let calculatedTaxRate = taxDetails?.defaultRate || 0.0775;
-  let totalTaxDue = 0;
+  // 3. Monthly payment and taxes
   let monthlyTax = 0;
-
-  if (taxDetails) {
-    if (taxDetails.taxType === 'TAX_ON_FULL_PRICE') {
-      // upfront sales tax on selling price of car
-      const rate = taxCreditActive ? 0.0125 : calculatedTaxRate;
-      totalTaxDue = sellPrice * rate;
-      monthlyTax = totalTaxDue / safeTerm;
-    } else if (taxDetails.taxType === 'TAX_ON_TOTAL_PAYMENTS') {
-      // upfront sales tax on sum of base payments
-      const totalPaymentsEst = basePmt * safeTerm;
-      totalTaxDue = totalPaymentsEst * calculatedTaxRate;
-      monthlyTax = totalTaxDue / safeTerm;
-    } else {
-      // monthly tax on TOP of base payment
-      monthlyTax = basePmt * calculatedTaxRate;
-    }
+  if (taxType === 'TAX_ON_PAYMENT') {
+    monthlyTax = basePmt * calculatedTaxRate;
   }
-
+  
   const finalPayment = basePmt + monthlyTax;
 
   return (
@@ -170,6 +181,21 @@ export default function TaxSimulator({ dealConfig }: { dealConfig?: any }) {
                   type="checkbox"
                   checked={taxCreditActive}
                   onChange={(e) => setTaxCreditActive(e.target.checked)}
+                  className="h-4 w-4 accent-indigo-500 cursor-pointer"
+                />
+              </div>
+            )}
+
+            {(taxDetails?.taxType === 'TAX_ON_FULL_PRICE' || taxDetails?.taxType === 'TAX_ON_TOTAL_PAYMENTS') && (
+              <div className="mt-3 pt-2.5 border-t border-slate-800/60 flex items-center justify-between">
+                <span className="text-xs text-slate-300 font-medium flex items-center gap-1.5">
+                  <Info className="h-3.5 w-3.5 text-indigo-400 shrink-0" />
+                  Roll Upfront Taxes into Lease (Capitalize)
+                </span>
+                <input
+                  type="checkbox"
+                  checked={capitalizeTaxes}
+                  onChange={(e) => setCapitalizeTaxes(e.target.checked)}
                   className="h-4 w-4 accent-indigo-500 cursor-pointer"
                 />
               </div>
@@ -342,6 +368,8 @@ export default function TaxSimulator({ dealConfig }: { dealConfig?: any }) {
               <span className="flex items-center gap-1">
                 Upfront Sales Tax Assessed:
                 {taxDetails?.taxType === 'TAX_ON_PAYMENT' && <span className="text-[9px] text-slate-500">(Monthly assessed)</span>}
+                {(taxDetails?.taxType === 'TAX_ON_FULL_PRICE' || taxDetails?.taxType === 'TAX_ON_TOTAL_PAYMENTS') && capitalizeTaxes && <span className="text-[9px] text-indigo-400 font-medium">(Capitalized)</span>}
+                {(taxDetails?.taxType === 'TAX_ON_FULL_PRICE' || taxDetails?.taxType === 'TAX_ON_TOTAL_PAYMENTS') && !capitalizeTaxes && <span className="text-[9px] text-amber-500 font-medium">(Due at signing)</span>}
               </span>
               <span className="font-mono text-sky-400 font-semibold">
                 {taxDetails?.taxType === 'TAX_ON_PAYMENT' ? '$0.00' : `$${totalTaxDue.toFixed(2)}`}
@@ -359,7 +387,7 @@ export default function TaxSimulator({ dealConfig }: { dealConfig?: any }) {
           <div className="bg-slate-950 p-3 rounded-lg border border-slate-800 text-[10px] text-slate-500 font-mono space-y-2 mt-4">
             <h4 className="text-slate-400 font-sans font-semibold uppercase tracking-wider mb-2 text-xs">Mathematical Breakdown</h4>
             <div className="grid grid-cols-[1fr_auto] gap-x-2 gap-y-1">
-              <span>Net Cap Cost = (MSRP * (1 - Discount)) + $650 Acq - Rebates</span>
+              <span>Net Cap Cost = (MSRP * (1 - Discount)) + $650 Acq {capitalizeTaxes && totalTaxDue > 0 ? `+ $${totalTaxDue.toFixed(2)} Tax ` : ''}- Rebates</span>
               <span className="text-slate-300">${netCap.toFixed(2)}</span>
               
               <span>Depreciation = (Net Cap - Residual) / Term</span>
