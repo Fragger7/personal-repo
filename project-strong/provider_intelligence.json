@@ -309,5 +309,17 @@
         "cloudflare": "No",
         "first_seen": "2026-07-10 03:38:39",
         "last_seen": "2026-07-10 03:38:39"
+    },
+    "tectonbrand.com": {
+        "provider_name": "\ud83c\udfaf Identified: nginx/1.18.0 (Ubuntu)",
+        "server": "nginx/1.18.0 (Ubuntu)",
+        "cloudflare": "No",
+        "timezone": "UTC",
+        "server_protocol": "http",
+        "https_port": "25460",
+        "rtmp_port": "25462",
+        "allowed_formats": "['m3u8', 'ts']",
+        "first_seen": "2026-07-10 04:05:18",
+        "last_seen": "2026-07-10 04:05:18"
     }
 }
