@@ -321,5 +321,44 @@
         "allowed_formats": "['m3u8', 'ts']",
         "first_seen": "2026-07-10 04:05:18",
         "last_seen": "2026-07-10 04:05:18"
+    },
+    "smartvnow.xyz:25461": {
+        "provider_name": "\ud83d\udc64 Host: smartvnow.xyz:25461",
+        "server": "nginx",
+        "cloudflare": "No",
+        "timezone": "America/New_York",
+        "metadata_message": "Welcome to Xtream Codes Reborn",
+        "server_protocol": "http",
+        "https_port": "25463",
+        "rtmp_port": "25462",
+        "allowed_formats": "['m3u8', 'ts', 'rtmp']",
+        "first_seen": "2026-07-10 04:07:41",
+        "last_seen": "2026-07-10 04:07:41"
+    },
+    "20669a6d4k.redplus.me:80": {
+        "provider_name": "\ud83d\udc64 Host: 20669a6d4k.redplus.me:80",
+        "cloudflare": "No",
+        "first_seen": "2026-07-10 04:07:41",
+        "last_seen": "2026-07-10 04:07:41",
+        "server": "nginx",
+        "timezone": "Europe/Rome",
+        "metadata_message": "Welcome to Exclusive",
+        "server_protocol": "http",
+        "https_port": "25463",
+        "rtmp_port": "25462",
+        "allowed_formats": "['m3u8', 'ts']"
+    },
+    "luckydreamvod.servebeer.com:24000": {
+        "provider_name": "\ud83c\udfaf Identified: CDN PROXY SERVICE",
+        "server": "CDN PROXY SERVICE",
+        "cloudflare": "No",
+        "timezone": "Europe/Rome",
+        "metadata_message": "Welcome to Lucky VOD",
+        "server_protocol": "http",
+        "https_port": "25463",
+        "rtmp_port": "25462",
+        "allowed_formats": "['m3u8', 'ts', 'rtmp']",
+        "first_seen": "2026-07-10 04:07:41",
+        "last_seen": "2026-07-10 04:07:41"
     }
 }
