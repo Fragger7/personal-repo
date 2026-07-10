@@ -369,5 +369,37 @@
         "timezone": "Fri, 10 Jul 2026 04:16:16 GMT",
         "first_seen": "2026-07-10 04:16:16",
         "last_seen": "2026-07-10 04:16:16"
+    },
+    "zoralatte.com:8080": {
+        "provider_name": "\ud83d\udc64 Host: zoralatte.com:8080",
+        "cloudflare": "No",
+        "first_seen": "2026-07-10 04:18:10",
+        "last_seen": "2026-07-10 04:18:10"
+    },
+    "smart-oott.xyz:80": {
+        "provider_name": "\ud83d\udc64 Host: smart-oott.xyz:80",
+        "server": "nginx",
+        "cors": "*",
+        "cloudflare": "No",
+        "timezone": "Europe/Amsterdam",
+        "server_protocol": "http",
+        "https_port": "443",
+        "rtmp_port": "25462",
+        "allowed_formats": "['m3u8', 'ts', 'rtmp']",
+        "first_seen": "2026-07-10 04:18:10",
+        "last_seen": "2026-07-10 04:18:10"
+    },
+    "chasintv.vip:80": {
+        "provider_name": "\ud83d\udc64 Host: chasintv.vip:80",
+        "cloudflare": "No",
+        "timezone": "America/New_York",
+        "first_seen": "2026-07-10 04:18:10",
+        "last_seen": "2026-07-10 04:18:10",
+        "cors": "*",
+        "metadata_message": "Welcome",
+        "server_protocol": "http",
+        "https_port": "443",
+        "rtmp_port": "8880",
+        "allowed_formats": "['m3u8', 'ts']"
     }
 }
