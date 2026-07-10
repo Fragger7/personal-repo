@@ -159,5 +159,38 @@
         "Source": "Xtream",
         "Date Selected": "2026-06-25 23:58:40",
         "Notes": "Not added anywhere, but solid big provider!"
+    },
+    {
+        "type": "Xtream",
+        "base_url": "http://chasintv.vip:80",
+        "username": "Ruby1",
+        "password": "Ruby1",
+        "Status": "\ud83d\udfe2 Active",
+        "Expires": "2027-01-26",
+        "Max Conn": "1",
+        "Active Conn": "1",
+        "Channels": 31110,
+        "VODs": 42794,
+        "Days Left": 200,
+        "Server Timezone": "America/New_York",
+        "Server Time": "2026-07-10 00:18:10",
+        "fingerprint": {
+            "server": "Unknown",
+            "x_powered_by": "Unknown",
+            "cors": "*",
+            "cloudflare": "No",
+            "timezone": "America/New_York",
+            "metadata_message": "Welcome",
+            "server_protocol": "http",
+            "server_version": "Unknown",
+            "https_port": "443",
+            "rtmp_port": "8880",
+            "allowed_formats": "['m3u8', 'ts']"
+        },
+        "Provider": "\ud83c\udfaf Identified: Link: http://138.199.27.237:8080/ITALY/PLUTO.png\"",
+        "M3U Link": "http://chasintv.vip:80/get.php?username=Ruby1&password=Ruby1&type=m3u_plus&output=ts",
+        "Source": "Xtream",
+        "Date Selected": "2026-07-10 04:20:31",
+        "Notes": ""
     }
 ]
