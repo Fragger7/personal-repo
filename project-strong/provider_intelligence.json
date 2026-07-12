@@ -92,7 +92,7 @@
     "zk85.hofcepesp1.top:8080": {
         "provider_name": "\ud83d\udc64 Host: zk85.hofcepesp1.top:8080",
         "server": "cloudflare",
-        "cloudflare": "Yes",
+        "cloudflare": "No",
         "timezone": "Europe/London",
         "metadata_message": "Welcome to Xtream Codes Reborn",
         "server_protocol": "http",
@@ -100,7 +100,7 @@
         "rtmp_port": "25462",
         "allowed_formats": "['m3u8', 'ts', 'rtmp']",
         "first_seen": "2026-06-23 00:53:02",
-        "last_seen": "2026-06-23 00:53:02"
+        "last_seen": "2026-07-12 20:43:20"
     },
     "limited-name.com:80": {
         "provider_name": "\ud83c\udfaf Identified: openresty",
@@ -401,5 +401,695 @@
         "https_port": "443",
         "rtmp_port": "8880",
         "allowed_formats": "['m3u8', 'ts']"
+    },
+    "hnsefpop.top:8080": {
+        "provider_name": "\ud83d\udc64 Host: hnsefpop.top:8080",
+        "cloudflare": "No",
+        "first_seen": "2026-07-12 20:43:20",
+        "last_seen": "2026-07-12 20:43:20"
+    },
+    "neosfpoo.top:8080": {
+        "provider_name": "\ud83d\udc64 Host: neosfpoo.top:8080",
+        "cloudflare": "No",
+        "first_seen": "2026-07-12 20:43:20",
+        "last_seen": "2026-07-12 20:43:20"
+    },
+    "103.240.150.220:80": {
+        "provider_name": "\ud83d\udc64 Host: 103.240.150.220:80",
+        "cloudflare": "No",
+        "first_seen": "2026-07-12 20:43:20",
+        "last_seen": "2026-07-12 20:43:20"
+    },
+    "cr402.vgsshvvjh.top:8080": {
+        "provider_name": "\ud83d\udc64 Host: cr402.vgsshvvjh.top:8080",
+        "cloudflare": "No",
+        "first_seen": "2026-07-12 20:43:20",
+        "last_seen": "2026-07-12 20:43:20"
+    },
+    "10366-north.cdn-o2.me:80": {
+        "provider_name": "\ud83d\udc64 Host: 10366-north.cdn-o2.me:80",
+        "cloudflare": "No",
+        "first_seen": "2026-07-12 20:43:20",
+        "last_seen": "2026-07-12 20:43:20"
+    },
+    "10k.lucastv.pro": {
+        "provider_name": "\ud83d\udc64 Host: 10k.lucastv.pro",
+        "cloudflare": "No",
+        "first_seen": "2026-07-12 20:43:20",
+        "last_seen": "2026-07-12 20:43:20"
+    },
+    "117.55.202.58:8080": {
+        "provider_name": "\ud83d\udc64 Host: 117.55.202.58:8080",
+        "cloudflare": "No",
+        "first_seen": "2026-07-12 20:43:20",
+        "last_seen": "2026-07-12 20:43:20"
+    },
+    "125bis.blackgood.xyz:80": {
+        "provider_name": "\ud83d\udc64 Host: 125bis.blackgood.xyz:80",
+        "cloudflare": "No",
+        "first_seen": "2026-07-12 20:43:20",
+        "last_seen": "2026-07-12 20:43:20"
+    },
+    "13869-ate.tx-4kott.com:80": {
+        "provider_name": "\ud83d\udc64 Host: 13869-ate.tx-4kott.com:80",
+        "cloudflare": "No",
+        "first_seen": "2026-07-12 20:43:20",
+        "last_seen": "2026-07-12 20:43:20"
+    },
+    "16k.xyz:2082": {
+        "provider_name": "\ud83d\udc64 Host: 16k.xyz:2082",
+        "cloudflare": "No",
+        "first_seen": "2026-07-12 20:43:20",
+        "last_seen": "2026-07-12 20:43:20"
+    },
+    "181.118.155.254:8080": {
+        "provider_name": "\ud83d\udc64 Host: 181.118.155.254:8080",
+        "cloudflare": "No",
+        "first_seen": "2026-07-12 20:43:20",
+        "last_seen": "2026-07-12 20:43:20"
+    },
+    "185.134.22.131:8080": {
+        "provider_name": "\ud83d\udc64 Host: 185.134.22.131:8080",
+        "cloudflare": "No",
+        "first_seen": "2026-07-12 20:43:20",
+        "last_seen": "2026-07-12 20:43:20"
+    },
+    "185.160.192.64:80": {
+        "provider_name": "\ud83d\udc64 Host: 185.160.192.64:80",
+        "cloudflare": "No",
+        "first_seen": "2026-07-12 20:43:20",
+        "last_seen": "2026-07-12 20:43:20"
+    },
+    "185.160.192.64:8789": {
+        "provider_name": "\ud83d\udc64 Host: 185.160.192.64:8789",
+        "cloudflare": "No",
+        "first_seen": "2026-07-12 20:43:20",
+        "last_seen": "2026-07-12 20:43:20"
+    },
+    "195.128.27.253:2095": {
+        "provider_name": "\ud83d\udc64 Host: 195.128.27.253:2095",
+        "cloudflare": "No",
+        "first_seen": "2026-07-12 20:43:20",
+        "last_seen": "2026-07-12 20:43:20"
+    },
+    "newborne.pro:8080": {
+        "provider_name": "\ud83d\udc64 Host: newborne.pro:8080",
+        "cloudflare": "No",
+        "first_seen": "2026-07-12 20:43:20",
+        "last_seen": "2026-07-12 20:43:20"
+    },
+    "206.212.244.54": {
+        "provider_name": "\ud83d\udc64 Host: 206.212.244.54",
+        "cloudflare": "No",
+        "first_seen": "2026-07-12 20:43:20",
+        "last_seen": "2026-07-12 20:43:20"
+    },
+    "nopptgaujgm.top:8080": {
+        "provider_name": "\ud83d\udc64 Host: nopptgaujgm.top:8080",
+        "cloudflare": "No",
+        "first_seen": "2026-07-12 20:43:20",
+        "last_seen": "2026-07-12 20:43:20"
+    },
+    "nrvmobil.com:2095": {
+        "provider_name": "\ud83d\udc64 Host: nrvmobil.com:2095",
+        "cloudflare": "No",
+        "first_seen": "2026-07-12 20:43:20",
+        "last_seen": "2026-07-12 20:43:20"
+    },
+    "39279-sexo.dn-4kott.com:80": {
+        "provider_name": "\ud83d\udc64 Host: 39279-sexo.dn-4kott.com:80",
+        "cloudflare": "No",
+        "first_seen": "2026-07-12 20:43:20",
+        "last_seen": "2026-07-12 20:43:20"
+    },
+    "4kgood.org": {
+        "provider_name": "\ud83d\udc64 Host: 4kgood.org",
+        "cloudflare": "No",
+        "first_seen": "2026-07-12 20:43:20",
+        "last_seen": "2026-07-12 20:43:20"
+    },
+    "51-15-19-195.rev.poneytelecom.eu:1453": {
+        "provider_name": "\ud83d\udc64 Host: 51-15-19-195.rev.poneytelecom.eu:1453",
+        "cloudflare": "No",
+        "first_seen": "2026-07-12 20:43:20",
+        "last_seen": "2026-07-12 20:43:20"
+    },
+    "57.128.99.164:80": {
+        "provider_name": "\ud83d\udc64 Host: 57.128.99.164:80",
+        "cloudflare": "No",
+        "first_seen": "2026-07-12 20:43:20",
+        "last_seen": "2026-07-12 20:43:20"
+    },
+    "66.163.115.84:80": {
+        "provider_name": "\ud83d\udc64 Host: 66.163.115.84:80",
+        "cloudflare": "No",
+        "first_seen": "2026-07-12 20:43:20",
+        "last_seen": "2026-07-12 20:43:20"
+    },
+    "78.159.101.179:2082": {
+        "provider_name": "\ud83d\udc64 Host: 78.159.101.179:2082",
+        "cloudflare": "No",
+        "first_seen": "2026-07-12 20:43:20",
+        "last_seen": "2026-07-12 20:43:20"
+    },
+    "oktay-can-mdiya-hack.streamtv.to:8080": {
+        "provider_name": "\ud83d\udc64 Host: oktay-can-mdiya-hack.streamtv.to:8080",
+        "cloudflare": "No",
+        "first_seen": "2026-07-12 20:43:20",
+        "last_seen": "2026-07-12 20:43:20"
+    },
+    "97739-joined.dn-4kott.com:80": {
+        "provider_name": "\ud83d\udc64 Host: 97739-joined.dn-4kott.com:80",
+        "cloudflare": "No",
+        "first_seen": "2026-07-12 20:43:20",
+        "last_seen": "2026-07-12 20:43:20"
+    },
+    "ondemand.gostreet.org:24000": {
+        "provider_name": "\ud83d\udc64 Host: ondemand.gostreet.org:24000",
+        "cloudflare": "No",
+        "first_seen": "2026-07-12 20:43:20",
+        "last_seen": "2026-07-12 20:43:20"
+    },
+    "alextv.gentv.to:8080": {
+        "provider_name": "\ud83d\udc64 Host: alextv.gentv.to:8080",
+        "cloudflare": "No",
+        "first_seen": "2026-07-12 20:43:20",
+        "last_seen": "2026-07-12 20:43:20"
+    },
+    "p2premium.club:80": {
+        "provider_name": "\ud83d\udc64 Host: p2premium.club:80",
+        "cloudflare": "No",
+        "first_seen": "2026-07-12 20:43:20",
+        "last_seen": "2026-07-12 20:43:20"
+    },
+    "altodomonte.com:80": {
+        "provider_name": "\ud83d\udc64 Host: altodomonte.com:80",
+        "cloudflare": "No",
+        "first_seen": "2026-07-12 20:43:20",
+        "last_seen": "2026-07-12 20:43:20"
+    },
+    "athena.dyndns.biz:80": {
+        "provider_name": "\ud83d\udc64 Host: athena.dyndns.biz:80",
+        "cloudflare": "No",
+        "first_seen": "2026-07-12 20:43:20",
+        "last_seen": "2026-07-12 20:43:20"
+    },
+    "hottest.plus:80": {
+        "provider_name": "\ud83d\udc64 Host: hottest.plus:80",
+        "cloudflare": "No",
+        "first_seen": "2026-07-12 20:43:20",
+        "last_seen": "2026-07-12 20:43:20"
+    },
+    "bazaruto.top:8000": {
+        "provider_name": "\ud83d\udc64 Host: bazaruto.top:8000",
+        "cloudflare": "No",
+        "first_seen": "2026-07-12 20:43:20",
+        "last_seen": "2026-07-12 20:43:20"
+    },
+    "websafety101.net:5050": {
+        "provider_name": "\ud83d\udc64 Host: websafety101.net:5050",
+        "cloudflare": "No",
+        "first_seen": "2026-07-12 20:43:20",
+        "last_seen": "2026-07-12 20:43:20"
+    },
+    "bocian.io:8880": {
+        "provider_name": "\ud83d\udc64 Host: bocian.io:8880",
+        "cloudflare": "No",
+        "first_seen": "2026-07-12 20:43:20",
+        "last_seen": "2026-07-12 20:43:20"
+    },
+    "bosstv.casa:80": {
+        "provider_name": "\ud83d\udc64 Host: bosstv.casa:80",
+        "cloudflare": "No",
+        "first_seen": "2026-07-12 20:43:20",
+        "last_seen": "2026-07-12 20:43:20"
+    },
+    "bosstv.click:8080": {
+        "provider_name": "\ud83d\udc64 Host: bosstv.click:8080",
+        "cloudflare": "No",
+        "first_seen": "2026-07-12 20:43:20",
+        "last_seen": "2026-07-12 20:43:20"
+    },
+    "cane.nero.ws:80": {
+        "provider_name": "\ud83d\udc64 Host: cane.nero.ws:80",
+        "cloudflare": "No",
+        "first_seen": "2026-07-12 20:43:20",
+        "last_seen": "2026-07-12 20:43:20"
+    },
+    "cdn.pt-private.com:80": {
+        "provider_name": "\ud83d\udc64 Host: cdn.pt-private.com:80",
+        "cloudflare": "No",
+        "first_seen": "2026-07-12 20:43:20",
+        "last_seen": "2026-07-12 20:43:20"
+    },
+    "cdn-u.me:2095": {
+        "provider_name": "\ud83d\udc64 Host: cdn-u.me:2095",
+        "cloudflare": "No",
+        "first_seen": "2026-07-12 20:43:20",
+        "last_seen": "2026-07-12 20:43:20"
+    },
+    "cm1.portaltv.info:777": {
+        "provider_name": "\ud83d\udc64 Host: cm1.portaltv.info:777",
+        "cloudflare": "No",
+        "first_seen": "2026-07-12 20:43:20",
+        "last_seen": "2026-07-12 20:43:20"
+    },
+    "wolvestv.net:8880": {
+        "provider_name": "\ud83d\udc64 Host: wolvestv.net:8880",
+        "cloudflare": "No",
+        "first_seen": "2026-07-12 20:43:20",
+        "last_seen": "2026-07-12 20:43:20"
+    },
+    "worldangels.xyz:8080": {
+        "provider_name": "\ud83d\udc64 Host: worldangels.xyz:8080",
+        "cloudflare": "No",
+        "first_seen": "2026-07-12 20:43:20",
+        "last_seen": "2026-07-12 20:43:20"
+    },
+    "xn----8sbafhzjfdzv9g.com:80": {
+        "provider_name": "\ud83d\udc64 Host: xn----8sbafhzjfdzv9g.com:80",
+        "cloudflare": "No",
+        "first_seen": "2026-07-12 20:43:20",
+        "last_seen": "2026-07-12 20:43:20"
+    },
+    "xyzzyx.org:80": {
+        "provider_name": "\ud83d\udc64 Host: xyzzyx.org:80",
+        "cloudflare": "No",
+        "first_seen": "2026-07-12 20:43:20",
+        "last_seen": "2026-07-12 20:43:20"
+    },
+    "d889.done-lon.com:80": {
+        "provider_name": "\ud83d\udc64 Host: d889.done-lon.com:80",
+        "cloudflare": "No",
+        "first_seen": "2026-07-12 20:43:20",
+        "last_seen": "2026-07-12 20:43:20"
+    },
+    "dahyatv.com:80": {
+        "provider_name": "\ud83d\udc64 Host: dahyatv.com:80",
+        "cloudflare": "No",
+        "first_seen": "2026-07-12 20:43:20",
+        "last_seen": "2026-07-12 20:43:20"
+    },
+    "yx0nd0d0h0.cava90.xyz:80": {
+        "provider_name": "\ud83d\udc64 Host: yx0nd0d0h0.cava90.xyz:80",
+        "cloudflare": "No",
+        "first_seen": "2026-07-12 20:43:20",
+        "last_seen": "2026-07-12 20:43:20"
+    },
+    "inthezone.pro:80": {
+        "provider_name": "\ud83d\udc64 Host: inthezone.pro:80",
+        "cloudflare": "No",
+        "first_seen": "2026-07-12 20:43:20",
+        "last_seen": "2026-07-12 20:43:20"
+    },
+    "iptvch.com:2082": {
+        "provider_name": "\ud83d\udc64 Host: iptvch.com:2082",
+        "cloudflare": "No",
+        "first_seen": "2026-07-12 20:43:20",
+        "last_seen": "2026-07-12 20:43:20"
+    },
+    "103.240.148.189:80": {
+        "provider_name": "\ud83d\udc64 Host: 103.240.148.189:80",
+        "cloudflare": "No",
+        "first_seen": "2026-07-12 20:43:20",
+        "last_seen": "2026-07-12 20:43:20"
+    },
+    "ipwebtv.dyndns.tv:8000": {
+        "provider_name": "\ud83d\udc64 Host: ipwebtv.dyndns.tv:8000",
+        "cloudflare": "No",
+        "first_seen": "2026-07-12 20:43:20",
+        "last_seen": "2026-07-12 20:43:20"
+    },
+    "solution62000.mine.nu:8000": {
+        "provider_name": "\ud83d\udc64 Host: solution62000.mine.nu:8000",
+        "cloudflare": "No",
+        "first_seen": "2026-07-12 20:43:20",
+        "last_seen": "2026-07-12 20:43:20"
+    },
+    "ipxpto.store:80": {
+        "provider_name": "\ud83d\udc64 Host: ipxpto.store:80",
+        "cloudflare": "No",
+        "first_seen": "2026-07-12 20:43:20",
+        "last_seen": "2026-07-12 20:43:20"
+    },
+    "speccy.pw:8080": {
+        "provider_name": "\ud83d\udc64 Host: speccy.pw:8080",
+        "cloudflare": "No",
+        "first_seen": "2026-07-12 20:43:20",
+        "last_seen": "2026-07-12 20:43:20"
+    },
+    "jarodtv62000.com:8000": {
+        "provider_name": "\ud83d\udc64 Host: jarodtv62000.com:8000",
+        "cloudflare": "No",
+        "first_seen": "2026-07-12 20:43:20",
+        "last_seen": "2026-07-12 20:43:20"
+    },
+    "kaantv.net:8000": {
+        "provider_name": "\ud83d\udc64 Host: kaantv.net:8000",
+        "cloudflare": "No",
+        "first_seen": "2026-07-12 20:43:20",
+        "last_seen": "2026-07-12 20:43:20"
+    },
+    "103.240.148.195:80": {
+        "provider_name": "\ud83d\udc64 Host: 103.240.148.195:80",
+        "cloudflare": "No",
+        "first_seen": "2026-07-12 20:43:20",
+        "last_seen": "2026-07-12 20:43:20"
+    },
+    "kaantv.site:8000": {
+        "provider_name": "\ud83d\udc64 Host: kaantv.site:8000",
+        "cloudflare": "No",
+        "first_seen": "2026-07-12 20:43:20",
+        "last_seen": "2026-07-12 20:43:20"
+    },
+    "kb87.eshofrcep.top:8080": {
+        "provider_name": "\ud83d\udc64 Host: kb87.eshofrcep.top:8080",
+        "cloudflare": "No",
+        "first_seen": "2026-07-12 20:43:20",
+        "last_seen": "2026-07-12 20:43:20"
+    },
+    "s.rocketdns.info:8080": {
+        "provider_name": "\ud83d\udc64 Host: s.rocketdns.info:8080",
+        "cloudflare": "No",
+        "first_seen": "2026-07-12 20:43:20",
+        "last_seen": "2026-07-12 20:43:20"
+    },
+    "eaiptv.net:8080": {
+        "provider_name": "\ud83d\udc64 Host: eaiptv.net:8080",
+        "cloudflare": "No",
+        "first_seen": "2026-07-12 20:43:20",
+        "last_seen": "2026-07-12 20:43:20"
+    },
+    "eex24.com:8000": {
+        "provider_name": "\ud83d\udc64 Host: eex24.com:8000",
+        "cloudflare": "No",
+        "first_seen": "2026-07-12 20:43:20",
+        "last_seen": "2026-07-12 20:43:20"
+    },
+    "electrohassan4k.xyz:80": {
+        "provider_name": "\ud83d\udc64 Host: electrohassan4k.xyz:80",
+        "cloudflare": "No",
+        "first_seen": "2026-07-12 20:43:20",
+        "last_seen": "2026-07-12 20:43:20"
+    },
+    "elit64.xyz:2086": {
+        "provider_name": "\ud83d\udc64 Host: elit64.xyz:2086",
+        "cloudflare": "No",
+        "first_seen": "2026-07-12 20:43:20",
+        "last_seen": "2026-07-12 20:43:20"
+    },
+    "knbyi555.xyz:8080": {
+        "provider_name": "\ud83d\udc64 Host: knbyi555.xyz:8080",
+        "cloudflare": "No",
+        "first_seen": "2026-07-12 20:43:20",
+        "last_seen": "2026-07-12 20:43:20"
+    },
+    "kulis2026.xyz:8080": {
+        "provider_name": "\ud83d\udc64 Host: kulis2026.xyz:8080",
+        "cloudflare": "No",
+        "first_seen": "2026-07-12 20:43:20",
+        "last_seen": "2026-07-12 20:43:20"
+    },
+    "tkosportz.live:25461": {
+        "provider_name": "\ud83d\udc64 Host: tkosportz.live:25461",
+        "cloudflare": "No",
+        "first_seen": "2026-07-12 20:43:20",
+        "last_seen": "2026-07-12 20:43:20"
+    },
+    "lefanten.com:8080": {
+        "provider_name": "\ud83d\udc64 Host: lefanten.com:8080",
+        "cloudflare": "No",
+        "first_seen": "2026-07-12 20:43:20",
+        "last_seen": "2026-07-12 20:43:20"
+    },
+    "lg.peces.biz:8080": {
+        "provider_name": "\ud83d\udc64 Host: lg.peces.biz:8080",
+        "cloudflare": "No",
+        "first_seen": "2026-07-12 20:43:20",
+        "last_seen": "2026-07-12 20:43:20"
+    },
+    "triaena.dyndns.info:25001": {
+        "provider_name": "\ud83d\udc64 Host: triaena.dyndns.info:25001",
+        "cloudflare": "No",
+        "first_seen": "2026-07-12 20:43:20",
+        "last_seen": "2026-07-12 20:43:20"
+    },
+    "limitlesslivetv.xyz:8080": {
+        "provider_name": "\ud83d\udc64 Host: limitlesslivetv.xyz:8080",
+        "cloudflare": "No",
+        "first_seen": "2026-07-12 20:43:20",
+        "last_seen": "2026-07-12 20:43:20"
+    },
+    "tv.123tv.to:8080": {
+        "provider_name": "\ud83d\udc64 Host: tv.123tv.to:8080",
+        "cloudflare": "No",
+        "first_seen": "2026-07-12 20:43:20",
+        "last_seen": "2026-07-12 20:43:20"
+    },
+    "elit64.xyz:3800": {
+        "provider_name": "\ud83d\udc64 Host: elit64.xyz:3800",
+        "cloudflare": "No",
+        "first_seen": "2026-07-12 20:43:20",
+        "last_seen": "2026-07-12 20:43:20"
+    },
+    "tv.challenge.tn:2052": {
+        "provider_name": "\ud83d\udc64 Host: tv.challenge.tn:2052",
+        "cloudflare": "No",
+        "first_seen": "2026-07-12 20:43:20",
+        "last_seen": "2026-07-12 20:43:20"
+    },
+    "limonapp.in:8080": {
+        "provider_name": "\ud83d\udc64 Host: limonapp.in:8080",
+        "cloudflare": "No",
+        "first_seen": "2026-07-12 20:43:20",
+        "last_seen": "2026-07-12 20:43:20"
+    },
+    "user.scalecdn.co:8080": {
+        "provider_name": "\ud83d\udc64 Host: user.scalecdn.co:8080",
+        "cloudflare": "No",
+        "first_seen": "2026-07-12 20:43:20",
+        "last_seen": "2026-07-12 20:43:20"
+    },
+    "line.dino.ws": {
+        "provider_name": "\ud83d\udc64 Host: line.dino.ws",
+        "cloudflare": "No",
+        "first_seen": "2026-07-12 20:43:20",
+        "last_seen": "2026-07-12 20:43:20"
+    },
+    "vod-4k.info:8089": {
+        "provider_name": "\ud83d\udc64 Host: vod-4k.info:8089",
+        "cloudflare": "No",
+        "first_seen": "2026-07-12 20:43:20",
+        "last_seen": "2026-07-12 20:43:20"
+    },
+    "weaseltv.live:80": {
+        "provider_name": "\ud83d\udc64 Host: weaseltv.live:80",
+        "cloudflare": "No",
+        "first_seen": "2026-07-12 20:43:20",
+        "last_seen": "2026-07-12 20:43:20"
+    },
+    "etvhosts.site:55337": {
+        "provider_name": "\ud83d\udc64 Host: etvhosts.site:55337",
+        "cloudflare": "No",
+        "first_seen": "2026-07-12 20:43:20",
+        "last_seen": "2026-07-12 20:43:20"
+    },
+    "eu.majes-line.co": {
+        "provider_name": "\ud83d\udc64 Host: eu.majes-line.co",
+        "cloudflare": "No",
+        "first_seen": "2026-07-12 20:43:20",
+        "last_seen": "2026-07-12 20:43:20"
+    },
+    "line.fullir.xyz:8080": {
+        "provider_name": "\ud83d\udc64 Host: line.fullir.xyz:8080",
+        "cloudflare": "No",
+        "first_seen": "2026-07-12 20:43:20",
+        "last_seen": "2026-07-12 20:43:20"
+    },
+    "line.tvlion.xyz:80": {
+        "provider_name": "\ud83d\udc64 Host: line.tvlion.xyz:80",
+        "cloudflare": "No",
+        "first_seen": "2026-07-12 20:43:20",
+        "last_seen": "2026-07-12 20:43:20"
+    },
+    "live.remorize.live:2082": {
+        "provider_name": "\ud83d\udc64 Host: live.remorize.live:2082",
+        "cloudflare": "No",
+        "first_seen": "2026-07-12 20:43:20",
+        "last_seen": "2026-07-12 20:43:20"
+    },
+    "livinitup.online:80": {
+        "provider_name": "\ud83d\udc64 Host: livinitup.online:80",
+        "cloudflare": "No",
+        "first_seen": "2026-07-12 20:43:20",
+        "last_seen": "2026-07-12 20:43:20"
+    },
+    "euro-deluxe.com:8080": {
+        "provider_name": "\ud83d\udc64 Host: euro-deluxe.com:8080",
+        "cloudflare": "No",
+        "first_seen": "2026-07-12 20:43:20",
+        "last_seen": "2026-07-12 20:43:20"
+    },
+    "fastrunner.live:8080": {
+        "provider_name": "\ud83d\udc64 Host: fastrunner.live:8080",
+        "cloudflare": "No",
+        "first_seen": "2026-07-12 20:43:20",
+        "last_seen": "2026-07-12 20:43:20"
+    },
+    "favoritv85.shop:8080": {
+        "provider_name": "\ud83d\udc64 Host: favoritv85.shop:8080",
+        "cloudflare": "No",
+        "first_seen": "2026-07-12 20:43:20",
+        "last_seen": "2026-07-12 20:43:20"
+    },
+    "filinta.eu:8080": {
+        "provider_name": "\ud83d\udc64 Host: filinta.eu:8080",
+        "cloudflare": "No",
+        "first_seen": "2026-07-12 20:43:20",
+        "last_seen": "2026-07-12 20:43:20"
+    },
+    "play.biturl.vip:80": {
+        "provider_name": "\ud83d\udc64 Host: play.biturl.vip:80",
+        "cloudflare": "No",
+        "first_seen": "2026-07-12 20:43:20",
+        "last_seen": "2026-07-12 20:43:20"
+    },
+    "fine34232.wd.business-cloud-neo.ru:80": {
+        "provider_name": "\ud83d\udc64 Host: fine34232.wd.business-cloud-neo.ru:80",
+        "cloudflare": "No",
+        "first_seen": "2026-07-12 20:43:20",
+        "last_seen": "2026-07-12 20:43:20"
+    },
+    "portal.woab.top:8080": {
+        "provider_name": "\ud83d\udc64 Host: portal.woab.top:8080",
+        "cloudflare": "No",
+        "first_seen": "2026-07-12 20:43:20",
+        "last_seen": "2026-07-12 20:43:20"
+    },
+    "fiona22.xyz:80": {
+        "provider_name": "\ud83d\udc64 Host: fiona22.xyz:80",
+        "cloudflare": "No",
+        "first_seen": "2026-07-12 20:43:20",
+        "last_seen": "2026-07-12 20:43:20"
+    },
+    "premium2.ottpro2.org:8789": {
+        "provider_name": "\ud83d\udc64 Host: premium2.ottpro2.org:8789",
+        "cloudflare": "No",
+        "first_seen": "2026-07-12 20:43:20",
+        "last_seen": "2026-07-12 20:43:20"
+    },
+    "fomo.re:80": {
+        "provider_name": "\ud83d\udc64 Host: fomo.re:80",
+        "cloudflare": "No",
+        "first_seen": "2026-07-12 20:43:20",
+        "last_seen": "2026-07-12 20:43:20"
+    },
+    "pro.premiummrzoo.xyz:80": {
+        "provider_name": "\ud83d\udc64 Host: pro.premiummrzoo.xyz:80",
+        "cloudflare": "No",
+        "first_seen": "2026-07-12 20:43:20",
+        "last_seen": "2026-07-12 20:43:20"
+    },
+    "provider-us.com:8080": {
+        "provider_name": "\ud83d\udc64 Host: provider-us.com:8080",
+        "cloudflare": "No",
+        "first_seen": "2026-07-12 20:43:20",
+        "last_seen": "2026-07-12 20:43:20"
+    },
+    "front-main.drm-cloud.com:80": {
+        "provider_name": "\ud83d\udc64 Host: front-main.drm-cloud.com:80",
+        "cloudflare": "No",
+        "first_seen": "2026-07-12 20:43:20",
+        "last_seen": "2026-07-12 20:43:20"
+    },
+    "rocky101.ddns.net:80": {
+        "provider_name": "\ud83d\udc64 Host: rocky101.ddns.net:80",
+        "cloudflare": "No",
+        "first_seen": "2026-07-12 20:43:20",
+        "last_seen": "2026-07-12 20:43:20"
+    },
+    "ghjk.live:8080": {
+        "provider_name": "\ud83d\udc64 Host: ghjk.live:8080",
+        "cloudflare": "No",
+        "first_seen": "2026-07-12 20:43:20",
+        "last_seen": "2026-07-12 20:43:20"
+    },
+    "mag.dino.ws:80": {
+        "provider_name": "\ud83d\udc64 Host: mag.dino.ws:80",
+        "cloudflare": "No",
+        "first_seen": "2026-07-12 20:43:20",
+        "last_seen": "2026-07-12 20:43:20"
+    },
+    "s1.stealtnet.com:80": {
+        "provider_name": "\ud83d\udc64 Host: s1.stealtnet.com:80",
+        "cloudflare": "No",
+        "first_seen": "2026-07-12 20:43:20",
+        "last_seen": "2026-07-12 20:43:20"
+    },
+    "smartntv.pro:25461": {
+        "provider_name": "\ud83d\udc64 Host: smartntv.pro:25461",
+        "cloudflare": "No",
+        "first_seen": "2026-07-12 20:43:20",
+        "last_seen": "2026-07-12 20:43:20"
+    },
+    "0g7hljf4wx.sasa24.xyz:80": {
+        "provider_name": "\ud83d\udc64 Host: 0g7hljf4wx.sasa24.xyz:80",
+        "cloudflare": "No",
+        "first_seen": "2026-07-12 20:43:20",
+        "last_seen": "2026-07-12 20:43:20"
+    },
+    "gold2.info:8089": {
+        "provider_name": "\ud83d\udc64 Host: gold2.info:8089",
+        "cloudflare": "No",
+        "first_seen": "2026-07-12 20:43:20",
+        "last_seen": "2026-07-12 20:43:20"
+    },
+    "maveniptv.tv:2095": {
+        "provider_name": "\ud83d\udc64 Host: maveniptv.tv:2095",
+        "cloudflare": "No",
+        "first_seen": "2026-07-12 20:43:20",
+        "last_seen": "2026-07-12 20:43:20"
+    },
+    "mediagrupa.club": {
+        "provider_name": "\ud83d\udc64 Host: mediagrupa.club",
+        "cloudflare": "No",
+        "first_seen": "2026-07-12 20:43:20",
+        "last_seen": "2026-07-12 20:43:20"
+    },
+    "moja.tv.bh.telekom.d.d.sarajevo.gentv.to:8080": {
+        "provider_name": "\ud83d\udc64 Host: moja.tv.bh.telekom.d.d.sarajevo.gentv.to:8080",
+        "cloudflare": "No",
+        "first_seen": "2026-07-12 20:43:20",
+        "last_seen": "2026-07-12 20:43:20"
+    },
+    "mostaphi.store:80": {
+        "provider_name": "\ud83d\udc64 Host: mostaphi.store:80",
+        "cloudflare": "No",
+        "first_seen": "2026-07-12 20:43:20",
+        "last_seen": "2026-07-12 20:43:20"
+    },
+    "msdp2.otvipserv.com:80": {
+        "provider_name": "\ud83d\udc64 Host: msdp2.otvipserv.com:80",
+        "cloudflare": "No",
+        "first_seen": "2026-07-12 20:43:20",
+        "last_seen": "2026-07-12 20:43:20"
+    },
+    "mundo2.pro:80": {
+        "provider_name": "\ud83d\udc64 Host: mundo2.pro:80",
+        "cloudflare": "No",
+        "first_seen": "2026-07-12 20:43:20",
+        "last_seen": "2026-07-12 20:43:20"
+    },
+    "mz.full5k.cc:8080": {
+        "provider_name": "\ud83d\udc64 Host: mz.full5k.cc:8080",
+        "cloudflare": "No",
+        "first_seen": "2026-07-12 20:43:20",
+        "last_seen": "2026-07-12 20:43:20"
+    },
+    "mz.full5k.cc:80": {
+        "provider_name": "\ud83d\udc64 Host: mz.full5k.cc:80",
+        "cloudflare": "No",
+        "first_seen": "2026-07-12 20:43:20",
+        "last_seen": "2026-07-12 20:43:20"
     }
 }
