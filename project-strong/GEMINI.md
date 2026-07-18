@@ -193,6 +193,16 @@ For developers and AI agents running within serverless container workspaces (e.g
 
 ---
 
+## 📱 Android Native Application (Kotlin + Jetpack Compose)
+To bypass restrictive cloud blockades and IP filtering encountered via web deployments (Streamlit Community Cloud), the project maintains a **Native Android Application** located in the `/android` directory.
+
+* **Feature Parity Goal**: The Android app is structurally mapped to match the Python application's capabilities (Ingestion Parser, Base64 Decoder, Scanner, Xtream/Stalker Deep Dives, and Committed persistence).
+* **Networking Evasion**: Running natively on the user's Android device ensures IP requests originate from the user's residential IP or mobile carrier, severely reducing HTTP 403 blockades compared to public cloud IP ranges.
+* **UI Architecture**: Built using Kotlin and Jetpack Compose (`Material 3`). Navigation mimics the Python app's master-detail tab flow.
+* **CI/CD APK Generation**: A GitHub Action (`.github/workflows/android-build.yml`) automatically compiles a debug `.apk` on every push to `main` that modifies the `/android` directory. Users can download the resulting APK from the GitHub Actions "Artifacts" panel.
+
+---
+
 ## 📅 Future Backlog
 * **Persistent Themes**: Save user theme preferences (e.g., in `localStorage` via Streamlit cookie managers or custom components) to remember the chosen aesthetic across page reloads and future visits without needing to re-select it in the UI/sidebar each time.
 
