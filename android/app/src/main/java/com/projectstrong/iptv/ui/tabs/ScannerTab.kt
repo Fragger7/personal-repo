@@ -52,7 +52,10 @@ fun ScannerTab() {
                 onValueChange = { input = it },
                 label = "Paste Unstructured Credentials Block",
                 minLines = 8,
-                modifier = Modifier.heightIn(min = 180.dp)
+                maxLines = 10,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(250.dp)
             )
 
             Spacer(modifier = Modifier.height(16.dp))
