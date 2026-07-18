@@ -20,7 +20,7 @@ import com.projectstrong.iptv.ui.components.GlassButton
 import com.projectstrong.iptv.ui.components.GlassCard
 
 @Composable
-fun XtreamTab() {
+fun XtreamTab(onNextTab: () -> Unit = {}) {
     val xtreamNodes = DataStore.scannedNodes.filter { it.type == "Xtream" }
     
     Column(
@@ -127,6 +127,14 @@ fun XtreamTab() {
                         }
                     }
                 }
+            }
+            
+            item {
+                Spacer(modifier = Modifier.height(16.dp))
+                GlassButton(
+                    text = "Continue to Stalker Portals →",
+                    onClick = onNextTab
+                )
             }
         }
     }

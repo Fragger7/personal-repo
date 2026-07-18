@@ -85,10 +85,10 @@ fun MainDashboard() {
                 contentAlignment = Alignment.TopStart
             ) {
                 when (selectedTab) {
-                    0 -> com.projectstrong.iptv.ui.tabs.Base64Tab()
-                    1 -> com.projectstrong.iptv.ui.tabs.ScannerTab()
-                    2 -> com.projectstrong.iptv.ui.tabs.XtreamTab()
-                    3 -> com.projectstrong.iptv.ui.tabs.StalkerTab()
+                    0 -> com.projectstrong.iptv.ui.tabs.Base64Tab(onNextTab = { selectedTab = 1 })
+                    1 -> com.projectstrong.iptv.ui.tabs.ScannerTab(onNextTab = { selectedTab = 2 })
+                    2 -> com.projectstrong.iptv.ui.tabs.XtreamTab(onNextTab = { selectedTab = 3 })
+                    3 -> com.projectstrong.iptv.ui.tabs.StalkerTab(onNextTab = { selectedTab = 4 })
                     4 -> com.projectstrong.iptv.ui.tabs.CommittedTab()
                     else -> {
                         Box(

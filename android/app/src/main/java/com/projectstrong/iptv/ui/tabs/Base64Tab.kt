@@ -14,7 +14,7 @@ import com.projectstrong.iptv.ui.components.GlassButton
 import com.projectstrong.iptv.ui.components.GlassTextField
 
 @Composable
-fun Base64Tab() {
+fun Base64Tab(onNextTab: () -> Unit = {}) {
     var input by remember { mutableStateOf("") }
     var output by remember { mutableStateOf("") }
     val scrollState = rememberScrollState()
@@ -90,5 +90,11 @@ fun Base64Tab() {
                 minLines = 4
             )
         }
+        
+        Spacer(modifier = Modifier.height(16.dp))
+        GlassButton(
+            text = "Continue to Scanner →",
+            onClick = onNextTab
+        )
     }
 }

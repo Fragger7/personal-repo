@@ -18,7 +18,7 @@ import com.projectstrong.iptv.ui.components.GlassButton
 import com.projectstrong.iptv.ui.components.GlassCard
 
 @Composable
-fun StalkerTab() {
+fun StalkerTab(onNextTab: () -> Unit = {}) {
     val stalkerNodes = DataStore.scannedNodes.filter { it.type == "Stalker" }
 
     Column(
@@ -121,6 +121,14 @@ fun StalkerTab() {
                         }
                     }
                 }
+            }
+            
+            item {
+                Spacer(modifier = Modifier.height(16.dp))
+                GlassButton(
+                    text = "Continue to Committed Data →",
+                    onClick = onNextTab
+                )
             }
         }
     }

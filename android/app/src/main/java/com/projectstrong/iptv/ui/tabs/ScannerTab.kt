@@ -21,7 +21,7 @@ import com.projectstrong.iptv.ui.components.GlassCard
 import com.projectstrong.iptv.ui.components.GlassTextField
 
 @Composable
-fun ScannerTab() {
+fun ScannerTab(onNextTab: () -> Unit = {}) {
     var input by remember { mutableStateOf("") }
     val output = DataStore.scannedNodes
 
@@ -130,6 +130,16 @@ fun ScannerTab() {
                         }
                     }
                 }
+            }
+        }
+
+        if (output.isNotEmpty()) {
+            item {
+                Spacer(modifier = Modifier.height(16.dp))
+                GlassButton(
+                    text = "Continue to Xtream & Stalker →",
+                    onClick = onNextTab
+                )
             }
         }
     }
