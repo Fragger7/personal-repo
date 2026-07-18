@@ -7,7 +7,10 @@ data class ParsedCredential(
     val user: String,
     val pass: String,
     val mac: String,
-    val type: String
+    val type: String,
+    val status: String = "Pending Handshake",
+    val details: String = "",
+    val isVerifying: Boolean = false
 )
 
 object Parser {

@@ -10,18 +10,25 @@ import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.launch
 import com.projectstrong.iptv.data.DataStore
+import com.projectstrong.iptv.data.CommittedManager
+import com.projectstrong.iptv.data.CommittedRecord
+import com.projectstrong.iptv.network.IPTVClient
+import com.projectstrong.iptv.network.VerificationResult
 import com.projectstrong.iptv.ui.components.GlassButton
 import com.projectstrong.iptv.ui.components.GlassCard
 
 @Composable
 fun XtreamTab(onNextTab: () -> Unit = {}) {
     val xtreamNodes = DataStore.scannedNodes.filter { it.type == "Xtream" }
+    val coroutineScope = rememberCoroutineScope()
     
     Column(
         modifier = Modifier
@@ -106,7 +113,15 @@ fun XtreamTab(onNextTab: () -> Unit = {}) {
                             }
                             
                             Spacer(modifier = Modifier.height(16.dp))
-                            Text(text = "Status: Pending Handshake", color = Color(0xFFF59E0B), fontWeight = FontWeight.Medium)
+                            val statusColor = when {
+                                node.status.contains("Active") -> Color(0xFF10B981)
+                                node.status.contains("Failed") || node.status.contains("Blocked") -> Color(0xFFEF4444)
+                                else -> Color(0xFFF59E0B)
+                            }
+                            Text(text = "Status: ${node.status}", color = statusColor, fontWeight = FontWeight.Medium)
+                            if (node.details.isNotEmpty()) {
+                                Text(text = node.details, color = Color.White.copy(alpha=0.7f), style = androidx.compose.material3.MaterialTheme.typography.bodySmall)
+                            }
                             
                             Spacer(modifier = Modifier.height(16.dp))
                             Row(
@@ -114,13 +129,46 @@ fun XtreamTab(onNextTab: () -> Unit = {}) {
                                 horizontalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
                                 GlassButton(
-                                    text = "Verify",
-                                    onClick = { },
+                                    text = if (node.isVerifying) "Verifying..." else "Verify",
+                                    onClick = { 
+                                        if (node.isVerifying) return@GlassButton
+                                        coroutineScope.launch {
+                                            val idx = DataStore.scannedNodes.indexOf(node)
+                                            if (idx != -1) {
+                                                DataStore.scannedNodes[idx] = node.copy(isVerifying = true, status = "Connecting...")
+                                            }
+                                            
+                                            val result = IPTVClient.verifyXtream(node.baseUrl, node.user, node.pass)
+                                            
+                                            val newIdx = DataStore.scannedNodes.indexOfFirst { it.baseUrl == node.baseUrl && it.user == node.user && it.type == "Xtream" }
+                                            if (newIdx != -1) {
+                                                when (result) {
+                                                    is VerificationResult.Success -> {
+                                                        DataStore.scannedNodes[newIdx] = DataStore.scannedNodes[newIdx].copy(isVerifying = false, status = result.status, details = result.details)
+                                                    }
+                                                    is VerificationResult.Failed -> {
+                                                        DataStore.scannedNodes[newIdx] = DataStore.scannedNodes[newIdx].copy(isVerifying = false, status = result.reason)
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    },
                                     modifier = Modifier.weight(1f)
                                 )
                                 GlassButton(
                                     text = "Commit",
-                                    onClick = { },
+                                    onClick = { 
+                                        CommittedManager.commit(
+                                            CommittedRecord(
+                                                type = node.type,
+                                                baseUrl = node.baseUrl,
+                                                user = node.user,
+                                                pass = node.pass,
+                                                mac = node.mac,
+                                                notes = ""
+                                            )
+                                        )
+                                    },
                                     modifier = Modifier.weight(1f)
                                 )
                             }

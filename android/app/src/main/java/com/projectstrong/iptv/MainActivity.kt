@@ -13,6 +13,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.projectstrong.iptv.data.CommittedManager
 import com.projectstrong.iptv.ui.theme.GlassTheme
 import com.projectstrong.iptv.ui.theme.GlassBackground
 import com.projectstrong.iptv.ui.components.GlassCard
@@ -20,6 +21,7 @@ import com.projectstrong.iptv.ui.components.GlassCard
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        CommittedManager.init(applicationContext)
         setContent {
             GlassTheme {
                 Box(
