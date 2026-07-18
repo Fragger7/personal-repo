@@ -21,24 +21,26 @@ fun CommittedTab() {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp),
+            .padding(horizontal = 16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
                 text = "Committed Data",
                 color = Color.White,
-                style = androidx.compose.material3.MaterialTheme.typography.titleLarge
+                style = androidx.compose.material3.MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold
             )
             GlassCard(modifier = Modifier.padding(4.dp)) {
                 Text(
                     text = "0 Records",
                     color = Color.White,
-                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                    fontWeight = FontWeight.Bold
                 )
             }
         }
@@ -52,8 +54,9 @@ fun CommittedTab() {
         }
         
         LazyColumn(
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-            modifier = Modifier.fillMaxSize()
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(bottom = 16.dp)
         ) {
             item {
                 Box(

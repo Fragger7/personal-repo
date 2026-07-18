@@ -12,28 +12,98 @@ data class ParsedCredential(
 
 object Parser {
     fun parseCredentials(textBlock: String): List<ParsedCredential> {
-        val results = mutableListOf<ParsedCredential>()
+        val extracted = mutableListOf<ParsedCredential>()
         
-        // Basic Xtream Codes regex
-        val xtreamPattern = Pattern.compile("http[s]?://[^/]+/.*?username=([^&]+)&password=([^&\\s]+)")
-        val xtreamMatcher = xtreamPattern.matcher(textBlock)
-        while (xtreamMatcher.find()) {
-            val url = xtreamMatcher.group(0) ?: ""
-            val baseUrl = url.substringBefore("/get.php").substringBefore("/player_api.php")
-            val user = xtreamMatcher.group(1) ?: ""
-            val pass = xtreamMatcher.group(2) ?: ""
-            results.add(ParsedCredential(baseUrl, user, pass, "", "Xtream"))
+        // 1. Xtream Pattern
+        val patternXtream = Pattern.compile("(https?://[^/:]+(?::\\d+)?)/player_api\\.php\\?username=([^&\\s]+)&password=([^&\\s]+)")
+        val matcherXtream = patternXtream.matcher(textBlock)
+        while (matcherXtream.find()) {
+            val baseUrl = matcherXtream.group(1) ?: ""
+            val user = matcherXtream.group(2) ?: ""
+            val pass = matcherXtream.group(3) ?: ""
+            extracted.add(ParsedCredential(baseUrl, user, pass, "", "Xtream"))
         }
 
-        // Basic Stalker Pattern
-        val stalkerPattern = Pattern.compile("(http[s]?://[^\\s]+/c/).*?([0-9a-fA-F]{2}(?::[0-9a-fA-F]{2}){5})")
-        val stalkerMatcher = stalkerPattern.matcher(textBlock)
-        while (stalkerMatcher.find()) {
-            val baseUrl = stalkerMatcher.group(1) ?: ""
-            val mac = stalkerMatcher.group(2) ?: ""
-            results.add(ParsedCredential(baseUrl.trimEnd('/'), "", "", mac, "Stalker"))
+        // 2. Xtream Fallback
+        val patternXtreamFallback = Pattern.compile("(https?://[^/:]+(?::\\d+)?)/get\\.php\\?username=([^&\\s]+)&password=([^&\\s]+)")
+        val matcherFallback = patternXtreamFallback.matcher(textBlock)
+        while (matcherFallback.find()) {
+            val baseUrl = matcherFallback.group(1) ?: ""
+            val user = matcherFallback.group(2) ?: ""
+            val pass = matcherFallback.group(3) ?: ""
+            if (!extracted.any { it.baseUrl == baseUrl && it.user == user }) {
+                extracted.add(ParsedCredential(baseUrl, user, pass, "", "Xtream"))
+            }
         }
 
-        return results
+        // 3. Combo Pattern
+        val patternCombo = Pattern.compile("((?:https?://)?[a-zA-Z0-9\\.-]+(?::\\d+)?)(?:\\s+|:)([^:\\s]*:\\S+|[^:\\s]+)")
+        val matcherCombo = patternCombo.matcher(textBlock)
+        while (matcherCombo.find()) {
+            var baseUrl = matcherCombo.group(1) ?: ""
+            if (!baseUrl.startsWith("http")) {
+                baseUrl = "http://$baseUrl"
+            }
+            val cred = matcherCombo.group(2) ?: ""
+            
+            var user = cred
+            var password = ""
+            if (cred.contains(":")) {
+                val parts = cred.split(":", limit = 2)
+                user = parts[0]
+                password = parts[1]
+            }
+
+            // Skip if it's actually a MAC address
+            if (user.matches(Regex("^[0-9a-fA-F]{2}$")) && password.matches(Regex("^(?:[0-9a-fA-F]{2}:){4}[0-9a-fA-F]{2}$"))) {
+                continue
+            }
+            
+            val skipKeywords = listOf("mac", "active", "expired", "http", "https")
+            if (skipKeywords.contains(cred.lowercase())) {
+                continue
+            }
+            
+            if (!extracted.any { it.baseUrl == baseUrl && it.user == user }) {
+                extracted.add(ParsedCredential(baseUrl, user, password, "", "Xtream"))
+            }
+        }
+
+        // 4. Stalker Pattern (Robust State-Machine Parser for Free Text)
+        var currentUrl: String? = null
+        var currentMac: String? = null
+        
+        val urlExtractPattern = Pattern.compile("(https?://[^/\\s]+(?:/[^/\\s]*)?)")
+        val baseExtractPattern = Pattern.compile("(https?://[^/:]+(?::\\d+)?)")
+        val macExtractPattern = Pattern.compile("([0-9a-fA-F]{2}(?::[0-9a-fA-F]{2}){5})", Pattern.CASE_INSENSITIVE)
+        
+        for (line in textBlock.lines()) {
+            if (line.trim().isEmpty() || line.contains(Regex("[-=_*#]{4,}|╰─|╭─|┌─|└─|\\|"))) {
+                currentUrl = null
+                currentMac = null
+            }
+            
+            val urlMatch = urlExtractPattern.matcher(line)
+            if (urlMatch.find() && !line.contains("player_api") && !line.contains("get.php")) {
+                val baseMatch = baseExtractPattern.matcher(urlMatch.group(1) ?: "")
+                if (baseMatch.find()) {
+                    currentUrl = baseMatch.group(1)
+                }
+            }
+            
+            val macMatch = macExtractPattern.matcher(line)
+            if (macMatch.find()) {
+                currentMac = macMatch.group(1)?.uppercase()
+            }
+            
+            if (currentUrl != null && currentMac != null) {
+                if (!extracted.any { it.type == "Stalker" && it.baseUrl == currentUrl && it.mac == currentMac }) {
+                    extracted.add(ParsedCredential(currentUrl, currentMac, "MAC", currentMac, "Stalker"))
+                }
+                currentMac = null
+            }
+        }
+
+        return extracted
     }
 }

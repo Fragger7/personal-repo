@@ -1,5 +1,9 @@
 package com.projectstrong.iptv.ui.tabs
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -7,8 +11,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.projectstrong.iptv.data.DataStore
 import com.projectstrong.iptv.network.Parser
+import com.projectstrong.iptv.network.ParsedCredential
 import com.projectstrong.iptv.ui.components.GlassButton
 import com.projectstrong.iptv.ui.components.GlassCard
 import com.projectstrong.iptv.ui.components.GlassTextField
@@ -16,56 +23,107 @@ import com.projectstrong.iptv.ui.components.GlassTextField
 @Composable
 fun ScannerTab() {
     var input by remember { mutableStateOf("") }
-    var output by remember { mutableStateOf<List<com.projectstrong.iptv.network.ParsedCredential>>(emptyList()) }
+    val output = DataStore.scannedNodes
 
-    Column(
+    LazyColumn(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp),
+            .padding(horizontal = 16.dp),
+        contentPadding = PaddingValues(vertical = 16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        Text(
-            text = "Multi-Payload Scanner",
-            color = Color.White,
-            style = androidx.compose.material3.MaterialTheme.typography.titleLarge
-        )
-
-        GlassTextField(
-            value = input,
-            onValueChange = { input = it },
-            label = "Paste Unstructured Credentials Block",
-            minLines = 4
-        )
-
-        GlassButton(
-            text = "Parse & Scan",
-            onClick = {
-                output = Parser.parseCredentials(input)
-            }
-        )
-        
-        if (output.isNotEmpty()) {
+        item {
             Text(
-                text = "Discovered Nodes (${output.size})",
+                text = "Multi-Payload Scanner",
                 color = Color.White,
-                style = androidx.compose.material3.MaterialTheme.typography.titleMedium
+                style = androidx.compose.material3.MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold
             )
             
-            LazyColumn(
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier.fillMaxWidth().weight(1f)
+            Text(
+                text = "Paste messy, unstructured text blocks containing Xtream Codes or Stalker Portals credentials. The parser will extract all readable accounts.",
+                color = Color.White.copy(alpha = 0.7f),
+                style = androidx.compose.material3.MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.padding(top = 8.dp, bottom = 16.dp)
+            )
+
+            GlassTextField(
+                value = input,
+                onValueChange = { input = it },
+                label = "Paste Unstructured Credentials Block",
+                minLines = 8,
+                modifier = Modifier.heightIn(min = 180.dp)
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            GlassButton(
+                text = "Parse & Scan Data",
+                onClick = {
+                    val parsed = Parser.parseCredentials(input)
+                    DataStore.scannedNodes.clear()
+                    DataStore.scannedNodes.addAll(parsed)
+                }
+            )
+        }
+        
+        item {
+            AnimatedVisibility(
+                visible = output.isNotEmpty(),
+                enter = fadeIn() + slideInVertically(),
+                exit = fadeOut()
             ) {
-                items(output) { cred ->
-                    GlassCard(modifier = Modifier.fillMaxWidth()) {
-                        Column(modifier = Modifier.padding(16.dp)) {
-                            Text(text = "Type: ${cred.type}", color = Color.White)
-                            Text(text = "URL: ${cred.baseUrl}", color = Color.White.copy(alpha=0.7f))
-                            if (cred.type == "Xtream") {
-                                Text(text = "User: ${cred.user}", color = Color.White.copy(alpha=0.7f))
-                                Text(text = "Pass: ${cred.pass}", color = Color.White.copy(alpha=0.7f))
-                            } else {
-                                Text(text = "MAC: ${cred.mac}", color = Color.White.copy(alpha=0.7f))
+                Column(modifier = Modifier.padding(top = 16.dp, bottom = 8.dp)) {
+                    Text(
+                        text = "Discovered Nodes",
+                        color = Color.White,
+                        style = androidx.compose.material3.MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = "Found ${output.size} valid credentials.",
+                        color = Color(0xFF3B82F6),
+                        style = androidx.compose.material3.MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+            }
+        }
+            
+        if (output.isNotEmpty()) {
+            items(output) { cred ->
+                GlassCard(modifier = Modifier.fillMaxWidth()) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Row(
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(
+                                text = cred.type, 
+                                color = if (cred.type == "Xtream") Color(0xFF3B82F6) else Color(0xFF8B5CF6),
+                                fontWeight = FontWeight.Bold,
+                                style = androidx.compose.material3.MaterialTheme.typography.titleMedium
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(text = "Host", color = Color.White.copy(alpha=0.5f), style = androidx.compose.material3.MaterialTheme.typography.labelSmall)
+                        Text(text = cred.baseUrl, color = Color.White, style = androidx.compose.material3.MaterialTheme.typography.bodyLarge)
+                        
+                        Spacer(modifier = Modifier.height(8.dp))
+                        if (cred.type == "Xtream") {
+                            Row(modifier = Modifier.fillMaxWidth()) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(text = "Username", color = Color.White.copy(alpha=0.5f), style = androidx.compose.material3.MaterialTheme.typography.labelSmall)
+                                    Text(text = cred.user, color = Color.White, style = androidx.compose.material3.MaterialTheme.typography.bodyLarge)
+                                }
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(text = "Password", color = Color.White.copy(alpha=0.5f), style = androidx.compose.material3.MaterialTheme.typography.labelSmall)
+                                    Text(text = cred.pass, color = Color.White, style = androidx.compose.material3.MaterialTheme.typography.bodyLarge)
+                                }
                             }
+                        } else {
+                            Text(text = "MAC Address", color = Color.White.copy(alpha=0.5f), style = androidx.compose.material3.MaterialTheme.typography.labelSmall)
+                            Text(text = cred.mac, color = Color.White, style = androidx.compose.material3.MaterialTheme.typography.bodyLarge)
                         }
                     }
                 }
