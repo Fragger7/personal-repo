@@ -36,6 +36,7 @@ Accidental exposure of a private home IP address during playlist checks can comp
 * **Universal Credential Scanner**: Function `parse_credentials` uses regex patterns to parse both Xtream Codes and Stalker Portal credentials from unstructured text blocks.
 * **Patterns Supported**: 
   * **Xtream Codes**: Scans standard player API layouts (`player_api.php?username=...&password=...`) and target fallbacks (`get.php?...`).
+  * **Tabular Combos (NEW)**: Extracts credentials from raw unstructured combos (`host:port user:pass`, `host:user:pass`, or missing components) commonly found in pasted text blocks.
   * **Stalker Portals**: Employs a robust state-machine parser to isolate disparate MAC addresses and Host URLs connected via unstructured block fragments or custom scanner headers without failing due to whitespace and formatting breaks.
 
 #### B. Tier 1: Asynchronous Handshake Verification
@@ -60,7 +61,7 @@ Accidental exposure of a private home IP address during playlist checks can comp
 
 ### 4. Application UI & Efficiency Optimizations
 * **Dynamic Multi-Theming**: The app features a UI theme selection engine managed via `st.session_state` and a top-level expander ("⚙️ Dashboard Settings & Themes"). Users can dynamically swap CSS visual skins including *Midnight Purple (Focus)*, *Ocean Blue (Glass)*, *Crimson Red (Dark)*, and *Clean Light Mode*. The chosen CSS payload is automatically injected to re-style tabs, containers, and data graphics.
-* **Tab-Based Workspace**: The application is divided into a clean, tabbed hierarchy:
+* **Tab-Based Workspace**: The application is divided into a clean, tabbed hierarchy with **JavaScript-injected Next Buttons** bridging the tabs for a linear flow:
   * **🛠️ Base64 Decoder**: Extracts hidden structural links embedded as text chunks inside unstructured text blocks, automatically stripping garbage or padding limits. Output enables one-click link launching or copying.
   * **📡 Multi-Payload Scanner**: The main bulk ingest and tracking center.
   * **📺 Xtream Codes & 🛸 Stalker Portals**: Dedicated manifest tabs, indicating real-time discovered node counts dynamically in their tab titles. Records now capture target server Timezones and Server regional timings structurally when available.

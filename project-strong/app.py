@@ -11,6 +11,17 @@ import logging
 from datetime import datetime
 import base64
 
+def get_secret_safe(key):
+    try:
+        if key in st.secrets:
+            return st.secrets[key]
+    except Exception:
+        pass
+    env_key = f"STREAMLIT_{key}"
+    if env_key in os.environ:
+        return os.environ[env_key]
+    return None
+
 # --- LOGGING CONFIGURATION ---
 logging.basicConfig(
     level=logging.INFO,
@@ -43,12 +54,12 @@ def pull_committed_data(force=False):
     If no GITHUB_TOKEN or fetch fails, returns local load_committed_data() and None.
     """
     local_data = load_committed_data()
-    if "GITHUB_TOKEN" not in st.secrets:
+    token = get_secret_safe("GITHUB_TOKEN")
+    if not token:
         return local_data, None
         
     try:
         import base64
-        token = st.secrets["GITHUB_TOKEN"]
         repo_slug = "Fragger7/personal-repo" 
         file_path = "project-strong/committed.json"
         url = f"https://api.github.com/repos/{repo_slug}/contents/{file_path}"
@@ -99,10 +110,10 @@ def save_committed_data(data_list, sha=None):
     with open(COMMITTED_FILE, "w", encoding="utf-8") as f:
         f.write(json_str)
         
-    if "GITHUB_TOKEN" in st.secrets:
+    token = get_secret_safe("GITHUB_TOKEN")
+    if token:
         try:
             import base64
-            token = st.secrets["GITHUB_TOKEN"]
             repo_slug = "Fragger7/personal-repo" 
             file_path = "project-strong/committed.json"
             url = f"https://api.github.com/repos/{repo_slug}/contents/{file_path}"
@@ -222,12 +233,12 @@ def load_provider_intel():
 
 def pull_provider_intel(force=False):
     local_data = load_provider_intel()
-    if "GITHUB_TOKEN" not in st.secrets:
+    token = get_secret_safe("GITHUB_TOKEN")
+    if not token:
         return local_data, None
         
     try:
         import base64
-        token = st.secrets["GITHUB_TOKEN"]
         repo_slug = "Fragger7/personal-repo" 
         file_path = "project-strong/provider_intelligence.json"
         url = f"https://api.github.com/repos/{repo_slug}/contents/{file_path}"
@@ -268,10 +279,10 @@ def save_provider_intel(data_dict, sha=None):
     with open(PROVIDER_INTEL_FILE, "w", encoding="utf-8") as f:
         f.write(json_str)
         
-    if "GITHUB_TOKEN" in st.secrets:
+    token = get_secret_safe("GITHUB_TOKEN")
+    if token:
         try:
             import base64
-            token = st.secrets["GITHUB_TOKEN"]
             repo_slug = "Fragger7/personal-repo" 
             file_path = "project-strong/provider_intelligence.json"
             url = f"https://api.github.com/repos/{repo_slug}/contents/{file_path}"
@@ -706,12 +717,13 @@ with col_head:
 # --- SECURE ACCESS CHECK ---
 def check_password():
     """Returns `True` if the user entered the correct password, or if no password is configured."""
-    if "ACCESS_PASSWORD" not in st.secrets:
+    access_password = get_secret_safe("ACCESS_PASSWORD")
+    if not access_password:
         return True
 
     def password_entered():
         """Checks whether a password entered by the user is correct."""
-        if st.session_state["password"] == st.secrets["ACCESS_PASSWORD"]:
+        if st.session_state["password"] == access_password:
             st.session_state["password_correct"] = True
             del st.session_state["password"]  # don't store password in session state
         else:
@@ -799,6 +811,33 @@ def parse_credentials(text_block):
         # avoid duplicates if the string contains both player_api and get.php for the same account
         if not any(a["base_url"] == match[0] and a["username"] == match[1] for a in extracted):
             extracted.append({"type": "Xtream", "base_url": match[0], "username": match[1], "password": match[2]})
+
+    # Combo Pattern (e.g. host:port \s+ user:pass OR host:port:user:pass OR host:port \s+ user OR host:port \s+ :pass)
+    pattern_combo = r'((?:https?://)?[a-zA-Z0-9\.-]+(?::\d+)?)(?:\s+|:)([^:\s]*:\S+|[^:\s]+)'
+    for match in re.findall(pattern_combo, text_block):
+        base_url = match[0]
+        if not base_url.startswith("http"):
+            base_url = "http://" + base_url
+            
+        cred = match[1]
+        if ":" in cred:
+            parts = cred.split(":", 1)
+            user = parts[0]
+            password = parts[1]
+        else:
+            user = cred
+            password = ""
+            
+        # Skip if it's actually a MAC address disguised as user:pass
+        if re.match(r'^[0-9a-fA-F]{2}$', user) and re.match(r'^(?:[0-9a-fA-F]{2}:){4}[0-9a-fA-F]{2}$', password):
+            continue
+            
+        # Skip if cred is just a common keyword like 'MAC:' or 'Active' etc.
+        if cred.lower() in ["mac", "active", "expired", "http", "https"]:
+            continue
+            
+        if not any(a["base_url"] == base_url and a["username"] == user for a in extracted):
+            extracted.append({"type": "Xtream", "base_url": base_url, "username": user, "password": password})
 
     # Stalker Pattern (Robust State-Machine Parser for Free Text)
     current_url = None
@@ -1202,11 +1241,14 @@ with tab_tools:
     b64_action = st.radio("Select Operation:", ["Decode (Base64 -> Text)", "Encode (Text -> Base64)"], horizontal=True)
     b64_input = st.text_area("Input Payload:", height=180, key="b64_input", label_visibility="collapsed")
     
-    col_tools_1, col_tools_2, _ = st.columns([2, 1, 3])
+    col_tools_1, col_tools_2, col_tools_3, _ = st.columns([2, 1, 2, 2])
     with col_tools_1:
         trans_pressed = st.button("🔄 Execute Translation", type="primary", use_container_width=True)
     with col_tools_2:
         st.button("🧹 Clear", on_click=clear_b64_input, key="clear_b64_btn", use_container_width=True)
+    with col_tools_3:
+        if st.button("Next ➡️", key="next_b64", use_container_width=True):
+            components.html("<script>window.parent.document.querySelectorAll('button[data-baseweb=\"tab\"]')[1].click();</script>", height=0)
 
     if trans_pressed:
         if not b64_input.strip():
@@ -1263,11 +1305,14 @@ with tab_scanner:
     if "playlist_results" not in st.session_state:
         st.session_state["playlist_results"] = None
     
-    col_scan_1, col_scan_2, _ = st.columns([2, 1, 3])
+    col_scan_1, col_scan_2, col_scan_3, _ = st.columns([2, 1, 2, 2])
     with col_scan_1:
         analyze_pressed = st.button("🚀 Analyze Discovered Nodes", type="primary", disabled=("UNKNOWN" in current_ip.upper() or current_ip.startswith("DISCONNECTED")), use_container_width=True)
     with col_scan_2:
         st.button("🧹 Clear", on_click=clear_input, key="clear_btn", use_container_width=True)
+    with col_scan_3:
+        if st.button("Next ➡️", key="next_scan", use_container_width=True):
+            components.html("<script>window.parent.document.querySelectorAll('button[data-baseweb=\"tab\"]')[2].click();</script>", height=0)
 
     st.write("---")
 
@@ -1454,6 +1499,12 @@ if st.session_state["playlist_results"] is not None:
                 render_xtream_details(row, selected_x_idx, show_commit_button=True)
             else:
                 st.info("👆 Select a row in the table above to reveal Master-Detail deep insight panel, copy easy credentials, and browse channels!")
+            
+            st.write("---")
+            col_x_next1, col_x_next2 = st.columns([8, 2])
+            with col_x_next2:
+                if st.button("Next ➡️", key="next_xtream", use_container_width=True):
+                    components.html("<script>window.parent.document.querySelectorAll('button[data-baseweb=\"tab\"]')[3].click();</script>", height=0)
 
     with tab_stalker:
         col_s_head, col_s_action = st.columns([3, 1])
@@ -1502,6 +1553,12 @@ if st.session_state["playlist_results"] is not None:
                 render_stalker_details(row, selected_s_idx, show_commit_button=True)
             else:
                 st.info("👆 Select a row in the table above to open the easy-copy credentials panel for Stalker portals!")
+            
+            st.write("---")
+            col_s_next1, col_s_next2 = st.columns([8, 2])
+            with col_s_next2:
+                if st.button("Next ➡️", key="next_stalker", use_container_width=True):
+                    components.html("<script>window.parent.document.querySelectorAll('button[data-baseweb=\"tab\"]')[4].click();</script>", height=0)
 
 with tab_committed:
     st.markdown("### 💾 Committed Data Repository")
