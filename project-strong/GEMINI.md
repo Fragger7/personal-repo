@@ -206,3 +206,5 @@ To bypass restrictive cloud blockades and IP filtering encountered via web deplo
 ## 📅 Future Backlog
 * **Persistent Themes**: Save user theme preferences (e.g., in `localStorage` via Streamlit cookie managers or custom components) to remember the chosen aesthetic across page reloads and future visits without needing to re-select it in the UI/sidebar each time.
 
+* **Fix Xtream Parsing**: Xtreme parsing seems badly broken for both Android and Python. Need to implement fix with new data examples.
+* **Fix Android Committed Notes**: Committed Data in Android is not fetching the Notes attribute correctly in the UI. Ensure `notes = obj.optString("Notes", obj.optString("notes", ""))`.
