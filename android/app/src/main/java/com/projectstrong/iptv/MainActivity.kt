@@ -49,6 +49,24 @@ fun MainDashboard() {
     val tabs = listOf("Base64", "Scanner", "Xtream", "Stalker", "Committed")
 
     Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, bottom = 8.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "IPTV Analytics",
+                color = Color.White,
+                fontWeight = FontWeight.Bold,
+                style = MaterialTheme.typography.titleLarge
+            )
+            Text(
+                text = "v1.0.1 (Build 2)",
+                color = Color.White.copy(alpha = 0.5f),
+                style = MaterialTheme.typography.labelMedium
+            )
+        }
+
         ScrollableTabRow(
             selectedTabIndex = selectedTab,
             edgePadding = 8.dp,
