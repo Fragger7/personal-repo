@@ -1109,5 +1109,17 @@
         "cloudflare": "No",
         "first_seen": "2026-07-18 14:28:34",
         "last_seen": "2026-07-18 14:28:34"
+    },
+    "ovejasnegrasafull.ofztvxv.top:8080": {
+        "provider_name": "\ud83d\udc64 Host: ovejasnegrasafull.ofztvxv.top:8080",
+        "cloudflare": "No",
+        "first_seen": "2026-07-18 14:42:57",
+        "last_seen": "2026-07-18 14:42:57"
+    },
+    "tmkbxqnk.ngtdt.com": {
+        "provider_name": "\ud83d\udc64 Host: tmkbxqnk.ngtdt.com",
+        "cloudflare": "No",
+        "first_seen": "2026-07-18 14:42:57",
+        "last_seen": "2026-07-18 14:42:57"
     }
 }
