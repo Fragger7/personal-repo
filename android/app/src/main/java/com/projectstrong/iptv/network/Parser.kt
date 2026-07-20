@@ -40,36 +40,31 @@ object Parser {
         }
 
         // 3. Combo Pattern
-        val patternCombo = Pattern.compile("((?:https?://)?[a-zA-Z0-9\\.-]+(?::\\d+)?)(?:\\s+|:)([^:\\s]*:\\S+|[^:\\s]+)")
+        val patternCombo = Pattern.compile("((?:https?://)?(?:(?:[a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,}|(?:\\d{1,3}\\.){3}\\d{1,3})(?::\\d{2,5})?(?:/[^:\\s]*)?)(?:\\s+|:)([^:\\s]+)(?:\\s+|:)([^:\\s]+)")
         val matcherCombo = patternCombo.matcher(textBlock)
         while (matcherCombo.find()) {
             var baseUrl = matcherCombo.group(1) ?: ""
             if (!baseUrl.startsWith("http")) {
                 baseUrl = "http://$baseUrl"
             }
-            val cred = matcherCombo.group(2) ?: ""
             
-            var user = cred
-            var password = ""
-            if (cred.contains(":")) {
-                val parts = cred.split(":", limit = 2)
-                user = parts[0]
-                password = parts[1]
-            }
-
+            val user = matcherCombo.group(2) ?: ""
+            val password = matcherCombo.group(3) ?: ""
+            
             // Skip if it's actually a MAC address
             if (user.matches(Regex("^[0-9a-fA-F]{2}$")) && password.matches(Regex("^(?:[0-9a-fA-F]{2}:){4}[0-9a-fA-F]{2}$"))) {
                 continue
             }
             
             val skipKeywords = listOf("mac", "active", "expired", "http", "https")
-            if (skipKeywords.contains(cred.lowercase())) {
+            if (skipKeywords.contains(user.lowercase()) || skipKeywords.contains(password.lowercase())) {
                 continue
             }
             
             if (!extracted.any { it.baseUrl == baseUrl && it.user == user }) {
                 extracted.add(ParsedCredential(baseUrl, user, password, "", "Xtream"))
             }
+        }
         }
 
         // 4. Stalker Pattern (Robust State-Machine Parser for Free Text)

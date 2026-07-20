@@ -10,9 +10,16 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import org.json.JSONObject
 import com.projectstrong.iptv.data.DataStore
 import com.projectstrong.iptv.network.Parser
 import com.projectstrong.iptv.network.ParsedCredential
@@ -24,6 +31,29 @@ import com.projectstrong.iptv.ui.components.GlassTextField
 fun ScannerTab(onNextTab: () -> Unit = {}) {
     var input by remember { mutableStateOf("") }
     val output = DataStore.scannedNodes
+    var ipInfo by remember { mutableStateOf("Checking connection...") }
+    var showVpnWarning by remember { mutableStateOf(false) }
+    val coroutineScope = rememberCoroutineScope()
+    val clipboardManager = LocalClipboardManager.current
+    
+    LaunchedEffect(Unit) {
+        coroutineScope.launch {
+            try {
+                val client = OkHttpClient()
+                val request = Request.Builder().url("http://ip-api.com/json/").build()
+                val response = withContext(Dispatchers.IO) { client.newCall(request).execute() }
+                val json = JSONObject(response.body?.string() ?: "{}")
+                val isp = json.optString("isp", "Unknown ISP")
+                val org = json.optString("org", "")
+                ipInfo = "Connected via $isp"
+                val combined = "$isp $org".lowercase()
+                val cloudProviders = listOf("amazon", "aws", "google", "azure", "cloudflare", "digitalocean")
+                showVpnWarning = !combined.contains("vpn") && !combined.contains("proxy") && !combined.contains("mullvad") && !combined.contains("nord")
+            } catch (e: Exception) {
+                ipInfo = "VPN / Connection Unknown"
+            }
+        }
+    }
 
     LazyColumn(
         modifier = Modifier
@@ -60,14 +90,45 @@ fun ScannerTab(onNextTab: () -> Unit = {}) {
 
             Spacer(modifier = Modifier.height(16.dp))
             
-            GlassButton(
-                text = "Parse & Scan Data",
-                onClick = {
-                    val parsed = Parser.parseCredentials(input)
-                    DataStore.scannedNodes.clear()
-                    DataStore.scannedNodes.addAll(parsed)
+            if (showVpnWarning) {
+                GlassCard(modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)) {
+                    Text(
+                        text = "⚠️ $ipInfo\nWARNING: You may not be using a VPN. Public ISPs often block IPTV portals. You can proceed, but results may fail.",
+                        color = Color(0xFFF59E0B),
+                        style = androidx.compose.material3.MaterialTheme.typography.bodySmall,
+                        modifier = Modifier.padding(12.dp)
+                    )
                 }
-            )
+            } else {
+                Text(text = "🛡️ $ipInfo", color = Color(0xFF10B981), style = androidx.compose.material3.MaterialTheme.typography.bodySmall, modifier = Modifier.padding(bottom = 16.dp))
+            }
+            
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                GlassButton(
+                    text = "Parse & Scan Data",
+                    onClick = {
+                        val parsed = Parser.parseCredentials(input)
+                        DataStore.scannedNodes.clear()
+                        DataStore.scannedNodes.addAll(parsed)
+                    },
+                    modifier = Modifier.weight(1.5f)
+                )
+                GlassButton(
+                    text = "Paste",
+                    onClick = { 
+                        clipboardManager.getText()?.text?.let { input += it } 
+                    },
+                    modifier = Modifier.weight(1f)
+                )
+                GlassButton(
+                    text = "Clear",
+                    onClick = { input = ""; DataStore.scannedNodes.clear() },
+                    modifier = Modifier.weight(1f)
+                )
+            }
         }
         
         item {

@@ -6,6 +6,7 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.json.JSONObject
 import java.util.concurrent.TimeUnit
+import java.net.URLEncoder
 
 sealed class VerificationResult {
     data class Success(val status: String, val details: String) : VerificationResult()
@@ -20,7 +21,9 @@ object IPTVClient {
 
     suspend fun verifyXtream(baseUrl: String, user: String, pass: String): VerificationResult = withContext(Dispatchers.IO) {
         try {
-            val url = "${baseUrl.trimEnd('/')}/player_api.php?username=$user&password=$pass"
+            val encodedUser = URLEncoder.encode(user, "UTF-8")
+            val encodedPass = URLEncoder.encode(pass, "UTF-8")
+            val url = "${baseUrl.trimEnd('/')}/player_api.php?username=$encodedUser&password=$encodedPass"
             val request = Request.Builder()
                 .url(url)
                 .header("User-Agent", "IPTVSmartersPro")
@@ -64,10 +67,11 @@ object IPTVClient {
     suspend fun verifyStalker(baseUrl: String, mac: String): VerificationResult = withContext(Dispatchers.IO) {
         try {
             val url = "${baseUrl.trimEnd('/')}/server/load.php?type=stb&action=handshake"
+            val encodedMac = URLEncoder.encode(mac, "UTF-8")
             val request = Request.Builder()
                 .url(url)
                 .header("User-Agent", "Mozilla/5.0 (QtEmbedded; U; Linux; C) AppleWebKit/533.3 (KHTML, like Gecko) MAG200 stbapp ver: 2 rev: 250 Safari/533.3")
-                .header("Cookie", "mac=$mac")
+                .header("Cookie", "mac=$encodedMac")
                 .build()
 
             val response = client.newCall(request).execute()

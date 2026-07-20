@@ -10,12 +10,20 @@ import androidx.compose.material.icons.filled.Storage
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.foundation.clickable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import org.json.JSONArray
 import com.projectstrong.iptv.data.CommittedManager
 import com.projectstrong.iptv.ui.components.GlassButton
 import com.projectstrong.iptv.ui.components.GlassCard
@@ -23,7 +31,11 @@ import com.projectstrong.iptv.ui.components.GlassTextField
 
 @Composable
 fun CommittedTab() {
+    var selectedRecord by remember { mutableStateOf<com.projectstrong.iptv.data.CommittedRecord?>(null) }
     val records = CommittedManager.records
+    val coroutineScope = rememberCoroutineScope()
+    var isReloading by remember { mutableStateOf(false) }
+    var reloadMessage by remember { mutableStateOf("") }
 
     Column(
         modifier = Modifier
@@ -54,10 +66,48 @@ fun CommittedTab() {
         
         Row(modifier = Modifier.fillMaxWidth()) {
             GlassButton(
-                text = "Reload from Cloud",
-                onClick = { /* Android implementation doesn't currently pull from remote */ },
+                text = if (isReloading) "Reloading..." else "Reload from Cloud",
+                onClick = {
+                    if (isReloading) return@GlassButton
+                    isReloading = true
+                    reloadMessage = ""
+                    coroutineScope.launch {
+                        try {
+                            val client = OkHttpClient()
+                            val request = Request.Builder().url("https://raw.githubusercontent.com/Fragger7/personal-repo/main/project-strong/committed.json").build()
+                            val response = withContext(Dispatchers.IO) { client.newCall(request).execute() }
+                            val body = response.body?.string()
+                            if (response.isSuccessful && body != null) {
+                                val array = JSONArray(body)
+                                val newRecords = mutableListOf<com.projectstrong.iptv.data.CommittedRecord>()
+                                for (i in 0 until array.length()) {
+                                    val obj = array.getJSONObject(i)
+                                    newRecords.add(com.projectstrong.iptv.data.CommittedRecord(
+                                        type = obj.optString("type", "Xtream"),
+                                        baseUrl = obj.optString("base_url", ""),
+                                        user = obj.optString("username", ""),
+                                        pass = obj.optString("password", ""),
+                                        mac = obj.optString("mac", ""),
+                                        notes = obj.optString("Notes", obj.optString("notes", ""))
+                                    ))
+                                }
+                                newRecords.forEach { CommittedManager.commit(it) }
+                                reloadMessage = "Synced successfully!"
+                            } else {
+                                reloadMessage = "Failed to fetch from cloud."
+                            }
+                        } catch(e: Exception) {
+                            reloadMessage = "Error: ${e.message}"
+                            e.printStackTrace()
+                        }
+                        isReloading = false
+                    }
+                },
                 modifier = Modifier.fillMaxWidth()
             )
+        }
+        if (reloadMessage.isNotEmpty()) {
+            Text(text = reloadMessage, color = Color(0xFF10B981), style = androidx.compose.material3.MaterialTheme.typography.bodySmall)
         }
         
         LazyColumn(
@@ -78,73 +128,95 @@ fun CommittedTab() {
                     }
                 }
             } else {
+                item {
+                    Column(modifier = Modifier.fillMaxWidth()) {
+                        // Table Header
+                        Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 4.dp), horizontalArrangement = Arrangement.SpaceBetween) {
+                            Text("Host", color = Color.White.copy(alpha=0.5f), modifier = Modifier.weight(2f))
+                            Text("Type", color = Color.White.copy(alpha=0.5f), modifier = Modifier.weight(1f))
+                            Text("Identifier", color = Color.White.copy(alpha=0.5f), modifier = Modifier.weight(1.5f))
+                        }
+                    }
+                }
+                
                 items(records) { record ->
-                    GlassCard(modifier = Modifier.fillMaxWidth()) {
-                        Column(modifier = Modifier.padding(16.dp)) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
+                    GlassCard(modifier = Modifier.fillMaxWidth().clickable { selectedRecord = record }.alpha(if (selectedRecord == record) 1f else 0.5f)) {
+                        Row(modifier = Modifier.fillMaxWidth().padding(12.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                            Text(record.baseUrl.removePrefix("http://").removePrefix("https://"), color = Color.White, modifier = Modifier.weight(2f), maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
+                            Text(record.type, color = if (record.type == "Xtream") Color(0xFF3B82F6) else Color(0xFF8B5CF6), modifier = Modifier.weight(1f))
+                            Text(if (record.type == "Xtream") record.user else record.mac, color = Color.White.copy(alpha=0.8f), modifier = Modifier.weight(1.5f), maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
+                        }
+                    }
+                }
+                
+                if (selectedRecord != null) {
+                    val record = selectedRecord!!
+                    item {
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text("Selected Details", color = Color.White, style = androidx.compose.material3.MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                        GlassCard(modifier = Modifier.fillMaxWidth()) {
+                            Column(modifier = Modifier.padding(16.dp)) {
                                 Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Icon(Icons.Default.Storage, contentDescription = "Record", tint = if (record.type == "Xtream") Color(0xFF3B82F6) else Color(0xFF8B5CF6))
-                                    Text(
-                                        text = record.baseUrl.removePrefix("http://").removePrefix("https://"),
-                                        color = Color.White,
-                                        fontWeight = FontWeight.Bold,
-                                        style = androidx.compose.material3.MaterialTheme.typography.titleMedium
-                                    )
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                    ) {
+                                        Icon(Icons.Default.Storage, contentDescription = "Record", tint = if (record.type == "Xtream") Color(0xFF3B82F6) else Color(0xFF8B5CF6))
+                                        Text(
+                                            text = record.baseUrl.removePrefix("http://").removePrefix("https://"),
+                                            color = Color.White,
+                                            fontWeight = FontWeight.Bold,
+                                            style = androidx.compose.material3.MaterialTheme.typography.titleMedium
+                                        )
+                                    }
+                                    IconButton(onClick = { CommittedManager.delete(record); if (selectedRecord == record) selectedRecord = null }) {
+                                        Icon(Icons.Default.Delete, contentDescription = "Delete", tint = Color.Red.copy(alpha=0.8f))
+                                    }
                                 }
-                                IconButton(onClick = { CommittedManager.delete(record) }) {
-                                    Icon(Icons.Default.Delete, contentDescription = "Delete", tint = Color.Red.copy(alpha=0.8f))
-                                }
-                            }
-                            
-                            Spacer(modifier = Modifier.height(16.dp))
-                            
-                            Row(modifier = Modifier.fillMaxWidth()) {
-                                Column(modifier = Modifier.weight(1f)) {
-                                    Text(text = "Host URL", color = Color.White.copy(alpha=0.5f), style = androidx.compose.material3.MaterialTheme.typography.labelSmall)
-                                    Text(text = record.baseUrl, color = Color.White, style = androidx.compose.material3.MaterialTheme.typography.bodyLarge)
-                                }
-                            }
-                            
-                            Spacer(modifier = Modifier.height(8.dp))
-                            
-                            if (record.type == "Xtream") {
+                                
+                                Spacer(modifier = Modifier.height(16.dp))
+                                
                                 Row(modifier = Modifier.fillMaxWidth()) {
                                     Column(modifier = Modifier.weight(1f)) {
-                                        Text(text = "Username", color = Color.White.copy(alpha=0.5f), style = androidx.compose.material3.MaterialTheme.typography.labelSmall)
-                                        Text(text = record.user, color = Color.White, style = androidx.compose.material3.MaterialTheme.typography.bodyLarge)
-                                    }
-                                    Column(modifier = Modifier.weight(1f)) {
-                                        Text(text = "Password", color = Color.White.copy(alpha=0.5f), style = androidx.compose.material3.MaterialTheme.typography.labelSmall)
-                                        Text(text = record.pass, color = Color.White, style = androidx.compose.material3.MaterialTheme.typography.bodyLarge)
+                                        com.projectstrong.iptv.ui.components.GlassTextField(value = record.baseUrl, onValueChange = {}, label = "Host URL", minLines = 1)
                                     }
                                 }
-                            } else {
-                                Row(modifier = Modifier.fillMaxWidth()) {
-                                    Column(modifier = Modifier.weight(1f)) {
-                                        Text(text = "MAC Address", color = Color.White.copy(alpha=0.5f), style = androidx.compose.material3.MaterialTheme.typography.labelSmall)
-                                        Text(text = record.mac, color = Color.White, style = androidx.compose.material3.MaterialTheme.typography.bodyLarge)
+                                
+                                Spacer(modifier = Modifier.height(8.dp))
+                                
+                                if (record.type == "Xtream") {
+                                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                        Column(modifier = Modifier.weight(1f)) {
+                                            com.projectstrong.iptv.ui.components.GlassTextField(value = record.user, onValueChange = {}, label = "Username", minLines = 1)
+                                        }
+                                        Column(modifier = Modifier.weight(1f)) {
+                                            com.projectstrong.iptv.ui.components.GlassTextField(value = record.pass, onValueChange = {}, label = "Password", minLines = 1)
+                                        }
+                                    }
+                                } else {
+                                    Row(modifier = Modifier.fillMaxWidth()) {
+                                        Column(modifier = Modifier.weight(1f)) {
+                                            com.projectstrong.iptv.ui.components.GlassTextField(value = record.mac, onValueChange = {}, label = "MAC Address", minLines = 1)
+                                        }
                                     }
                                 }
+                                
+                                Spacer(modifier = Modifier.height(16.dp))
+                                
+                                GlassTextField(
+                                    value = record.notes,
+                                    onValueChange = { newText ->
+                                        CommittedManager.updateNotes(record, newText)
+                                    },
+                                    label = "Custom Notes / Labels",
+                                    minLines = 2,
+                                    maxLines = 4
+                                )
                             }
-                            
-                            Spacer(modifier = Modifier.height(16.dp))
-                            
-                            GlassTextField(
-                                value = record.notes,
-                                onValueChange = { newText ->
-                                    CommittedManager.updateNotes(record, newText)
-                                },
-                                label = "Custom Notes / Labels",
-                                minLines = 2,
-                                maxLines = 4
-                            )
                         }
                     }
                 }
