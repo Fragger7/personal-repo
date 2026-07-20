@@ -206,3 +206,14 @@ To bypass restrictive cloud blockades and IP filtering encountered via web deplo
 ## 📅 Future Backlog
 * **Persistent Themes**: Save user theme preferences (e.g., in `localStorage` via Streamlit cookie managers or custom components) to remember the chosen aesthetic across page reloads and future visits without needing to re-select it in the UI/sidebar each time.
 
+### 📱 Android UI/UX Overhaul (High Priority)
+The current Android Jetpack Compose UI needs significant improvements to reach parity with the Python web application. Key UX feedback to address:
+* **Compact Data Tables**: The interface needs to move away from bulky cards to compact data tables or highly dense lists with useful columns (similar to the Python app's grid).
+* **Scanner Tab Workflow**: The Scanner tab should NOT list all discovered connections as individual cards. Instead, it should display the progress of the scan (with counts and a progress bar), and declare a summary of counts found (via text or toast). Individual connections should only be listed in their dedicated Xtream or Stalker tabs to avoid redundancy.
+* **Xtream / Stalker Drill-Downs**: Currently, clicking a connection card in these tabs only allows verifying or committing, and involves excessive scrolling. It MUST support the deep-dive drill-downs seen in the Python app:
+  - Fetching and displaying Channel Groups (Categories) and Channel Names.
+  - Easy 1-click buttons to copy connection details (Host, Username, Password).
+
+### 🔍 Parser Engine Improvements
+* **Xtream Codes State-Machine**: The current Xtream parser relies on regex matches on a single line (combos or URLs). Analysis of "Hit Hunter" style pastebins (e.g. `├● 🔌 ᴍᴀᴄ : ... ├● 🌐 ᴘᴏʀᴛᴀʟ : ...`) reveals that automated checking tools often output credentials across multiple lines using unicode characters (e.g., `ᴜꜱᴇʀ`, `ᴩᴀꜱꜱ`, `ʜᴏꜱᴛ`). The parser should be upgraded with a multi-line state machine for Xtream combos (similar to the Stalker parser) to capture these disconnected host/user/pass blocks.
+
