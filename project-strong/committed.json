@@ -192,5 +192,38 @@
         "Source": "Xtream",
         "Date Selected": "2026-07-10 04:20:31",
         "Notes": "Phone. 30K channels, very interesting NFL VOD with Combine. Pak, NBCSN and NFL. "
+    },
+    {
+        "type": "Xtream",
+        "base_url": "http://yourservicetop.shop",
+        "username": "112958c67721",
+        "password": "0c72012ed9",
+        "Status": "\ud83d\udfe2 Active",
+        "Expires": "2026-11-18",
+        "Max Conn": "1",
+        "Active Conn": "0",
+        "Channels": "N/A",
+        "VODs": "N/A",
+        "Days Left": 121,
+        "Server Timezone": "Europe/Amsterdam",
+        "Server Time": "2026-07-20 06:02:56",
+        "fingerprint": {
+            "server": "CDN PROXY SERVICE",
+            "x_powered_by": "Unknown",
+            "cors": "*",
+            "cloudflare": "No",
+            "timezone": "Europe/Amsterdam",
+            "metadata_message": "Welcome to World 8K",
+            "server_protocol": "http",
+            "server_version": "Unknown",
+            "https_port": "443",
+            "rtmp_port": "25462",
+            "allowed_formats": "['m3u8', 'ts', 'rtmp']"
+        },
+        "Provider": "\ud83c\udfaf Identified: MAX PPV",
+        "M3U Link": "http://yourservicetop.shop/get.php?username=112958c67721&password=0c72012ed9&type=m3u_plus&output=ts",
+        "Source": "Xtream",
+        "Date Selected": "2026-07-20 04:03:12",
+        "Notes": ""
     }
 ]
