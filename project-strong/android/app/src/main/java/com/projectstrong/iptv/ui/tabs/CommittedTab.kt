@@ -85,7 +85,7 @@ fun CommittedTab() {
                                         user = obj.optString("username", ""),
                                         pass = obj.optString("password", ""),
                                         mac = obj.optString("mac", ""),
-                                        notes = obj.optString("notes", "")
+                                        notes = obj.optString("Notes", obj.optString("notes", ""))
                                     ))
                                 }
                                 newRecords.forEach { CommittedManager.commit(it) }
@@ -95,6 +95,7 @@ fun CommittedTab() {
                             }
                         } catch(e: Exception) {
                             reloadMessage = "Error: ${e.message}"
+                            e.printStackTrace()
                         }
                         isReloading = false
                     }

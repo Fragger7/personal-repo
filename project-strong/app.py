@@ -55,18 +55,15 @@ def pull_committed_data(force=False):
     """
     local_data = load_committed_data()
     token = get_secret_safe("GITHUB_TOKEN")
-    if not token:
-        return local_data, None
         
     try:
         import base64
         repo_slug = "Fragger7/personal-repo" 
         file_path = "project-strong/committed.json"
         url = f"https://api.github.com/repos/{repo_slug}/contents/{file_path}"
-        headers = {
-            "Authorization": f"token {token}",
-            "Accept": "application/vnd.github.v3+json"
-        }
+        headers = {"Accept": "application/vnd.github.v3+json"}
+        if token:
+            headers["Authorization"] = f"token {token}"
         
         r = httpx.get(url, headers=headers)
         if r.status_code == 200:
@@ -234,18 +231,15 @@ def load_provider_intel():
 def pull_provider_intel(force=False):
     local_data = load_provider_intel()
     token = get_secret_safe("GITHUB_TOKEN")
-    if not token:
-        return local_data, None
         
     try:
         import base64
         repo_slug = "Fragger7/personal-repo" 
         file_path = "project-strong/provider_intelligence.json"
         url = f"https://api.github.com/repos/{repo_slug}/contents/{file_path}"
-        headers = {
-            "Authorization": f"token {token}",
-            "Accept": "application/vnd.github.v3+json"
-        }
+        headers = {"Accept": "application/vnd.github.v3+json"}
+        if token:
+            headers["Authorization"] = f"token {token}"
         
         r = httpx.get(url, headers=headers)
         if r.status_code == 200:
@@ -813,27 +807,21 @@ def parse_credentials(text_block):
             extracted.append({"type": "Xtream", "base_url": match[0], "username": match[1], "password": match[2]})
 
     # Combo Pattern (e.g. host:port \s+ user:pass OR host:port:user:pass OR host:port \s+ user OR host:port \s+ :pass)
-    pattern_combo = r'((?:https?://)?[a-zA-Z0-9\.-]+(?::\d+)?)(?:\s+|:)([^:\s]*:\S+|[^:\s]+)'
+    pattern_combo = r'((?:https?://)?(?:(?:[a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}|(?:\d{1,3}\.){3}\d{1,3})(?::\d{2,5})?(?:/[^:\s]*)?)(?:\s+|:)([^:\s]+)(?:\s+|:)([^:\s]+)'
     for match in re.findall(pattern_combo, text_block):
         base_url = match[0]
         if not base_url.startswith("http"):
             base_url = "http://" + base_url
             
-        cred = match[1]
-        if ":" in cred:
-            parts = cred.split(":", 1)
-            user = parts[0]
-            password = parts[1]
-        else:
-            user = cred
-            password = ""
-            
+        user = match[1]
+        password = match[2]
+        
         # Skip if it's actually a MAC address disguised as user:pass
         if re.match(r'^[0-9a-fA-F]{2}$', user) and re.match(r'^(?:[0-9a-fA-F]{2}:){4}[0-9a-fA-F]{2}$', password):
             continue
             
         # Skip if cred is just a common keyword like 'MAC:' or 'Active' etc.
-        if cred.lower() in ["mac", "active", "expired", "http", "https"]:
+        if user.lower() in ["mac", "active", "expired", "http", "https"] or password.lower() in ["mac", "active", "expired", "http", "https"]:
             continue
             
         if not any(a["base_url"] == base_url and a["username"] == user for a in extracted):
@@ -1048,9 +1036,13 @@ current_isp = network_info.get("isp", "Unknown")
 current_org = network_info.get("org", "Unknown")
 current_country = network_info.get("country", "Unknown")
 
-# Cloud detection logic (flags if running on typical public cloud / hosting ranges)
+# VPN / Cloud detection logic
 cloud_keywords = ["amazon", "aws", "google", "azure", "cloudflare", "digitalocean", "linode", "ovh", "hosting", "server", "oracle", "m247", "scaleway", "vulcan", "leaseweb", "hetzner"]
-is_cloud = any(kw in current_isp.lower() or kw in current_org.lower() for kw in cloud_keywords)
+vpn_keywords = ["vpn", "proxy", "mullvad", "nord", "express", "surfshark", "cyberghost"]
+
+combined_isp_org = (current_isp + " " + current_org).lower()
+is_cloud = any(kw in combined_isp_org for kw in cloud_keywords)
+is_vpn = any(kw in combined_isp_org for kw in vpn_keywords)
 
 with st.sidebar:
     st.markdown("### 🛡️ Network Shield")
@@ -1060,12 +1052,19 @@ with st.sidebar:
         st.success(f"🟢 **NETWORK ACTIVE**\n\n**IP:** {current_ip}\n\n**ISP:** {current_isp}")
         if is_cloud:
             st.warning("⚠️ **Cloud Node Detected**\nMany IPTV targets block cloud IP ranges.")
+        elif not is_vpn:
+            st.warning("⚠️ **No VPN Detected**\nYour real IP might be exposed to servers.")
 
 # Cloud warning banner to assist users deploying on public platforms (kept in main for visibility if cloud)
 if is_cloud:
     st.info(
         f"⚠️ **Public Cloud/Hosting Environment Detected:** You are running on **{current_isp}** ({current_org}). "
         f"If connections fail with **'HTTP 403'** or **'Blocked'**, this hosting network is likely banned by the target server."
+    )
+elif not is_vpn and "UNKNOWN" not in current_ip.upper() and not current_ip.startswith("DISCONNECTED"):
+    st.warning(
+        f"⚠️ **VPN Not Detected:** Your ISP is showing as **{current_isp}**. "
+        f"Many users prefer to use a VPN to avoid exposing their residential IP. You can still scan, but proceed with caution."
     )
 
 
@@ -1281,10 +1280,12 @@ with tab_tools:
                     st.success("✅ Successfully encoded. (Use the copy button in the top right of the block)")
                     
                 st.code(result, language="text")
-                
-                # If it's a URL, give a link button
-                if result.strip().startswith("http://") or result.strip().startswith("https://"):
-                    st.link_button("🌐 Launch Converted URL in New Tab", result.strip())
+            
+            # If the result contains a URL, provide a link button
+            url_match = re.search(r'(https?://[^\s]+)', result)
+            if url_match:
+                url = url_match.group(1)
+                st.link_button("🌐 Launch Converted URL in New Tab", url)
                     
             except Exception as e:
                 st.error(f"Failed to process payload: {str(e)}")
@@ -1298,6 +1299,7 @@ with tab_scanner:
 
     def clear_input():
         st.session_state["raw_input"] = ""
+        st.session_state["playlist_results"] = None
 
     pasted_data = st.text_area("Ingestion Area:", height=200, key="raw_input", label_visibility="collapsed")
 
