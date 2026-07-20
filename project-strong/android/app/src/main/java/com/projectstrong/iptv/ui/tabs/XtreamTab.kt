@@ -9,6 +9,7 @@ import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
+import androidx.compose.runtime.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
@@ -22,6 +23,7 @@ import kotlinx.coroutines.launch
 import com.projectstrong.iptv.data.DataStore
 import com.projectstrong.iptv.data.CommittedManager
 import com.projectstrong.iptv.data.CommittedRecord
+import com.projectstrong.iptv.network.ParsedCredential
 import com.projectstrong.iptv.network.IPTVClient
 import com.projectstrong.iptv.network.VerificationResult
 import com.projectstrong.iptv.ui.components.GlassButton
