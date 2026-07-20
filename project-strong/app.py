@@ -1281,11 +1281,11 @@ with tab_tools:
                     
                 st.code(result, language="text")
             
-            # If the result contains a URL, provide a link button
-            url_match = re.search(r'(https?://[^\s]+)', result)
-            if url_match:
-                url = url_match.group(1)
-                st.link_button("🌐 Launch Converted URL in New Tab", url)
+                # If the result contains a URL, provide a link button
+                url_match = re.search(r'(https?://[^\s]+)', result)
+                if url_match:
+                    url = url_match.group(1)
+                    st.link_button("🌐 Launch Converted URL in New Tab", url)
                     
             except Exception as e:
                 st.error(f"Failed to process payload: {str(e)}")
