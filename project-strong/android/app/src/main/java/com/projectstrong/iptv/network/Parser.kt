@@ -65,7 +65,6 @@ object Parser {
                 extracted.add(ParsedCredential(baseUrl, user, password, "", "Xtream"))
             }
         }
-        }
 
         // 4. Stalker Pattern (Robust State-Machine Parser for Free Text)
         var currentUrl: String? = null
