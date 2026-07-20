@@ -24,12 +24,18 @@ object IPTVClient {
             val encodedUser = URLEncoder.encode(user, "UTF-8")
             val encodedPass = URLEncoder.encode(pass, "UTF-8")
             val url = "${baseUrl.trimEnd('/')}/player_api.php?username=$encodedUser&password=$encodedPass"
-            val request = Request.Builder()
+            var request = Request.Builder()
                 .url(url)
                 .header("User-Agent", "IPTVSmartersPro")
                 .build()
 
-            val response = client.newCall(request).execute()
+            var response = client.newCall(request).execute()
+            if (response.code == 404) {
+                response.close()
+                url = "${baseUrl.trimEnd('/')}/server/load.php?type=stb&action=handshake&type=itv"
+                request = request.newBuilder().url(url).build()
+                response = client.newCall(request).execute()
+            }
             val code = response.code
             val body = response.body?.string() ?: ""
 
@@ -66,15 +72,21 @@ object IPTVClient {
 
     suspend fun verifyStalker(baseUrl: String, mac: String): VerificationResult = withContext(Dispatchers.IO) {
         try {
-            val url = "${baseUrl.trimEnd('/')}/server/load.php?type=stb&action=handshake"
+            var url = "${baseUrl.trimEnd('/')}/c/server/load.php?type=stb&action=handshake&type=itv"
             val encodedMac = URLEncoder.encode(mac, "UTF-8")
-            val request = Request.Builder()
+            var request = Request.Builder()
                 .url(url)
                 .header("User-Agent", "Mozilla/5.0 (QtEmbedded; U; Linux; C) AppleWebKit/533.3 (KHTML, like Gecko) MAG200 stbapp ver: 2 rev: 250 Safari/533.3")
-                .header("Cookie", "mac=$encodedMac")
+                .header("Cookie", "mac=$encodedMac; stb_lang=en; timezone=Europe/Kiev;")
                 .build()
 
-            val response = client.newCall(request).execute()
+            var response = client.newCall(request).execute()
+            if (response.code == 404) {
+                response.close()
+                url = "${baseUrl.trimEnd('/')}/server/load.php?type=stb&action=handshake&type=itv"
+                request = request.newBuilder().url(url).build()
+                response = client.newCall(request).execute()
+            }
             val code = response.code
             val body = response.body?.string() ?: ""
 
