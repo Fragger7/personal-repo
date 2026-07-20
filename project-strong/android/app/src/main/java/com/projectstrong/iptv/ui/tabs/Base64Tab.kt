@@ -11,6 +11,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.projectstrong.iptv.ui.components.GlassButton
@@ -22,6 +23,7 @@ fun Base64Tab(onNextTab: () -> Unit = {}) {
     var output by remember { mutableStateOf("") }
     val scrollState = rememberScrollState()
     val context = LocalContext.current
+    val clipboardManager = LocalClipboardManager.current
 
     Column(
         modifier = Modifier

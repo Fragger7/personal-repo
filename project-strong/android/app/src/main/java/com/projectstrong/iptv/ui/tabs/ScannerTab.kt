@@ -10,6 +10,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -33,6 +34,7 @@ fun ScannerTab(onNextTab: () -> Unit = {}) {
     var ipInfo by remember { mutableStateOf("Checking connection...") }
     var showVpnWarning by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
+    val clipboardManager = LocalClipboardManager.current
     
     LaunchedEffect(Unit) {
         coroutineScope.launch {
@@ -111,6 +113,13 @@ fun ScannerTab(onNextTab: () -> Unit = {}) {
                         val parsed = Parser.parseCredentials(input)
                         DataStore.scannedNodes.clear()
                         DataStore.scannedNodes.addAll(parsed)
+                    },
+                    modifier = Modifier.weight(1.5f)
+                )
+                GlassButton(
+                    text = "Paste",
+                    onClick = { 
+                        clipboardManager.getText()?.text?.let { input += it } 
                     },
                     modifier = Modifier.weight(1f)
                 )
