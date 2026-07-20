@@ -104,8 +104,9 @@ fun StalkerTab(onNextTab: () -> Unit = {}) {
                         }
                     }
                 }
+            }
                 
-                if (selectedNode != null) {
+            if (selectedNode != null) {
                     val node = selectedNode!!
                     item {
                         Spacer(modifier = Modifier.height(16.dp))
@@ -182,17 +183,18 @@ fun StalkerTab(onNextTab: () -> Unit = {}) {
                                                 
                                                 val newIdx = DataStore.scannedNodes.indexOfFirst { it.baseUrl == node.baseUrl && it.mac == node.mac && it.type == "Stalker" }
                                                 if (newIdx != -1) {
-                                                    val finalNode = when (result) {
-                                                        is VerificationResult.Success -> {
-                                                            DataStore.scannedNodes[newIdx].copy(isVerifying = false, status = result.status, details = result.details)
+                                                    if (result is VerificationResult.Success) {
+                                                        val finalNode = DataStore.scannedNodes[newIdx].copy(isVerifying = false, status = result.status, details = result.details)
+                                                        DataStore.scannedNodes[newIdx] = finalNode
+                                                        if (selectedNode?.baseUrl == finalNode.baseUrl && selectedNode?.mac == finalNode.mac) {
+                                                            selectedNode = finalNode
                                                         }
-                                                        is VerificationResult.Failed -> {
-                                                            DataStore.scannedNodes[newIdx].copy(isVerifying = false, status = result.reason)
+                                                    } else if (result is VerificationResult.Failed) {
+                                                        val finalNode = DataStore.scannedNodes[newIdx].copy(isVerifying = false, status = result.reason)
+                                                        DataStore.scannedNodes[newIdx] = finalNode
+                                                        if (selectedNode?.baseUrl == finalNode.baseUrl && selectedNode?.mac == finalNode.mac) {
+                                                            selectedNode = finalNode
                                                         }
-                                                    }
-                                                    DataStore.scannedNodes[newIdx] = finalNode
-                                                    if (selectedNode?.baseUrl == finalNode.baseUrl && selectedNode?.mac == finalNode.mac) {
-                                                        selectedNode = finalNode
                                                     }
                                                 }
                                             }
