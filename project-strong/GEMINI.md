@@ -208,12 +208,16 @@ To bypass restrictive cloud blockades and IP filtering encountered via web deplo
 
 ### 📱 Android UI/UX Overhaul (High Priority)
 The current Android Jetpack Compose UI needs significant improvements to reach parity with the Python web application. Key UX feedback to address:
-* **Compact Data Tables**: The interface needs to move away from bulky cards to compact data tables or highly dense lists with useful columns (similar to the Python app's grid).
-* **Scanner Tab Workflow**: The Scanner tab should NOT list all discovered connections as individual cards. Instead, it should display the progress of the scan (with counts and a progress bar), and declare a summary of counts found (via text or toast). Individual connections should only be listed in their dedicated Xtream or Stalker tabs to avoid redundancy.
-* **Xtream / Stalker Drill-Downs**: Currently, clicking a connection card in these tabs only allows verifying or committing, and involves excessive scrolling. It MUST support the deep-dive drill-downs seen in the Python app:
-  - Fetching and displaying Channel Groups (Categories) and Channel Names.
-  - Easy 1-click buttons to copy connection details (Host, Username, Password).
+* **Visual Presentation**: The current UI is bland with a 90s/late-2000s vibe in terms of graphics and presentation. Needs a modern, visually striking "jaw-dropping" overhaul.
+* **Active Connections Toggle & Columns**: Functionality is missing. Add "Active Connections" toggles to begin the drill-down of connections. Ensure the views support the "cool columns" the Python app provides (Channel counts, VOD counts, etc.).
+* **Compact Data Tables vs Cards**: The interface needs to move away from bulky cards. The experience of each result being displayed as a card on the Xtream and Stalker tabs requires endless scrolling. Use compact data tables or highly dense lists with useful columns instead.
+* **Scanner Tab Workflow**: The Scanner tab has a horrible user experience because it renders each discovered connection as an individual card, making it useless and redundant. Instead, it should ONLY display the progress of the scan (with counts and a progress bar) and then declare a summary of counts found (via text or toast). Individual connections should only be listed in their dedicated Xtream or Stalker tabs.
+* **Xtream / Stalker Drill-Downs**: Currently, clicking a connection card involves endless scrolling only to either verify or commit, without the 3rd-level drill-downs seen in the Python app. It MUST support fetching and displaying Channel groups (Categories) and Channel names, along with easy 1-click buttons to copy connection details (Host, Username, Password) or Commit.
+
+### 🐛 Android Bugs to Fix
+* **Committed Data Sync**: The Committed Data tab is only fetching 8 results when there are 9 in the Git repository. Investigate and fix the sync discrepancy.
+* **App Versioning**: Versioning up doesn't happen automatically each time you build and push to Git. Set up an automated version bump mechanism.
 
 ### 🔍 Parser Engine Improvements
-* **Xtream Codes State-Machine**: The current Xtream parser relies on regex matches on a single line (combos or URLs). Analysis of "Hit Hunter" style pastebins (e.g. `├● 🔌 ᴍᴀᴄ : ... ├● 🌐 ᴘᴏʀᴛᴀʟ : ...`) reveals that automated checking tools often output credentials across multiple lines using unicode characters (e.g., `ᴜꜱᴇʀ`, `ᴩᴀꜱꜱ`, `ʜᴏꜱᴛ`). The parser should be upgraded with a multi-line state machine for Xtream combos (similar to the Stalker parser) to capture these disconnected host/user/pass blocks.
+* **Xtream Codes State-Machine**: The current parsers work very well, but there are insights to bolster them even more (ensure changes only increase recognition and do NOT break or impair current functionality). Analysis of "Hit Hunter" style pastebins (e.g. `├● 🔌 ᴍᴀᴄ : ... ├● 🌐 ᴘᴏʀᴛᴀʟ : ...`) reveals that automated checking tools often output credentials across multiple lines using unicode characters (e.g., `ᴜꜱᴇʀ`, `ᴩᴀꜱꜱ`, `ʜᴏꜱᴛ`). The parser should be upgraded with a multi-line state machine for Xtream combos (similar to the Stalker parser) to capture these disconnected host/user/pass blocks.
 
