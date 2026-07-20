@@ -2157,7 +2157,7 @@
         "last_seen": "2026-07-20 03:48:41"
     },
     "yourservicetop.shop": {
-        "provider_name": "\ud83c\udfaf Identified: CDN PROXY SERVICE",
+        "provider_name": "\ud83c\udfaf Identified: MAX PPV",
         "server": "CDN PROXY SERVICE",
         "cors": "*",
         "cloudflare": "No",
@@ -2168,7 +2168,7 @@
         "rtmp_port": "25462",
         "allowed_formats": "['m3u8', 'ts', 'rtmp']",
         "first_seen": "2026-07-20 03:48:41",
-        "last_seen": "2026-07-20 03:48:41"
+        "last_seen": "2026-07-20 03:50:00"
     },
     "myxpanel.pro": {
         "provider_name": "\ud83d\udc64 Host: myxpanel.pro",
