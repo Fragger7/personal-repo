@@ -23,7 +23,7 @@ object IPTVClient {
         try {
             val encodedUser = URLEncoder.encode(user, "UTF-8")
             val encodedPass = URLEncoder.encode(pass, "UTF-8")
-            val url = "${baseUrl.trimEnd('/')}/player_api.php?username=$encodedUser&password=$encodedPass"
+            var url = "${baseUrl.trimEnd('/')}/player_api.php?username=$encodedUser&password=$encodedPass"
             var request = Request.Builder()
                 .url(url)
                 .header("User-Agent", "IPTVSmartersPro")
