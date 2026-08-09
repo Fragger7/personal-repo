@@ -110,4 +110,38 @@ object IPTVClient {
             return@withContext VerificationResult.Failed("Network Error: ${e.localizedMessage}")
         }
     }
+
+    suspend fun getLiveCategories(baseUrl: String, user: String, pass: String): org.json.JSONArray? = withContext(Dispatchers.IO) {
+        try {
+            val encodedUser = URLEncoder.encode(user, "UTF-8")
+            val encodedPass = URLEncoder.encode(pass, "UTF-8")
+            val url = "${baseUrl.trimEnd('/')}/player_api.php?username=$encodedUser&password=$encodedPass&action=get_live_categories"
+            val request = Request.Builder().url(url).header("User-Agent", "IPTVSmartersPro").build()
+            val response = client.newCall(request).execute()
+            if (response.code == 200) {
+                val body = response.body?.string() ?: ""
+                return@withContext org.json.JSONArray(body)
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+        return@withContext null
+    }
+
+    suspend fun getLiveStreams(baseUrl: String, user: String, pass: String, categoryId: String): org.json.JSONArray? = withContext(Dispatchers.IO) {
+        try {
+            val encodedUser = URLEncoder.encode(user, "UTF-8")
+            val encodedPass = URLEncoder.encode(pass, "UTF-8")
+            val url = "${baseUrl.trimEnd('/')}/player_api.php?username=$encodedUser&password=$encodedPass&action=get_live_streams&category_id=$categoryId"
+            val request = Request.Builder().url(url).header("User-Agent", "IPTVSmartersPro").build()
+            val response = client.newCall(request).execute()
+            if (response.code == 200) {
+                val body = response.body?.string() ?: ""
+                return@withContext org.json.JSONArray(body)
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+        return@withContext null
+    }
 }

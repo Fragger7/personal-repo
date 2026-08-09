@@ -827,26 +827,37 @@ def parse_credentials(text_block):
         if not any(a["base_url"] == base_url and a["username"] == user for a in extracted):
             extracted.append({"type": "Xtream", "base_url": base_url, "username": user, "password": password})
 
-    # Stalker Pattern (Robust State-Machine Parser for Free Text)
+    # Unified State-Machine Parser for Multi-line Free Text (Stalker & Xtream)
     current_url = None
     current_mac = None
-
+    xt_user = None
+    xt_pass = None
     for line in text_block.splitlines():
         # Reset state on empty lines or explicit custom text block separators
         if not line.strip() or re.search(r'[-=_*#]{4,}|╰─|╭─|┌─|└─|\|', line):
             current_url = None
             current_mac = None
-
+            xt_user = None
+            xt_pass = None
+        
         url_match = re.search(r'(https?://[^/\s]+(?:/[^/\s]*)?)', line)
         if url_match and "player_api" not in line and "get.php" not in line:
             base_match = re.match(r'(https?://[^/:]+(?::\d+)?)', url_match.group(1))
             if base_match:
                 current_url = base_match.group(1)
-
+        
         mac_match = re.search(r'([0-9a-fA-F]{2}(?::[0-9a-fA-F]{2}){5})', line, re.IGNORECASE)
         if mac_match:
             current_mac = mac_match.group(1).upper()
-
+            
+        user_match = re.search(r'(?i)(?:user|usr|username|ᴜꜱᴇʀ)[\s:=]+([^\s]+)', line)
+        if user_match:
+            xt_user = user_match.group(1)
+            
+        pass_match = re.search(r'(?i)(?:pass|password|ᴩᴀꜱꜱ)[\s:=]+([^\s]+)', line)
+        if pass_match:
+            xt_pass = pass_match.group(1)
+            
         if current_url and current_mac:
             if not any(a.get("type") == "Stalker" and a["base_url"] == current_url and a.get("mac") == current_mac for a in extracted):
                 extracted.append({
@@ -857,7 +868,14 @@ def parse_credentials(text_block):
                     "password": "MAC"
                 })
             current_mac = None # Clear mac to allow next mac to pair with the same portal
-                    
+            
+        if current_url and xt_user and xt_pass:
+            if not (re.match(r'^[0-9a-fA-F]{2}$', xt_user) and re.match(r'^(?:[0-9a-fA-F]{2}:){4}[0-9a-fA-F]{2}$', xt_pass)):
+                if not any(a.get("type") == "Xtream" and a["base_url"] == current_url and a["username"] == xt_user for a in extracted):
+                    extracted.append({"type": "Xtream", "base_url": current_url, "username": xt_user, "password": xt_pass})
+            xt_user = None
+            xt_pass = None
+
     logger.info(f"Parsing complete. Extracted {len(extracted)} account configurations.")
     return extracted
 

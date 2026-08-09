@@ -66,18 +66,24 @@ object Parser {
             }
         }
 
-        // 4. Stalker Pattern (Robust State-Machine Parser for Free Text)
+                // 4. Unified State-Machine Parser for Free Text (Stalker & Xtream)
         var currentUrl: String? = null
         var currentMac: String? = null
+        var xtUser: String? = null
+        var xtPass: String? = null
         
         val urlExtractPattern = Pattern.compile("(https?://[^/\\s]+(?:/[^/\\s]*)?)")
         val baseExtractPattern = Pattern.compile("(https?://[^/:]+(?::\\d+)?)")
         val macExtractPattern = Pattern.compile("([0-9a-fA-F]{2}(?::[0-9a-fA-F]{2}){5})", Pattern.CASE_INSENSITIVE)
+        val userExtractPattern = Pattern.compile("(?i)(?:user|usr|username|ᴜꜱᴇʀ)[\\s:=]+([^\\s]+)")
+        val passExtractPattern = Pattern.compile("(?i)(?:pass|password|ᴩᴀꜱꜱ)[\\s:=]+([^\\s]+)")
         
         for (line in textBlock.lines()) {
             if (line.trim().isEmpty() || line.contains(Regex("[-=_*#]{4,}|╰─|╭─|┌─|└─|\\|"))) {
                 currentUrl = null
                 currentMac = null
+                xtUser = null
+                xtPass = null
             }
             
             val urlMatch = urlExtractPattern.matcher(line)
@@ -93,14 +99,33 @@ object Parser {
                 currentMac = macMatch.group(1)?.uppercase()
             }
             
+            val userMatch = userExtractPattern.matcher(line)
+            if (userMatch.find()) {
+                xtUser = userMatch.group(1)
+            }
+            
+            val passMatch = passExtractPattern.matcher(line)
+            if (passMatch.find()) {
+                xtPass = passMatch.group(1)
+            }
+            
             if (currentUrl != null && currentMac != null) {
                 if (!extracted.any { it.type == "Stalker" && it.baseUrl == currentUrl && it.mac == currentMac }) {
                     extracted.add(ParsedCredential(currentUrl, currentMac, "MAC", currentMac, "Stalker"))
                 }
                 currentMac = null
             }
+            
+            if (currentUrl != null && xtUser != null && xtPass != null) {
+                if (!(xtUser.matches(Regex("^[0-9a-fA-F]{2}$")) && xtPass.matches(Regex("^(?:[0-9a-fA-F]{2}:){4}[0-9a-fA-F]{2}$")))) {
+                    if (!extracted.any { it.type == "Xtream" && it.baseUrl == currentUrl && it.user == xtUser }) {
+                        extracted.add(ParsedCredential(currentUrl, xtUser, xtPass, "", "Xtream"))
+                    }
+                }
+                xtUser = null
+                xtPass = null
+            }
         }
-
         return extracted
     }
 }

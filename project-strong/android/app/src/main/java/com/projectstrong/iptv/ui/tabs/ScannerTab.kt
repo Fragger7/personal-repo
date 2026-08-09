@@ -14,6 +14,9 @@ import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.material3.LinearProgressIndicator
+import kotlinx.coroutines.delay
+import com.projectstrong.iptv.network.IPTVClient
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -33,6 +36,9 @@ fun ScannerTab(onNextTab: () -> Unit = {}) {
     val output = DataStore.scannedNodes
     var ipInfo by remember { mutableStateOf("Checking connection...") }
     var showVpnWarning by remember { mutableStateOf(false) }
+        var isScanning by remember { mutableStateOf(false) }
+    var scanProgress by remember { mutableStateOf(0f) }
+    var scanCountText by remember { mutableStateOf("") }
     val coroutineScope = rememberCoroutineScope()
     val clipboardManager = LocalClipboardManager.current
     
@@ -108,11 +114,51 @@ fun ScannerTab(onNextTab: () -> Unit = {}) {
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 GlassButton(
-                    text = "Parse & Scan Data",
+                    text = if (isScanning) "Scanning..." else "Parse & Scan Data",
                     onClick = {
+                        if (isScanning) return@GlassButton
                         val parsed = Parser.parseCredentials(input)
                         DataStore.scannedNodes.clear()
                         DataStore.scannedNodes.addAll(parsed)
+                        if (parsed.isEmpty()) {
+                            scanCountText = "No credentials found."
+                            return@GlassButton
+                        }
+                        
+                        isScanning = true
+                        scanProgress = 0f
+                        scanCountText = "Found ${parsed.size} credentials. Starting handshake..."
+                        
+                        coroutineScope.launch {
+                            val total = parsed.size
+                            for ((i, node) in parsed.withIndex()) {
+                                // Batch Verification
+                                val idx = DataStore.scannedNodes.indexOf(node)
+                                if (idx != -1) {
+                                    DataStore.scannedNodes[idx] = node.copy(isVerifying = true, status = "Connecting...")
+                                }
+                                
+                                val result = if (node.type == "Xtream") {
+                                    IPTVClient.verifyXtream(node.baseUrl, node.user, node.pass)
+                                } else {
+                                    IPTVClient.verifyStalker(node.baseUrl, node.mac)
+                                }
+                                
+                                val newIdx = DataStore.scannedNodes.indexOfFirst { it.baseUrl == node.baseUrl && it.user == node.user && it.mac == node.mac && it.type == node.type }
+                                if (newIdx != -1) {
+                                    if (result is com.projectstrong.iptv.network.VerificationResult.Success) {
+                                        DataStore.scannedNodes[newIdx] = DataStore.scannedNodes[newIdx].copy(isVerifying = false, status = result.status, details = result.details)
+                                    } else if (result is com.projectstrong.iptv.network.VerificationResult.Failed) {
+                                        DataStore.scannedNodes[newIdx] = DataStore.scannedNodes[newIdx].copy(isVerifying = false, status = result.reason)
+                                    }
+                                }
+                                
+                                scanProgress = (i + 1).toFloat() / total.toFloat()
+                                scanCountText = "Processed ${i + 1}/$total connections..."
+                            }
+                            isScanning = false
+                            scanCountText = "Scan Complete: ${parsed.size} credentials ready."
+                        }
                     },
                     modifier = Modifier.weight(1.5f)
                 )
@@ -133,67 +179,30 @@ fun ScannerTab(onNextTab: () -> Unit = {}) {
         
         item {
             AnimatedVisibility(
-                visible = output.isNotEmpty(),
-                enter = fadeIn() + slideInVertically(),
-                exit = fadeOut()
+                visible = output.isNotEmpty() || isScanning,
+                enter = androidx.compose.animation.fadeIn() + androidx.compose.animation.slideInVertically(),
+                exit = androidx.compose.animation.fadeOut()
             ) {
                 Column(modifier = Modifier.padding(top = 16.dp, bottom = 8.dp)) {
                     Text(
-                        text = "Discovered Nodes",
-                        color = Color.White,
-                        style = androidx.compose.material3.MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Text(
-                        text = "Found ${output.size} valid credentials.",
+                        text = scanCountText,
                         color = Color(0xFF3B82F6),
-                        style = androidx.compose.material3.MaterialTheme.typography.bodyMedium,
+                        style = androidx.compose.material3.MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Medium
                     )
-                }
-            }
-        }
-            
-        if (output.isNotEmpty()) {
-            items(output) { cred ->
-                GlassCard(modifier = Modifier.fillMaxWidth()) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Row(
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Text(
-                                text = cred.type, 
-                                color = if (cred.type == "Xtream") Color(0xFF3B82F6) else Color(0xFF8B5CF6),
-                                fontWeight = FontWeight.Bold,
-                                style = androidx.compose.material3.MaterialTheme.typography.titleMedium
-                            )
-                        }
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(text = "Host", color = Color.White.copy(alpha=0.5f), style = androidx.compose.material3.MaterialTheme.typography.labelSmall)
-                        Text(text = cred.baseUrl, color = Color.White, style = androidx.compose.material3.MaterialTheme.typography.bodyLarge)
-                        
-                        Spacer(modifier = Modifier.height(8.dp))
-                        if (cred.type == "Xtream") {
-                            Row(modifier = Modifier.fillMaxWidth()) {
-                                Column(modifier = Modifier.weight(1f)) {
-                                    Text(text = "Username", color = Color.White.copy(alpha=0.5f), style = androidx.compose.material3.MaterialTheme.typography.labelSmall)
-                                    Text(text = cred.user, color = Color.White, style = androidx.compose.material3.MaterialTheme.typography.bodyLarge)
-                                }
-                                Column(modifier = Modifier.weight(1f)) {
-                                    Text(text = "Password", color = Color.White.copy(alpha=0.5f), style = androidx.compose.material3.MaterialTheme.typography.labelSmall)
-                                    Text(text = cred.pass, color = Color.White, style = androidx.compose.material3.MaterialTheme.typography.bodyLarge)
-                                }
-                            }
-                        } else {
-                            Text(text = "MAC Address", color = Color.White.copy(alpha=0.5f), style = androidx.compose.material3.MaterialTheme.typography.labelSmall)
-                            Text(text = cred.mac, color = Color.White, style = androidx.compose.material3.MaterialTheme.typography.bodyLarge)
-                        }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    if (isScanning || scanProgress > 0f) {
+                        LinearProgressIndicator(
+                            progress = scanProgress,
+                            modifier = Modifier.fillMaxWidth().height(6.dp),
+                            color = Color(0xFF10B981),
+                            trackColor = Color.White.copy(alpha = 0.2f)
+                        )
                     }
                 }
             }
         }
-
+        
         if (output.isNotEmpty()) {
             item {
                 Spacer(modifier = Modifier.height(16.dp))
