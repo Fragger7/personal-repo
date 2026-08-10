@@ -6,7 +6,7 @@ import android.util.Base64
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -14,8 +14,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.projectstrong.iptv.ui.components.GlassButton
-import com.projectstrong.iptv.ui.components.GlassTextField
+import com.projectstrong.iptv.ui.components.*
 
 @Composable
 fun Base64Tab(onNextTab: () -> Unit = {}) {
@@ -35,29 +34,38 @@ fun Base64Tab(onNextTab: () -> Unit = {}) {
         Text(
             text = "Base64 URL Decoder",
             color = Color.White,
-            style = androidx.compose.material3.MaterialTheme.typography.headlineMedium,
+            style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.Bold
         )
         
         Text(
             text = "Extract hidden structural links embedded as text chunks inside unstructured text blocks, automatically stripping garbage or padding limits.",
-            color = Color.White.copy(alpha = 0.7f),
-            style = androidx.compose.material3.MaterialTheme.typography.bodyMedium,
+            color = Color(0xFFA0A0B0),
+            style = MaterialTheme.typography.bodyMedium,
             modifier = Modifier.padding(bottom = 8.dp)
         )
 
-        GlassTextField(
+        OutlinedTextField(
             value = input,
             onValueChange = { input = it },
-            label = "Paste Base64 Encoded Block",
-            minLines = 6
+            label = { Text("Paste Base64 Encoded Block") },
+            minLines = 6,
+            modifier = Modifier.fillMaxWidth(),
+            colors = OutlinedTextFieldDefaults.colors(
+                unfocusedBorderColor = Color(0xFF333344),
+                focusedBorderColor = Color(0xFF3B82F6),
+                unfocusedTextColor = Color.White,
+                focusedTextColor = Color.White,
+                unfocusedContainerColor = Color(0xFF12121A),
+                focusedContainerColor = Color(0xFF12121A)
+            )
         )
 
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            GlassButton(
+            PrimaryButton(
                 text = "Decode Data",
                 onClick = {
                     try {
@@ -87,7 +95,7 @@ fun Base64Tab(onNextTab: () -> Unit = {}) {
                 modifier = Modifier.weight(1f)
             )
             
-            GlassButton(
+            SecondaryButton(
                 text = "Clear",
                 onClick = { 
                     input = ""
@@ -101,36 +109,45 @@ fun Base64Tab(onNextTab: () -> Unit = {}) {
             Text(
                 text = "Decoded Output",
                 color = Color.White,
-                style = androidx.compose.material3.MaterialTheme.typography.titleMedium,
+                style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.padding(top = 16.dp)
             )
-
-            GlassTextField(
+            OutlinedTextField(
                 value = output,
                 onValueChange = {},
-                label = "Result",
-                minLines = 4
+                label = { Text("Result") },
+                minLines = 4,
+                modifier = Modifier.fillMaxWidth(),
+                colors = OutlinedTextFieldDefaults.colors(
+                    unfocusedBorderColor = Color(0xFF333344),
+                    focusedBorderColor = Color(0xFF3B82F6),
+                    unfocusedTextColor = Color.White,
+                    focusedTextColor = Color.White,
+                    unfocusedContainerColor = Color(0xFF12121A),
+                    focusedContainerColor = Color(0xFF12121A)
+                )
             )
             
             val trimmedOutput = output.trim()
             if (trimmedOutput.startsWith("http://") || trimmedOutput.startsWith("https://")) {
                 Spacer(modifier = Modifier.height(8.dp))
-                GlassButton(
+                PrimaryButton(
                     text = "🌐 Launch Converted URL in Browser",
                     onClick = {
                         val intent = Intent(Intent.ACTION_VIEW, Uri.parse(trimmedOutput))
                         context.startActivity(intent)
-                    }
+                    },
+                    modifier = Modifier.fillMaxWidth()
                 )
             }
         }
         
         Spacer(modifier = Modifier.height(16.dp))
-
-        GlassButton(
+        PrimaryButton(
             text = "Continue to Scanner →",
-            onClick = onNextTab
+            onClick = onNextTab,
+            modifier = Modifier.fillMaxWidth()
         )
     }
 }
