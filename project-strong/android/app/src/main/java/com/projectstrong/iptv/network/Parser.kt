@@ -11,6 +11,7 @@ data class ParsedCredential(
     val status: String = "Pending Handshake",
     val details: String = "",
     val expires: String = "N/A",
+    val daysLeft: String = "N/A",
     val activeConn: String = "N/A",
     val maxConn: String = "N/A",
     val channels: String = "N/A",

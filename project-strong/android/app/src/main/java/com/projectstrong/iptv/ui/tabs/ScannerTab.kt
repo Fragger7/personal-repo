@@ -32,35 +32,32 @@ import com.projectstrong.iptv.ui.components.GlassTextField
 
 @Composable
 fun ScannerTab(onNextTab: () -> Unit = {}) {
-    var input by remember { mutableStateOf("") }
-    val output = DataStore.scannedNodes
-    var ipInfo by remember { mutableStateOf("Checking connection...") }
-    var showVpnWarning by remember { mutableStateOf(false) }
-        var isScanning by remember { mutableStateOf(false) }
-    var scanProgress by remember { mutableStateOf(0f) }
-    var scanCountText by remember { mutableStateOf("") }
-    val coroutineScope = rememberCoroutineScope()
+        val output = DataStore.scannedNodes
+    var DataStore.ipInfo by remember { mutableStateOf("Checking connection...") }
+                        val coroutineScope = rememberCoroutineScope()
     val clipboardManager = LocalClipboardManager.current
     
     LaunchedEffect(Unit) {
-        coroutineScope.launch {
-            try {
-                val client = OkHttpClient()
-                val request = Request.Builder().url("http://ip-api.com/json/").build()
-                val response = withContext(Dispatchers.IO) { client.newCall(request).execute() }
-                val json = JSONObject(response.body?.string() ?: "{}")
-                val isp = json.optString("isp", "Unknown ISP")
-                val org = json.optString("org", "")
-                ipInfo = "Connected via $isp"
-                val combined = "$isp $org".lowercase()
-                val cloudProviders = listOf("amazon", "aws", "google", "azure", "cloudflare", "digitalocean")
-                showVpnWarning = !combined.contains("vpn") && !combined.contains("proxy") && !combined.contains("mullvad") && !combined.contains("nord")
-            } catch (e: Exception) {
-                ipInfo = "VPN / Connection Unknown"
+        if (DataStore.ipInfo.isEmpty()) {
+            DataStore.ipInfo = "Checking secure network shielding..."
+            coroutineScope.launch {
+                try {
+                    val client = OkHttpClient()
+                    val request = Request.Builder().url("http://ip-api.com/json/").build()
+                    val response = withContext(Dispatchers.IO) { client.newCall(request).execute() }
+                    val json = JSONObject(response.body?.string() ?: "{}")
+                    val isp = json.optString("isp", "Unknown ISP")
+                    val org = json.optString("org", "")
+                    DataStore.ipInfo = "Connected via $isp"
+                    val combined = "$isp $org".lowercase()
+                    val cloudProviders = listOf("amazon", "aws", "google", "azure", "cloudflare", "digitalocean")
+                    DataStore.showVpnWarning = !combined.contains("vpn") && !combined.contains("proxy") && !combined.contains("mullvad") && !combined.contains("nord")
+                } catch (e: Exception) {
+                    DataStore.ipInfo = "VPN / Connection Unknown"
+                }
             }
         }
     }
-
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
@@ -84,8 +81,8 @@ fun ScannerTab(onNextTab: () -> Unit = {}) {
             )
 
             GlassTextField(
-                value = input,
-                onValueChange = { input = it },
+                value = DataStore.scannerInput,
+                onValueChange = { DataStore.scannerInput = it },
                 label = "Paste Unstructured Credentials Block",
                 minLines = 8,
                 maxLines = 10,
@@ -96,17 +93,17 @@ fun ScannerTab(onNextTab: () -> Unit = {}) {
 
             Spacer(modifier = Modifier.height(16.dp))
             
-            if (showVpnWarning) {
+            if (DataStore.showVpnWarning) {
                 GlassCard(modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)) {
                     Text(
-                        text = "⚠️ $ipInfo\nWARNING: You may not be using a VPN. Public ISPs often block IPTV portals. You can proceed, but results may fail.",
+                        text = "⚠️ ${DataStore.ipInfo}\nWARNING: You may not be using a VPN. Public ISPs often block IPTV portals. You can proceed, but results may fail.",
                         color = Color(0xFFF59E0B),
                         style = androidx.compose.material3.MaterialTheme.typography.bodySmall,
                         modifier = Modifier.padding(12.dp)
                     )
                 }
             } else {
-                Text(text = "🛡️ $ipInfo", color = Color(0xFF10B981), style = androidx.compose.material3.MaterialTheme.typography.bodySmall, modifier = Modifier.padding(bottom = 16.dp))
+                Text(text = "🛡️ ${DataStore.ipInfo}", color = Color(0xFF10B981), style = androidx.compose.material3.MaterialTheme.typography.bodySmall, modifier = Modifier.padding(bottom = 16.dp))
             }
             
             Row(
@@ -114,20 +111,20 @@ fun ScannerTab(onNextTab: () -> Unit = {}) {
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 GlassButton(
-                    text = if (isScanning) "Scanning..." else "Parse & Scan Data",
+                    text = if (DataStore.isScanning) "Scanning..." else "Parse & Scan Data",
                     onClick = {
-                        if (isScanning) return@GlassButton
-                        val parsed = Parser.parseCredentials(input)
+                        if (DataStore.isScanning) return@GlassButton
+                        val parsed = Parser.parseCredentials(DataStore.scannerInput)
                         DataStore.scannedNodes.clear()
                         DataStore.scannedNodes.addAll(parsed)
                         if (parsed.isEmpty()) {
-                            scanCountText = "No credentials found."
+                            DataStore.scanCountText = "No credentials found."
                             return@GlassButton
                         }
                         
-                        isScanning = true
-                        scanProgress = 0f
-                        scanCountText = "Found ${parsed.size} credentials. Starting handshake..."
+                        DataStore.isScanning = true
+                        DataStore.scanProgress = 0f
+                        DataStore.scanCountText = "Found ${parsed.size} credentials. Starting handshake..."
                         
                         coroutineScope.launch {
                             val total = parsed.size
@@ -153,11 +150,11 @@ fun ScannerTab(onNextTab: () -> Unit = {}) {
                                     }
                                 }
                                 
-                                scanProgress = (i + 1).toFloat() / total.toFloat()
-                                scanCountText = "Processed ${i + 1}/$total connections..."
+                                DataStore.scanProgress = (i + 1).toFloat() / total.toFloat()
+                                DataStore.scanCountText = "Processed ${i + 1}/$total connections..."
                             }
-                            isScanning = false
-                            scanCountText = "Scan Complete: ${parsed.size} credentials ready."
+                            DataStore.isScanning = false
+                            DataStore.scanCountText = "Scan Complete: ${parsed.size} credentials ready."
                         }
                     },
                     modifier = Modifier.weight(1.5f)
@@ -165,13 +162,13 @@ fun ScannerTab(onNextTab: () -> Unit = {}) {
                 GlassButton(
                     text = "Paste",
                     onClick = { 
-                        clipboardManager.getText()?.text?.let { input += it } 
+                        clipboardManager.getText()?.text?.let { DataStore.scannerInput += it } 
                     },
                     modifier = Modifier.weight(1f)
                 )
                 GlassButton(
                     text = "Clear",
-                    onClick = { input = ""; DataStore.scannedNodes.clear() },
+                    onClick = { DataStore.scannerInput = ""; DataStore.scannedNodes.clear() },
                     modifier = Modifier.weight(1f)
                 )
             }
@@ -179,21 +176,21 @@ fun ScannerTab(onNextTab: () -> Unit = {}) {
         
         item {
             AnimatedVisibility(
-                visible = output.isNotEmpty() || isScanning,
+                visible = DataStore.scannedNodes.isNotEmpty() || DataStore.isScanning,
                 enter = androidx.compose.animation.fadeIn() + androidx.compose.animation.slideInVertically(),
                 exit = androidx.compose.animation.fadeOut()
             ) {
                 Column(modifier = Modifier.padding(top = 16.dp, bottom = 8.dp)) {
                     Text(
-                        text = scanCountText,
+                        text = DataStore.scanCountText,
                         color = Color(0xFF3B82F6),
                         style = androidx.compose.material3.MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Medium
                     )
                     Spacer(modifier = Modifier.height(8.dp))
-                    if (isScanning || scanProgress > 0f) {
+                    if (DataStore.isScanning || DataStore.scanProgress > 0f) {
                         LinearProgressIndicator(
-                            progress = scanProgress,
+                            progress = DataStore.scanProgress,
                             modifier = Modifier.fillMaxWidth().height(6.dp),
                             color = Color(0xFF10B981),
                             trackColor = Color.White.copy(alpha = 0.2f)
@@ -203,7 +200,7 @@ fun ScannerTab(onNextTab: () -> Unit = {}) {
             }
         }
         
-        if (output.isNotEmpty()) {
+        if (DataStore.scannedNodes.isNotEmpty()) {
             item {
                 Spacer(modifier = Modifier.height(16.dp))
                 GlassButton(

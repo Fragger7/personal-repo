@@ -40,9 +40,9 @@ fun XtreamTab(onNextTab: () -> Unit) {
     var showOnlyActive by remember { mutableStateOf(false) }
     
     val displayNodes = if (showOnlyActive) {
-        xtreamNodes.filter { it.status.contains("Active", ignoreCase = true) }
+        xtreamNodes.filter { it.status.contains("Active", ignoreCase = true) }.sortedByDescending { it.channels.toIntOrNull() ?: -1 }
     } else {
-        xtreamNodes
+        xtreamNodes.sortedByDescending { it.channels.toIntOrNull() ?: -1 }
     }
 
     val coroutineScope = rememberCoroutineScope()
@@ -52,11 +52,19 @@ fun XtreamTab(onNextTab: () -> Unit) {
     
     var isLoadingCategories by remember { mutableStateOf(false) }
     var categories by remember { mutableStateOf<JSONArray?>(null) }
+    var selectedCategory by remember { mutableStateOf<org.json.JSONObject?>(null) }
+    var channelsList by remember { mutableStateOf<JSONArray?>(null) }
+    var isLoadingChannels by remember { mutableStateOf(false) }
+
+    var isBatchLoading by remember { mutableStateOf(false) }
 
     // Reset details when selection changes
     LaunchedEffect(selectedNode) {
         categories = null
+        selectedCategory = null
+        channelsList = null
         isLoadingCategories = false
+        isLoadingChannels = false
         if (selectedNode != null) {
             val idx = displayNodes.indexOf(selectedNode)
             if (idx >= 0) {
@@ -108,10 +116,32 @@ fun XtreamTab(onNextTab: () -> Unit) {
                 )
                 Text("Show only Active", color = Color.White)
             }
-            GlassButton(
-                text = "Continue to Stalker →",
-                onClick = onNextTab
-            )
+            if (showOnlyActive && displayNodes.isNotEmpty()) {
+                GlassButton(
+                    text = if (isBatchLoading) "Loading..." else "📊 Query Counts",
+                    onClick = {
+                        if (isBatchLoading) return@GlassButton
+                        isBatchLoading = true
+                        coroutineScope.launch {
+                            for (node in displayNodes) {
+                                if (node.channels == "N/A") {
+                                    val cats = IPTVClient.getLiveCategories(node.baseUrl, node.user, node.pass)
+                                    val idx = DataStore.scannedNodes.indexOf(node)
+                                    if (idx != -1) {
+                                        DataStore.scannedNodes[idx] = node.copy(channels = (cats?.length() ?: 0).toString())
+                                    }
+                                }
+                            }
+                            isBatchLoading = false
+                        }
+                    }
+                )
+            } else {
+                GlassButton(
+                    text = "Continue to Stalker →",
+                    onClick = onNextTab
+                )
+            }
         }
 
         // Table / Grid Area
@@ -138,10 +168,10 @@ fun XtreamTab(onNextTab: () -> Unit) {
                             Text("Pass", color = Color.White, fontWeight = FontWeight.Bold, modifier = Modifier.width(120.dp))
                             Text("Status", color = Color.White, fontWeight = FontWeight.Bold, modifier = Modifier.width(120.dp))
                             Text("Expires", color = Color.White, fontWeight = FontWeight.Bold, modifier = Modifier.width(100.dp))
-                            Text("Conn", color = Color.White, fontWeight = FontWeight.Bold, modifier = Modifier.width(80.dp))
-                            Text("Max", color = Color.White, fontWeight = FontWeight.Bold, modifier = Modifier.width(80.dp))
-                            Text("Channels", color = Color.White, fontWeight = FontWeight.Bold, modifier = Modifier.width(80.dp))
-                            Text("VODs", color = Color.White, fontWeight = FontWeight.Bold, modifier = Modifier.width(80.dp))
+                            Text("Days", color = Color.White, fontWeight = FontWeight.Bold, modifier = Modifier.width(60.dp))
+                            Text("Conn", color = Color.White, fontWeight = FontWeight.Bold, modifier = Modifier.width(60.dp))
+                            Text("Max", color = Color.White, fontWeight = FontWeight.Bold, modifier = Modifier.width(60.dp))
+                            Text("Cats", color = Color.White, fontWeight = FontWeight.Bold, modifier = Modifier.width(80.dp))
                         }
                         Divider(color = Color.White.copy(alpha = 0.2f))
                     }
@@ -167,10 +197,10 @@ fun XtreamTab(onNextTab: () -> Unit) {
                             Text(node.status, color = statusColor, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.width(120.dp))
                             
                             Text(node.expires, color = Color.White.copy(alpha = 0.8f), maxLines = 1, modifier = Modifier.width(100.dp))
-                            Text(node.activeConn, color = Color.White.copy(alpha = 0.8f), maxLines = 1, modifier = Modifier.width(80.dp))
-                            Text(node.maxConn, color = Color.White.copy(alpha = 0.8f), maxLines = 1, modifier = Modifier.width(80.dp))
+                            Text(node.daysLeft, color = Color.White.copy(alpha = 0.8f), maxLines = 1, modifier = Modifier.width(60.dp))
+                            Text(node.activeConn, color = Color.White.copy(alpha = 0.8f), maxLines = 1, modifier = Modifier.width(60.dp))
+                            Text(node.maxConn, color = Color.White.copy(alpha = 0.8f), maxLines = 1, modifier = Modifier.width(60.dp))
                             Text(node.channels, color = Color.White.copy(alpha = 0.8f), maxLines = 1, modifier = Modifier.width(80.dp))
-                            Text(node.vods, color = Color.White.copy(alpha = 0.8f), maxLines = 1, modifier = Modifier.width(80.dp))
                         }
                         Divider(color = Color.White.copy(alpha = 0.1f))
                     }
@@ -185,7 +215,7 @@ fun XtreamTab(onNextTab: () -> Unit) {
             exit = slideOutVertically(targetOffsetY = { it }) + fadeOut()
         ) {
             val node = selectedNode ?: return@AnimatedVisibility
-            GlassCard(modifier = Modifier.fillMaxWidth().heightIn(max = 300.dp)) {
+            GlassCard(modifier = Modifier.fillMaxWidth().heightIn(min = 350.dp, max = 400.dp)) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -206,7 +236,11 @@ fun XtreamTab(onNextTab: () -> Unit) {
                         }
                     }
                     
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Row(modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp), horizontalArrangement = Arrangement.SpaceBetween) {
+                         Text("Expires: ${node.expires} (${node.daysLeft} days)", color = Color.White.copy(alpha = 0.8f), style = MaterialTheme.typography.bodySmall)
+                         Text("Conns: ${node.activeConn} / ${node.maxConn}", color = Color.White.copy(alpha = 0.8f), style = MaterialTheme.typography.bodySmall)
+                         Text("Tz: ${node.serverTimezone}", color = Color.White.copy(alpha = 0.8f), style = MaterialTheme.typography.bodySmall)
+                    }
                     
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         GlassButton(text = "Copy Host", onClick = { clipboardManager.setText(AnnotatedString(node.baseUrl)) }, modifier = Modifier.weight(1f))
@@ -214,7 +248,7 @@ fun XtreamTab(onNextTab: () -> Unit) {
                         GlassButton(text = "Copy Pass", onClick = { clipboardManager.setText(AnnotatedString(node.pass)) }, modifier = Modifier.weight(1f))
                     }
                     
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(12.dp))
                     
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         GlassButton(
@@ -237,6 +271,7 @@ fun XtreamTab(onNextTab: () -> Unit) {
                                                 status = result.status, 
                                                 details = result.details,
                                                 expires = result.expires,
+                                                daysLeft = result.daysLeft,
                                                 activeConn = result.activeConn,
                                                 maxConn = result.maxConn,
                                                 serverTimezone = result.serverTimezone,
@@ -268,35 +303,73 @@ fun XtreamTab(onNextTab: () -> Unit) {
                     Spacer(modifier = Modifier.height(16.dp))
                     
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                        Text("Category Explorer", color = Color.White, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                        Text(if (selectedCategory == null) "Categories" else "Channels in ${selectedCategory!!.optString("category_name")}", color = Color.White, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                         GlassButton(
-                            text = if (isLoadingCategories) "Loading..." else "Load Categories & Count",
+                            text = if (isLoadingCategories) "Loading..." else if (selectedCategory != null) "Back" else "Load",
                             onClick = {
-                                if (isLoadingCategories) return@GlassButton
-                                isLoadingCategories = true
-                                coroutineScope.launch {
-                                    categories = IPTVClient.getLiveCategories(node.baseUrl, node.user, node.pass)
-                                    
-                                    // Set channel/vod counts (Mocking VOD count since endpoint is categories)
-                                    val catCount = categories?.length() ?: 0
-                                    val newIdx = DataStore.scannedNodes.indexOfFirst { it.baseUrl == node.baseUrl && it.user == node.user && it.type == "Xtream" }
-                                    if (newIdx != -1) {
-                                        DataStore.scannedNodes[newIdx] = DataStore.scannedNodes[newIdx].copy(
-                                            channels = "$catCount cats"
-                                        )
-                                        if (selectedNode?.baseUrl == node.baseUrl && selectedNode?.user == node.user) {
-                                            selectedNode = DataStore.scannedNodes[newIdx]
+                                if (selectedCategory != null) {
+                                    selectedCategory = null
+                                    channelsList = null
+                                } else {
+                                    if (isLoadingCategories) return@GlassButton
+                                    isLoadingCategories = true
+                                    coroutineScope.launch {
+                                        categories = IPTVClient.getLiveCategories(node.baseUrl, node.user, node.pass)
+                                        val catCount = categories?.length() ?: 0
+                                        val newIdx = DataStore.scannedNodes.indexOfFirst { it.baseUrl == node.baseUrl && it.user == node.user && it.type == "Xtream" }
+                                        if (newIdx != -1) {
+                                            DataStore.scannedNodes[newIdx] = DataStore.scannedNodes[newIdx].copy(channels = catCount.toString())
+                                            if (selectedNode?.baseUrl == node.baseUrl && selectedNode?.user == node.user) {
+                                                selectedNode = DataStore.scannedNodes[newIdx]
+                                            }
                                         }
+                                        isLoadingCategories = false
                                     }
-                                    isLoadingCategories = false
                                 }
                             }
                         )
                     }
                     
-                    if (categories != null) {
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text("Total Categories Loaded: ${categories!!.length()}", color = Color(0xFF3B82F6), style = MaterialTheme.typography.bodyMedium)
+                    // Display Categories or Channels
+                    Box(modifier = Modifier.fillMaxWidth().weight(1f).padding(top = 8.dp)) {
+                        if (isLoadingChannels) {
+                            Text("Loading channels...", color = Color.White.copy(alpha = 0.5f), modifier = Modifier.align(Alignment.Center))
+                        } else if (channelsList != null && selectedCategory != null) {
+                            LazyColumn(modifier = Modifier.fillMaxSize()) {
+                                items(channelsList!!.length()) { i ->
+                                    val ch = channelsList!!.optJSONObject(i)
+                                    Row(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp), horizontalArrangement = Arrangement.SpaceBetween) {
+                                        Text(ch?.optString("name", "Unknown") ?: "Unknown", color = Color.White, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
+                                        Text("ID: ${ch?.optString("stream_id", "")}", color = Color.White.copy(alpha = 0.5f))
+                                    }
+                                    Divider(color = Color.White.copy(alpha = 0.1f))
+                                }
+                            }
+                        } else if (categories != null) {
+                            LazyColumn(modifier = Modifier.fillMaxSize()) {
+                                items(categories!!.length()) { i ->
+                                    val cat = categories!!.optJSONObject(i)
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth().clickable {
+                                            selectedCategory = cat
+                                            isLoadingChannels = true
+                                            coroutineScope.launch {
+                                                channelsList = IPTVClient.getLiveStreams(node.baseUrl, node.user, node.pass, cat?.optString("category_id") ?: "")
+                                                isLoadingChannels = false
+                                            }
+                                        }.padding(vertical = 8.dp),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text(cat?.optString("category_name", "Unknown") ?: "Unknown", color = Color(0xFF3B82F6), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                        Text("ID: ${cat?.optString("category_id", "")}", color = Color.White.copy(alpha = 0.5f))
+                                    }
+                                    Divider(color = Color.White.copy(alpha = 0.1f))
+                                }
+                            }
+                        } else {
+                            Text("Click Load to fetch categories.", color = Color.White.copy(alpha = 0.5f), modifier = Modifier.align(Alignment.Center))
+                        }
                     }
                 }
             }

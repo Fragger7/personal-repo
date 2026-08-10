@@ -190,7 +190,13 @@ fun StalkerTab(onNextTab: () -> Unit) {
                         }
                     }
                     
-                    Spacer(modifier = Modifier.height(16.dp))
+                    
+                    Row(modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp), horizontalArrangement = Arrangement.SpaceBetween) {
+                         Text("Status: ${node.status}", color = Color.White.copy(alpha = 0.8f), style = MaterialTheme.typography.bodySmall)
+                         Text("Details: ${node.details}", color = Color.White.copy(alpha = 0.8f), style = MaterialTheme.typography.bodySmall)
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
                     
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         GlassButton(text = "Copy Host", onClick = { clipboardManager.setText(AnnotatedString(node.baseUrl)) }, modifier = Modifier.weight(1f))

@@ -46,7 +46,17 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun MainDashboard() {
     var selectedTab by remember { mutableIntStateOf(0) }
-    val tabs = listOf("Base64", "Scanner", "Xtream", "Stalker", "Committed")
+        val xtreamNodesCount = com.projectstrong.iptv.data.DataStore.scannedNodes.count { it.type == "Xtream" }
+    val stalkerNodesCount = com.projectstrong.iptv.data.DataStore.scannedNodes.count { it.type == "Stalker" }
+    val committedCount = com.projectstrong.iptv.data.CommittedManager.records.size
+    
+    val tabs = listOf(
+        "Base64", 
+        "Scanner", 
+        if (xtreamNodesCount > 0) "Xtream ($xtreamNodesCount)" else "Xtream", 
+        if (stalkerNodesCount > 0) "Stalker ($stalkerNodesCount)" else "Stalker", 
+        if (committedCount > 0) "Committed ($committedCount)" else "Committed"
+    )
 
     Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
         Row(

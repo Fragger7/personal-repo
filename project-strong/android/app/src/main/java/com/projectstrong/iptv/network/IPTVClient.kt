@@ -13,6 +13,7 @@ sealed class VerificationResult {
         val status: String, 
         val details: String,
         val expires: String = "N/A",
+        val daysLeft: String = "N/A",
         val activeConn: String = "N/A",
         val maxConn: String = "N/A",
         val serverTimezone: String = "N/A",
@@ -57,18 +58,22 @@ object IPTVClient {
                         val maxConns = userInfo?.optString("max_connections", "1")
                         val activeConns = userInfo?.optString("active_cons", "0")
                         var expDate = "N/A"
+                        var daysLeft = "N/A"
                         val expTs = userInfo?.optString("exp_date", "")
                         if (!expTs.isNullOrEmpty() && expTs != "null") {
                             try {
                                 val ts = expTs.toLong() * 1000
                                 val sdf = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault())
                                 expDate = sdf.format(java.util.Date(ts))
+                                val diffMillis = ts - System.currentTimeMillis()
+                                val days = java.util.concurrent.TimeUnit.MILLISECONDS.toDays(diffMillis)
+                                daysLeft = if (days < 0) "0" else days.toString()
                             } catch (e: Exception) { }
                         }
                         val sTz = serverInfo?.optString("timezone", "N/A")
                         val sTime = serverInfo?.optString("time_now", "N/A")
                         val statusStr = if (active) "Active" else "Expired/Inactive"
-                        return@withContext VerificationResult.Success(statusStr, "Verified", expDate, activeConns ?: "0", maxConns ?: "1", sTz ?: "N/A", sTime ?: "N/A")
+                        return@withContext VerificationResult.Success(statusStr, "Verified", expDate, daysLeft, activeConns ?: "0", maxConns ?: "1", sTz ?: "N/A", sTime ?: "N/A")
                     } catch (e: Exception) {
                         return@withContext VerificationResult.Failed("Parse Error: Invalid JSON Format")
                     }
