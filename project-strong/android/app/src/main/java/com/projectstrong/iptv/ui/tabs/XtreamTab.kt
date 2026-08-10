@@ -7,6 +7,12 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import kotlinx.coroutines.Dispatchers
+
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
@@ -56,10 +62,12 @@ fun XtreamMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCredent
     var showActiveOnly by remember { mutableStateOf(false) }
     val filteredNodes = if (showActiveOnly) nodes.filter { it.status.contains("Active", ignoreCase = true) } else nodes
     val scrollState = rememberScrollState()
+    val listState = rememberLazyListState()
     val clipboardManager = LocalClipboardManager.current
+    val coroutineScope = rememberCoroutineScope()
+    var fetchingRows by remember { mutableStateOf<Set<String>>(emptySet()) }
     
     Column(modifier = Modifier.fillMaxSize()) {
-        
         Row(
             modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -81,7 +89,6 @@ fun XtreamMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCredent
                 )
             }
         }
-
         
         if (filteredNodes.isEmpty()) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -89,70 +96,124 @@ fun XtreamMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCredent
             }
             return
         }
-
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .horizontalScroll(scrollState)
-        ) {
-            Column {
-                // Header Row
-                Row(
-                    modifier = Modifier
-                        .background(Color(0xFF1E1E2E))
-                        .padding(horizontal = 16.dp, vertical = 12.dp)
-                ) {
-                    GridHeader("Host URL", 250.dp)
-                    GridHeader("Status", 120.dp)
-                    GridHeader("Username", 120.dp)
-                    GridHeader("Live", 80.dp)
-                    GridHeader("VODs", 80.dp)
-                    GridHeader("Active", 80.dp)
-                    GridHeader("Max", 80.dp)
-                    GridHeader("Expires", 100.dp)
-                    GridHeader("Actions", 180.dp)
-                }
-                
-                Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(Color(0xFF333344)))
-                
-                LazyColumn(modifier = Modifier.fillMaxSize()) {
-                    items(filteredNodes) { node ->
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable { onSelectNode(node) }
-                                .padding(horizontal = 16.dp, vertical = 12.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            GridCell(node.baseUrl, 250.dp, isBold = true)
-                            StatusBadge(node.status, 120.dp)
-                            GridCell(node.user, 120.dp)
-                            GridCell(node.channels, 80.dp)
-                            GridCell(node.vods, 80.dp)
-                            GridCell(node.activeConn, 80.dp)
-                            GridCell(node.maxConn, 80.dp)
-                            GridCell(node.expires, 100.dp)
-                            
-                            Row(modifier = Modifier.width(180.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                SecondaryButton(
-                                    text = "Copy",
-                                    onClick = {
-                                        val url = "${node.baseUrl}/get.php?username=${node.user}&password=${node.pass}&type=m3u_plus&output=ts"
-                                        clipboardManager.setText(AnnotatedString(url))
-                                    },
-                                    modifier = Modifier.height(36.dp)
-                                )
-                                PrimaryButton(
-                                    text = "Commit",
-                                    onClick = {
-                                        CommittedManager.commit(CommittedRecord(type = node.type, baseUrl = node.baseUrl, user = node.user, pass = node.pass, mac = node.mac, notes = ""))
-                                    },
-                                    modifier = Modifier.height(36.dp)
-                                )
-                            }
-                        }
-                        Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(Color(0xFF222233)))
+        
+        Box(modifier = Modifier.fillMaxSize()) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .horizontalScroll(scrollState)
+            ) {
+                Column {
+                    // Header Row
+                    Row(
+                        modifier = Modifier
+                            .background(Color(0xFF1E1E2E))
+                            .padding(horizontal = 16.dp, vertical = 12.dp)
+                    ) {
+                        GridHeader("Host URL", 250.dp)
+                        GridHeader("Status", 120.dp)
+                        GridHeader("Provider", 150.dp)
+                        GridHeader("Timezone", 120.dp)
+                        GridHeader("Username", 120.dp)
+                        GridHeader("Live", 80.dp)
+                        GridHeader("VODs", 80.dp)
+                        GridHeader("Active", 80.dp)
+                        GridHeader("Max", 80.dp)
+                        GridHeader("Expires", 100.dp)
+                        GridHeader("Actions", 280.dp)
                     }
+                    
+                    Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(Color(0xFF333344)))
+                    
+                    LazyColumn(modifier = Modifier.fillMaxSize(), state = listState) {
+                        items(filteredNodes) { node ->
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable { onSelectNode(node) }
+                                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                GridCell(node.baseUrl, 250.dp, isBold = true)
+                                StatusBadge(node.status, 120.dp)
+                                GridCell(node.provider, 150.dp)
+                                GridCell(node.serverTimezone, 120.dp)
+                                GridCell(node.user, 120.dp)
+                                GridCell(node.channels, 80.dp)
+                                GridCell(node.vods, 80.dp)
+                                GridCell(node.activeConn, 80.dp)
+                                GridCell(node.maxConn, 80.dp)
+                                GridCell(node.expires, 100.dp)
+                                
+                                Row(modifier = Modifier.width(280.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    val isFetching = fetchingRows.contains(node.baseUrl + node.user)
+                                    SecondaryButton(
+                                        text = if (isFetching) "..." else "Query",
+                                        onClick = {
+                                            if (isFetching) return@SecondaryButton
+                                            val key = node.baseUrl + node.user
+                                            fetchingRows = fetchingRows + key
+                                            coroutineScope.launch {
+                                                val liveStreams = IPTVClient.getAllLiveStreams(node.baseUrl, node.user, node.pass)
+                                                val vodStreams = IPTVClient.getVodStreams(node.baseUrl, node.user, node.pass)
+                                                
+                                                val liveCount = liveStreams?.length() ?: 0
+                                                val vodCount = vodStreams?.length() ?: 0
+                                                
+                                                val newIdx = DataStore.scannedNodes.indexOfFirst { it.baseUrl == node.baseUrl && it.user == node.user && it.type == "Xtream" }
+                                                if (newIdx != -1) {
+                                                    DataStore.scannedNodes[newIdx] = DataStore.scannedNodes[newIdx].copy(channels = "$liveCount", vods = "$vodCount")
+                                                }
+                                                fetchingRows = fetchingRows - key
+                                            }
+                                        },
+                                        modifier = Modifier.height(36.dp).weight(1f)
+                                    )
+                                    SecondaryButton(
+                                        text = "Copy",
+                                        onClick = {
+                                            val url = "${node.baseUrl}/get.php?username=${node.user}&password=${node.pass}&type=m3u_plus&output=ts"
+                                            clipboardManager.setText(AnnotatedString(url))
+                                        },
+                                        modifier = Modifier.height(36.dp).weight(1f)
+                                    )
+                                    PrimaryButton(
+                                        text = "Commit",
+                                        onClick = {
+                                            CommittedManager.commit(CommittedRecord(type = node.type, baseUrl = node.baseUrl, user = node.user, pass = node.pass, mac = node.mac, notes = ""))
+                                        },
+                                        modifier = Modifier.height(36.dp).weight(1f)
+                                    )
+                                }
+                            }
+                            Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(Color(0xFF222233)))
+                        }
+                    }
+                }
+            }
+            
+            // Floating scroll buttons
+            Column(
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(end = 16.dp, bottom = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                FloatingActionButton(
+                    onClick = { coroutineScope.launch { listState.animateScrollToItem(0) } },
+                    containerColor = Color(0xFF3B82F6),
+                    contentColor = Color.White,
+                    modifier = Modifier.size(48.dp)
+                ) {
+                    Icon(Icons.Default.KeyboardArrowUp, contentDescription = "Scroll to Top")
+                }
+                FloatingActionButton(
+                    onClick = { coroutineScope.launch { listState.animateScrollToItem(if (filteredNodes.isNotEmpty()) filteredNodes.size - 1 else 0) } },
+                    containerColor = Color(0xFF3B82F6),
+                    contentColor = Color.White,
+                    modifier = Modifier.size(48.dp)
+                ) {
+                    Icon(Icons.Default.KeyboardArrowDown, contentDescription = "Scroll to Bottom")
                 }
             }
         }

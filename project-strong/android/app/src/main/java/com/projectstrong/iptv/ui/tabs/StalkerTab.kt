@@ -7,6 +7,13 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.Dispatchers
+
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
@@ -53,17 +60,18 @@ fun StalkerMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCreden
     var showActiveOnly by remember { mutableStateOf(false) }
     val filteredNodes = if (showActiveOnly) nodes.filter { it.status.contains("Active", ignoreCase = true) } else nodes
     val scrollState = rememberScrollState()
+    val listState = rememberLazyListState()
     val clipboardManager = LocalClipboardManager.current
+    val coroutineScope = rememberCoroutineScope()
     
     Column(modifier = Modifier.fillMaxSize()) {
-        
         Row(
             modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "Stalker Portals (${nodes.size})",
+                text = "Stalker Portals Nodes (${nodes.size})",
                 color = Color.White,
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold
@@ -78,7 +86,6 @@ fun StalkerMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCreden
                 )
             }
         }
-
         
         if (filteredNodes.isEmpty()) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -86,63 +93,90 @@ fun StalkerMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCreden
             }
             return
         }
-
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .horizontalScroll(scrollState)
-        ) {
-            Column {
-                // Header Row
-                Row(
-                    modifier = Modifier
-                        .background(Color(0xFF1E1E2E))
-                        .padding(horizontal = 16.dp, vertical = 12.dp)
-                ) {
-                    GridHeader("Host URL", 250.dp)
-                    GridHeader("Status", 120.dp)
-                    GridHeader("MAC Address", 160.dp)
-                    GridHeader("Provider", 150.dp)
-                    GridHeader("Timezone", 120.dp)
-                    GridHeader("Actions", 180.dp)
-                }
-                
-                Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(Color(0xFF333344)))
-                
-                LazyColumn(modifier = Modifier.fillMaxSize()) {
-                    items(filteredNodes) { node ->
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable { onSelectNode(node) }
-                                .padding(horizontal = 16.dp, vertical = 12.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            GridCell(node.baseUrl, 250.dp, isBold = true)
-                            StatusBadge(node.status, 120.dp)
-                            GridCell(node.mac, 160.dp)
-                            GridCell("Unknown", 150.dp)
-                            GridCell(node.serverTimezone, 120.dp)
-                            
-                            Row(modifier = Modifier.width(180.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                SecondaryButton(
-                                    text = "Copy",
-                                    onClick = {
-                                        clipboardManager.setText(AnnotatedString("${node.baseUrl} / ${node.mac}"))
-                                    },
-                                    modifier = Modifier.height(36.dp)
-                                )
-                                PrimaryButton(
-                                    text = "Commit",
-                                    onClick = {
-                                        CommittedManager.commit(CommittedRecord(type = node.type, baseUrl = node.baseUrl, user = node.user, pass = node.pass, mac = node.mac, notes = ""))
-                                    },
-                                    modifier = Modifier.height(36.dp)
-                                )
-                            }
-                        }
-                        Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(Color(0xFF222233)))
+        
+        Box(modifier = Modifier.fillMaxSize()) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .horizontalScroll(scrollState)
+            ) {
+                Column {
+                    // Header Row
+                    Row(
+                        modifier = Modifier
+                            .background(Color(0xFF1E1E2E))
+                            .padding(horizontal = 16.dp, vertical = 12.dp)
+                    ) {
+                        GridHeader("Host URL", 250.dp)
+                        GridHeader("Status", 120.dp)
+                        GridHeader("MAC Address", 160.dp)
+                        GridHeader("Provider", 150.dp)
+                        GridHeader("Timezone", 120.dp)
+                        GridHeader("Actions", 180.dp)
                     }
+                    
+                    Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(Color(0xFF333344)))
+                    
+                    LazyColumn(modifier = Modifier.fillMaxSize(), state = listState) {
+                        items(filteredNodes) { node ->
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable { onSelectNode(node) }
+                                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                GridCell(node.baseUrl, 250.dp, isBold = true)
+                                StatusBadge(node.status, 120.dp)
+                                GridCell(node.mac, 160.dp)
+                                GridCell(node.provider, 150.dp)
+                                GridCell(node.serverTimezone, 120.dp)
+                                
+                                Row(modifier = Modifier.width(180.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    SecondaryButton(
+                                        text = "Copy",
+                                        onClick = {
+                                            clipboardManager.setText(AnnotatedString("${node.baseUrl} / ${node.mac}"))
+                                        },
+                                        modifier = Modifier.height(36.dp).weight(1f)
+                                    )
+                                    PrimaryButton(
+                                        text = "Commit",
+                                        onClick = {
+                                            CommittedManager.commit(CommittedRecord(type = node.type, baseUrl = node.baseUrl, user = node.user, pass = node.pass, mac = node.mac, notes = ""))
+                                        },
+                                        modifier = Modifier.height(36.dp).weight(1f)
+                                    )
+                                }
+                            }
+                            Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(Color(0xFF222233)))
+                        }
+                    }
+                }
+            }
+            
+            // Floating scroll buttons
+            Column(
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(end = 16.dp, bottom = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                FloatingActionButton(
+                    onClick = { coroutineScope.launch { listState.animateScrollToItem(0) } },
+                    containerColor = Color(0xFF3B82F6),
+                    contentColor = Color.White,
+                    modifier = Modifier.size(48.dp)
+                ) {
+                    Icon(Icons.Default.KeyboardArrowUp, contentDescription = "Scroll to Top")
+                }
+                FloatingActionButton(
+                    onClick = { coroutineScope.launch { listState.animateScrollToItem(if (filteredNodes.isNotEmpty()) filteredNodes.size - 1 else 0) } },
+                    containerColor = Color(0xFF3B82F6),
+                    contentColor = Color.White,
+                    modifier = Modifier.size(48.dp)
+                ) {
+                    Icon(Icons.Default.KeyboardArrowDown, contentDescription = "Scroll to Bottom")
                 }
             }
         }

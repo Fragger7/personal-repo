@@ -18,10 +18,20 @@ data class ParsedCredential(
     val vods: String = "N/A",
     val serverTimezone: String = "N/A",
     val serverTime: String = "N/A",
+    val provider: String = "Unknown",
     val isVerifying: Boolean = false
 )
 
 object Parser {
+    private fun extractDomain(url: String): String {
+        return try {
+            val uri = java.net.URI(url)
+            uri.host ?: "Unknown"
+        } catch (e: Exception) {
+            "Unknown"
+        }
+    }
+
     fun parseCredentials(textBlock: String): List<ParsedCredential> {
         val extracted = mutableListOf<ParsedCredential>()
         
