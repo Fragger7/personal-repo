@@ -96,7 +96,7 @@ fun XtreamMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCredent
         Row(
             modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically) {
  {
             Text(
                 text = "Xtream Codes (${filteredNodes.size}/${nodes.size})",
@@ -106,7 +106,7 @@ fun XtreamMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCredent
                 modifier = Modifier.weight(1f)
     
             Row(
-                verticalAlignment = Alignment.CenterVertically,
+                verticalAlignment = Alignment.CenterVertically) {,
                 modifier = Modifier.horizontalScroll(rememberScrollState())
      {
                 if (filteredNodes.isNotEmpty()) {
@@ -190,7 +190,7 @@ fun XtreamMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCredent
                         modifier = Modifier
                             .background(Color(0xFF1E1E2E))
                             .padding(horizontal = 16.dp, vertical = 12.dp)
-             {
+    
                         val headerClick = { col: String -> 
                             if (sortColumn == col) sortAscending = !sortAscending else { sortColumn = col; sortAscending = false }
                         }
@@ -217,8 +217,8 @@ fun XtreamMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCredent
                                     .fillMaxWidth()
                                     .clickable { onSelectNode(node) }
                                     .padding(horizontal = 16.dp, vertical = 12.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                     {
+                                verticalAlignment = Alignment.CenterVertically) {
+            
                                 GridCell(node.baseUrl, 250.dp, isBold = true)
                                 StatusBadge(node.status, 120.dp)
                                 GridCell(node.provider, 150.dp)
@@ -292,7 +292,7 @@ fun XtreamMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCredent
                     containerColor = Color(0xFF3B82F6),
                     contentColor = Color.White,
                     modifier = Modifier.size(48.dp)
-         {
+
                     Icon(Icons.Default.KeyboardArrowUp, contentDescription = "Scroll to Top")
                 }
                 FloatingActionButton(
@@ -300,7 +300,7 @@ fun XtreamMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCredent
                     containerColor = Color(0xFF3B82F6),
                     contentColor = Color.White,
                     modifier = Modifier.size(48.dp)
-         {
+
                     Icon(Icons.Default.KeyboardArrowDown, contentDescription = "Scroll to Bottom")
                 }
             }
@@ -322,7 +322,7 @@ fun XtreamDetailScreen(node: ParsedCredential, onBack: () -> Unit) {
 
     Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
         // Toolbar
-        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(bottom = 16.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {, modifier = Modifier.padding(bottom = 16.dp)) {
             IconButton(onClick = onBack) {
                 Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = Color.White)
             }
@@ -341,13 +341,13 @@ fun XtreamDetailScreen(node: ParsedCredential, onBack: () -> Unit) {
                 Card(
                     colors = CardDefaults.cardColors(containerColor = Color(0xFF1E1E2E)),
                     shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp),
-                    modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)
-         {
+                    modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)) {
+
                     Column(modifier = Modifier.padding(16.dp)) {
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                             Column(modifier = Modifier.weight(1f)) {
                                 Text("HOST", color = Color(0xFFA0A0B0), style = MaterialTheme.typography.labelSmall)
-                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {) {
                                     Text(node.baseUrl, color = Color.White, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold)
                                     IconButton(onClick = { clipboardManager.setText(AnnotatedString(node.baseUrl)) }, modifier = Modifier.size(24.dp)) {
                                         Icon(Icons.Default.ContentCopy, contentDescription = "Copy Host", tint = Color.Gray, modifier = Modifier.size(16.dp))
@@ -360,7 +360,7 @@ fun XtreamDetailScreen(node: ParsedCredential, onBack: () -> Unit) {
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                             Column(modifier = Modifier.weight(1f)) {
                                 Text("USERNAME", color = Color(0xFFA0A0B0), style = MaterialTheme.typography.labelSmall)
-                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {) {
                                     Text(node.user, color = Color.White, style = MaterialTheme.typography.bodyMedium)
                                     IconButton(onClick = { clipboardManager.setText(AnnotatedString(node.user)) }, modifier = Modifier.size(24.dp)) {
                                         Icon(Icons.Default.ContentCopy, contentDescription = "Copy", tint = Color.Gray, modifier = Modifier.size(16.dp))
@@ -369,7 +369,7 @@ fun XtreamDetailScreen(node: ParsedCredential, onBack: () -> Unit) {
                             }
                             Column(modifier = Modifier.weight(1f)) {
                                 Text("PASSWORD", color = Color(0xFFA0A0B0), style = MaterialTheme.typography.labelSmall)
-                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {) {
                                     Text(node.pass, color = Color.White, style = MaterialTheme.typography.bodyMedium)
                                     IconButton(onClick = { clipboardManager.setText(AnnotatedString(node.pass)) }, modifier = Modifier.size(24.dp)) {
                                         Icon(Icons.Default.ContentCopy, contentDescription = "Copy", tint = Color.Gray, modifier = Modifier.size(16.dp))
@@ -417,7 +417,7 @@ fun XtreamDetailScreen(node: ParsedCredential, onBack: () -> Unit) {
                                 isFetchingCounts = false
                             }
                         },
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.weight(1f))
             
                     PrimaryButton(
                         text = "Commit Account",
@@ -432,7 +432,7 @@ fun XtreamDetailScreen(node: ParsedCredential, onBack: () -> Unit) {
         }
 
         // Deep Dive Section
-        Row(modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+        Row(modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {) {
             Text(
                 if (selectedCategory == null) "Categories Catalog" else "Channels in ${selectedCategory?.optString("category_name") ?: "Unknown"}", 
                 color = Color.White, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold
@@ -522,8 +522,8 @@ fun XtreamDetailScreen(node: ParsedCredential, onBack: () -> Unit) {
                                     }
                                     .padding(vertical = 12.dp, horizontal = 8.dp),
                                 horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                     {
+                                verticalAlignment = Alignment.CenterVertically) {
+            
                                 val catName = cat?.optString("category_name", "Unknown") ?: "Unknown"
                                 val count = cat?.optInt("count", 0) ?: 0
                                 Text("$catName ($count)", color = Color(0xFF3B82F6), maxLines = 1, overflow = TextOverflow.Ellipsis)
