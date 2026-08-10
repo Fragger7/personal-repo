@@ -67,6 +67,33 @@ object CommittedManager {
         save()
     }
     
+        fun syncFromCloud(): List<CommittedRecord>? {
+        try {
+            val url = java.net.URL("https://raw.githubusercontent.com/Fragger7/personal-repo/main/project-strong/committed.json")
+            val connection = url.openConnection() as java.net.HttpURLConnection
+            connection.requestMethod = "GET"
+            connection.connectTimeout = 5000
+            connection.readTimeout = 5000
+            if (connection.responseCode == 200) {
+                val json = connection.inputStream.bufferedReader().use { it.readText() }
+                if (json.isNotBlank()) {
+                    val type = object : TypeToken<List<CommittedRecord>>() {}.type
+                    val list: List<CommittedRecord> = gson.fromJson(json, type)
+                    
+                    // Save it locally as well to mirror Python app behavior
+                    records.clear()
+                    records.addAll(list)
+                    save()
+                    
+                    return list
+                }
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+        return null
+    }
+
     fun updateNotes(record: CommittedRecord, newNotes: String) {
         val index = records.indexOf(record)
         if (index != -1) {
