@@ -9,7 +9,15 @@ import java.util.concurrent.TimeUnit
 import java.net.URLEncoder
 
 sealed class VerificationResult {
-    data class Success(val status: String, val details: String) : VerificationResult()
+    data class Success(
+        val status: String, 
+        val details: String,
+        val expires: String = "N/A",
+        val activeConn: String = "N/A",
+        val maxConn: String = "N/A",
+        val serverTimezone: String = "N/A",
+        val serverTime: String = "N/A"
+    ) : VerificationResult()
     data class Failed(val reason: String) : VerificationResult()
 }
 
@@ -47,11 +55,20 @@ object IPTVClient {
                         val serverInfo = json.optJSONObject("server_info")
                         val active = userInfo?.optString("status", "") == "Active"
                         val maxConns = userInfo?.optString("max_connections", "1")
+                        val activeConns = userInfo?.optString("active_cons", "0")
+                        var expDate = "N/A"
+                        val expTs = userInfo?.optString("exp_date", "")
+                        if (!expTs.isNullOrEmpty() && expTs != "null") {
+                            try {
+                                val ts = expTs.toLong() * 1000
+                                val sdf = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault())
+                                expDate = sdf.format(java.util.Date(ts))
+                            } catch (e: Exception) { }
+                        }
+                        val sTz = serverInfo?.optString("timezone", "N/A")
+                        val sTime = serverInfo?.optString("time_now", "N/A")
                         val statusStr = if (active) "Active" else "Expired/Inactive"
-                        return@withContext VerificationResult.Success(
-                            status = statusStr,
-                            details = "Max Connections: $maxConns"
-                        )
+                        return@withContext VerificationResult.Success(statusStr, "Verified", expDate, activeConns ?: "0", maxConns ?: "1", sTz ?: "N/A", sTime ?: "N/A")
                     } catch (e: Exception) {
                         return@withContext VerificationResult.Failed("Parse Error: Invalid JSON Format")
                     }

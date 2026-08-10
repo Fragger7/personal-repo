@@ -221,3 +221,9 @@ The current Android Jetpack Compose UI needs significant improvements to reach p
 ### 🔍 Parser Engine Improvements (Completed)
 * **Xtream Codes State-Machine**: The current parsers work very well, but there are insights to bolster them even more (ensure changes only increase recognition and do NOT break or impair current functionality). Analysis of "Hit Hunter" style pastebins (e.g. `├● 🔌 ᴍᴀᴄ : ... ├● 🌐 ᴘᴏʀᴛᴀʟ : ...`) reveals that automated checking tools often output credentials across multiple lines using unicode characters (e.g., `ᴜꜱᴇʀ`, `ᴩᴀꜱꜱ`, `ʜᴏꜱᴛ`). The parser should be upgraded with a multi-line state machine for Xtream combos (similar to the Stalker parser) to capture these disconnected host/user/pass blocks.
 
+
+### 📱 Android Data Grid Parity & Auto-Scroll (Completed)
+Addressed significant UX complaints regarding the Android app's tabular data displays:
+* **Grid Refactoring**: Replaced bulky, slow-rendering Compose Cards with dense, native horizontal `LazyColumn` grids matching the Python Dataframes.
+* **Extended Columns**: Implemented new data columns for Xtream Nodes (Expires, Active Conns, Max Conns, Channels, VODs, Timezone). Modified `IPTVClient.kt` to extract and parse the metadata locally.
+* **Master-Detail Flow & Auto-Scroll**: Implemented a responsive fixed deep-dive drawer attached to the bottom of the screen. Upon clicking a node row, the view `animateScrollToItem()` snaps directly to the record while exposing action buttons cleanly.
