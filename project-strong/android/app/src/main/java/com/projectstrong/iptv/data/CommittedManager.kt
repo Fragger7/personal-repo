@@ -7,13 +7,22 @@ import com.google.gson.reflect.TypeToken
 import java.io.File
 
 data class CommittedRecord(
-    val type: String,
-    val baseUrl: String,
-    val user: String,
-    val pass: String,
-    val mac: String,
-    var notes: String = "",
-    val dateAdded: Long = System.currentTimeMillis()
+    val type: String? = "Unknown",
+    val baseUrl: String? = "",
+    val user: String? = "",
+    val pass: String? = "",
+    val mac: String? = "",
+    val notes: String? = "",
+    val dateAdded: Long? = null
+) {
+    val safeType get() = type ?: "Unknown"
+    val safeBaseUrl get() = baseUrl ?: ""
+    val safeUser get() = user ?: ""
+    val safePass get() = pass ?: ""
+    val safeMac get() = mac ?: ""
+    val safeNotes get() = notes ?: ""
+    val safeDateAdded get() = dateAdded ?: System.currentTimeMillis()
+}
 )
 
 object CommittedManager {

@@ -166,11 +166,11 @@ fun CommittedMasterGrid(
                                 .padding(horizontal = 16.dp, vertical = 12.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            StatusBadge(record.type, 80.dp)
-                            GridCell(record.baseUrl, 250.dp, isBold = true)
-                            val authId = if (record.type == "Xtream") record.user else record.mac
+                            StatusBadge(record.safeType, 80.dp)
+                            GridCell(record.safeBaseUrl, 250.dp, isBold = true)
+                            val authId = if (record.safeType == "Xtream") record.safeUser else record.safeMac
                             GridCell(authId, 160.dp)
-                            GridCell(record.notes.ifEmpty { "..." }, 200.dp, color = Color.Gray)
+                            GridCell(record.safeNotes.ifEmpty { "..." }, 200.dp, color = Color.Gray)
                             
                             IconButton(onClick = { CommittedManager.delete(record) }, modifier = Modifier.size(36.dp)) {
                                 Icon(Icons.Default.Delete, contentDescription = "Delete", tint = Color(0xFFEF4444))
@@ -187,7 +187,7 @@ fun CommittedMasterGrid(
 @Composable
 fun CommittedDetailScreen(record: CommittedRecord, onBack: () -> Unit, onDelete: () -> Unit) {
     val clipboardManager = LocalClipboardManager.current
-    var currentNotes by remember(record) { mutableStateOf(record.notes) }
+    var currentNotes by remember(record) { mutableStateOf(record.safeNotes) }
 
     Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
         // Toolbar
@@ -202,7 +202,7 @@ fun CommittedDetailScreen(record: CommittedRecord, onBack: () -> Unit, onDelete:
                 }
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = "${record.type} Record Details",
+                    text = "${record.safeType} Record Details",
                     color = Color.White,
                     style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.Bold
@@ -222,20 +222,20 @@ fun CommittedDetailScreen(record: CommittedRecord, onBack: () -> Unit, onDelete:
             Column(modifier = Modifier.padding(16.dp)) {
                 Text("HOST", color = Color(0xFFA0A0B0), style = MaterialTheme.typography.labelSmall)
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(record.baseUrl, color = Color.White, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold)
-                    IconButton(onClick = { clipboardManager.setText(AnnotatedString(record.baseUrl)) }) {
+                    Text(record.safeBaseUrl, color = Color.White, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold)
+                    IconButton(onClick = { clipboardManager.setText(AnnotatedString(record.safeBaseUrl)) }) {
                         Icon(Icons.Default.ContentCopy, contentDescription = "Copy", tint = Color.Gray, modifier = Modifier.size(16.dp))
                     }
                 }
                 Spacer(modifier = Modifier.height(12.dp))
                 
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    if (record.type == "Xtream") {
+                    if (record.safeType == "Xtream") {
                         Column(modifier = Modifier.weight(1f)) {
                             Text("USERNAME", color = Color(0xFFA0A0B0), style = MaterialTheme.typography.labelSmall)
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text(record.user, color = Color.White, style = MaterialTheme.typography.bodyMedium)
-                                IconButton(onClick = { clipboardManager.setText(AnnotatedString(record.user)) }) {
+                                Text(record.safeUser, color = Color.White, style = MaterialTheme.typography.bodyMedium)
+                                IconButton(onClick = { clipboardManager.setText(AnnotatedString(record.safeUser)) }) {
                                     Icon(Icons.Default.ContentCopy, contentDescription = "Copy", tint = Color.Gray, modifier = Modifier.size(16.dp))
                                 }
                             }
@@ -243,8 +243,8 @@ fun CommittedDetailScreen(record: CommittedRecord, onBack: () -> Unit, onDelete:
                         Column(modifier = Modifier.weight(1f)) {
                             Text("PASSWORD", color = Color(0xFFA0A0B0), style = MaterialTheme.typography.labelSmall)
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text(record.pass, color = Color.White, style = MaterialTheme.typography.bodyMedium)
-                                IconButton(onClick = { clipboardManager.setText(AnnotatedString(record.pass)) }) {
+                                Text(record.safePass, color = Color.White, style = MaterialTheme.typography.bodyMedium)
+                                IconButton(onClick = { clipboardManager.setText(AnnotatedString(record.safePass)) }) {
                                     Icon(Icons.Default.ContentCopy, contentDescription = "Copy", tint = Color.Gray, modifier = Modifier.size(16.dp))
                                 }
                             }
@@ -253,8 +253,8 @@ fun CommittedDetailScreen(record: CommittedRecord, onBack: () -> Unit, onDelete:
                         Column(modifier = Modifier.weight(1f)) {
                             Text("MAC ADDRESS", color = Color(0xFFA0A0B0), style = MaterialTheme.typography.labelSmall)
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text(record.mac, color = Color.White, style = MaterialTheme.typography.bodyMedium)
-                                IconButton(onClick = { clipboardManager.setText(AnnotatedString(record.mac)) }) {
+                                Text(record.safeMac, color = Color.White, style = MaterialTheme.typography.bodyMedium)
+                                IconButton(onClick = { clipboardManager.setText(AnnotatedString(record.safeMac)) }) {
                                     Icon(Icons.Default.ContentCopy, contentDescription = "Copy", tint = Color.Gray, modifier = Modifier.size(16.dp))
                                 }
                             }

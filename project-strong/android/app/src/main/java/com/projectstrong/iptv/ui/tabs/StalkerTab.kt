@@ -71,7 +71,7 @@ fun StalkerMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCreden
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "Stalker Portals Nodes (${nodes.size})",
+                text = "Stalker Portals (${filteredNodes.size} of ${nodes.size})",
                 color = Color.White,
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold

@@ -74,12 +74,42 @@ fun XtreamMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCredent
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "Xtream Codes Nodes (${nodes.size})",
+                text = "Xtream Codes (${filteredNodes.size} of ${nodes.size})",
                 color = Color.White,
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold
             )
             Row(verticalAlignment = Alignment.CenterVertically) {
+                var isQueryingAll by remember { mutableStateOf(false) }
+                if (filteredNodes.isNotEmpty()) {
+                    PrimaryButton(
+                        text = if (isQueryingAll) "Querying..." else "Query All Active",
+                        onClick = {
+                            if (isQueryingAll) return@PrimaryButton
+                            isQueryingAll = true
+                            coroutineScope.launch {
+                                val activeNodes = filteredNodes.filter { it.status.contains("Active", ignoreCase = true) }
+                                for (node in activeNodes) {
+                                    val key = node.baseUrl + node.user
+                                    fetchingRows = fetchingRows + key
+                                    val liveStreams = IPTVClient.getAllLiveStreams(node.baseUrl, node.user, node.pass)
+                                    val vodStreams = IPTVClient.getVodStreams(node.baseUrl, node.user, node.pass)
+                                    val liveCount = liveStreams?.length() ?: 0
+                                    val vodCount = vodStreams?.length() ?: 0
+                                    
+                                    val newIdx = DataStore.scannedNodes.indexOfFirst { it.baseUrl == node.baseUrl && it.user == node.user && it.type == "Xtream" }
+                                    if (newIdx != -1) {
+                                        DataStore.scannedNodes[newIdx] = DataStore.scannedNodes[newIdx].copy(channels = "$liveCount", vods = "$vodCount")
+                                    }
+                                    fetchingRows = fetchingRows - key
+                                }
+                                isQueryingAll = false
+                            }
+                        },
+                        modifier = Modifier.height(36.dp)
+                    )
+                    Spacer(modifier = Modifier.width(16.dp))
+                }
                 Text("Active Only", color = Color.White, style = MaterialTheme.typography.bodyMedium)
                 Spacer(modifier = Modifier.width(8.dp))
                 Switch(
@@ -117,10 +147,11 @@ fun XtreamMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCredent
                         GridHeader("Username", 120.dp)
                         GridHeader("Live", 80.dp)
                         GridHeader("VODs", 80.dp)
+                        GridHeader("Days Left", 100.dp)
                         GridHeader("Active", 80.dp)
                         GridHeader("Max", 80.dp)
                         GridHeader("Expires", 100.dp)
-                        GridHeader("Actions", 280.dp)
+                        GridHeader("Actions", 180.dp)
                     }
                     
                     Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(Color(0xFF333344)))
@@ -141,34 +172,13 @@ fun XtreamMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCredent
                                 GridCell(node.user, 120.dp)
                                 GridCell(node.channels, 80.dp)
                                 GridCell(node.vods, 80.dp)
+                                GridCell(node.daysLeft, 100.dp)
                                 GridCell(node.activeConn, 80.dp)
                                 GridCell(node.maxConn, 80.dp)
                                 GridCell(node.expires, 100.dp)
                                 
-                                Row(modifier = Modifier.width(280.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                    val isFetching = fetchingRows.contains(node.baseUrl + node.user)
-                                    SecondaryButton(
-                                        text = if (isFetching) "..." else "Query",
-                                        onClick = {
-                                            if (isFetching) return@SecondaryButton
-                                            val key = node.baseUrl + node.user
-                                            fetchingRows = fetchingRows + key
-                                            coroutineScope.launch {
-                                                val liveStreams = IPTVClient.getAllLiveStreams(node.baseUrl, node.user, node.pass)
-                                                val vodStreams = IPTVClient.getVodStreams(node.baseUrl, node.user, node.pass)
-                                                
-                                                val liveCount = liveStreams?.length() ?: 0
-                                                val vodCount = vodStreams?.length() ?: 0
-                                                
-                                                val newIdx = DataStore.scannedNodes.indexOfFirst { it.baseUrl == node.baseUrl && it.user == node.user && it.type == "Xtream" }
-                                                if (newIdx != -1) {
-                                                    DataStore.scannedNodes[newIdx] = DataStore.scannedNodes[newIdx].copy(channels = "$liveCount", vods = "$vodCount")
-                                                }
-                                                fetchingRows = fetchingRows - key
-                                            }
-                                        },
-                                        modifier = Modifier.height(36.dp).weight(1f)
-                                    )
+                                Row(modifier = Modifier.width(180.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    
                                     SecondaryButton(
                                         text = "Copy",
                                         onClick = {
@@ -299,7 +309,7 @@ fun XtreamDetailScreen(node: ParsedCredential, onBack: () -> Unit) {
                             }
                             Column(modifier = Modifier.weight(1f)) {
                                 Text("EXPIRES", color = Color(0xFFA0A0B0), style = MaterialTheme.typography.labelSmall)
-                                Text(node.expires, color = Color.White, style = MaterialTheme.typography.bodyMedium)
+                                Text("${node.expires} (${node.daysLeft} days left)", color = Color.White, style = MaterialTheme.typography.bodyMedium)
                             }
                         }
                     }
@@ -343,7 +353,7 @@ fun XtreamDetailScreen(node: ParsedCredential, onBack: () -> Unit) {
         // Deep Dive Section
         Row(modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
             Text(
-                if (selectedCategory == null) "Categories Catalog" else "Channels in ${selectedCategory!!.optString("category_name")}", 
+                if (selectedCategory == null) "Categories Catalog" else "Channels in ${selectedCategory?.optString("category_name") ?: "Unknown"}", 
                 color = Color.White, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold
             )
             SecondaryButton(
@@ -366,12 +376,16 @@ fun XtreamDetailScreen(node: ParsedCredential, onBack: () -> Unit) {
 
         // Data List
         Box(modifier = Modifier.fillMaxWidth().weight(1f).background(Color(0xFF12121A), androidx.compose.foundation.shape.RoundedCornerShape(8.dp))) {
+            val currentChannels = channelsList
+            val currentCategories = categories
+            val currentCategory = selectedCategory
+
             if (isLoadingChannels || isLoadingCategories) {
                 CircularProgressIndicator(modifier = Modifier.align(Alignment.Center), color = Color(0xFF3B82F6))
-            } else if (channelsList != null && selectedCategory != null) {
+            } else if (currentChannels != null && currentCategory != null) {
                 LazyColumn(modifier = Modifier.fillMaxSize().padding(8.dp)) {
-                    items(channelsList!!.length()) { i ->
-                        val ch = channelsList!!.optJSONObject(i)
+                    items(currentChannels.length()) { i ->
+                        val ch = currentChannels.optJSONObject(i)
                         Row(modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp, horizontal = 8.dp), horizontalArrangement = Arrangement.SpaceBetween) {
                             Text(ch?.optString("name", "Unknown") ?: "Unknown", color = Color.White, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
                             Text("ID: ${ch?.optString("stream_id", "")}", color = Color.Gray, style = MaterialTheme.typography.bodySmall)
@@ -379,10 +393,10 @@ fun XtreamDetailScreen(node: ParsedCredential, onBack: () -> Unit) {
                         Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(Color(0xFF222233)))
                     }
                 }
-            } else if (categories != null) {
+            } else if (currentCategories != null) {
                 LazyColumn(modifier = Modifier.fillMaxSize().padding(8.dp)) {
-                    items(categories!!.length()) { i ->
-                        val cat = categories!!.optJSONObject(i)
+                    items(currentCategories.length()) { i ->
+                        val cat = currentCategories.optJSONObject(i)
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
