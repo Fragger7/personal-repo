@@ -36,6 +36,12 @@ import com.projectstrong.iptv.network.ParsedCredential
 import com.projectstrong.iptv.network.VerificationResult
 import com.projectstrong.iptv.ui.components.*
 import kotlinx.coroutines.launch
+import async
+import withContext
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.async
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.coroutineScope
 import org.json.JSONArray
 
 @Composable
@@ -104,7 +110,7 @@ fun XtreamMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCredent
                                 
                                 kotlinx.coroutines.coroutineScope {
                                     activeNodes.map { node ->
-                                        kotlinx.coroutines.async(Dispatchers.IO) {
+                                        async(Dispatchers.IO) {
                                             val key = node.baseUrl + node.user
                                             fetchingRows = fetchingRows + key
                                             val liveStreams = IPTVClient.getAllLiveStreams(node.baseUrl, node.user, node.pass)
@@ -112,7 +118,7 @@ fun XtreamMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCredent
                                             val liveCount = liveStreams?.length() ?: 0
                                             val vodCount = vodStreams?.length() ?: 0
                                             
-                                            kotlinx.coroutines.withContext(Dispatchers.Main) {
+                                            withContext(Dispatchers.Main) {
                                                 val newIdx = DataStore.scannedNodes.indexOfFirst { it.baseUrl == node.baseUrl && it.user == node.user && it.type == "Xtream" }
                                                 if (newIdx != -1) {
                                                     DataStore.scannedNodes[newIdx] = DataStore.scannedNodes[newIdx].copy(channels = "$liveCount", vods = "$vodCount")
@@ -122,7 +128,7 @@ fun XtreamMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCredent
                                                 DataStore.scanProgress = completed.toFloat() / total
                                             }
                                         }
-                                    }.map { it.await() }
+                                    }.awaitAll()
                                 }
                                 
                                 isQueryingAll = false
@@ -349,8 +355,8 @@ fun XtreamDetailScreen(node: ParsedCredential, onBack: () -> Unit) {
                             if (isFetchingCounts) return@PrimaryButton
                             isFetchingCounts = true
                             coroutineScope.launch {
-                                val liveStreamsAsync = kotlinx.coroutines.async(Dispatchers.IO) { IPTVClient.getAllLiveStreams(node.baseUrl, node.user, node.pass) }
-                                val vodStreamsAsync = kotlinx.coroutines.async(Dispatchers.IO) { IPTVClient.getVodStreams(node.baseUrl, node.user, node.pass) }
+                                val liveStreamsAsync = async(Dispatchers.IO) { IPTVClient.getAllLiveStreams(node.baseUrl, node.user, node.pass) }
+                                val vodStreamsAsync = async(Dispatchers.IO) { IPTVClient.getVodStreams(node.baseUrl, node.user, node.pass) }
                                 
                                 val liveStreams = liveStreamsAsync.await()
                                 val vodStreams = vodStreamsAsync.await()
@@ -395,8 +401,8 @@ fun XtreamDetailScreen(node: ParsedCredential, onBack: () -> Unit) {
                         if (isLoadingCategories) return@SecondaryButton
                         isLoadingCategories = true
                         coroutineScope.launch {
-                            val catsAsync = kotlinx.coroutines.async(Dispatchers.IO) { IPTVClient.getLiveCategories(node.baseUrl, node.user, node.pass) }
-                            val allStreamsAsync = kotlinx.coroutines.async(Dispatchers.IO) { IPTVClient.getAllLiveStreams(node.baseUrl, node.user, node.pass) }
+                            val catsAsync = async(Dispatchers.IO) { IPTVClient.getLiveCategories(node.baseUrl, node.user, node.pass) }
+                            val allStreamsAsync = async(Dispatchers.IO) { IPTVClient.getAllLiveStreams(node.baseUrl, node.user, node.pass) }
                             val cats = catsAsync.await()
                             val allStreams = allStreamsAsync.await()
                             
