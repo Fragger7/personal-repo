@@ -92,17 +92,19 @@ fun StalkerMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCreden
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.weight(1f)
+            )
     
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.horizontalScroll(rememberScrollState())
-     {
+            ) {
                 Text("Active Only", color = Color.White, style = MaterialTheme.typography.bodyMedium)
                 Spacer(modifier = Modifier.width(8.dp))
                 Switch(
                     checked = DataStore.activeOnlyStalker,
                     onCheckedChange = { DataStore.activeOnlyStalker = it },
                     colors = SwitchDefaults.colors(checkedThumbColor = Color(0xFF3B82F6), checkedTrackColor = Color(0xFF3B82F6).copy(alpha = 0.5f))
+                )
         
             }
         }
@@ -110,8 +112,7 @@ fun StalkerMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCreden
         if (filteredNodes.isEmpty()) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Text("No Stalker portals found.", color = Color.Gray)
-            }
-            return
+            } else {
         }
         
         Box(modifier = Modifier.fillMaxSize()) {
@@ -164,6 +165,7 @@ fun StalkerMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCreden
                                             clipboardManager.setText(AnnotatedString("${node.baseUrl} / ${node.mac}"))
                                         },
                                         modifier = Modifier.height(36.dp).weight(1f)
+                                    )
                             
                                     PrimaryButton(
                                         text = "Commit",
@@ -171,6 +173,7 @@ fun StalkerMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCreden
                                             CommittedManager.commit(CommittedRecord(type = node.type, baseUrl = node.baseUrl, user = node.user, pass = node.pass, mac = node.mac, notes = ""))
                                         },
                                         modifier = Modifier.height(36.dp).weight(1f)
+                                    )
                             
                                 }
                             }
@@ -206,6 +209,7 @@ fun StalkerMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCreden
             }
         }
     }
+        }
 }
 
 @Composable
@@ -244,6 +248,7 @@ fun StalkerDetailScreen(node: ParsedCredential, onBack: () -> Unit) {
                 Spacer(modifier = Modifier.height(16.dp))
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                     Column(modifier = Modifier.weight(1f)) {
+            )
                         Text("MAC ADDRESS", color = Color(0xFFA0A0B0), style = MaterialTheme.typography.labelSmall)
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Text(node.mac, color = Color.White, style = MaterialTheme.typography.bodyMedium)

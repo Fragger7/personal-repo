@@ -99,18 +99,18 @@ fun XtreamMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCredent
             modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically) {
- {
             Text(
                 text = "Xtream Codes (${filteredNodes.size}/${nodes.size})",
                 color = Color.White,
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.weight(1f)
+            )
     
             Row(
-                verticalAlignment = Alignment.CenterVertically) {,
+                verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.horizontalScroll(rememberScrollState())
-     {
+            ) {
                 if (filteredNodes.isNotEmpty()) {
                     PrimaryButton(
                         text = if (isQueryingAll) "Querying..." else "Query All Active",
@@ -157,6 +157,7 @@ fun XtreamMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCredent
                             }
                         },
                         modifier = Modifier.height(36.dp)
+                    )
             
                     Spacer(modifier = Modifier.width(16.dp))
                 }
@@ -166,6 +167,7 @@ fun XtreamMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCredent
                     checked = DataStore.activeOnlyXtream,
                     onCheckedChange = { DataStore.activeOnlyXtream = it },
                     colors = SwitchDefaults.colors(checkedThumbColor = Color(0xFF3B82F6), checkedTrackColor = Color(0xFF3B82F6).copy(alpha = 0.5f))
+                )
         
             }
         }
@@ -174,8 +176,7 @@ fun XtreamMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCredent
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Text("No Xtream accounts found.", color = Color.Gray)
             }
-            return
-        }
+        } else {
         
         Box(modifier = Modifier.fillMaxSize()) {
             Box(
@@ -258,6 +259,7 @@ fun XtreamMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCredent
                                             }
                                         },
                                         modifier = Modifier.height(36.dp).width(50.dp)
+                                    )
                             
                                     SecondaryButton(
                                         text = "Copy",
@@ -274,6 +276,7 @@ fun XtreamMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCredent
                                             CommittedManager.commit(CommittedRecord(type = node.type, baseUrl = node.baseUrl, user = node.user, pass = node.pass, mac = node.mac, notes = ""))
                                         },
                                         modifier = Modifier.height(36.dp).weight(1f)
+                                    )
                             
                                 }
                             }
@@ -311,6 +314,7 @@ fun XtreamMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCredent
             }
         }
     }
+        }
 }
 
 @Composable
@@ -351,6 +355,7 @@ fun XtreamDetailScreen(node: ParsedCredential, onBack: () -> Unit) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                             Column(modifier = Modifier.weight(1f)) {
+            )
                                 Text("HOST", color = Color(0xFFA0A0B0), style = MaterialTheme.typography.labelSmall)
                                 Row(verticalAlignment = Alignment.CenterVertically) {
                                     Text(node.baseUrl, color = Color.White, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold)
@@ -364,6 +369,7 @@ fun XtreamDetailScreen(node: ParsedCredential, onBack: () -> Unit) {
                         Spacer(modifier = Modifier.height(12.dp))
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                             Column(modifier = Modifier.weight(1f)) {
+            )
                                 Text("USERNAME", color = Color(0xFFA0A0B0), style = MaterialTheme.typography.labelSmall)
                                 Row(verticalAlignment = Alignment.CenterVertically) {
                                     Text(node.user, color = Color.White, style = MaterialTheme.typography.bodyMedium)
@@ -373,6 +379,7 @@ fun XtreamDetailScreen(node: ParsedCredential, onBack: () -> Unit) {
                                 }
                             }
                             Column(modifier = Modifier.weight(1f)) {
+            )
                                 Text("PASSWORD", color = Color(0xFFA0A0B0), style = MaterialTheme.typography.labelSmall)
                                 Row(verticalAlignment = Alignment.CenterVertically) {
                                     Text(node.pass, color = Color.White, style = MaterialTheme.typography.bodyMedium)
