@@ -236,7 +236,10 @@ Addressed significant UX complaints regarding the Android app's tabular data dis
 
 ### 📱 Android Advanced UI Actions & Bug Fixes (Completed)
 * **Committed Tab Cloud Sync Crash**: Fixed a crash that occurred when manually syncing from the cloud due to improperly mapping the response. The `CommittedManager` now correctly pulls and parses JSON and seamlessly saves to local state.
-* **Active Connections Toggle**: Added "Active Only" toggle switches to both Xtream and Stalker tabs to filter out inactive nodes easily.
+* **Active Connections Toggle**: Added "Active Only" toggle switches to both Xtream and Stalker tabs to filter out inactive nodes easily, accompanied by descriptive labels.
+* **Master Grid Data & Column Parity**: Upgraded the Android Xtream and Stalker tabs to display the full dataset found in the Python application, including extracting the "Provider" (domain) and "Timezone" details directly into the scrollable grids.
+* **First-Level Query Buttons**: Added instant "Query" buttons directly into the action rows for Xtream Master Grids. Users no longer need to open the deep-dive drawer just to fetch basic Channel and VOD counts for specific connections.
+* **Floating Scroll Buttons**: Added persistent scroll-to-top and scroll-to-bottom Floating Action Buttons (FABs) across the Master Grid screens to quickly navigate lists containing thousands of nodes.
 * **Deep-Dive Action Triggers**: Added functionality to dynamically query and fetch Live Channel and VOD counts for specific accounts straight from the connection details drawer.
 * **Channel Groups & Data List Expandability**: Re-engineered the channel fetch mechanism to properly bypass server-side category filters. The UI now fully pulls all live streams, categorizes them locally, and expands lists properly without relying on buggy target-server filters.
 * **Connection Detail Actions**: Added quick action buttons to copy raw M3U Playlist URLs for Xtream nodes, enhancing copy-paste flexibility beyond discrete host/username/password combinations.
