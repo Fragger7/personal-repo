@@ -206,6 +206,12 @@ To bypass restrictive cloud blockades and IP filtering encountered via web deplo
 ## 📅 Future Backlog
 * **Persistent Themes**: Save user theme preferences (e.g., in `localStorage` via Streamlit cookie managers or custom components) to remember the chosen aesthetic across page reloads and future visits without needing to re-select it in the UI/sidebar each time.
 
+
+### 🐛 Android GitHub Actions Build Failure (In Progress)
+* **APK Build Pipeline**: The GitHub Action `.github/workflows/android-build.yml` is currently failing during the `gradle assembleDebug` step.
+* **Troubleshooting Status**: Attempted to replicate the Gradle 8.7 / Android SDK build environment locally within the AI Studio container, but encountered persistent Java/Gradle daemon initialization issues (e.g. `Error opening zip file or JAR manifest missing`, out of memory, or Java environment setup failures). 
+* **Next Steps**: We need to extract the exact Gradle error logs directly from the GitHub Actions run to diagnose the root cause (e.g., compile errors in Kotlin code such as `ScannerTab.kt`, missing dependencies, or incorrect imports) rather than trying to build the entire Android toolchain in the sandboxed container.
+
 ### 📱 Android UI/UX Overhaul (Completed)
 The current Android Jetpack Compose UI needs significant improvements to reach parity with the Python web application. Key UX feedback to address:
 * **Visual Presentation**: The current UI is bland with a 90s/late-2000s vibe in terms of graphics and presentation. Needs a modern, visually striking "jaw-dropping" overhaul.
