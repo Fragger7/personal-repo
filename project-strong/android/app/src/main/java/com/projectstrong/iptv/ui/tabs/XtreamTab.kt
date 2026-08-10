@@ -36,8 +36,8 @@ import com.projectstrong.iptv.network.ParsedCredential
 import com.projectstrong.iptv.network.VerificationResult
 import com.projectstrong.iptv.ui.components.*
 import kotlinx.coroutines.launch
-import async
-import withContext
+import kotlinx.coroutines.async
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.async
 import kotlinx.coroutines.withContext
@@ -77,6 +77,7 @@ fun XtreamMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCredent
     val clipboardManager = LocalClipboardManager.current
     val coroutineScope = rememberCoroutineScope()
     var fetchingRows by remember { mutableStateOf<Set<String>>(emptySet()) }
+    var isQueryingAll by remember { mutableStateOf(false) }
     
     Column(modifier = Modifier.fillMaxSize()) {
         Row(
@@ -95,7 +96,6 @@ fun XtreamMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCredent
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.horizontalScroll(rememberScrollState())
             ) {
-                var isQueryingAll by remember { mutableStateOf(false) }
                 if (filteredNodes.isNotEmpty()) {
                     PrimaryButton(
                         text = if (isQueryingAll) "Querying..." else "Query All Active",
