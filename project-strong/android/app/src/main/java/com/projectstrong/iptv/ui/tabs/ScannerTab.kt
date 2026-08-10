@@ -32,8 +32,6 @@ import com.projectstrong.iptv.ui.components.GlassTextField
 
 @Composable
 fun ScannerTab(onNextTab: () -> Unit = {}) {
-        val output = DataStore.scannedNodes
-    var DataStore.ipInfo by remember { mutableStateOf("Checking connection...") }
                         val coroutineScope = rememberCoroutineScope()
     val clipboardManager = LocalClipboardManager.current
     
