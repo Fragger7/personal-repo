@@ -53,10 +53,13 @@ fun XtreamTab() {
 
 @Composable
 fun XtreamMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCredential) -> Unit) {
+    var showActiveOnly by remember { mutableStateOf(false) }
+    val filteredNodes = if (showActiveOnly) nodes.filter { it.status.contains("Active", ignoreCase = true) } else nodes
     val scrollState = rememberScrollState()
     val clipboardManager = LocalClipboardManager.current
     
     Column(modifier = Modifier.fillMaxSize()) {
+        
         Row(
             modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -68,9 +71,19 @@ fun XtreamMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCredent
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold
             )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text("Active Only", color = Color.White, style = MaterialTheme.typography.bodyMedium)
+                Spacer(modifier = Modifier.width(8.dp))
+                Switch(
+                    checked = showActiveOnly,
+                    onCheckedChange = { showActiveOnly = it },
+                    colors = SwitchDefaults.colors(checkedThumbColor = Color(0xFF3B82F6), checkedTrackColor = Color(0xFF3B82F6).copy(alpha = 0.5f))
+                )
+            }
         }
+
         
-        if (nodes.isEmpty()) {
+        if (filteredNodes.isEmpty()) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Text("No Xtream accounts found.", color = Color.Gray)
             }
@@ -103,7 +116,7 @@ fun XtreamMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCredent
                 Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(Color(0xFF333344)))
                 
                 LazyColumn(modifier = Modifier.fillMaxSize()) {
-                    items(nodes) { node ->
+                    items(filteredNodes) { node ->
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -173,82 +186,101 @@ fun XtreamDetailScreen(node: ParsedCredential, onBack: () -> Unit) {
             )
         }
 
-        // Host Info Card
-        Card(
-            colors = CardDefaults.cardColors(containerColor = Color(0xFF1E1E2E)),
-            shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp),
-            modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)
-        ) {
-            Column(modifier = Modifier.padding(16.dp)) {
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Column {
-                        Text("HOST", color = Color(0xFFA0A0B0), style = MaterialTheme.typography.labelSmall)
-                        Text(node.baseUrl, color = Color.White, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold)
+        AnimatedVisibility(visible = selectedCategory == null) {
+            Column {
+                // Host Info Card
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = Color(0xFF1E1E2E)),
+                    shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp),
+                    modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text("HOST", color = Color(0xFFA0A0B0), style = MaterialTheme.typography.labelSmall)
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Text(node.baseUrl, color = Color.White, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold)
+                                    IconButton(onClick = { clipboardManager.setText(AnnotatedString(node.baseUrl)) }, modifier = Modifier.size(24.dp)) {
+                                        Icon(Icons.Default.ContentCopy, contentDescription = "Copy Host", tint = Color.Gray, modifier = Modifier.size(16.dp))
+                                    }
+                                }
+                            }
+                            StatusBadge(node.status, 120.dp)
+                        }
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text("USERNAME", color = Color(0xFFA0A0B0), style = MaterialTheme.typography.labelSmall)
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Text(node.user, color = Color.White, style = MaterialTheme.typography.bodyMedium)
+                                    IconButton(onClick = { clipboardManager.setText(AnnotatedString(node.user)) }, modifier = Modifier.size(24.dp)) {
+                                        Icon(Icons.Default.ContentCopy, contentDescription = "Copy", tint = Color.Gray, modifier = Modifier.size(16.dp))
+                                    }
+                                }
+                            }
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text("PASSWORD", color = Color(0xFFA0A0B0), style = MaterialTheme.typography.labelSmall)
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Text(node.pass, color = Color.White, style = MaterialTheme.typography.bodyMedium)
+                                    IconButton(onClick = { clipboardManager.setText(AnnotatedString(node.pass)) }, modifier = Modifier.size(24.dp)) {
+                                        Icon(Icons.Default.ContentCopy, contentDescription = "Copy", tint = Color.Gray, modifier = Modifier.size(16.dp))
+                                    }
+                                }
+                            }
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text("M3U PLAYLIST", color = Color(0xFFA0A0B0), style = MaterialTheme.typography.labelSmall)
+                                IconButton(onClick = { 
+                                    val m3uUrl = "${node.baseUrl.trimEnd('/')}/get.php?username=${node.user}&password=${node.pass}&type=m3u_plus&output=ts"
+                                    clipboardManager.setText(AnnotatedString(m3uUrl)) 
+                                }, modifier = Modifier.size(24.dp)) {
+                                    Icon(Icons.Default.ContentCopy, contentDescription = "Copy M3U URL", tint = Color.Gray, modifier = Modifier.size(16.dp))
+                                }
+                            }
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text("EXPIRES", color = Color(0xFFA0A0B0), style = MaterialTheme.typography.labelSmall)
+                                Text(node.expires, color = Color.White, style = MaterialTheme.typography.bodyMedium)
+                            }
+                        }
                     }
-                    StatusBadge(node.status, 120.dp)
                 }
-                Spacer(modifier = Modifier.height(12.dp))
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text("USERNAME", color = Color(0xFFA0A0B0), style = MaterialTheme.typography.labelSmall)
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(node.user, color = Color.White, style = MaterialTheme.typography.bodyMedium)
-                            IconButton(onClick = { clipboardManager.setText(AnnotatedString(node.user)) }, modifier = Modifier.size(24.dp)) {
-                                Icon(Icons.Default.ContentCopy, contentDescription = "Copy", tint = Color.Gray, modifier = Modifier.size(16.dp))
+                
+                // Actions
+                Row(modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    PrimaryButton(
+                        text = if (isFetchingCounts) "Fetching Counts..." else "Query Channels & VOD Counts",
+                        onClick = {
+                            if (isFetchingCounts) return@PrimaryButton
+                            isFetchingCounts = true
+                            coroutineScope.launch {
+                                val liveStreams = IPTVClient.getAllLiveStreams(node.baseUrl, node.user, node.pass)
+                                val vodStreams = IPTVClient.getVodStreams(node.baseUrl, node.user, node.pass)
+                                
+                                val liveCount = liveStreams?.length() ?: 0
+                                val vodCount = vodStreams?.length() ?: 0
+                                
+                                val newIdx = DataStore.scannedNodes.indexOfFirst { it.baseUrl == node.baseUrl && it.user == node.user && it.type == "Xtream" }
+                                if (newIdx != -1) {
+                                    DataStore.scannedNodes[newIdx] = DataStore.scannedNodes[newIdx].copy(channels = "$liveCount", vods = "$vodCount")
+                                }
+                                isFetchingCounts = false
                             }
-                        }
-                    }
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text("PASSWORD", color = Color(0xFFA0A0B0), style = MaterialTheme.typography.labelSmall)
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(node.pass, color = Color.White, style = MaterialTheme.typography.bodyMedium)
-                            IconButton(onClick = { clipboardManager.setText(AnnotatedString(node.pass)) }, modifier = Modifier.size(24.dp)) {
-                                Icon(Icons.Default.ContentCopy, contentDescription = "Copy", tint = Color.Gray, modifier = Modifier.size(16.dp))
-                            }
-                        }
-                    }
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text("EXPIRES", color = Color(0xFFA0A0B0), style = MaterialTheme.typography.labelSmall)
-                        Text(node.expires, color = Color.White, style = MaterialTheme.typography.bodyMedium)
-                    }
+                        },
+                        modifier = Modifier.weight(1f)
+                    )
+                    PrimaryButton(
+                        text = "Commit Account",
+                        color = Color(0xFF10B981),
+                        onClick = {
+                            CommittedManager.commit(CommittedRecord(type = node.type, baseUrl = node.baseUrl, user = node.user, pass = node.pass, mac = node.mac, notes = ""))
+                        },
+                        modifier = Modifier.weight(1f)
+                    )
                 }
             }
         }
-        
-        // Actions
-        Row(modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            PrimaryButton(
-                text = if (isFetchingCounts) "Fetching Counts..." else "Query Channels & VOD Counts",
-                onClick = {
-                    if (isFetchingCounts) return@PrimaryButton
-                    isFetchingCounts = true
-                    coroutineScope.launch {
-                        // Normally this would fetch action=get_live_streams and get_vod_streams and update counts
-                        // For demonstration, we just fetch categories as a fast proxy, or actual streams if API permits
-                        // Since loading all streams is heavy, let's just simulate or fetch live categories length
-                        val cats = IPTVClient.getLiveCategories(node.baseUrl, node.user, node.pass)
-                        val catCount = cats?.length() ?: 0
-                        val newIdx = DataStore.scannedNodes.indexOfFirst { it.baseUrl == node.baseUrl && it.user == node.user && it.type == "Xtream" }
-                        if (newIdx != -1) {
-                            DataStore.scannedNodes[newIdx] = DataStore.scannedNodes[newIdx].copy(channels = "$catCount Categories")
-                        }
-                        isFetchingCounts = false
-                    }
-                },
-                modifier = Modifier.weight(1f)
-            )
-            PrimaryButton(
-                text = "Commit Account",
-                color = Color(0xFF10B981),
-                onClick = {
-                    CommittedManager.commit(CommittedRecord(type = node.type, baseUrl = node.baseUrl, user = node.user, pass = node.pass, mac = node.mac, notes = ""))
-                },
-                modifier = Modifier.weight(1f)
-            )
-        }
 
         // Deep Dive Section
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+        Row(modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
             Text(
                 if (selectedCategory == null) "Categories Catalog" else "Channels in ${selectedCategory!!.optString("category_name")}", 
                 color = Color.White, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold
@@ -270,8 +302,6 @@ fun XtreamDetailScreen(node: ParsedCredential, onBack: () -> Unit) {
                 }
             )
         }
-
-        Spacer(modifier = Modifier.height(12.dp))
 
         // Data List
         Box(modifier = Modifier.fillMaxWidth().weight(1f).background(Color(0xFF12121A), androidx.compose.foundation.shape.RoundedCornerShape(8.dp))) {

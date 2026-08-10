@@ -67,7 +67,7 @@ object CommittedManager {
         save()
     }
     
-        fun syncFromCloud(): List<CommittedRecord>? {
+                fun syncFromCloud(): List<CommittedRecord>? {
         try {
             val url = java.net.URL("https://raw.githubusercontent.com/Fragger7/personal-repo/main/project-strong/committed.json")
             val connection = url.openConnection() as java.net.HttpURLConnection
@@ -80,10 +80,12 @@ object CommittedManager {
                     val type = object : TypeToken<List<CommittedRecord>>() {}.type
                     val list: List<CommittedRecord> = gson.fromJson(json, type)
                     
-                    // Save it locally as well to mirror Python app behavior
-                    records.clear()
-                    records.addAll(list)
-                    save()
+                    // Save raw json to file directly on IO thread
+                    try {
+                        file.writeText(json)
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
                     
                     return list
                 }

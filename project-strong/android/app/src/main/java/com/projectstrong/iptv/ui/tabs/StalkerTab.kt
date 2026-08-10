@@ -50,10 +50,13 @@ fun StalkerTab() {
 
 @Composable
 fun StalkerMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCredential) -> Unit) {
+    var showActiveOnly by remember { mutableStateOf(false) }
+    val filteredNodes = if (showActiveOnly) nodes.filter { it.status.contains("Active", ignoreCase = true) } else nodes
     val scrollState = rememberScrollState()
     val clipboardManager = LocalClipboardManager.current
     
     Column(modifier = Modifier.fillMaxSize()) {
+        
         Row(
             modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -65,9 +68,19 @@ fun StalkerMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCreden
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold
             )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text("Active Only", color = Color.White, style = MaterialTheme.typography.bodyMedium)
+                Spacer(modifier = Modifier.width(8.dp))
+                Switch(
+                    checked = showActiveOnly,
+                    onCheckedChange = { showActiveOnly = it },
+                    colors = SwitchDefaults.colors(checkedThumbColor = Color(0xFF3B82F6), checkedTrackColor = Color(0xFF3B82F6).copy(alpha = 0.5f))
+                )
+            }
         }
+
         
-        if (nodes.isEmpty()) {
+        if (filteredNodes.isEmpty()) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Text("No Stalker portals found.", color = Color.Gray)
             }
@@ -97,7 +110,7 @@ fun StalkerMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCreden
                 Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(Color(0xFF333344)))
                 
                 LazyColumn(modifier = Modifier.fillMaxSize()) {
-                    items(nodes) { node ->
+                    items(filteredNodes) { node ->
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()

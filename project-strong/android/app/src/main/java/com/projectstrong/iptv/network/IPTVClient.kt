@@ -154,7 +154,49 @@ object IPTVClient {
         try {
             val encodedUser = URLEncoder.encode(user, "UTF-8")
             val encodedPass = URLEncoder.encode(pass, "UTF-8")
-            val url = "${baseUrl.trimEnd('/')}/player_api.php?username=$encodedUser&password=$encodedPass&action=get_live_streams&category_id=$categoryId"
+            // Bypass server-side category filters which are often broken, fetch all and filter locally
+            val url = "${baseUrl.trimEnd('/')}/player_api.php?username=$encodedUser&password=$encodedPass&action=get_live_streams"
+            val request = Request.Builder().url(url).header("User-Agent", "IPTVSmartersPro").build()
+            val response = client.newCall(request).execute()
+            if (response.code == 200) {
+                val body = response.body?.string() ?: ""
+                val allStreams = org.json.JSONArray(body)
+                val filtered = org.json.JSONArray()
+                for (i in 0 until allStreams.length()) {
+                    val stream = allStreams.optJSONObject(i)
+                    if (stream != null && stream.optString("category_id") == categoryId) {
+                        filtered.put(stream)
+                    }
+                }
+                return@withContext filtered
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+        return@withContext null
+    }
+    suspend fun getVodStreams(baseUrl: String, user: String, pass: String): org.json.JSONArray? = withContext(Dispatchers.IO) {
+        try {
+            val encodedUser = URLEncoder.encode(user, "UTF-8")
+            val encodedPass = URLEncoder.encode(pass, "UTF-8")
+            val url = "${baseUrl.trimEnd('/')}/player_api.php?username=$encodedUser&password=$encodedPass&action=get_vod_streams"
+            val request = Request.Builder().url(url).header("User-Agent", "IPTVSmartersPro").build()
+            val response = client.newCall(request).execute()
+            if (response.code == 200) {
+                val body = response.body?.string() ?: ""
+                return@withContext org.json.JSONArray(body)
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+        return@withContext null
+    }
+
+    suspend fun getAllLiveStreams(baseUrl: String, user: String, pass: String): org.json.JSONArray? = withContext(Dispatchers.IO) {
+        try {
+            val encodedUser = URLEncoder.encode(user, "UTF-8")
+            val encodedPass = URLEncoder.encode(pass, "UTF-8")
+            val url = "${baseUrl.trimEnd('/')}/player_api.php?username=$encodedUser&password=$encodedPass&action=get_live_streams"
             val request = Request.Builder().url(url).header("User-Agent", "IPTVSmartersPro").build()
             val response = client.newCall(request).execute()
             if (response.code == 200) {
