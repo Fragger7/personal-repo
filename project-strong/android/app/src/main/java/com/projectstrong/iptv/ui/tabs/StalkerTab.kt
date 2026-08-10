@@ -57,14 +57,24 @@ fun StalkerTab() {
 
 @Composable
 fun StalkerMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCredential) -> Unit) {
-    var showActiveOnly by remember { mutableStateOf(false) }
-    val filteredNodes = (if (showActiveOnly) nodes.filter { it.status.contains("Active", ignoreCase = true) } else nodes)
-        .sortedWith(
-            compareByDescending<ParsedCredential> { it.channels.toIntOrNull() ?: -1 }
-            .thenByDescending { it.daysLeft.toIntOrNull() ?: -1 }
-        )
+    
+    val filteredNodes = (if (DataStore.activeOnlyStalker) nodes.filter { it.status.contains("Active", ignoreCase = true) } else nodes)
+        .let { list ->
+            when (sortColumn) {
+                "Live" -> if (sortAscending) list.sortedBy { it.channels.toIntOrNull() ?: -1 } else list.sortedByDescending { it.channels.toIntOrNull() ?: -1 }
+                "VODs" -> if (sortAscending) list.sortedBy { it.vods.toIntOrNull() ?: -1 } else list.sortedByDescending { it.vods.toIntOrNull() ?: -1 }
+                "Days Left" -> if (sortAscending) list.sortedBy { it.daysLeft.toIntOrNull() ?: -1 } else list.sortedByDescending { it.daysLeft.toIntOrNull() ?: -1 }
+                "Host URL" -> if (sortAscending) list.sortedBy { it.baseUrl } else list.sortedByDescending { it.baseUrl }
+                "Status" -> if (sortAscending) list.sortedBy { it.status } else list.sortedByDescending { it.status }
+                "Provider" -> if (sortAscending) list.sortedBy { it.provider } else list.sortedByDescending { it.provider }
+                "MAC" -> if (sortAscending) list.sortedBy { it.mac } else list.sortedByDescending { it.mac }
+                else -> list
+            }
+        }
     val scrollState = rememberScrollState()
     val listState = rememberLazyListState()
+    var sortColumn by remember { mutableStateOf("Days Left") }
+    var sortAscending by remember { mutableStateOf(false) }
     val clipboardManager = LocalClipboardManager.current
     val coroutineScope = rememberCoroutineScope()
     
@@ -88,8 +98,8 @@ fun StalkerMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCreden
                 Text("Active Only", color = Color.White, style = MaterialTheme.typography.bodyMedium)
                 Spacer(modifier = Modifier.width(8.dp))
                 Switch(
-                    checked = showActiveOnly,
-                    onCheckedChange = { showActiveOnly = it },
+                    checked = DataStore.activeOnlyStalker,
+                    onCheckedChange = { DataStore.activeOnlyStalker = it },
                     colors = SwitchDefaults.colors(checkedThumbColor = Color(0xFF3B82F6), checkedTrackColor = Color(0xFF3B82F6).copy(alpha = 0.5f))
                 )
             }
@@ -115,12 +125,17 @@ fun StalkerMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCreden
                             .background(Color(0xFF1E1E2E))
                             .padding(horizontal = 16.dp, vertical = 12.dp)
                     ) {
-                        GridHeader("Host URL", 250.dp)
-                        GridHeader("Status", 120.dp)
-                        GridHeader("MAC Address", 160.dp)
-                        GridHeader("Provider", 150.dp)
-                        GridHeader("Timezone", 120.dp)
-                        GridHeader("Actions", 180.dp)
+                        val headerClick = { col: String -> 
+                            if (sortColumn == col) sortAscending = !sortAscending else { sortColumn = col; sortAscending = false }
+                        }
+                        GridHeader("Host URL", 250.dp, { headerClick("Host URL") })
+                        GridHeader("Status", 120.dp, { headerClick("Status") })
+                        GridHeader("Provider", 150.dp, { headerClick("Provider") })
+                        GridHeader("Timezone", 120.dp, null)
+                        GridHeader("MAC Address", 150.dp, { headerClick("MAC") })
+                        GridHeader("Expires", 100.dp, null)
+                        GridHeader("Days Left", 100.dp, { headerClick("Days Left") })
+                        GridHeader("Actions", 180.dp, null)
                     }
                     
                     Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(Color(0xFF333344)))
