@@ -347,7 +347,7 @@ fun XtreamDetailScreen(node: ParsedCredential, onBack: () -> Unit) {
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                             Column(modifier = Modifier.weight(1f)) {
                                 Text("HOST", color = Color(0xFFA0A0B0), style = MaterialTheme.typography.labelSmall)
-                                Row(verticalAlignment = Alignment.CenterVertically) {) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
                                     Text(node.baseUrl, color = Color.White, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold)
                                     IconButton(onClick = { clipboardManager.setText(AnnotatedString(node.baseUrl)) }, modifier = Modifier.size(24.dp)) {
                                         Icon(Icons.Default.ContentCopy, contentDescription = "Copy Host", tint = Color.Gray, modifier = Modifier.size(16.dp))
@@ -360,7 +360,7 @@ fun XtreamDetailScreen(node: ParsedCredential, onBack: () -> Unit) {
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                             Column(modifier = Modifier.weight(1f)) {
                                 Text("USERNAME", color = Color(0xFFA0A0B0), style = MaterialTheme.typography.labelSmall)
-                                Row(verticalAlignment = Alignment.CenterVertically) {) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
                                     Text(node.user, color = Color.White, style = MaterialTheme.typography.bodyMedium)
                                     IconButton(onClick = { clipboardManager.setText(AnnotatedString(node.user)) }, modifier = Modifier.size(24.dp)) {
                                         Icon(Icons.Default.ContentCopy, contentDescription = "Copy", tint = Color.Gray, modifier = Modifier.size(16.dp))
@@ -369,7 +369,7 @@ fun XtreamDetailScreen(node: ParsedCredential, onBack: () -> Unit) {
                             }
                             Column(modifier = Modifier.weight(1f)) {
                                 Text("PASSWORD", color = Color(0xFFA0A0B0), style = MaterialTheme.typography.labelSmall)
-                                Row(verticalAlignment = Alignment.CenterVertically) {) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
                                     Text(node.pass, color = Color.White, style = MaterialTheme.typography.bodyMedium)
                                     IconButton(onClick = { clipboardManager.setText(AnnotatedString(node.pass)) }, modifier = Modifier.size(24.dp)) {
                                         Icon(Icons.Default.ContentCopy, contentDescription = "Copy", tint = Color.Gray, modifier = Modifier.size(16.dp))
@@ -417,7 +417,8 @@ fun XtreamDetailScreen(node: ParsedCredential, onBack: () -> Unit) {
                                 isFetchingCounts = false
                             }
                         },
-                        modifier = Modifier.weight(1f))
+                        modifier = Modifier.weight(1f)
+                    )
             
                     PrimaryButton(
                         text = "Commit Account",
@@ -426,17 +427,18 @@ fun XtreamDetailScreen(node: ParsedCredential, onBack: () -> Unit) {
                             CommittedManager.commit(CommittedRecord(type = node.type, baseUrl = node.baseUrl, user = node.user, pass = node.pass, mac = node.mac, notes = ""))
                         },
                         modifier = Modifier.weight(1f)
+                    )
             
                 }
             }
         }
 
         // Deep Dive Section
-        Row(modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {) {
+        Row(modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
             Text(
-                if (selectedCategory == null) "Categories Catalog" else "Channels in ${selectedCategory?.optString("category_name") ?: "Unknown"}", 
+                text = if (selectedCategory == null) "Categories Catalog" else "Channels in ${selectedCategory?.optString(\"category_name\") ?: \"Unknown\"}",
                 color = Color.White, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold
-    
+            )
             SecondaryButton(
                 text = if (isLoadingCategories || isLoadingChannels) "Loading..." else if (selectedCategory != null) "Back to Categories" else "Load Categories",
                 onClick = {
@@ -496,7 +498,8 @@ fun XtreamDetailScreen(node: ParsedCredential, onBack: () -> Unit) {
                             items(currentChannels.length()) { i ->
                                 val ch = currentChannels.optJSONObject(i)
                                 Row(modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp, horizontal = 8.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-                                    Text(ch?.optString("name", "Unknown") ?: "Unknown", color = Color.White, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
+                                    Text(ch?.optString("name", "Unknown") ?: "Unknown", color = Color.White, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f)
+                    )
                                     Text("ID: ${ch?.optString("stream_id", "")}", color = Color.Gray, style = MaterialTheme.typography.bodySmall)
                                 }
                                 Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(Color(0xFF222233)))
