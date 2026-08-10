@@ -61,7 +61,11 @@ fun XtreamTab() {
 @Composable
 fun XtreamMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCredential) -> Unit) {
     var showActiveOnly by remember { mutableStateOf(false) }
-    val filteredNodes = if (showActiveOnly) nodes.filter { it.status.contains("Active", ignoreCase = true) } else nodes
+    val filteredNodes = (if (showActiveOnly) nodes.filter { it.status.contains("Active", ignoreCase = true) } else nodes)
+        .sortedWith(
+            compareByDescending<ParsedCredential> { it.channels.toIntOrNull() ?: -1 }
+            .thenByDescending { it.daysLeft.toIntOrNull() ?: -1 }
+        )
     val scrollState = rememberScrollState()
     val listState = rememberLazyListState()
     val clipboardManager = LocalClipboardManager.current
@@ -75,12 +79,16 @@ fun XtreamMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCredent
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "Xtream Codes (${filteredNodes.size} of ${nodes.size})",
+                text = "Xtream Codes (${filteredNodes.size}/${nodes.size})",
                 color = Color.White,
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.weight(1f)
             )
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.horizontalScroll(rememberScrollState())
+            ) {
                 var isQueryingAll by remember { mutableStateOf(false) }
                 if (filteredNodes.isNotEmpty()) {
                     PrimaryButton(
@@ -88,23 +96,37 @@ fun XtreamMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCredent
                         onClick = {
                             if (isQueryingAll) return@PrimaryButton
                             isQueryingAll = true
+                            DataStore.scanProgress = 0f
                             coroutineScope.launch {
                                 val activeNodes = filteredNodes.filter { it.status.contains("Active", ignoreCase = true) }
-                                for (node in activeNodes) {
-                                    val key = node.baseUrl + node.user
-                                    fetchingRows = fetchingRows + key
-                                    val liveStreams = IPTVClient.getAllLiveStreams(node.baseUrl, node.user, node.pass)
-                                    val vodStreams = IPTVClient.getVodStreams(node.baseUrl, node.user, node.pass)
-                                    val liveCount = liveStreams?.length() ?: 0
-                                    val vodCount = vodStreams?.length() ?: 0
-                                    
-                                    val newIdx = DataStore.scannedNodes.indexOfFirst { it.baseUrl == node.baseUrl && it.user == node.user && it.type == "Xtream" }
-                                    if (newIdx != -1) {
-                                        DataStore.scannedNodes[newIdx] = DataStore.scannedNodes[newIdx].copy(channels = "$liveCount", vods = "$vodCount")
-                                    }
-                                    fetchingRows = fetchingRows - key
+                                val total = activeNodes.size
+                                var completed = 0
+                                
+                                kotlinx.coroutines.coroutineScope {
+                                    activeNodes.map { node ->
+                                        kotlinx.coroutines.async(Dispatchers.IO) {
+                                            val key = node.baseUrl + node.user
+                                            fetchingRows = fetchingRows + key
+                                            val liveStreams = IPTVClient.getAllLiveStreams(node.baseUrl, node.user, node.pass)
+                                            val vodStreams = IPTVClient.getVodStreams(node.baseUrl, node.user, node.pass)
+                                            val liveCount = liveStreams?.length() ?: 0
+                                            val vodCount = vodStreams?.length() ?: 0
+                                            
+                                            kotlinx.coroutines.withContext(Dispatchers.Main) {
+                                                val newIdx = DataStore.scannedNodes.indexOfFirst { it.baseUrl == node.baseUrl && it.user == node.user && it.type == "Xtream" }
+                                                if (newIdx != -1) {
+                                                    DataStore.scannedNodes[newIdx] = DataStore.scannedNodes[newIdx].copy(channels = "$liveCount", vods = "$vodCount")
+                                                }
+                                                fetchingRows = fetchingRows - key
+                                                completed++
+                                                DataStore.scanProgress = completed.toFloat() / total
+                                            }
+                                        }
+                                    }.map { it.await() }
                                 }
+                                
                                 isQueryingAll = false
+                                DataStore.scanProgress = 0f
                             }
                         },
                         modifier = Modifier.height(36.dp)
@@ -135,6 +157,9 @@ fun XtreamMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCredent
                     .horizontalScroll(scrollState)
             ) {
                 Column {
+                    if (isQueryingAll && DataStore.scanProgress > 0f) {
+                        LinearProgressIndicator(progress = DataStore.scanProgress, modifier = Modifier.fillMaxWidth().height(2.dp), color = Color(0xFF10B981))
+                    }
                     // Header Row
                     Row(
                         modifier = Modifier
@@ -158,7 +183,7 @@ fun XtreamMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCredent
                     Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(Color(0xFF333344)))
                     
                     LazyColumn(modifier = Modifier.fillMaxSize(), state = listState) {
-                        items(filteredNodes) { node ->
+                        items(filteredNodes, key = { it.baseUrl + it.user }) { node ->
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -324,8 +349,11 @@ fun XtreamDetailScreen(node: ParsedCredential, onBack: () -> Unit) {
                             if (isFetchingCounts) return@PrimaryButton
                             isFetchingCounts = true
                             coroutineScope.launch {
-                                val liveStreams = IPTVClient.getAllLiveStreams(node.baseUrl, node.user, node.pass)
-                                val vodStreams = IPTVClient.getVodStreams(node.baseUrl, node.user, node.pass)
+                                val liveStreamsAsync = kotlinx.coroutines.async(Dispatchers.IO) { IPTVClient.getAllLiveStreams(node.baseUrl, node.user, node.pass) }
+                                val vodStreamsAsync = kotlinx.coroutines.async(Dispatchers.IO) { IPTVClient.getVodStreams(node.baseUrl, node.user, node.pass) }
+                                
+                                val liveStreams = liveStreamsAsync.await()
+                                val vodStreams = vodStreamsAsync.await()
                                 
                                 val liveCount = liveStreams?.length() ?: 0
                                 val vodCount = vodStreams?.length() ?: 0
@@ -367,7 +395,31 @@ fun XtreamDetailScreen(node: ParsedCredential, onBack: () -> Unit) {
                         if (isLoadingCategories) return@SecondaryButton
                         isLoadingCategories = true
                         coroutineScope.launch {
-                            categories = IPTVClient.getLiveCategories(node.baseUrl, node.user, node.pass)
+                            val catsAsync = kotlinx.coroutines.async(Dispatchers.IO) { IPTVClient.getLiveCategories(node.baseUrl, node.user, node.pass) }
+                            val allStreamsAsync = kotlinx.coroutines.async(Dispatchers.IO) { IPTVClient.getAllLiveStreams(node.baseUrl, node.user, node.pass) }
+                            val cats = catsAsync.await()
+                            val allStreams = allStreamsAsync.await()
+                            
+                            if (cats != null && allStreams != null) {
+                                val categoryCounts = mutableMapOf<String, Int>()
+                                for (i in 0 until allStreams.length()) {
+                                    val stream = allStreams.optJSONObject(i)
+                                    val catId = stream?.optString("category_id", "") ?: ""
+                                    if (catId.isNotEmpty()) {
+                                        categoryCounts[catId] = categoryCounts.getOrDefault(catId, 0) + 1
+                                    }
+                                }
+                                
+                                for (i in 0 until cats.length()) {
+                                    val cat = cats.optJSONObject(i)
+                                    if (cat != null) {
+                                        val catId = cat.optString("category_id", "")
+                                        val count = categoryCounts[catId] ?: 0
+                                        cat.put("count", count)
+                                    }
+                                }
+                            }
+                            categories = cats
                             isLoadingCategories = false
                         }
                     }
@@ -416,7 +468,9 @@ fun XtreamDetailScreen(node: ParsedCredential, onBack: () -> Unit) {
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Text(cat?.optString("category_name", "Unknown") ?: "Unknown", color = Color(0xFF3B82F6), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                val catName = cat?.optString("category_name", "Unknown") ?: "Unknown"
+                                val count = cat?.optInt("count", 0) ?: 0
+                                Text("$catName ($count)", color = Color(0xFF3B82F6), maxLines = 1, overflow = TextOverflow.Ellipsis)
                                 Text("ID: ${cat?.optString("category_id", "")}", color = Color.Gray, style = MaterialTheme.typography.bodySmall)
                             }
                             Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(Color(0xFF222233)))

@@ -58,7 +58,11 @@ fun StalkerTab() {
 @Composable
 fun StalkerMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCredential) -> Unit) {
     var showActiveOnly by remember { mutableStateOf(false) }
-    val filteredNodes = if (showActiveOnly) nodes.filter { it.status.contains("Active", ignoreCase = true) } else nodes
+    val filteredNodes = (if (showActiveOnly) nodes.filter { it.status.contains("Active", ignoreCase = true) } else nodes)
+        .sortedWith(
+            compareByDescending<ParsedCredential> { it.channels.toIntOrNull() ?: -1 }
+            .thenByDescending { it.daysLeft.toIntOrNull() ?: -1 }
+        )
     val scrollState = rememberScrollState()
     val listState = rememberLazyListState()
     val clipboardManager = LocalClipboardManager.current
@@ -71,12 +75,16 @@ fun StalkerMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCreden
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "Stalker Portals (${filteredNodes.size} of ${nodes.size})",
+                text = "Stalker Portals (${filteredNodes.size}/${nodes.size})",
                 color = Color.White,
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.weight(1f)
             )
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.horizontalScroll(rememberScrollState())
+            ) {
                 Text("Active Only", color = Color.White, style = MaterialTheme.typography.bodyMedium)
                 Spacer(modifier = Modifier.width(8.dp))
                 Switch(
@@ -118,7 +126,7 @@ fun StalkerMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCreden
                     Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(Color(0xFF333344)))
                     
                     LazyColumn(modifier = Modifier.fillMaxSize(), state = listState) {
-                        items(filteredNodes) { node ->
+                        items(filteredNodes, key = { it.baseUrl + it.mac }) { node ->
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()

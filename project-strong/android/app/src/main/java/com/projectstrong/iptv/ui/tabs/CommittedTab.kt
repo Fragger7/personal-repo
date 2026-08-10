@@ -108,11 +108,11 @@ fun CommittedMasterGrid(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Column {
+            Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = "Committed Data (${records.size})",
                     color = Color.White,
-                    style = MaterialTheme.typography.headlineMedium,
+                    style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold
                 )
                 if (reloadMessage.isNotEmpty()) {
@@ -158,7 +158,7 @@ fun CommittedMasterGrid(
                 Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(Color(0xFF333344)))
                 
                 LazyColumn(modifier = Modifier.fillMaxSize()) {
-                    items(records) { record ->
+                    items(records, key = { it.hashCode() }) { record ->
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
