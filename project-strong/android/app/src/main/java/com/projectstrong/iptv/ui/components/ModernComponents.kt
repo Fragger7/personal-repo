@@ -16,13 +16,15 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun GridHeader(text: String, width: Dp) {
+fun GridHeader(text: String, width: Dp, onClick: (() -> Unit)? = null) {
     Text(
         text = text.uppercase(),
         color = Color(0xFFA0A0B0),
         style = MaterialTheme.typography.labelSmall,
         fontWeight = FontWeight.Bold,
-        modifier = Modifier.width(width).padding(end = 8.dp)
+        modifier = Modifier.width(width).padding(end = 8.dp).let {
+            if (onClick != null) it.clickable { onClick() } else it
+        }
     )
 }
 

@@ -26,6 +26,7 @@ import okhttp3.Request
 import org.json.JSONObject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.awaitAll
 
 @Composable
 fun ScannerTab(onNextTab: () -> Unit = {}) {
@@ -117,9 +118,14 @@ fun ScannerTab(onNextTab: () -> Unit = {}) {
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 PrimaryButton(
-                    text = if (DataStore.isScanning) "Scanning..." else "Parse & Scan Data",
+                    text = if (DataStore.isScanning) "Stop Scan" else "Parse & Scan Data",
                     onClick = {
-                        if (DataStore.isScanning) return@PrimaryButton
+                        if (DataStore.isScanning) {
+                            DataStore.isScanning = false
+                            DataStore.scanCountText = "Scan Stopped."
+                            return@PrimaryButton
+                        }
+                        
                         val parsed = Parser.parseCredentials(DataStore.scannerInput)
                         DataStore.scannedNodes.clear()
                         DataStore.scannedNodes.addAll(parsed)
@@ -135,36 +141,54 @@ fun ScannerTab(onNextTab: () -> Unit = {}) {
                         
                         DataStore.scanScope.launch {
                             val total = parsed.size
-                            for ((i, node) in parsed.withIndex()) {
-                                // Batch Verification
-                                val idx = DataStore.scannedNodes.indexOf(node)
-                                if (idx != -1) {
-                                    DataStore.scannedNodes[idx] = node.copy(isVerifying = true, status = "Connecting...")
-                                }
+                            var completed = 0
+                            val chunkSize = 15
+                            val chunks = parsed.chunked(chunkSize)
+                            
+                            for (chunk in chunks) {
+                                if (!DataStore.isScanning) break
                                 
-                                val result = if (node.type == "Xtream") {
-                                    IPTVClient.verifyXtream(node.baseUrl, node.user, node.pass)
-                                } else {
-                                    IPTVClient.verifyStalker(node.baseUrl, node.mac)
+                                kotlinx.coroutines.coroutineScope {
+                                    chunk.map { node ->
+                                        kotlinx.coroutines.async(Dispatchers.IO) {
+                                            withContext(Dispatchers.Main) {
+                                                val idx = DataStore.scannedNodes.indexOf(node)
+                                                if (idx != -1) {
+                                                    DataStore.scannedNodes[idx] = node.copy(isVerifying = true, status = "Connecting...")
+                                                }
+                                            }
+                                            
+                                            val result = if (node.type == "Xtream") {
+                                                IPTVClient.verifyXtream(node.baseUrl, node.user, node.pass)
+                                            } else {
+                                                IPTVClient.verifyStalker(node.baseUrl, node.mac)
+                                            }
+                                            
+                                            withContext(Dispatchers.Main) {
+                                                val newIdx = DataStore.scannedNodes.indexOfFirst { it.baseUrl == node.baseUrl && it.user == node.user && it.mac == node.mac && it.type == node.type }
+                                                if (newIdx != -1) {
+                                                    if (result is VerificationResult.Success) {
+                                                        DataStore.scannedNodes[newIdx] = DataStore.scannedNodes[newIdx].copy(isVerifying = false, status = result.status, details = result.details, expires = result.expires, daysLeft = result.daysLeft, activeConn = result.activeConn, maxConn = result.maxConn, serverTimezone = result.serverTimezone, serverTime = result.serverTime)
+                                                    } else if (result is VerificationResult.Failed) {
+                                                        DataStore.scannedNodes[newIdx] = DataStore.scannedNodes[newIdx].copy(isVerifying = false, status = result.reason)
+                                                    }
+                                                }
+                                                completed++
+                                                DataStore.scanProgress = completed.toFloat() / total.toFloat()
+                                                DataStore.scanCountText = "Processed $completed/$total connections..."
+                                            }
+                                        }
+                                    }.awaitAll()
                                 }
-                                
-                                val newIdx = DataStore.scannedNodes.indexOfFirst { it.baseUrl == node.baseUrl && it.user == node.user && it.mac == node.mac && it.type == node.type }
-                                if (newIdx != -1) {
-                                    if (result is VerificationResult.Success) {
-                                        DataStore.scannedNodes[newIdx] = DataStore.scannedNodes[newIdx].copy(isVerifying = false, status = result.status, details = result.details, expires = result.expires, daysLeft = result.daysLeft, activeConn = result.activeConn, maxConn = result.maxConn, serverTimezone = result.serverTimezone, serverTime = result.serverTime)
-                                    } else if (result is VerificationResult.Failed) {
-                                        DataStore.scannedNodes[newIdx] = DataStore.scannedNodes[newIdx].copy(isVerifying = false, status = result.reason)
-                                    }
-                                }
-                                
-                                DataStore.scanProgress = (i + 1).toFloat() / total.toFloat()
-                                DataStore.scanCountText = "Processed ${i + 1}/$total connections..."
                             }
-                            DataStore.isScanning = false
-                            DataStore.scanCountText = "Scan Complete: ${parsed.size} credentials ready."
+                            if (DataStore.isScanning) {
+                                DataStore.isScanning = false
+                                DataStore.scanCountText = "Scan Complete: ${parsed.size} credentials ready."
+                            }
                         }
                     },
-                    modifier = Modifier.weight(1.5f)
+                    modifier = Modifier.weight(1.5f),
+                    color = if (DataStore.isScanning) Color(0xFFEF4444) else Color(0xFF3B82F6)
                 )
                 SecondaryButton(
                     text = "Paste",

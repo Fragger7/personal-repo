@@ -4,16 +4,18 @@ import android.content.Context
 import androidx.compose.runtime.mutableStateListOf
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
+import com.google.gson.annotations.SerializedName
 import java.io.File
 
 data class CommittedRecord(
-    val type: String? = "Unknown",
-    val baseUrl: String? = "",
-    val user: String? = "",
-    val pass: String? = "",
-    val mac: String? = "",
-    val notes: String? = "",
-    val dateAdded: Long? = null)
+    @SerializedName("type") val type: String? = "Unknown",
+    @SerializedName("base_url") val baseUrl: String? = "",
+    @SerializedName("username") val user: String? = "",
+    @SerializedName("password") val pass: String? = "",
+    @SerializedName("mac") val mac: String? = "",
+    @SerializedName("Notes") val notes: String? = "",
+    @SerializedName("Date Selected") val dateAdded: String? = null
+)
  {
     val safeType get() = type ?: "Unknown"
     val safeBaseUrl get() = baseUrl ?: ""
@@ -21,7 +23,7 @@ data class CommittedRecord(
     val safePass get() = pass ?: ""
     val safeMac get() = mac ?: ""
     val safeNotes get() = notes ?: ""
-    val safeDateAdded get() = dateAdded ?: System.currentTimeMillis()
+    val safeDateAdded get() = dateAdded ?: ""
 }
 
 

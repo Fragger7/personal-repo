@@ -19,4 +19,6 @@ object DataStore {
     var scanCountText by mutableStateOf("")
     var ipInfo by mutableStateOf("")
     var showVpnWarning by mutableStateOf(false)
+    var activeOnlyXtream by mutableStateOf(false)
+    var activeOnlyStalker by mutableStateOf(false)
 }
