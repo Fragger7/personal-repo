@@ -54,18 +54,22 @@ fun XtreamTab() {
             XtreamDetailScreen(
                 node = selectedNode!!,
                 onBack = { selectedNode = null }
-            )
+    
         } else {
             XtreamMasterGrid(
                 nodes = xtreamNodes,
                 onSelectNode = { selectedNode = it }
-            )
+    
         }
     }
 }
 
 @Composable
 fun XtreamMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCredential) -> Unit) {
+    val scrollState = rememberScrollState()
+    val listState = rememberLazyListState()
+    var sortColumn by remember { mutableStateOf("Days Left") }
+    var sortAscending by remember { mutableStateOf(false) }
     
     val filteredNodes = (if (DataStore.activeOnlyXtream) nodes.filter { it.status.contains("Active", ignoreCase = true) } else nodes)
         .let { list ->
@@ -81,11 +85,8 @@ fun XtreamMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCredent
                 else -> list
             }
         }
-        )
-    val scrollState = rememberScrollState()
-    val listState = rememberLazyListState()
-    var sortColumn by remember { mutableStateOf("Days Left") }
-    var sortAscending by remember { mutableStateOf(false) }
+
+
     val clipboardManager = LocalClipboardManager.current
     val coroutineScope = rememberCoroutineScope()
     var fetchingRows by remember { mutableStateOf<Set<String>>(emptySet()) }
@@ -96,18 +97,18 @@ fun XtreamMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCredent
             modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
-        ) {
+ {
             Text(
                 text = "Xtream Codes (${filteredNodes.size}/${nodes.size})",
                 color = Color.White,
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.weight(1f)
-            )
+    
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.horizontalScroll(rememberScrollState())
-            ) {
+     {
                 if (filteredNodes.isNotEmpty()) {
                     PrimaryButton(
                         text = if (isQueryingAll) "Querying..." else "Query All Active",
@@ -154,7 +155,7 @@ fun XtreamMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCredent
                             }
                         },
                         modifier = Modifier.height(36.dp)
-                    )
+            
                     Spacer(modifier = Modifier.width(16.dp))
                 }
                 Text("Active Only", color = Color.White, style = MaterialTheme.typography.bodyMedium)
@@ -163,7 +164,7 @@ fun XtreamMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCredent
                     checked = DataStore.activeOnlyXtream,
                     onCheckedChange = { DataStore.activeOnlyXtream = it },
                     colors = SwitchDefaults.colors(checkedThumbColor = Color(0xFF3B82F6), checkedTrackColor = Color(0xFF3B82F6).copy(alpha = 0.5f))
-                )
+        
             }
         }
         
@@ -179,7 +180,7 @@ fun XtreamMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCredent
                 modifier = Modifier
                     .fillMaxSize()
                     .horizontalScroll(scrollState)
-            ) {
+     {
                 Column {
                     if (isQueryingAll && DataStore.scanProgress > 0f) {
                         LinearProgressIndicator(progress = DataStore.scanProgress, modifier = Modifier.fillMaxWidth().height(2.dp), color = Color(0xFF10B981))
@@ -189,7 +190,7 @@ fun XtreamMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCredent
                         modifier = Modifier
                             .background(Color(0xFF1E1E2E))
                             .padding(horizontal = 16.dp, vertical = 12.dp)
-                    ) {
+             {
                         val headerClick = { col: String -> 
                             if (sortColumn == col) sortAscending = !sortAscending else { sortColumn = col; sortAscending = false }
                         }
@@ -217,7 +218,7 @@ fun XtreamMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCredent
                                     .clickable { onSelectNode(node) }
                                     .padding(horizontal = 16.dp, vertical = 12.dp),
                                 verticalAlignment = Alignment.CenterVertically
-                            ) {
+                     {
                                 GridCell(node.baseUrl, 250.dp, isBold = true)
                                 StatusBadge(node.status, 120.dp)
                                 GridCell(node.provider, 150.dp)
@@ -255,7 +256,7 @@ fun XtreamMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCredent
                                             }
                                         },
                                         modifier = Modifier.height(36.dp).width(50.dp)
-                                    )
+                            
                                     SecondaryButton(
                                         text = "Copy",
                                         onClick = {
@@ -263,14 +264,14 @@ fun XtreamMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCredent
                                             clipboardManager.setText(AnnotatedString(url))
                                         },
                                         modifier = Modifier.height(36.dp).weight(1f)
-                                    )
+                            
                                     PrimaryButton(
                                         text = "Commit",
                                         onClick = {
                                             CommittedManager.commit(CommittedRecord(type = node.type, baseUrl = node.baseUrl, user = node.user, pass = node.pass, mac = node.mac, notes = ""))
                                         },
                                         modifier = Modifier.height(36.dp).weight(1f)
-                                    )
+                            
                                 }
                             }
                             Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(Color(0xFF222233)))
@@ -285,13 +286,13 @@ fun XtreamMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCredent
                     .align(Alignment.BottomEnd)
                     .padding(end = 16.dp, bottom = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
+     {
                 FloatingActionButton(
                     onClick = { coroutineScope.launch { listState.animateScrollToItem(0) } },
                     containerColor = Color(0xFF3B82F6),
                     contentColor = Color.White,
                     modifier = Modifier.size(48.dp)
-                ) {
+         {
                     Icon(Icons.Default.KeyboardArrowUp, contentDescription = "Scroll to Top")
                 }
                 FloatingActionButton(
@@ -299,7 +300,7 @@ fun XtreamMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCredent
                     containerColor = Color(0xFF3B82F6),
                     contentColor = Color.White,
                     modifier = Modifier.size(48.dp)
-                ) {
+         {
                     Icon(Icons.Default.KeyboardArrowDown, contentDescription = "Scroll to Bottom")
                 }
             }
@@ -331,7 +332,7 @@ fun XtreamDetailScreen(node: ParsedCredential, onBack: () -> Unit) {
                 color = Color.White,
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold
-            )
+    
         }
 
         AnimatedVisibility(visible = selectedCategory == null) {
@@ -341,7 +342,7 @@ fun XtreamDetailScreen(node: ParsedCredential, onBack: () -> Unit) {
                     colors = CardDefaults.cardColors(containerColor = Color(0xFF1E1E2E)),
                     shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp),
                     modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)
-                ) {
+         {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                             Column(modifier = Modifier.weight(1f)) {
@@ -417,7 +418,7 @@ fun XtreamDetailScreen(node: ParsedCredential, onBack: () -> Unit) {
                             }
                         },
                         modifier = Modifier.weight(1f)
-                    )
+            
                     PrimaryButton(
                         text = "Commit Account",
                         color = Color(0xFF10B981),
@@ -425,7 +426,7 @@ fun XtreamDetailScreen(node: ParsedCredential, onBack: () -> Unit) {
                             CommittedManager.commit(CommittedRecord(type = node.type, baseUrl = node.baseUrl, user = node.user, pass = node.pass, mac = node.mac, notes = ""))
                         },
                         modifier = Modifier.weight(1f)
-                    )
+            
                 }
             }
         }
@@ -435,7 +436,7 @@ fun XtreamDetailScreen(node: ParsedCredential, onBack: () -> Unit) {
             Text(
                 if (selectedCategory == null) "Categories Catalog" else "Channels in ${selectedCategory?.optString("category_name") ?: "Unknown"}", 
                 color = Color.White, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold
-            )
+    
             SecondaryButton(
                 text = if (isLoadingCategories || isLoadingChannels) "Loading..." else if (selectedCategory != null) "Back to Categories" else "Load Categories",
                 onClick = {
@@ -475,7 +476,7 @@ fun XtreamDetailScreen(node: ParsedCredential, onBack: () -> Unit) {
                         }
                     }
                 }
-            )
+    
         }
 
         // Data List
@@ -522,7 +523,7 @@ fun XtreamDetailScreen(node: ParsedCredential, onBack: () -> Unit) {
                                     .padding(vertical = 12.dp, horizontal = 8.dp),
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
-                            ) {
+                     {
                                 val catName = cat?.optString("category_name", "Unknown") ?: "Unknown"
                                 val count = cat?.optInt("count", 0) ?: 0
                                 Text("$catName ($count)", color = Color(0xFF3B82F6), maxLines = 1, overflow = TextOverflow.Ellipsis)

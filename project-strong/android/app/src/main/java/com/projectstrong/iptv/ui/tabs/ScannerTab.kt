@@ -26,6 +26,8 @@ import okhttp3.Request
 import org.json.JSONObject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.awaitAll
 
 @Composable
@@ -148,9 +150,9 @@ fun ScannerTab(onNextTab: () -> Unit = {}) {
                             for (chunk in chunks) {
                                 if (!DataStore.isScanning) break
                                 
-                                kotlinx.coroutines.coroutineScope {
+                                coroutineScope {
                                     chunk.map { node ->
-                                        kotlinx.coroutines.async(Dispatchers.IO) {
+                                        async(Dispatchers.IO) {
                                             withContext(Dispatchers.Main) {
                                                 val idx = DataStore.scannedNodes.indexOf(node)
                                                 if (idx != -1) {

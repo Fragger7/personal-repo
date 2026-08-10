@@ -45,18 +45,22 @@ fun StalkerTab() {
             StalkerDetailScreen(
                 node = selectedNode!!,
                 onBack = { selectedNode = null }
-            )
+    
         } else {
             StalkerMasterGrid(
                 nodes = stalkerNodes,
                 onSelectNode = { selectedNode = it }
-            )
+    
         }
     }
 }
 
 @Composable
 fun StalkerMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCredential) -> Unit) {
+    val scrollState = rememberScrollState()
+    val listState = rememberLazyListState()
+    var sortColumn by remember { mutableStateOf("Days Left") }
+    var sortAscending by remember { mutableStateOf(false) }
     
     val filteredNodes = (if (DataStore.activeOnlyStalker) nodes.filter { it.status.contains("Active", ignoreCase = true) } else nodes)
         .let { list ->
@@ -71,11 +75,8 @@ fun StalkerMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCreden
                 else -> list
             }
         }
-        )
-    val scrollState = rememberScrollState()
-    val listState = rememberLazyListState()
-    var sortColumn by remember { mutableStateOf("Days Left") }
-    var sortAscending by remember { mutableStateOf(false) }
+
+
     val clipboardManager = LocalClipboardManager.current
     val coroutineScope = rememberCoroutineScope()
     
@@ -84,25 +85,25 @@ fun StalkerMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCreden
             modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
-        ) {
+ {
             Text(
                 text = "Stalker Portals (${filteredNodes.size}/${nodes.size})",
                 color = Color.White,
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.weight(1f)
-            )
+    
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.horizontalScroll(rememberScrollState())
-            ) {
+     {
                 Text("Active Only", color = Color.White, style = MaterialTheme.typography.bodyMedium)
                 Spacer(modifier = Modifier.width(8.dp))
                 Switch(
                     checked = DataStore.activeOnlyStalker,
                     onCheckedChange = { DataStore.activeOnlyStalker = it },
                     colors = SwitchDefaults.colors(checkedThumbColor = Color(0xFF3B82F6), checkedTrackColor = Color(0xFF3B82F6).copy(alpha = 0.5f))
-                )
+        
             }
         }
         
@@ -118,14 +119,14 @@ fun StalkerMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCreden
                 modifier = Modifier
                     .fillMaxSize()
                     .horizontalScroll(scrollState)
-            ) {
+     {
                 Column {
                     // Header Row
                     Row(
                         modifier = Modifier
                             .background(Color(0xFF1E1E2E))
                             .padding(horizontal = 16.dp, vertical = 12.dp)
-                    ) {
+             {
                         val headerClick = { col: String -> 
                             if (sortColumn == col) sortAscending = !sortAscending else { sortColumn = col; sortAscending = false }
                         }
@@ -149,7 +150,7 @@ fun StalkerMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCreden
                                     .clickable { onSelectNode(node) }
                                     .padding(horizontal = 16.dp, vertical = 12.dp),
                                 verticalAlignment = Alignment.CenterVertically
-                            ) {
+                     {
                                 GridCell(node.baseUrl, 250.dp, isBold = true)
                                 StatusBadge(node.status, 120.dp)
                                 GridCell(node.mac, 160.dp)
@@ -163,14 +164,14 @@ fun StalkerMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCreden
                                             clipboardManager.setText(AnnotatedString("${node.baseUrl} / ${node.mac}"))
                                         },
                                         modifier = Modifier.height(36.dp).weight(1f)
-                                    )
+                            
                                     PrimaryButton(
                                         text = "Commit",
                                         onClick = {
                                             CommittedManager.commit(CommittedRecord(type = node.type, baseUrl = node.baseUrl, user = node.user, pass = node.pass, mac = node.mac, notes = ""))
                                         },
                                         modifier = Modifier.height(36.dp).weight(1f)
-                                    )
+                            
                                 }
                             }
                             Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(Color(0xFF222233)))
@@ -185,13 +186,13 @@ fun StalkerMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCreden
                     .align(Alignment.BottomEnd)
                     .padding(end = 16.dp, bottom = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
+     {
                 FloatingActionButton(
                     onClick = { coroutineScope.launch { listState.animateScrollToItem(0) } },
                     containerColor = Color(0xFF3B82F6),
                     contentColor = Color.White,
                     modifier = Modifier.size(48.dp)
-                ) {
+         {
                     Icon(Icons.Default.KeyboardArrowUp, contentDescription = "Scroll to Top")
                 }
                 FloatingActionButton(
@@ -199,7 +200,7 @@ fun StalkerMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCreden
                     containerColor = Color(0xFF3B82F6),
                     contentColor = Color.White,
                     modifier = Modifier.size(48.dp)
-                ) {
+         {
                     Icon(Icons.Default.KeyboardArrowDown, contentDescription = "Scroll to Bottom")
                 }
             }
@@ -223,7 +224,7 @@ fun StalkerDetailScreen(node: ParsedCredential, onBack: () -> Unit) {
                 color = Color.White,
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold
-            )
+    
         }
 
         // Host Info Card
@@ -231,7 +232,7 @@ fun StalkerDetailScreen(node: ParsedCredential, onBack: () -> Unit) {
             colors = CardDefaults.cardColors(containerColor = Color(0xFF1E1E2E)),
             shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp),
             modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)
-        ) {
+ {
             Column(modifier = Modifier.padding(16.dp)) {
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                     Column {
@@ -268,7 +269,7 @@ fun StalkerDetailScreen(node: ParsedCredential, onBack: () -> Unit) {
                     CommittedManager.commit(CommittedRecord(type = node.type, baseUrl = node.baseUrl, user = node.user, pass = node.pass, mac = node.mac, notes = ""))
                 },
                 modifier = Modifier.weight(1f)
-            )
+    
         }
 
         // Deep Dive Section Notice
@@ -276,7 +277,7 @@ fun StalkerDetailScreen(node: ParsedCredential, onBack: () -> Unit) {
             colors = CardDefaults.cardColors(containerColor = Color(0xFF12121A)),
             shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp),
             modifier = Modifier.fillMaxWidth()
-        ) {
+ {
             Column(modifier = Modifier.padding(16.dp)) {
                 Text("⚠️ Stalker API Limitations", color = Color(0xFFF59E0B), fontWeight = FontWeight.Bold)
                 Spacer(modifier = Modifier.height(8.dp))
@@ -284,7 +285,7 @@ fun StalkerDetailScreen(node: ParsedCredential, onBack: () -> Unit) {
                     "Deep-dive channel classification and VOD grid streaming is structurally blocked for Stalker Portals due to MAC-driven authentication payload dynamically expiring. Deep-dive discovery is explicitly restricted from accessing these nodes to avoid triggering the target server's firewall banning mechanisms.",
                     color = Color.Gray,
                     style = MaterialTheme.typography.bodySmall
-                )
+        
             }
         }
     }
