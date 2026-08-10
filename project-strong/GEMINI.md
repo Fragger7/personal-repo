@@ -242,3 +242,9 @@ Addressed significant UX complaints regarding the Android app's tabular data dis
 * **Active Connections Toggle**: Added "Active Only" toggle switches to both Xtream and Stalker tabs to filter out inactive nodes easily, accompanied by descriptive labels.
 * **Floating Scroll Buttons**: Added persistent scroll-to-top and scroll-to-bottom Floating Action Buttons (FABs) across the Master Grid screens to quickly navigate lists containing thousands of nodes.
 * **Connection Detail Actions**: Added quick action buttons to copy raw M3U Playlist URLs for Xtream nodes, enhancing copy-paste flexibility beyond discrete host/username/password combinations.
+### 🚧 Current WIP & Backlog (To Implement)
+* **Scanner Batching & Concurrency Controls**: Implement proper chunking/batching for scanner tasks to prevent overwhelming the network or device.
+* **Scanner Lifecycle Controls**: Add capabilities to Start, Stop, and Pause the ongoing scan process mid-flight.
+* **Master Grid Data Sorting & Counts**: Ensure Data Grid counts accurately reflect the filtered UI state. Implement proper sorting controls (ascending/descending) on data grid headers (Days Left, Active Conns, etc.) and define intuitive default sorting rules, especially when "Active Only" toggles are engaged.
+* **Per-Connection Channel Queries**: Support robust, distinct querying of Channels/VODs for individual connections from the detail drawer without polluting global state.
+* **Android CI/CD Build Flakiness**: The Android APK build failed repeatedly due to syntax errors (Kotlin unresolved references and unclosed brackets in Composables) introduced during UI refactoring. These have been successfully reverted and patched (compilation is now clean), but we must monitor the GitHub Actions pipeline to ensure stability.
