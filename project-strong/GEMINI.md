@@ -233,3 +233,10 @@ Addressed significant UX complaints regarding the Android app's tabular data dis
 * **Grid Refactoring**: Replaced bulky, slow-rendering Compose Cards with dense, native horizontal `LazyColumn` grids matching the Python Dataframes.
 * **Extended Columns**: Implemented new data columns for Xtream Nodes (Expires, Active Conns, Max Conns, Channels, VODs, Timezone). Modified `IPTVClient.kt` to extract and parse the metadata locally.
 * **Master-Detail Flow & Auto-Scroll**: Implemented a responsive fixed deep-dive drawer attached to the bottom of the screen. Upon clicking a node row, the view `animateScrollToItem()` snaps directly to the record while exposing action buttons cleanly.
+
+### 📱 Android Advanced UI Actions & Bug Fixes (Completed)
+* **Committed Tab Cloud Sync Crash**: Fixed a crash that occurred when manually syncing from the cloud due to improperly mapping the response. The `CommittedManager` now correctly pulls and parses JSON and seamlessly saves to local state.
+* **Active Connections Toggle**: Added "Active Only" toggle switches to both Xtream and Stalker tabs to filter out inactive nodes easily.
+* **Deep-Dive Action Triggers**: Added functionality to dynamically query and fetch Live Channel and VOD counts for specific accounts straight from the connection details drawer.
+* **Channel Groups & Data List Expandability**: Re-engineered the channel fetch mechanism to properly bypass server-side category filters. The UI now fully pulls all live streams, categorizes them locally, and expands lists properly without relying on buggy target-server filters.
+* **Connection Detail Actions**: Added quick action buttons to copy raw M3U Playlist URLs for Xtream nodes, enhancing copy-paste flexibility beyond discrete host/username/password combinations.
