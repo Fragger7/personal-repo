@@ -4,45 +4,40 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.material3.LinearProgressIndicator
-import kotlinx.coroutines.delay
-import com.projectstrong.iptv.network.IPTVClient
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import com.projectstrong.iptv.network.IPTVClient
+import com.projectstrong.iptv.data.DataStore
+import com.projectstrong.iptv.network.Parser
+import com.projectstrong.iptv.network.VerificationResult
+import com.projectstrong.iptv.ui.components.*
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.json.JSONObject
-import com.projectstrong.iptv.data.DataStore
-import com.projectstrong.iptv.network.Parser
-import com.projectstrong.iptv.network.ParsedCredential
-import com.projectstrong.iptv.ui.components.GlassButton
-import com.projectstrong.iptv.ui.components.GlassCard
-import com.projectstrong.iptv.ui.components.GlassTextField
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 @Composable
 fun ScannerTab(onNextTab: () -> Unit = {}) {
-                        val coroutineScope = rememberCoroutineScope()
     val clipboardManager = LocalClipboardManager.current
     
     LaunchedEffect(Unit) {
         if (DataStore.ipInfo.isEmpty()) {
-            DataStore.ipInfo = "Checking secure network shielding..."
-            coroutineScope.launch {
+            withContext(Dispatchers.IO) {
                 try {
                     val client = OkHttpClient()
                     val request = Request.Builder().url("http://ip-api.com/json/").build()
-                    val response = withContext(Dispatchers.IO) { client.newCall(request).execute() }
+                    val response = client.newCall(request).execute()
                     val json = JSONObject(response.body?.string() ?: "{}")
                     val isp = json.optString("isp", "Unknown ISP")
                     val org = json.optString("org", "")
@@ -56,6 +51,7 @@ fun ScannerTab(onNextTab: () -> Unit = {}) {
             }
         }
     }
+
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
@@ -67,64 +63,77 @@ fun ScannerTab(onNextTab: () -> Unit = {}) {
             Text(
                 text = "Multi-Payload Scanner",
                 color = Color.White,
-                style = androidx.compose.material3.MaterialTheme.typography.headlineMedium,
+                style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold
             )
             
             Text(
                 text = "Paste messy, unstructured text blocks containing Xtream Codes or Stalker Portals credentials. The parser will extract all readable accounts.",
-                color = Color.White.copy(alpha = 0.7f),
-                style = androidx.compose.material3.MaterialTheme.typography.bodyMedium,
+                color = Color(0xFFA0A0B0),
+                style = MaterialTheme.typography.bodyMedium,
                 modifier = Modifier.padding(top = 8.dp, bottom = 16.dp)
             )
 
-            GlassTextField(
+            OutlinedTextField(
                 value = DataStore.scannerInput,
                 onValueChange = { DataStore.scannerInput = it },
-                label = "Paste Unstructured Credentials Block",
+                label = { Text("Paste Unstructured Credentials Block") },
                 minLines = 8,
                 maxLines = 10,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(250.dp)
+                    .height(250.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    unfocusedBorderColor = Color(0xFF333344),
+                    focusedBorderColor = Color(0xFF3B82F6),
+                    unfocusedTextColor = Color.White,
+                    focusedTextColor = Color.White,
+                    unfocusedContainerColor = Color(0xFF12121A),
+                    focusedContainerColor = Color(0xFF12121A)
+                )
             )
 
             Spacer(modifier = Modifier.height(16.dp))
             
             if (DataStore.showVpnWarning) {
-                GlassCard(modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)) {
-                    Text(
-                        text = "⚠️ ${DataStore.ipInfo}\nWARNING: You may not be using a VPN. Public ISPs often block IPTV portals. You can proceed, but results may fail.",
-                        color = Color(0xFFF59E0B),
-                        style = androidx.compose.material3.MaterialTheme.typography.bodySmall,
-                        modifier = Modifier.padding(12.dp)
-                    )
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = Color(0xFF1E1E2E)),
+                    modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)
+                ) {
+                    Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Text("⚠️", modifier = Modifier.padding(end = 8.dp))
+                        Column {
+                            Text(DataStore.ipInfo, color = Color(0xFFF59E0B), fontWeight = FontWeight.Bold)
+                            Text("WARNING: You may not be using a VPN. Public ISPs often block IPTV portals. You can proceed, but results may fail.", color = Color(0xFFF59E0B), style = MaterialTheme.typography.bodySmall)
+                        }
+                    }
                 }
             } else {
-                Text(text = "🛡️ ${DataStore.ipInfo}", color = Color(0xFF10B981), style = androidx.compose.material3.MaterialTheme.typography.bodySmall, modifier = Modifier.padding(bottom = 16.dp))
+                Text(text = "🛡️ ${DataStore.ipInfo}", color = Color(0xFF10B981), style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(bottom = 16.dp))
             }
             
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                GlassButton(
+                PrimaryButton(
                     text = if (DataStore.isScanning) "Scanning..." else "Parse & Scan Data",
                     onClick = {
-                        if (DataStore.isScanning) return@GlassButton
+                        if (DataStore.isScanning) return@PrimaryButton
                         val parsed = Parser.parseCredentials(DataStore.scannerInput)
                         DataStore.scannedNodes.clear()
                         DataStore.scannedNodes.addAll(parsed)
+                        
                         if (parsed.isEmpty()) {
                             DataStore.scanCountText = "No credentials found."
-                            return@GlassButton
+                            return@PrimaryButton
                         }
                         
                         DataStore.isScanning = true
                         DataStore.scanProgress = 0f
                         DataStore.scanCountText = "Found ${parsed.size} credentials. Starting handshake..."
                         
-                        coroutineScope.launch {
+                        DataStore.scanScope.launch {
                             val total = parsed.size
                             for ((i, node) in parsed.withIndex()) {
                                 // Batch Verification
@@ -141,9 +150,9 @@ fun ScannerTab(onNextTab: () -> Unit = {}) {
                                 
                                 val newIdx = DataStore.scannedNodes.indexOfFirst { it.baseUrl == node.baseUrl && it.user == node.user && it.mac == node.mac && it.type == node.type }
                                 if (newIdx != -1) {
-                                    if (result is com.projectstrong.iptv.network.VerificationResult.Success) {
+                                    if (result is VerificationResult.Success) {
                                         DataStore.scannedNodes[newIdx] = DataStore.scannedNodes[newIdx].copy(isVerifying = false, status = result.status, details = result.details)
-                                    } else if (result is com.projectstrong.iptv.network.VerificationResult.Failed) {
+                                    } else if (result is VerificationResult.Failed) {
                                         DataStore.scannedNodes[newIdx] = DataStore.scannedNodes[newIdx].copy(isVerifying = false, status = result.reason)
                                     }
                                 }
@@ -157,14 +166,14 @@ fun ScannerTab(onNextTab: () -> Unit = {}) {
                     },
                     modifier = Modifier.weight(1.5f)
                 )
-                GlassButton(
+                SecondaryButton(
                     text = "Paste",
                     onClick = { 
                         clipboardManager.getText()?.text?.let { DataStore.scannerInput += it } 
                     },
                     modifier = Modifier.weight(1f)
                 )
-                GlassButton(
+                SecondaryButton(
                     text = "Clear",
                     onClick = { DataStore.scannerInput = ""; DataStore.scannedNodes.clear() },
                     modifier = Modifier.weight(1f)
@@ -175,14 +184,14 @@ fun ScannerTab(onNextTab: () -> Unit = {}) {
         item {
             AnimatedVisibility(
                 visible = DataStore.scannedNodes.isNotEmpty() || DataStore.isScanning,
-                enter = androidx.compose.animation.fadeIn() + androidx.compose.animation.slideInVertically(),
-                exit = androidx.compose.animation.fadeOut()
+                enter = fadeIn() + slideInVertically(),
+                exit = fadeOut()
             ) {
                 Column(modifier = Modifier.padding(top = 16.dp, bottom = 8.dp)) {
                     Text(
                         text = DataStore.scanCountText,
                         color = Color(0xFF3B82F6),
-                        style = androidx.compose.material3.MaterialTheme.typography.titleMedium,
+                        style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Medium
                     )
                     Spacer(modifier = Modifier.height(8.dp))
@@ -191,7 +200,7 @@ fun ScannerTab(onNextTab: () -> Unit = {}) {
                             progress = DataStore.scanProgress,
                             modifier = Modifier.fillMaxWidth().height(6.dp),
                             color = Color(0xFF10B981),
-                            trackColor = Color.White.copy(alpha = 0.2f)
+                            trackColor = Color(0xFF333344)
                         )
                     }
                 }
@@ -201,9 +210,10 @@ fun ScannerTab(onNextTab: () -> Unit = {}) {
         if (DataStore.scannedNodes.isNotEmpty()) {
             item {
                 Spacer(modifier = Modifier.height(16.dp))
-                GlassButton(
+                PrimaryButton(
                     text = "Continue to Xtream & Stalker →",
-                    onClick = onNextTab
+                    onClick = onNextTab,
+                    modifier = Modifier.fillMaxWidth()
                 )
             }
         }

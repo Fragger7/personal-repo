@@ -6,7 +6,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import com.projectstrong.iptv.network.ParsedCredential
 
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+
 object DataStore {
+    val scanScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
     val scannedNodes = mutableStateListOf<ParsedCredential>()
     var scannerInput by mutableStateOf("")
     var isScanning by mutableStateOf(false)
