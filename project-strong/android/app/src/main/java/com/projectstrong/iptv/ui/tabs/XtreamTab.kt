@@ -2,8 +2,6 @@ package com.projectstrong.iptv.ui.tabs
 
 import androidx.compose.animation.*
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
-import androidx.compose.material3.Icon
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
@@ -56,39 +54,26 @@ fun XtreamTab() {
             XtreamDetailScreen(
                 node = selectedNode!!,
                 onBack = { selectedNode = null }
-    
+            )
         } else {
             XtreamMasterGrid(
                 nodes = xtreamNodes,
                 onSelectNode = { selectedNode = it }
-    
+            )
         }
     }
 }
 
 @Composable
 fun XtreamMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCredential) -> Unit) {
+    var showActiveOnly by remember { mutableStateOf(false) }
+    val filteredNodes = (if (showActiveOnly) nodes.filter { it.status.contains("Active", ignoreCase = true) } else nodes)
+        .sortedWith(
+            compareByDescending<ParsedCredential> { it.channels.toIntOrNull() ?: -1 }
+            .thenByDescending { it.daysLeft.toIntOrNull() ?: -1 }
+        )
     val scrollState = rememberScrollState()
     val listState = rememberLazyListState()
-    var sortColumn by remember { mutableStateOf("Days Left") }
-    var sortAscending by remember { mutableStateOf(false) }
-    
-    val filteredNodes = (if (DataStore.activeOnlyXtream) nodes.filter { it.status.contains("Active", ignoreCase = true) } else nodes)
-        .let { list ->
-            when (sortColumn) {
-                "Live" -> if (sortAscending) list.sortedBy { it.channels.toIntOrNull() ?: -1 } else list.sortedByDescending { it.channels.toIntOrNull() ?: -1 }
-                "VODs" -> if (sortAscending) list.sortedBy { it.vods.toIntOrNull() ?: -1 } else list.sortedByDescending { it.vods.toIntOrNull() ?: -1 }
-                "Days Left" -> if (sortAscending) list.sortedBy { it.daysLeft.toIntOrNull() ?: -1 } else list.sortedByDescending { it.daysLeft.toIntOrNull() ?: -1 }
-                "Active" -> if (sortAscending) list.sortedBy { it.activeConn.toIntOrNull() ?: -1 } else list.sortedByDescending { it.activeConn.toIntOrNull() ?: -1 }
-                "Host URL" -> if (sortAscending) list.sortedBy { it.baseUrl } else list.sortedByDescending { it.baseUrl }
-                "Status" -> if (sortAscending) list.sortedBy { it.status } else list.sortedByDescending { it.status }
-                "Provider" -> if (sortAscending) list.sortedBy { it.provider } else list.sortedByDescending { it.provider }
-                "Username" -> if (sortAscending) list.sortedBy { it.user } else list.sortedByDescending { it.user }
-                else -> list
-            }
-        }
-
-
     val clipboardManager = LocalClipboardManager.current
     val coroutineScope = rememberCoroutineScope()
     var fetchingRows by remember { mutableStateOf<Set<String>>(emptySet()) }
@@ -98,7 +83,8 @@ fun XtreamMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCredent
         Row(
             modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically) {
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             Text(
                 text = "Xtream Codes (${filteredNodes.size}/${nodes.size})",
                 color = Color.White,
@@ -106,7 +92,6 @@ fun XtreamMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCredent
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.weight(1f)
             )
-    
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.horizontalScroll(rememberScrollState())
@@ -122,53 +107,45 @@ fun XtreamMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCredent
                                 val activeNodes = filteredNodes.filter { it.status.contains("Active", ignoreCase = true) }
                                 val total = activeNodes.size
                                 var completed = 0
-                                val chunkSize = 5
-                                val chunks = activeNodes.chunked(chunkSize)
                                 
-                                for (chunk in chunks) {
-                                    if (!isQueryingAll) break
-                                    
-                                    kotlinx.coroutines.coroutineScope {
-                                        chunk.map { node ->
-                                            async(Dispatchers.IO) {
-                                                val key = node.baseUrl + node.user
-                                                withContext(Dispatchers.Main) { fetchingRows = fetchingRows + key }
-                                                
-                                                val liveStreams = IPTVClient.getAllLiveStreams(node.baseUrl, node.user, node.pass)
-                                                val vodStreams = IPTVClient.getVodStreams(node.baseUrl, node.user, node.pass)
-                                                val liveCount = liveStreams?.length() ?: 0
-                                                val vodCount = vodStreams?.length() ?: 0
-                                                
-                                                withContext(Dispatchers.Main) {
-                                                    val newIdx = DataStore.scannedNodes.indexOfFirst { it.baseUrl == node.baseUrl && it.user == node.user && it.type == "Xtream" }
-                                                    if (newIdx != -1) {
-                                                        DataStore.scannedNodes[newIdx] = DataStore.scannedNodes[newIdx].copy(channels = "$liveCount", vods = "$vodCount")
-                                                    }
-                                                    fetchingRows = fetchingRows - key
-                                                    completed++
-                                                    DataStore.scanProgress = completed.toFloat() / total.toFloat()
+                                kotlinx.coroutines.coroutineScope {
+                                    activeNodes.map { node ->
+                                        async(Dispatchers.IO) {
+                                            val key = node.baseUrl + node.user
+                                            fetchingRows = fetchingRows + key
+                                            val liveStreams = IPTVClient.getAllLiveStreams(node.baseUrl, node.user, node.pass)
+                                            val vodStreams = IPTVClient.getVodStreams(node.baseUrl, node.user, node.pass)
+                                            val liveCount = liveStreams?.length() ?: 0
+                                            val vodCount = vodStreams?.length() ?: 0
+                                            
+                                            withContext(Dispatchers.Main) {
+                                                val newIdx = DataStore.scannedNodes.indexOfFirst { it.baseUrl == node.baseUrl && it.user == node.user && it.type == "Xtream" }
+                                                if (newIdx != -1) {
+                                                    DataStore.scannedNodes[newIdx] = DataStore.scannedNodes[newIdx].copy(channels = "$liveCount", vods = "$vodCount")
                                                 }
+                                                fetchingRows = fetchingRows - key
+                                                completed++
+                                                DataStore.scanProgress = completed.toFloat() / total
                                             }
-                                        }.awaitAll()
-                                    }
+                                        }
+                                    }.awaitAll()
                                 }
+                                
                                 isQueryingAll = false
                                 DataStore.scanProgress = 0f
                             }
                         },
                         modifier = Modifier.height(36.dp)
                     )
-            
                     Spacer(modifier = Modifier.width(16.dp))
                 }
                 Text("Active Only", color = Color.White, style = MaterialTheme.typography.bodyMedium)
                 Spacer(modifier = Modifier.width(8.dp))
                 Switch(
-                    checked = DataStore.activeOnlyXtream,
-                    onCheckedChange = { DataStore.activeOnlyXtream = it },
+                    checked = showActiveOnly,
+                    onCheckedChange = { showActiveOnly = it },
                     colors = SwitchDefaults.colors(checkedThumbColor = Color(0xFF3B82F6), checkedTrackColor = Color(0xFF3B82F6).copy(alpha = 0.5f))
                 )
-        
             }
         }
         
@@ -176,7 +153,8 @@ fun XtreamMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCredent
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Text("No Xtream accounts found.", color = Color.Gray)
             }
-        } else {
+            return
+        }
         
         Box(modifier = Modifier.fillMaxSize()) {
             Box(
@@ -194,21 +172,18 @@ fun XtreamMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCredent
                             .background(Color(0xFF1E1E2E))
                             .padding(horizontal = 16.dp, vertical = 12.dp)
                     ) {
-                        val headerClick = { col: String -> 
-                            if (sortColumn == col) sortAscending = !sortAscending else { sortColumn = col; sortAscending = false }
-                        }
-                        GridHeader("Host URL", 250.dp, { headerClick("Host URL") })
-                        GridHeader("Status", 120.dp, { headerClick("Status") })
-                        GridHeader("Provider", 150.dp, { headerClick("Provider") })
-                        GridHeader("Timezone", 120.dp, null)
-                        GridHeader("Username", 120.dp, { headerClick("Username") })
-                        GridHeader("Live", 80.dp, { headerClick("Live") })
-                        GridHeader("VODs", 80.dp, { headerClick("VODs") })
-                        GridHeader("Days Left", 100.dp, { headerClick("Days Left") })
-                        GridHeader("Active", 80.dp, { headerClick("Active") })
-                        GridHeader("Max", 80.dp, null)
-                        GridHeader("Expires", 100.dp, null)
-                        GridHeader("Actions", 230.dp, null)
+                        GridHeader("Host URL", 250.dp)
+                        GridHeader("Status", 120.dp)
+                        GridHeader("Provider", 150.dp)
+                        GridHeader("Timezone", 120.dp)
+                        GridHeader("Username", 120.dp)
+                        GridHeader("Live", 80.dp)
+                        GridHeader("VODs", 80.dp)
+                        GridHeader("Days Left", 100.dp)
+                        GridHeader("Active", 80.dp)
+                        GridHeader("Max", 80.dp)
+                        GridHeader("Expires", 100.dp)
+                        GridHeader("Actions", 180.dp)
                     }
                     
                     Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(Color(0xFF333344)))
@@ -220,8 +195,8 @@ fun XtreamMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCredent
                                     .fillMaxWidth()
                                     .clickable { onSelectNode(node) }
                                     .padding(horizontal = 16.dp, vertical = 12.dp),
-                                verticalAlignment = Alignment.CenterVertically) {
-            
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
                                 GridCell(node.baseUrl, 250.dp, isBold = true)
                                 StatusBadge(node.status, 120.dp)
                                 GridCell(node.provider, 150.dp)
@@ -234,33 +209,8 @@ fun XtreamMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCredent
                                 GridCell(node.maxConn, 80.dp)
                                 GridCell(node.expires, 100.dp)
                                 
-                                Row(modifier = Modifier.width(230.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Row(modifier = Modifier.width(180.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                     
-                                    SecondaryButton(
-                                        text = if (fetchingRows.contains(node.baseUrl + node.user)) "..." else "Qry",
-                                        onClick = {
-                                            val key = node.baseUrl + node.user
-                                            if (fetchingRows.contains(key)) return@SecondaryButton
-                                            coroutineScope.launch {
-                                                fetchingRows = fetchingRows + key
-                                                val liveStreamsAsync = async(Dispatchers.IO) { IPTVClient.getAllLiveStreams(node.baseUrl, node.user, node.pass) }
-                                                val vodStreamsAsync = async(Dispatchers.IO) { IPTVClient.getVodStreams(node.baseUrl, node.user, node.pass) }
-                                                val liveStreams = liveStreamsAsync.await()
-                                                val vodStreams = vodStreamsAsync.await()
-                                                val liveCount = liveStreams?.length() ?: 0
-                                                val vodCount = vodStreams?.length() ?: 0
-                                                withContext(Dispatchers.Main) {
-                                                    val newIdx = DataStore.scannedNodes.indexOfFirst { it.baseUrl == node.baseUrl && it.user == node.user && it.type == "Xtream" }
-                                                    if (newIdx != -1) {
-                                                        DataStore.scannedNodes[newIdx] = DataStore.scannedNodes[newIdx].copy(channels = "$liveCount", vods = "$vodCount")
-                                                    }
-                                                    fetchingRows = fetchingRows - key
-                                                }
-                                            }
-                                        },
-                                        modifier = Modifier.height(36.dp).width(50.dp)
-                                    )
-                            
                                     SecondaryButton(
                                         text = "Copy",
                                         onClick = {
@@ -269,7 +219,6 @@ fun XtreamMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCredent
                                         },
                                         modifier = Modifier.height(36.dp).weight(1f)
                                     )
-                            
                                     PrimaryButton(
                                         text = "Commit",
                                         onClick = {
@@ -277,7 +226,6 @@ fun XtreamMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCredent
                                         },
                                         modifier = Modifier.height(36.dp).weight(1f)
                                     )
-                            
                                 }
                             }
                             Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(Color(0xFF222233)))
@@ -299,7 +247,6 @@ fun XtreamMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCredent
                     contentColor = Color.White,
                     modifier = Modifier.size(48.dp)
                 ) {
-
                     Icon(Icons.Default.KeyboardArrowUp, contentDescription = "Scroll to Top")
                 }
                 FloatingActionButton(
@@ -308,13 +255,11 @@ fun XtreamMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCredent
                     contentColor = Color.White,
                     modifier = Modifier.size(48.dp)
                 ) {
-
                     Icon(Icons.Default.KeyboardArrowDown, contentDescription = "Scroll to Bottom")
                 }
             }
         }
     }
-        }
 }
 
 @Composable
@@ -350,12 +295,11 @@ fun XtreamDetailScreen(node: ParsedCredential, onBack: () -> Unit) {
                 Card(
                     colors = CardDefaults.cardColors(containerColor = Color(0xFF1E1E2E)),
                     shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp),
-                    modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)) {
-
+                    modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)
+                ) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                             Column(modifier = Modifier.weight(1f)) {
-            )
                                 Text("HOST", color = Color(0xFFA0A0B0), style = MaterialTheme.typography.labelSmall)
                                 Row(verticalAlignment = Alignment.CenterVertically) {
                                     Text(node.baseUrl, color = Color.White, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold)
@@ -369,7 +313,6 @@ fun XtreamDetailScreen(node: ParsedCredential, onBack: () -> Unit) {
                         Spacer(modifier = Modifier.height(12.dp))
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                             Column(modifier = Modifier.weight(1f)) {
-            )
                                 Text("USERNAME", color = Color(0xFFA0A0B0), style = MaterialTheme.typography.labelSmall)
                                 Row(verticalAlignment = Alignment.CenterVertically) {
                                     Text(node.user, color = Color.White, style = MaterialTheme.typography.bodyMedium)
@@ -379,7 +322,6 @@ fun XtreamDetailScreen(node: ParsedCredential, onBack: () -> Unit) {
                                 }
                             }
                             Column(modifier = Modifier.weight(1f)) {
-            )
                                 Text("PASSWORD", color = Color(0xFFA0A0B0), style = MaterialTheme.typography.labelSmall)
                                 Row(verticalAlignment = Alignment.CenterVertically) {
                                     Text(node.pass, color = Color.White, style = MaterialTheme.typography.bodyMedium)
@@ -431,7 +373,6 @@ fun XtreamDetailScreen(node: ParsedCredential, onBack: () -> Unit) {
                         },
                         modifier = Modifier.weight(1f)
                     )
-            
                     PrimaryButton(
                         text = "Commit Account",
                         color = Color(0xFF10B981),
@@ -440,7 +381,6 @@ fun XtreamDetailScreen(node: ParsedCredential, onBack: () -> Unit) {
                         },
                         modifier = Modifier.weight(1f)
                     )
-            
                 }
             }
         }
@@ -448,11 +388,11 @@ fun XtreamDetailScreen(node: ParsedCredential, onBack: () -> Unit) {
         // Deep Dive Section
         Row(modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
             Text(
-                text = if (selectedCategory == null) "Categories Catalog" else "Channels in ${selectedCategory?.optString(\"category_name\") ?: \"Unknown\"}",
+                if (selectedCategory == null) "Categories Catalog" else "Channels in ${selectedCategory?.optString("category_name") ?: "Unknown"}", 
                 color = Color.White, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold
             )
             SecondaryButton(
-                text = if (isLoadingCategories || isLoadingChannels) "Loading..." else if (selectedCategory != null) "Back to Categories" else "Load Categories",
+                text = if (isLoadingCategories) "Loading..." else if (selectedCategory != null) "Back to Categories" else "Load Categories",
                 onClick = {
                     if (selectedCategory != null) {
                         selectedCategory = null
@@ -490,7 +430,7 @@ fun XtreamDetailScreen(node: ParsedCredential, onBack: () -> Unit) {
                         }
                     }
                 }
-    
+            )
         }
 
         // Data List
@@ -501,21 +441,16 @@ fun XtreamDetailScreen(node: ParsedCredential, onBack: () -> Unit) {
 
             if (isLoadingChannels || isLoadingCategories) {
                 CircularProgressIndicator(modifier = Modifier.align(Alignment.Center), color = Color(0xFF3B82F6))
-            } else if (currentCategory != null) {
-                if (currentChannels == null || currentChannels.length() == 0) {
-                    Text("No channels found.", color = Color.Gray, modifier = Modifier.align(Alignment.Center))
-                } else {
-                    key("channels") {
-                        LazyColumn(modifier = Modifier.fillMaxSize().padding(8.dp)) {
-                            items(currentChannels.length()) { i ->
-                                val ch = currentChannels.optJSONObject(i)
-                                Row(modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp, horizontal = 8.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-                                    Text(ch?.optString("name", "Unknown") ?: "Unknown", color = Color.White, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f)
-                    )
-                                    Text("ID: ${ch?.optString("stream_id", "")}", color = Color.Gray, style = MaterialTheme.typography.bodySmall)
-                                }
-                                Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(Color(0xFF222233)))
+            } else if (currentChannels != null && currentCategory != null) {
+                                key("channels") {
+                    LazyColumn(modifier = Modifier.fillMaxSize().padding(8.dp)) {
+                        items(currentChannels.length()) { i ->
+                            val ch = currentChannels.optJSONObject(i)
+                            Row(modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp, horizontal = 8.dp), horizontalArrangement = Arrangement.SpaceBetween) {
+                                Text(ch?.optString("name", "Unknown") ?: "Unknown", color = Color.White, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
+                                Text("ID: ${ch?.optString("stream_id", "")}", color = Color.Gray, style = MaterialTheme.typography.bodySmall)
                             }
+                            Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(Color(0xFF222233)))
                         }
                     }
                 }
@@ -537,8 +472,8 @@ fun XtreamDetailScreen(node: ParsedCredential, onBack: () -> Unit) {
                                     }
                                     .padding(vertical = 12.dp, horizontal = 8.dp),
                                 horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically) {
-            
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
                                 val catName = cat?.optString("category_name", "Unknown") ?: "Unknown"
                                 val count = cat?.optInt("count", 0) ?: 0
                                 Text("$catName ($count)", color = Color(0xFF3B82F6), maxLines = 1, overflow = TextOverflow.Ellipsis)
