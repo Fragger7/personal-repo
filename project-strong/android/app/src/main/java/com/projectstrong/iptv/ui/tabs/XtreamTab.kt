@@ -19,6 +19,7 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.key
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -383,31 +384,45 @@ fun XtreamDetailScreen(node: ParsedCredential, onBack: () -> Unit) {
             if (isLoadingChannels || isLoadingCategories) {
                 CircularProgressIndicator(modifier = Modifier.align(Alignment.Center), color = Color(0xFF3B82F6))
             } else if (currentChannels != null && currentCategory != null) {
-                LazyColumn(modifier = Modifier.fillMaxSize().padding(8.dp)) {
-                    items(currentChannels.length()) { i ->
-                        val ch = currentChannels.optJSONObject(i)
-                        Row(modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp, horizontal = 8.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-                            Text(ch?.optString("name", "Unknown") ?: "Unknown", color = Color.White, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
-                            Text("ID: ${ch?.optString("stream_id", "")}", color = Color.Gray, style = MaterialTheme.typography.bodySmall)
+                                key("channels") {
+                    LazyColumn(modifier = Modifier.fillMaxSize().padding(8.dp)) {
+                        items(currentChannels.length()) { i ->
+                            val ch = currentChannels.optJSONObject(i)
+                            Row(modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp, horizontal = 8.dp), horizontalArrangement = Arrangement.SpaceBetween) {
+                                Text(ch?.optString("name", "Unknown") ?: "Unknown", color = Color.White, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
+                                Text("ID: ${ch?.optString("stream_id", "")}", color = Color.Gray, style = MaterialTheme.typography.bodySmall)
+                            }
+                            Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(Color(0xFF222233)))
                         }
-                        Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(Color(0xFF222233)))
                     }
                 }
             } else if (currentCategories != null) {
-                LazyColumn(modifier = Modifier.fillMaxSize().padding(8.dp)) {
-                    items(currentCategories.length()) { i ->
-                        val cat = currentCategories.optJSONObject(i)
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable {
-                                    selectedCategory = cat
-                                    isLoadingChannels = true
-                                    coroutineScope.launch {
-                                        channelsList = IPTVClient.getLiveStreams(node.baseUrl, node.user, node.pass, cat?.optString("category_id") ?: "")
-                                        isLoadingChannels = false
+                                key("categories") {
+                    LazyColumn(modifier = Modifier.fillMaxSize().padding(8.dp)) {
+                        items(currentCategories.length()) { i ->
+                            val cat = currentCategories.optJSONObject(i)
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable {
+                                        selectedCategory = cat
+                                        isLoadingChannels = true
+                                        coroutineScope.launch {
+                                            channelsList = IPTVClient.getLiveStreams(node.baseUrl, node.user, node.pass, cat?.optString("category_id") ?: "")
+                                            isLoadingChannels = false
+                                        }
                                     }
-                                }
+                                    .padding(vertical = 12.dp, horizontal = 8.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(cat?.optString("category_name", "Unknown") ?: "Unknown", color = Color(0xFF3B82F6), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                Text("ID: ${cat?.optString("category_id", "")}", color = Color.Gray, style = MaterialTheme.typography.bodySmall)
+                            }
+                            Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(Color(0xFF222233)))
+                        }
+                    }
+                }
                                 .padding(vertical = 12.dp, horizontal = 8.dp),
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically

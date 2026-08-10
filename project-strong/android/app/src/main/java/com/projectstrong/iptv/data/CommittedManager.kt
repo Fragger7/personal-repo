@@ -14,7 +14,7 @@ data class CommittedRecord(
     val mac: String? = "",
     val notes: String? = "",
     val dateAdded: Long? = null
-) {
+ {
     val safeType get() = type ?: "Unknown"
     val safeBaseUrl get() = baseUrl ?: ""
     val safeUser get() = user ?: ""
@@ -23,7 +23,7 @@ data class CommittedRecord(
     val safeNotes get() = notes ?: ""
     val safeDateAdded get() = dateAdded ?: System.currentTimeMillis()
 }
-)
+
 
 object CommittedManager {
     val records = mutableStateListOf<CommittedRecord>()
