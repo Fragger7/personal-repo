@@ -180,7 +180,7 @@ fun XtreamMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCredent
                 modifier = Modifier
                     .fillMaxSize()
                     .horizontalScroll(scrollState)
-     {
+            ) {
                 Column {
                     if (isQueryingAll && DataStore.scanProgress > 0f) {
                         LinearProgressIndicator(progress = DataStore.scanProgress, modifier = Modifier.fillMaxWidth().height(2.dp), color = Color(0xFF10B981))
@@ -190,7 +190,7 @@ fun XtreamMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCredent
                         modifier = Modifier
                             .background(Color(0xFF1E1E2E))
                             .padding(horizontal = 16.dp, vertical = 12.dp)
-    
+                    ) {
                         val headerClick = { col: String -> 
                             if (sortColumn == col) sortAscending = !sortAscending else { sortColumn = col; sortAscending = false }
                         }
