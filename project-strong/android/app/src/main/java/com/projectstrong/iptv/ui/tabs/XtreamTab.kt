@@ -286,7 +286,7 @@ fun XtreamMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCredent
                     .align(Alignment.BottomEnd)
                     .padding(end = 16.dp, bottom = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
-     {
+            ) {
                 FloatingActionButton(
                     onClick = { coroutineScope.launch { listState.animateScrollToItem(0) } },
                     containerColor = Color(0xFF3B82F6),
@@ -322,7 +322,7 @@ fun XtreamDetailScreen(node: ParsedCredential, onBack: () -> Unit) {
 
     Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
         // Toolbar
-        Row(verticalAlignment = Alignment.CenterVertically) {, modifier = Modifier.padding(bottom = 16.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(bottom = 16.dp)) {
             IconButton(onClick = onBack) {
                 Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = Color.White)
             }
@@ -332,7 +332,7 @@ fun XtreamDetailScreen(node: ParsedCredential, onBack: () -> Unit) {
                 color = Color.White,
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold
-    
+            )
         }
 
         AnimatedVisibility(visible = selectedCategory == null) {
