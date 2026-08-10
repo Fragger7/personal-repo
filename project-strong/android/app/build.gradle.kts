@@ -11,8 +11,8 @@ android {
         applicationId = "com.projectstrong.iptv"
         minSdk = 26
         targetSdk = 34
-        versionCode = 11
-        versionName = "1.10"
+        versionCode = (System.getenv("GITHUB_RUN_NUMBER")?.toIntOrNull() ?: 11)
+        versionName = "1.10.${System.getenv("GITHUB_RUN_NUMBER") ?: 0}"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {

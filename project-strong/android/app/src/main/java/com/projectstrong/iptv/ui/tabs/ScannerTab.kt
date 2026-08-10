@@ -151,7 +151,7 @@ fun ScannerTab(onNextTab: () -> Unit = {}) {
                                 val newIdx = DataStore.scannedNodes.indexOfFirst { it.baseUrl == node.baseUrl && it.user == node.user && it.mac == node.mac && it.type == node.type }
                                 if (newIdx != -1) {
                                     if (result is VerificationResult.Success) {
-                                        DataStore.scannedNodes[newIdx] = DataStore.scannedNodes[newIdx].copy(isVerifying = false, status = result.status, details = result.details)
+                                        DataStore.scannedNodes[newIdx] = DataStore.scannedNodes[newIdx].copy(isVerifying = false, status = result.status, details = result.details, expires = result.expires, daysLeft = result.daysLeft, activeConn = result.activeConn, maxConn = result.maxConn, serverTimezone = result.serverTimezone, serverTime = result.serverTime)
                                     } else if (result is VerificationResult.Failed) {
                                         DataStore.scannedNodes[newIdx] = DataStore.scannedNodes[newIdx].copy(isVerifying = false, status = result.reason)
                                     }
