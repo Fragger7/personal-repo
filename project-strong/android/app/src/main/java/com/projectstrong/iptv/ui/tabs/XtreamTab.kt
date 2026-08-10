@@ -49,7 +49,7 @@ fun XtreamTab() {
     val xtreamNodes = DataStore.scannedNodes.filter { it.type == "Xtream" }
     var selectedNode by remember { mutableStateOf<ParsedCredential?>(null) }
 
-    AnimatedContent(targetState = selectedNode != null) { isDetail ->
+    AnimatedContent(targetState = selectedNode != null) { isDetail: Boolean ->
         if (isDetail && selectedNode != null) {
             XtreamDetailScreen(
                 node = selectedNode!!,
@@ -87,7 +87,7 @@ fun XtreamMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCredent
     var sortAscending by remember { mutableStateOf(false) }
     val clipboardManager = LocalClipboardManager.current
     val coroutineScope = rememberCoroutineScope()
-    var fetchingRows by remember { mutableStateOf<Set<String>>(emptySet()) }
+    var fetchingRows by remember { mutableStateOf(emptySet<String>()) }
     var isQueryingAll by remember { mutableStateOf(false) }
     
     Column(modifier = Modifier.fillMaxSize()) {
@@ -125,8 +125,8 @@ fun XtreamMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCredent
                                     if (!isQueryingAll) break
                                     
                                     kotlinx.coroutines.coroutineScope {
-                                        chunk.map { node ->
-                                            async(Dispatchers.IO) {
+                                        chunk.map { node: ParsedCredential ->
+                                            kotlinx.coroutines.async(Dispatchers.IO) {
                                                 val key = node.baseUrl + node.user
                                                 withContext(Dispatchers.Main) { fetchingRows = fetchingRows + key }
                                                 
@@ -170,10 +170,8 @@ fun XtreamMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCredent
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Text("No Xtream accounts found.", color = Color.Gray)
             }
-            return
-        }
-        
-        Box(modifier = Modifier.fillMaxSize()) {
+        } else {
+            Box(modifier = Modifier.fillMaxSize()) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -209,7 +207,7 @@ fun XtreamMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCredent
                     Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(Color(0xFF333344)))
                     
                     LazyColumn(modifier = Modifier.fillMaxSize(), state = listState) {
-                        items(filteredNodes, key = { it.baseUrl + it.user }) { node ->
+                        items(filteredNodes, key = { it.baseUrl + it.user }) { node: ParsedCredential ->
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -491,7 +489,7 @@ fun XtreamDetailScreen(node: ParsedCredential, onBack: () -> Unit) {
                 } else {
                     key("channels") {
                         LazyColumn(modifier = Modifier.fillMaxSize().padding(8.dp)) {
-                            items(currentChannels.length()) { i ->
+                            items(count = currentChannels.length()) { i: Int ->
                                 val ch = currentChannels.optJSONObject(i)
                                 Row(modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp, horizontal = 8.dp), horizontalArrangement = Arrangement.SpaceBetween) {
                                     Text(ch?.optString("name", "Unknown") ?: "Unknown", color = Color.White, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
@@ -505,7 +503,7 @@ fun XtreamDetailScreen(node: ParsedCredential, onBack: () -> Unit) {
             } else if (currentCategories != null) {
                                 key("categories") {
                     LazyColumn(modifier = Modifier.fillMaxSize().padding(8.dp)) {
-                        items(currentCategories.length()) { i ->
+                        items(count = currentCategories.length()) { i: Int ->
                             val cat = currentCategories.optJSONObject(i)
                             Row(
                                 modifier = Modifier
@@ -537,3 +535,5 @@ fun XtreamDetailScreen(node: ParsedCredential, onBack: () -> Unit) {
         }
     }
 }
+
+        }

@@ -40,7 +40,7 @@ fun StalkerTab() {
     val stalkerNodes = DataStore.scannedNodes.filter { it.type == "Stalker" }
     var selectedNode by remember { mutableStateOf<ParsedCredential?>(null) }
 
-    AnimatedContent(targetState = selectedNode != null) { isDetail ->
+    AnimatedContent(targetState = selectedNode != null) { isDetail: Boolean ->
         if (isDetail && selectedNode != null) {
             StalkerDetailScreen(
                 node = selectedNode!!,
@@ -109,8 +109,7 @@ fun StalkerMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCreden
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Text("No Stalker portals found.", color = Color.Gray)
             }
-            return
-        }
+        } else {
         
         Box(modifier = Modifier.fillMaxSize()) {
             Box(
@@ -141,7 +140,7 @@ fun StalkerMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCreden
                     Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(Color(0xFF333344)))
                     
                     LazyColumn(modifier = Modifier.fillMaxSize(), state = listState) {
-                        items(filteredNodes, key = { it.baseUrl + it.mac }) { node ->
+                        items(filteredNodes, key = { it.baseUrl + it.mac }) { node: ParsedCredential ->
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -288,3 +287,5 @@ fun StalkerDetailScreen(node: ParsedCredential, onBack: () -> Unit) {
         }
     }
 }
+
+        }

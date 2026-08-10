@@ -26,8 +26,6 @@ import okhttp3.Request
 import org.json.JSONObject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.async
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.awaitAll
 
 @Composable
@@ -150,9 +148,9 @@ fun ScannerTab(onNextTab: () -> Unit = {}) {
                             for (chunk in chunks) {
                                 if (!DataStore.isScanning) break
                                 
-                                coroutineScope {
-                                    chunk.map { node ->
-                                        async(Dispatchers.IO) {
+                                kotlinx.coroutines.coroutineScope {
+                                    chunk.map { node: ParsedCredential ->
+                                        kotlinx.coroutines.async(Dispatchers.IO) {
                                             withContext(Dispatchers.Main) {
                                                 val idx = DataStore.scannedNodes.indexOf(node)
                                                 if (idx != -1) {
@@ -180,7 +178,7 @@ fun ScannerTab(onNextTab: () -> Unit = {}) {
                                                 DataStore.scanCountText = "Processed $completed/$total connections..."
                                             }
                                         }
-                                    }.awaitAll()
+                                    }.awaitAll().awaitAll()
                                 }
                             }
                             if (DataStore.isScanning) {
@@ -195,7 +193,7 @@ fun ScannerTab(onNextTab: () -> Unit = {}) {
                 SecondaryButton(
                     text = "Paste",
                     onClick = { 
-                        clipboardManager.getText()?.text?.let { DataStore.scannerInput += it } 
+                        clipboardManager.getText()?.text?.let { DataStore.scannerInput = DataStore.scannerInput + it } 
                     },
                     modifier = Modifier.weight(1f)
                 )
