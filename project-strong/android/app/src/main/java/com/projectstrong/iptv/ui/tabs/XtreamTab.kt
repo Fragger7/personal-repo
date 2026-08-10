@@ -423,16 +423,6 @@ fun XtreamDetailScreen(node: ParsedCredential, onBack: () -> Unit) {
                         }
                     }
                 }
-                                .padding(vertical = 12.dp, horizontal = 8.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(cat?.optString("category_name", "Unknown") ?: "Unknown", color = Color(0xFF3B82F6), maxLines = 1, overflow = TextOverflow.Ellipsis)
-                            Text("ID: ${cat?.optString("category_id", "")}", color = Color.Gray, style = MaterialTheme.typography.bodySmall)
-                        }
-                        Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(Color(0xFF222233)))
-                    }
-                }
             } else {
                 Text("Click Load Categories to fetch catalog data.", color = Color.Gray, modifier = Modifier.align(Alignment.Center))
             }
