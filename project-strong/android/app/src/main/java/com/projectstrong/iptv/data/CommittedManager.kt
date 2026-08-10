@@ -13,7 +13,7 @@ data class CommittedRecord(
     val pass: String? = "",
     val mac: String? = "",
     val notes: String? = "",
-    val dateAdded: Long? = null
+    val dateAdded: Long? = null)
  {
     val safeType get() = type ?: "Unknown"
     val safeBaseUrl get() = baseUrl ?: ""
