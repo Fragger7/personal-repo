@@ -2137,5 +2137,11 @@
         "https_port": "0",
         "rtmp_port": "0",
         "allowed_formats": "['m3u8', 'ts']"
+    },
+    "line.dino-ott.ru:80": {
+        "provider_name": "\ud83d\udc64 Host: line.dino-ott.ru:80",
+        "cloudflare": "No",
+        "first_seen": "2026-08-10 04:12:19",
+        "last_seen": "2026-08-10 04:12:19"
     }
 }
