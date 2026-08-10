@@ -2,6 +2,8 @@ package com.projectstrong.iptv.ui.tabs
 
 import androidx.compose.animation.*
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.material3.Icon
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
@@ -264,6 +266,7 @@ fun XtreamMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCredent
                                             clipboardManager.setText(AnnotatedString(url))
                                         },
                                         modifier = Modifier.height(36.dp).weight(1f)
+                                    )
                             
                                     PrimaryButton(
                                         text = "Commit",
@@ -292,6 +295,7 @@ fun XtreamMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCredent
                     containerColor = Color(0xFF3B82F6),
                     contentColor = Color.White,
                     modifier = Modifier.size(48.dp)
+                ) {
 
                     Icon(Icons.Default.KeyboardArrowUp, contentDescription = "Scroll to Top")
                 }
@@ -300,6 +304,7 @@ fun XtreamMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCredent
                     containerColor = Color(0xFF3B82F6),
                     contentColor = Color.White,
                     modifier = Modifier.size(48.dp)
+                ) {
 
                     Icon(Icons.Default.KeyboardArrowDown, contentDescription = "Scroll to Bottom")
                 }
