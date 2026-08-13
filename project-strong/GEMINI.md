@@ -262,16 +262,21 @@ Addressed significant UX complaints regarding the Android app's tabular data dis
 * **Important Note on Path Filters**: Commits modifying only documentation (`GEMINI.md`) or top-level web files without touching `project-strong/android/**` intentionally bypass the Android APK build workflow to conserve GitHub Actions runner minutes.
 
 ### 🚧 Backlog & Priority Bugs for Next Session (To Implement)
-1. **Bulk Connection Query Performance & Crash Fix**:
-   - **Issue**: Triggering "Query All Active" connections causes severe performance degradation and crashes the app after running for a period (tested on Xtream tab, applies to Stalker tab as well).
-   - **Fix Plan**: Implement chunking, concurrency rate-limiting (batching), worker pool isolation, and timeout safeguards to prevent UI lockup and memory overflow during bulk channel queries.
-2. **Tab Workflow Navigation ("Next / Continue" Buttons)**:
-   - **Issue**: "Next" or "Continue" buttons to move sequentially through tabs exist only on the initial Base64 Decode tab.
-   - **Fix Plan**: Add "Next / Continue" workflow navigation buttons across all tabs (Multi-Payload Scanner, Xtream Codes, Stalker Portals, Committed Data) in both Python web and Android apps to enable seamless linear tab progression.
-3. **"Paste from Clipboard" Quick-Action Buttons**:
-   - **Issue**: Input forms feature "Clear" buttons, but lack corresponding "Paste from Clipboard" buttons.
-   - **Fix Plan**: Add dedicated 1-click "Paste from Clipboard" action buttons alongside Clear buttons on text areas and input fields across all applicable tabs.
-4. **Scanner Batching & Concurrency Controls**:
+1. **Scanner Batching & Concurrency Controls**:
    - Implement proper chunking/batching for scanner tasks to prevent overwhelming the network or device.
-5. **Scanner Lifecycle Controls**:
+2. **Scanner Lifecycle Controls**:
    - Add capabilities to Start, Stop, and Pause the ongoing scan process mid-flight.
+
+### 🐛 Bulk Connection Query Crash & OOM Fix (Completed)
+* **Issue**: Triggering "Query All Active" connections caused severe performance degradation and crashed the app (OOM Exceptions / Freezing) when executing against large lists on the Xtream tab.
+* **Resolution**: 
+  - **Android**: Rewrote the JSON parsing logic in `IPTVClient.kt` to use Android's built-in `JsonReader` stream-parsing API for `getLiveStreamCount` and `getVodStreamCount`. This counts elements instantly with virtually zero memory footprint (bypassing loading 50MB JSON bodies into memory). Also added smaller chunked coroutine grouping.
+  - **Python (Streamlit)**: Added an `asyncio.Semaphore(5)` limiter in `app.py` for the "Query Channels & VOD Counts" button to restrict the number of concurrent HTTP requests and prevent freezing the container.
+
+### 📱 Android UI Next/Continue Workflow Navigation (Completed)
+* **Issue**: "Next" or "Continue" buttons to move sequentially through tabs existed only on the initial Base64 Decode tab, creating a disjointed user flow.
+* **Resolution**: Piped the `onNextTab` state control through `MainActivity.kt` directly down to `ScannerTab`, `XtreamTab`, and `StalkerTab`. Added elegant "Continue to..." primary buttons at the bottom of each respective master grid or parsing layout to allow a smooth, linear progression through the analytics pipeline.
+
+### 📋 "Paste from Clipboard" Action Buttons (Completed)
+* **Issue**: Input forms featured "Clear" buttons, but lacked corresponding "Paste from Clipboard" buttons.
+* **Resolution**: Added dedicated 1-click "Paste" buttons using Android's `LocalClipboardManager` natively into the `Base64Tab` and `ScannerTab` UIs adjacent to the "Clear" and action buttons for rapid credential ingesting. *(Note: Paste buttons were strictly implemented in Android; Python Streamlit web apps natively block direct OS clipboard reading via JS security limits without user interaction events, so Ctrl+V is standard there).*

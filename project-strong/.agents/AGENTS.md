@@ -104,8 +104,7 @@ When building UI components, adding new screens, or refactoring the application 
 ---
 
 ## 📋 Next Session Backlog & Priority Fixes
-1. **Bulk Connection Query Performance & Crash Fix**: Fix memory leaks / freezes when triggering "Query All Active" on Xtream & Stalker tabs (implement batching, chunking & concurrency limiters).
-2. **Next/Continue Buttons Across All Tabs**: Add workflow navigation buttons to step through tabs linearly (Decoder -> Scanner -> Xtream -> Stalker -> Committed).
-3. **Paste from Clipboard Buttons**: Add "Paste from Clipboard" buttons alongside "Clear" buttons in input fields across all tabs.
+1. **Scanner Batching & Concurrency Controls**: Implement proper chunking/batching for scanner tasks to prevent overwhelming the network or device.
+2. **Scanner Lifecycle Controls**: Add capabilities to Start, Stop, and Pause the ongoing scan process mid-flight.
 
 
