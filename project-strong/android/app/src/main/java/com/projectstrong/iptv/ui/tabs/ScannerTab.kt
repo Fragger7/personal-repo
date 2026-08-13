@@ -9,6 +9,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.projectstrong.iptv.data.DataStore
@@ -28,6 +29,7 @@ import kotlinx.coroutines.withContext
 @Composable
 fun ScannerTab(onNextTab: (() -> Unit)? = null) {
     val context = LocalContext.current
+    val clipboardManager = LocalClipboardManager.current
     val coroutineScope = rememberCoroutineScope()
 
     // Query external IP info if empty
@@ -193,7 +195,13 @@ fun ScannerTab(onNextTab: (() -> Unit)? = null) {
                 },
                 modifier = Modifier.weight(1f)
             )
-
+            SecondaryButton(
+                text = "Paste",
+                onClick = {
+                    clipboardManager.getText()?.text?.let { DataStore.scannerInput = it }
+                },
+                modifier = Modifier.weight(1f)
+            )
             SecondaryButton(
                 text = "Clear",
                 onClick = {
@@ -201,7 +209,8 @@ fun ScannerTab(onNextTab: (() -> Unit)? = null) {
                     DataStore.scannedNodes.clear()
                     DataStore.scanProgress = 0f
                     DataStore.scanCountText = ""
-                }
+                },
+                modifier = Modifier.weight(1f)
             )
         }
 
@@ -226,5 +235,12 @@ fun ScannerTab(onNextTab: (() -> Unit)? = null) {
                 )
             }
         }
+        
+        Spacer(modifier = Modifier.height(16.dp))
+        PrimaryButton(
+            text = "Continue to Xtream Nodes →",
+            onClick = { onNextTab?.invoke() },
+            modifier = Modifier.fillMaxWidth()
+        )
     }
 }

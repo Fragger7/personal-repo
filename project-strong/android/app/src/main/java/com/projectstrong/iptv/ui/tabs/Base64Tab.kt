@@ -94,7 +94,13 @@ fun Base64Tab(onNextTab: () -> Unit = {}) {
                 },
                 modifier = Modifier.weight(1f)
             )
-            
+            SecondaryButton(
+                text = "Paste",
+                onClick = {
+                    clipboardManager.getText()?.text?.let { input = it }
+                },
+                modifier = Modifier.weight(1f)
+            )
             SecondaryButton(
                 text = "Clear",
                 onClick = { 

@@ -37,7 +37,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 @Composable
-fun StalkerTab() {
+fun StalkerTab(onNextTab: (() -> Unit)? = null) {
     val stalkerNodes = DataStore.scannedNodes.filter { it.type == "Stalker" }
     var selectedNode by remember { mutableStateOf<ParsedCredential?>(null) }
 
@@ -50,14 +50,15 @@ fun StalkerTab() {
         } else {
             StalkerMasterGrid(
                 nodes = stalkerNodes,
-                onSelectNode = { selectedNode = it }
+                onSelectNode = { selectedNode = it },
+                onNextTab = onNextTab
             )
         }
     }
 }
 
 @Composable
-fun StalkerMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCredential) -> Unit) {
+fun StalkerMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCredential) -> Unit, onNextTab: (() -> Unit)? = null) {
     var sortColumn by remember { mutableStateOf("") }
     var sortAscending by remember { mutableStateOf(false) }
 
@@ -178,6 +179,15 @@ fun StalkerMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCreden
                                     }
                                 }
                                 Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(Color(0xFF222233)))
+                            }
+                            item {
+                                Spacer(modifier = Modifier.height(24.dp))
+                                PrimaryButton(
+                                    text = "Continue to Committed Data →",
+                                    onClick = { onNextTab?.invoke() },
+                                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)
+                                )
+                                Spacer(modifier = Modifier.height(24.dp))
                             }
                         }
                     }

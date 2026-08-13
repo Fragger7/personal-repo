@@ -44,7 +44,7 @@ import org.json.JSONArray
 import org.json.JSONObject
 
 @Composable
-fun XtreamTab() {
+fun XtreamTab(onNextTab: (() -> Unit)? = null) {
     val xtreamNodes = DataStore.scannedNodes.filter { it.type == "Xtream" }
     var selectedNode by remember { mutableStateOf<ParsedCredential?>(null) }
 
@@ -57,14 +57,15 @@ fun XtreamTab() {
         } else {
             XtreamMasterGrid(
                 nodes = xtreamNodes,
-                onSelectNode = { selectedNode = it }
+                onSelectNode = { selectedNode = it },
+                onNextTab = onNextTab
             )
         }
     }
 }
 
 @Composable
-fun XtreamMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCredential) -> Unit) {
+fun XtreamMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCredential) -> Unit, onNextTab: (() -> Unit)? = null) {
     var sortColumn by remember { mutableStateOf("") }
     var sortAscending by remember { mutableStateOf(false) }
 
@@ -128,7 +129,7 @@ fun XtreamMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCredent
                             coroutineScope.launch {
                                 val total = activeNodes.size
                                 var completed = 0
-                                val chunkSize = 5
+                                val chunkSize = 3
                                 val chunks = activeNodes.chunked(chunkSize)
 
                                 for (chunk in chunks) {
@@ -140,10 +141,8 @@ fun XtreamMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCredent
                                                 val key = node.baseUrl + node.user
                                                 withContext(Dispatchers.Main) { fetchingRows = fetchingRows + key }
 
-                                                val liveStreams = IPTVClient.getAllLiveStreams(node.baseUrl, node.user, node.pass)
-                                                val vodStreams = IPTVClient.getVodStreams(node.baseUrl, node.user, node.pass)
-                                                val liveCount = liveStreams?.length() ?: 0
-                                                val vodCount = vodStreams?.length() ?: 0
+                                                val liveCount = IPTVClient.getLiveStreamCount(node.baseUrl, node.user, node.pass)
+                                                val vodCount = IPTVClient.getVodStreamCount(node.baseUrl, node.user, node.pass)
 
                                                 withContext(Dispatchers.Main) {
                                                     val newIdx = DataStore.scannedNodes.indexOfFirst { it.baseUrl == node.baseUrl && it.user == node.user && it.type == "Xtream" }
@@ -319,6 +318,15 @@ fun XtreamMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCredent
                                     }
                                 }
                                 Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(Color(0xFF222233)))
+                            }
+                            item {
+                                Spacer(modifier = Modifier.height(24.dp))
+                                PrimaryButton(
+                                    text = "Continue to Stalker Portals →",
+                                    onClick = { onNextTab?.invoke() },
+                                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)
+                                )
+                                Spacer(modifier = Modifier.height(24.dp))
                             }
                         }
                     }

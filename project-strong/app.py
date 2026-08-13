@@ -1471,19 +1471,21 @@ if st.session_state["playlist_results"] is not None:
                             with st.spinner("Downloading active server catalogs (this might take a few seconds)..."):
                                 async def load_counts():
                                     async with httpx.AsyncClient(headers=EVASION_HEADERS, verify=False) as client:
+                                        sem = asyncio.Semaphore(5)
                                         async def fetch_counts(acc):
-                                            channels_count = 0
-                                            vod_count = 0
-                                            try:
-                                                logger.info(f"Downloading stream sizes for active node: {acc['base_url']}")
-                                                live_url = f"{acc['base_url']}/player_api.php?username={acc['username']}&password={acc['password']}&action=get_live_streams"
-                                                vod_url = f"{acc['base_url']}/player_api.php?username={acc['username']}&password={acc['password']}&action=get_vod_streams"
-                                                
-                                                live_res, vod_res = await asyncio.gather(
-                                                    client.get(live_url, timeout=7.0),
-                                                    client.get(vod_url, timeout=7.0),
-                                                    return_exceptions=True
-                                                )
+                                            async with sem:
+                                                channels_count = 0
+                                                vod_count = 0
+                                                try:
+                                                    logger.info(f"Downloading stream sizes for active node: {acc['base_url']}")
+                                                    live_url = f"{acc['base_url']}/player_api.php?username={acc['username']}&password={acc['password']}&action=get_live_streams"
+                                                    vod_url = f"{acc['base_url']}/player_api.php?username={acc['username']}&password={acc['password']}&action=get_vod_streams"
+                                                    
+                                                    live_res, vod_res = await asyncio.gather(
+                                                        client.get(live_url, timeout=10.0),
+                                                        client.get(vod_url, timeout=10.0),
+                                                        return_exceptions=True
+                                                    )
                                                 if not isinstance(live_res, Exception) and live_res.status_code == 200:
                                                     live_data = live_res.json()
                                                     if isinstance(live_data, list):

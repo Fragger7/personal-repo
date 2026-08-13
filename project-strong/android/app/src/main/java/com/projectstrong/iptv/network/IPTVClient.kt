@@ -192,6 +192,47 @@ object IPTVClient {
         return@withContext null
     }
 
+    suspend fun getStreamCount(url: String): Int = withContext(Dispatchers.IO) {
+        var count = 0
+        try {
+            val request = Request.Builder().url(url).header("User-Agent", "IPTVSmartersPro").build()
+            client.newCall(request).execute().use { response ->
+                if (response.code == 200) {
+                    val body = response.body
+                    if (body != null) {
+                        val reader = android.util.JsonReader(java.io.InputStreamReader(body.byteStream(), "UTF-8"))
+                        if (reader.peek() == android.util.JsonToken.BEGIN_ARRAY) {
+                            reader.beginArray()
+                            while (reader.hasNext()) {
+                                reader.skipValue()
+                                count++
+                            }
+                            reader.endArray()
+                        }
+                        reader.close()
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+        return@withContext count
+    }
+
+    suspend fun getLiveStreamCount(baseUrl: String, user: String, pass: String): Int {
+        val encodedUser = URLEncoder.encode(user, "UTF-8")
+        val encodedPass = URLEncoder.encode(pass, "UTF-8")
+        val url = "${baseUrl.trimEnd('/')}/player_api.php?username=$encodedUser&password=$encodedPass&action=get_live_streams"
+        return getStreamCount(url)
+    }
+
+    suspend fun getVodStreamCount(baseUrl: String, user: String, pass: String): Int {
+        val encodedUser = URLEncoder.encode(user, "UTF-8")
+        val encodedPass = URLEncoder.encode(pass, "UTF-8")
+        val url = "${baseUrl.trimEnd('/')}/player_api.php?username=$encodedUser&password=$encodedPass&action=get_vod_streams"
+        return getStreamCount(url)
+    }
+
     suspend fun getAllLiveStreams(baseUrl: String, user: String, pass: String): org.json.JSONArray? = withContext(Dispatchers.IO) {
         try {
             val encodedUser = URLEncoder.encode(user, "UTF-8")
