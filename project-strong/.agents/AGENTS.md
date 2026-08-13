@@ -101,3 +101,11 @@ When building UI components, adding new screens, or refactoring the application 
 * **Consistency**: Maintain absolute continuity and professionalism across pages, tabs, and layout structures. Elements should not be placed "willy nilly". Functionality like sorting and filtering must behave cohesively everywhere.
 * **Visual Polish & Feedback**: Handle theming, exact color scheme pairings, error messages, and user screen feedback with world-class polish. Provide elegant loading states, toast notifications, clear empty states, and visually reassuring success indicators.
 
+---
+
+## 📋 Next Session Backlog & Priority Fixes
+1. **Bulk Connection Query Performance & Crash Fix**: Fix memory leaks / freezes when triggering "Query All Active" on Xtream & Stalker tabs (implement batching, chunking & concurrency limiters).
+2. **Next/Continue Buttons Across All Tabs**: Add workflow navigation buttons to step through tabs linearly (Decoder -> Scanner -> Xtream -> Stalker -> Committed).
+3. **Paste from Clipboard Buttons**: Add "Paste from Clipboard" buttons alongside "Clear" buttons in input fields across all tabs.
+
+

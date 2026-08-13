@@ -252,6 +252,7 @@ Addressed significant UX complaints regarding the Android app's tabular data dis
   - Fixed `.awaitAll()` invocation in `ScannerTab.kt`.
   - Added explicit coroutines imports (`import kotlinx.coroutines.async`, `import kotlinx.coroutines.awaitAll`, `import kotlinx.coroutines.withContext`) to `ScannerTab.kt`, `StalkerTab.kt`, and `XtreamTab.kt`.
   - Verified clean syntax and scoping across all tabs using `kotlinc`.
+* **Build Verification**: GitHub Actions Run #57 (Run ID `31670370319`) completed with `success` status, producing the debug APK artifact cleanly.
 
 ### 🚀 CI/CD & Deployment Strategy Overview
 * **Workflow Configuration (`.github/workflows/android-build.yml`)**:
@@ -260,8 +261,17 @@ Addressed significant UX complaints regarding the Android app's tabular data dis
   - Output Artifact: `project-strong-debug-apk` containing `app-debug.apk`.
 * **Important Note on Path Filters**: Commits modifying only documentation (`GEMINI.md`) or top-level web files without touching `project-strong/android/**` intentionally bypass the Android APK build workflow to conserve GitHub Actions runner minutes.
 
-### 🚧 Current WIP & Backlog (To Implement)
-* **Scanner Batching & Concurrency Controls**: Implement proper chunking/batching for scanner tasks to prevent overwhelming the network or device.
-* **Scanner Lifecycle Controls**: Add capabilities to Start, Stop, and Pause the ongoing scan process mid-flight.
-* **Master Grid Data Sorting & Counts**: Ensure Data Grid counts accurately reflect the filtered UI state. Verify header column click sorting (Days Left, Active Conns, Host, Status) behaves smoothly.
-* **Per-Connection Channel Queries**: Support robust, distinct querying of Channels/VODs for individual connections from the detail drawer without polluting global state.
+### 🚧 Backlog & Priority Bugs for Next Session (To Implement)
+1. **Bulk Connection Query Performance & Crash Fix**:
+   - **Issue**: Triggering "Query All Active" connections causes severe performance degradation and crashes the app after running for a period (tested on Xtream tab, applies to Stalker tab as well).
+   - **Fix Plan**: Implement chunking, concurrency rate-limiting (batching), worker pool isolation, and timeout safeguards to prevent UI lockup and memory overflow during bulk channel queries.
+2. **Tab Workflow Navigation ("Next / Continue" Buttons)**:
+   - **Issue**: "Next" or "Continue" buttons to move sequentially through tabs exist only on the initial Base64 Decode tab.
+   - **Fix Plan**: Add "Next / Continue" workflow navigation buttons across all tabs (Multi-Payload Scanner, Xtream Codes, Stalker Portals, Committed Data) in both Python web and Android apps to enable seamless linear tab progression.
+3. **"Paste from Clipboard" Quick-Action Buttons**:
+   - **Issue**: Input forms feature "Clear" buttons, but lack corresponding "Paste from Clipboard" buttons.
+   - **Fix Plan**: Add dedicated 1-click "Paste from Clipboard" action buttons alongside Clear buttons on text areas and input fields across all applicable tabs.
+4. **Scanner Batching & Concurrency Controls**:
+   - Implement proper chunking/batching for scanner tasks to prevent overwhelming the network or device.
+5. **Scanner Lifecycle Controls**:
+   - Add capabilities to Start, Stop, and Pause the ongoing scan process mid-flight.
