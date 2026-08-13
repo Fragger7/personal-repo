@@ -117,7 +117,7 @@ fun SecondaryButton(
 ) {
     OutlinedButton(
         onClick = onClick,
-        colors = ButtonDefaults.outlinedButtonColors(contentContentColor = Color.White),
+        colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White),
         border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF3B82F6)),
         shape = RoundedCornerShape(8.dp),
         contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),

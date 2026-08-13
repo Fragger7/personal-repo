@@ -26,7 +26,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 @Composable
-fun ScannerTab() {
+fun ScannerTab(onNextTab: (() -> Unit)? = null) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
 
