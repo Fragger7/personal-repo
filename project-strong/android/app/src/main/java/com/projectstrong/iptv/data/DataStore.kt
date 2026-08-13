@@ -21,4 +21,5 @@ object DataStore {
     var showVpnWarning by mutableStateOf(false)
     var activeOnlyXtream by mutableStateOf(false)
     var activeOnlyStalker by mutableStateOf(false)
+    var githubToken by mutableStateOf("")
 }

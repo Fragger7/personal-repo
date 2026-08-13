@@ -25,6 +25,8 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.sync.withPermit
 
 @Composable
 fun ScannerTab(onNextTab: (() -> Unit)? = null) {
@@ -137,15 +139,14 @@ fun ScannerTab(onNextTab: (() -> Unit)? = null) {
                     DataStore.scanScope.launch {
                         val total = parsed.size
                         var completed = 0
-                        val chunkSize = 15
-                        val chunks = parsed.chunked(chunkSize)
+                        val semaphore = Semaphore(20)
                         
-                        for (chunk in chunks) {
-                            if (!DataStore.isScanning) break
-                            
-                            coroutineScope {
-                                chunk.map { node: ParsedCredential ->
-                                    async(Dispatchers.IO) {
+                        coroutineScope {
+                            parsed.map { node: ParsedCredential ->
+                                async(Dispatchers.IO) {
+                                    semaphore.withPermit {
+                                        if (!DataStore.isScanning) return@withPermit
+                                        
                                         withContext(Dispatchers.Main) {
                                             val idx = DataStore.scannedNodes.indexOf(node)
                                             if (idx != -1) {
@@ -160,6 +161,7 @@ fun ScannerTab(onNextTab: (() -> Unit)? = null) {
                                         }
                                         
                                         withContext(Dispatchers.Main) {
+                                            if (!DataStore.isScanning) return@withContext
                                             val newIdx = DataStore.scannedNodes.indexOfFirst { it.baseUrl == node.baseUrl && it.user == node.user && it.mac == node.mac && it.type == node.type }
                                             if (newIdx != -1) {
                                                 if (result is VerificationResult.Success) {
@@ -183,9 +185,10 @@ fun ScannerTab(onNextTab: (() -> Unit)? = null) {
                                             DataStore.scanCountText = "Processed $completed/$total connections..."
                                         }
                                     }
-                                }.awaitAll()
-                            }
+                                }
+                            }.awaitAll()
                         }
+                        
                         if (DataStore.isScanning) {
                             DataStore.isScanning = false
                             val activeCount = DataStore.scannedNodes.count { it.status.contains("Active", ignoreCase = true) }

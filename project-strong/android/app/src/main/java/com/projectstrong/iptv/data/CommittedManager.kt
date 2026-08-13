@@ -80,31 +80,100 @@ object CommittedManager {
     
                 fun syncFromCloud(): List<CommittedRecord>? {
         try {
-            val url = java.net.URL("https://raw.githubusercontent.com/Fragger7/personal-repo/main/project-strong/committed.json")
+            val url = java.net.URL("https://api.github.com/repos/Fragger7/personal-repo/contents/project-strong/committed.json")
             val connection = url.openConnection() as java.net.HttpURLConnection
             connection.requestMethod = "GET"
+            connection.setRequestProperty("Accept", "application/vnd.github.v3+json")
             connection.connectTimeout = 5000
             connection.readTimeout = 5000
+            
             if (connection.responseCode == 200) {
-                val json = connection.inputStream.bufferedReader().use { it.readText() }
-                if (json.isNotBlank()) {
-                    val type = object : TypeToken<List<CommittedRecord>>() {}.type
-                    val list: List<CommittedRecord> = gson.fromJson(json, type)
+                val jsonResponse = connection.inputStream.bufferedReader().use { it.readText() }
+                val jsonObj = org.json.JSONObject(jsonResponse)
+                val contentB64 = jsonObj.optString("content", "").replace("\n", "")
+                
+                if (contentB64.isNotEmpty()) {
+                    val decodedBytes = android.util.Base64.decode(contentB64, android.util.Base64.DEFAULT)
+                    val json = String(decodedBytes, Charsets.UTF_8)
                     
-                    // Save raw json to file directly on IO thread
-                    try {
-                        file.writeText(json)
-                    } catch (e: Exception) {
-                        e.printStackTrace()
+                    val type = object : TypeToken<List<CommittedRecord>>() {}.type
+                    val remoteList: List<CommittedRecord> = gson.fromJson(json, type)
+                    
+                    // Merge local into remote
+                    val merged = remoteList.toMutableList()
+                    for (localRec in records) {
+                        val exists = remoteList.any { 
+                            it.baseUrl == localRec.baseUrl && 
+                            it.user == localRec.user && 
+                            it.mac == localRec.mac 
+                        }
+                        if (!exists) {
+                            merged.add(localRec)
+                        }
                     }
                     
-                    return list
+                    records.clear()
+                    records.addAll(merged)
+                    save()
+                    
+                    return merged
                 }
             }
         } catch (e: Exception) {
             e.printStackTrace()
         }
         return null
+    }
+
+    fun pushToCloud(token: String): Boolean {
+        try {
+            // 1. Get current SHA
+            val getUrl = java.net.URL("https://api.github.com/repos/Fragger7/personal-repo/contents/project-strong/committed.json")
+            val getConnection = getUrl.openConnection() as java.net.HttpURLConnection
+            getConnection.requestMethod = "GET"
+            getConnection.setRequestProperty("Accept", "application/vnd.github.v3+json")
+            getConnection.setRequestProperty("Authorization", "token $token")
+            getConnection.connectTimeout = 5000
+            getConnection.readTimeout = 5000
+            
+            var sha = ""
+            if (getConnection.responseCode == 200) {
+                val jsonResponse = getConnection.inputStream.bufferedReader().use { it.readText() }
+                val jsonObj = org.json.JSONObject(jsonResponse)
+                sha = jsonObj.optString("sha", "")
+            } else {
+                return false
+            }
+            
+            // 2. Push updated content
+            val putUrl = java.net.URL("https://api.github.com/repos/Fragger7/personal-repo/contents/project-strong/committed.json")
+            val putConnection = putUrl.openConnection() as java.net.HttpURLConnection
+            putConnection.requestMethod = "PUT"
+            putConnection.setRequestProperty("Accept", "application/vnd.github.v3+json")
+            putConnection.setRequestProperty("Authorization", "token $token")
+            putConnection.setRequestProperty("Content-Type", "application/json")
+            putConnection.doOutput = true
+            
+            val jsonContent = gson.toJson(records.toList())
+            val encodedContent = android.util.Base64.encodeToString(jsonContent.toByteArray(Charsets.UTF_8), android.util.Base64.NO_WRAP)
+            
+            val payload = org.json.JSONObject().apply {
+                put("message", "Sync from Android App")
+                put("content", encodedContent)
+                put("sha", sha)
+            }
+            
+            putConnection.outputStream.use { os ->
+                val input = payload.toString().toByteArray(Charsets.UTF_8)
+                os.write(input, 0, input.size)
+            }
+            
+            val code = putConnection.responseCode
+            return code == 200 || code == 201
+        } catch (e: Exception) {
+            e.printStackTrace()
+            return false
+        }
     }
 
     fun updateNotes(record: CommittedRecord, newNotes: String) {

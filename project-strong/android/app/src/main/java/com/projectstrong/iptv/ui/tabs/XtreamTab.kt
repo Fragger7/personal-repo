@@ -399,7 +399,12 @@ fun XtreamDetailScreen(node: ParsedCredential, onBack: () -> Unit) {
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                     Column {
                         Text("HOST URL", color = Color(0xFFA0A0B0), style = MaterialTheme.typography.labelSmall)
-                        Text(node.baseUrl, color = Color.White, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold)
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(node.baseUrl, color = Color.White, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold)
+                            IconButton(onClick = { clipboardManager.setText(AnnotatedString(node.baseUrl)) }, modifier = Modifier.size(24.dp).padding(start = 8.dp)) {
+                                Icon(Icons.Default.ContentCopy, contentDescription = "Copy", tint = Color.Gray, modifier = Modifier.size(16.dp))
+                            }
+                        }
                     }
                     StatusBadge(node.status, 120.dp)
                 }
@@ -409,7 +414,7 @@ fun XtreamDetailScreen(node: ParsedCredential, onBack: () -> Unit) {
                         Text("USERNAME", color = Color(0xFFA0A0B0), style = MaterialTheme.typography.labelSmall)
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Text(node.user, color = Color.White, style = MaterialTheme.typography.bodyMedium)
-                            IconButton(onClick = { clipboardManager.setText(AnnotatedString(node.user)) }, modifier = Modifier.size(24.dp)) {
+                            IconButton(onClick = { clipboardManager.setText(AnnotatedString(node.user)) }, modifier = Modifier.size(24.dp).padding(start = 8.dp)) {
                                 Icon(Icons.Default.ContentCopy, contentDescription = "Copy", tint = Color.Gray, modifier = Modifier.size(16.dp))
                             }
                         }
@@ -418,9 +423,20 @@ fun XtreamDetailScreen(node: ParsedCredential, onBack: () -> Unit) {
                         Text("PASSWORD", color = Color(0xFFA0A0B0), style = MaterialTheme.typography.labelSmall)
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Text(node.pass, color = Color.White, style = MaterialTheme.typography.bodyMedium)
-                            IconButton(onClick = { clipboardManager.setText(AnnotatedString(node.pass)) }, modifier = Modifier.size(24.dp)) {
+                            IconButton(onClick = { clipboardManager.setText(AnnotatedString(node.pass)) }, modifier = Modifier.size(24.dp).padding(start = 8.dp)) {
                                 Icon(Icons.Default.ContentCopy, contentDescription = "Copy", tint = Color.Gray, modifier = Modifier.size(16.dp))
                             }
+                        }
+                    }
+                }
+                Spacer(modifier = Modifier.height(12.dp))
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    Text("M3U PLAYLIST URL", color = Color(0xFFA0A0B0), style = MaterialTheme.typography.labelSmall)
+                    val m3uUrl = "${node.baseUrl.trimEnd('/')}/get.php?username=${node.user}&password=${node.pass}&type=m3u_plus&output=ts"
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(m3uUrl, color = Color.White, style = MaterialTheme.typography.bodyMedium, maxLines = 1, modifier = Modifier.weight(1f))
+                        IconButton(onClick = { clipboardManager.setText(AnnotatedString(m3uUrl)) }, modifier = Modifier.size(24.dp).padding(start = 8.dp)) {
+                            Icon(Icons.Default.ContentCopy, contentDescription = "Copy", tint = Color.Gray, modifier = Modifier.size(16.dp))
                         }
                     }
                 }
@@ -440,35 +456,13 @@ fun XtreamDetailScreen(node: ParsedCredential, onBack: () -> Unit) {
 
         // Actions
         Row(modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            SecondaryButton(
-                text = if (isFetchingCounts) "Querying..." else "Query Channels & VODs",
-                onClick = {
-                    if (isFetchingCounts) return@SecondaryButton
-                    isFetchingCounts = true
-                    coroutineScope.launch {
-                        val liveStreamsAsync = async(Dispatchers.IO) { IPTVClient.getAllLiveStreams(node.baseUrl, node.user, node.pass) }
-                        val vodStreamsAsync = async(Dispatchers.IO) { IPTVClient.getVodStreams(node.baseUrl, node.user, node.pass) }
-                        val liveStreams = liveStreamsAsync.await()
-                        val vodStreams = vodStreamsAsync.await()
-                        val liveCount = liveStreams?.length() ?: 0
-                        val vodCount = vodStreams?.length() ?: 0
-
-                        val newIdx = DataStore.scannedNodes.indexOfFirst { it.baseUrl == node.baseUrl && it.user == node.user && it.type == "Xtream" }
-                        if (newIdx != -1) {
-                            DataStore.scannedNodes[newIdx] = DataStore.scannedNodes[newIdx].copy(channels = "$liveCount", vods = "$vodCount")
-                        }
-                        isFetchingCounts = false
-                    }
-                },
-                modifier = Modifier.weight(1f)
-            )
             PrimaryButton(
                 text = "Commit Account",
                 color = Color(0xFF10B981),
                 onClick = {
                     CommittedManager.commit(CommittedRecord(type = node.type, baseUrl = node.baseUrl, user = node.user, pass = node.pass, mac = node.mac, notes = ""))
                 },
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.fillMaxWidth()
             )
         }
 

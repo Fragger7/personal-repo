@@ -251,7 +251,12 @@ fun StalkerDetailScreen(node: ParsedCredential, onBack: () -> Unit) {
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                     Column {
                         Text("HOST PORTAL", color = Color(0xFFA0A0B0), style = MaterialTheme.typography.labelSmall)
-                        Text(node.baseUrl, color = Color.White, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold)
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(node.baseUrl, color = Color.White, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold)
+                            IconButton(onClick = { clipboardManager.setText(AnnotatedString(node.baseUrl)) }, modifier = Modifier.size(24.dp).padding(start = 8.dp)) {
+                                Icon(Icons.Default.ContentCopy, contentDescription = "Copy", tint = Color.Gray, modifier = Modifier.size(16.dp))
+                            }
+                        }
                     }
                     StatusBadge(node.status, 120.dp)
                 }

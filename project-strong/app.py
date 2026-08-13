@@ -1351,7 +1351,11 @@ with tab_scanner:
 
             async def process_batch():
                 async with httpx.AsyncClient(headers=EVASION_HEADERS, verify=False) as client:
-                    tasks = [evaluate_account(client, acc) for acc in accounts]
+                    sem = asyncio.Semaphore(25)
+                    async def evaluate_with_sem(acc):
+                        async with sem:
+                            return await evaluate_account(client, acc)
+                    tasks = [evaluate_with_sem(acc) for acc in accounts]
                     results_list = []
                     total = len(tasks)
                     for i, coroutine in enumerate(asyncio.as_completed(tasks)):

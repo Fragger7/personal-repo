@@ -24,6 +24,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.projectstrong.iptv.data.CommittedManager
+import com.projectstrong.iptv.data.DataStore
 import com.projectstrong.iptv.data.CommittedRecord
 import com.projectstrong.iptv.ui.components.*
 import kotlinx.coroutines.Dispatchers
@@ -36,9 +37,63 @@ fun CommittedTab() {
     val records = CommittedManager.records
     var selectedRecord by remember { mutableStateOf<CommittedRecord?>(null) }
     var isReloading by remember { mutableStateOf(false) }
+    var isPushing by remember { mutableStateOf(false) }
     var reloadMessage by remember { mutableStateOf("") }
+    var showTokenDialog by remember { mutableStateOf(false) }
+    var tempToken by remember { mutableStateOf(DataStore.githubToken) }
     
     val coroutineScope = rememberCoroutineScope()
+
+    if (showTokenDialog) {
+        AlertDialog(
+            onDismissRequest = { showTokenDialog = false },
+            title = { Text("GitHub Access Token") },
+            text = {
+                Column {
+                    Text("To push your committed records back to the GitHub repository, please provide a valid GitHub Personal Access Token (Classic).")
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedTextField(
+                        value = tempToken,
+                        onValueChange = { tempToken = it },
+                        label = { Text("GITHUB_TOKEN") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    DataStore.githubToken = tempToken
+                    showTokenDialog = false
+                    
+                    if (DataStore.githubToken.isNotEmpty()) {
+                        isPushing = true
+                        reloadMessage = "Pushing to Cloud..."
+                        coroutineScope.launch {
+                            val success = withContext(Dispatchers.IO) {
+                                CommittedManager.pushToCloud(DataStore.githubToken)
+                            }
+                            if (success) {
+                                reloadMessage = "Push successful!"
+                            } else {
+                                reloadMessage = "Push failed. Check token/internet."
+                            }
+                            isPushing = false
+                            delay(2000)
+                            reloadMessage = ""
+                        }
+                    }
+                }) {
+                    Text("Save & Push")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showTokenDialog = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
 
     AnimatedContent(targetState = selectedRecord != null) { isDetail ->
         if (isDetail && selectedRecord != null) {
@@ -53,11 +108,11 @@ fun CommittedTab() {
         } else {
             CommittedMasterGrid(
                 records = records,
-                isReloading = isReloading,
+                isReloading = isReloading || isPushing,
                 reloadMessage = reloadMessage,
                 onSelectRecord = { selectedRecord = it },
                 onReload = {
-                    if (isReloading) return@CommittedMasterGrid
+                    if (isReloading || isPushing) return@CommittedMasterGrid
                     isReloading = true
                     reloadMessage = "Syncing from Git..."
                     coroutineScope.launch {
@@ -72,8 +127,6 @@ fun CommittedTab() {
                                 }
                             } else {
                                 withContext(Dispatchers.Main) {
-                                    records.clear()
-                                    records.addAll(newRecords)
                                     reloadMessage = "Synced ${records.size} items."
                                 }
                             }
@@ -85,6 +138,29 @@ fun CommittedTab() {
                         isReloading = false
                         delay(2000)
                         reloadMessage = ""
+                    }
+                },
+                onPush = {
+                    if (isReloading || isPushing) return@CommittedMasterGrid
+                    if (DataStore.githubToken.isEmpty()) {
+                        showTokenDialog = true
+                    } else {
+                        isPushing = true
+                        reloadMessage = "Pushing to Cloud..."
+                        coroutineScope.launch {
+                            val success = withContext(Dispatchers.IO) {
+                                CommittedManager.pushToCloud(DataStore.githubToken)
+                            }
+                            if (success) {
+                                reloadMessage = "Push successful!"
+                            } else {
+                                reloadMessage = "Push failed. Check token."
+                                DataStore.githubToken = "" // Reset if failed
+                            }
+                            isPushing = false
+                            delay(2000)
+                            reloadMessage = ""
+                        }
                     }
                 }
             )
@@ -98,7 +174,8 @@ fun CommittedMasterGrid(
     isReloading: Boolean,
     reloadMessage: String,
     onSelectRecord: (CommittedRecord) -> Unit,
-    onReload: () -> Unit
+    onReload: () -> Unit,
+    onPush: () -> Unit
 ) {
     val scrollState = rememberScrollState()
 
@@ -119,10 +196,17 @@ fun CommittedMasterGrid(
                     Text(reloadMessage, color = Color(0xFF10B981), style = MaterialTheme.typography.bodySmall)
                 }
             }
-            SecondaryButton(
-                text = if (isReloading) "Syncing..." else "Reload Cloud",
-                onClick = onReload
-            )
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                SecondaryButton(
+                    text = if (isReloading && reloadMessage.contains("Syncing")) "Syncing..." else "Reload Cloud",
+                    onClick = onReload
+                )
+                PrimaryButton(
+                    text = if (isReloading && reloadMessage.contains("Pushing")) "Pushing..." else "Push to Cloud",
+                    color = Color(0xFF10B981),
+                    onClick = onPush
+                )
+            }
         }
 
         if (isReloading) {
