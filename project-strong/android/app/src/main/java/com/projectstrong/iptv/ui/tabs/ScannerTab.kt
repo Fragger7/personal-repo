@@ -16,6 +16,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.Dispatchers
+import com.projectstrong.iptv.network.ParsedCredential
 import com.projectstrong.iptv.network.IPTVClient
 import com.projectstrong.iptv.data.DataStore
 import com.projectstrong.iptv.network.Parser
@@ -178,7 +183,7 @@ fun ScannerTab(onNextTab: () -> Unit = {}) {
                                                 DataStore.scanCountText = "Processed $completed/$total connections..."
                                             }
                                         }
-                                    }.awaitAll().awaitAll()
+                                    }.awaitAll()
                                 }
                             }
                             if (DataStore.isScanning) {

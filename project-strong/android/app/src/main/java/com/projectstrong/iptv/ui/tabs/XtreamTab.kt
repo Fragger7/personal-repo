@@ -66,6 +66,8 @@ fun XtreamTab() {
 
 @Composable
 fun XtreamMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCredential) -> Unit) {
+    var sortColumn by remember { mutableStateOf("Days Left") }
+    var sortAscending by remember { mutableStateOf(false) }
     
     val filteredNodes = (if (DataStore.activeOnlyXtream) nodes.filter { it.status.contains("Active", ignoreCase = true) } else nodes)
         .let { list ->
@@ -83,8 +85,6 @@ fun XtreamMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCredent
         }
     val scrollState = rememberScrollState()
     val listState = rememberLazyListState()
-    var sortColumn by remember { mutableStateOf("Days Left") }
-    var sortAscending by remember { mutableStateOf(false) }
     val clipboardManager = LocalClipboardManager.current
     val coroutineScope = rememberCoroutineScope()
     var fetchingRows by remember { mutableStateOf(emptySet<String>()) }

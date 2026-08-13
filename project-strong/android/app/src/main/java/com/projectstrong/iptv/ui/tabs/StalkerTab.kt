@@ -12,6 +12,11 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.Dispatchers
+import com.projectstrong.iptv.network.ParsedCredential
 import kotlinx.coroutines.Dispatchers
 
 import androidx.compose.foundation.rememberScrollState
@@ -34,6 +39,11 @@ import com.projectstrong.iptv.network.IPTVClient
 import com.projectstrong.iptv.network.ParsedCredential
 import com.projectstrong.iptv.ui.components.*
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.Dispatchers
+import com.projectstrong.iptv.network.ParsedCredential
 
 @Composable
 fun StalkerTab() {
@@ -57,6 +67,8 @@ fun StalkerTab() {
 
 @Composable
 fun StalkerMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCredential) -> Unit) {
+    var sortColumn by remember { mutableStateOf("Days Left") }
+    var sortAscending by remember { mutableStateOf(false) }
     
     val filteredNodes = (if (DataStore.activeOnlyStalker) nodes.filter { it.status.contains("Active", ignoreCase = true) } else nodes)
         .let { list ->
@@ -73,8 +85,6 @@ fun StalkerMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCreden
         }
     val scrollState = rememberScrollState()
     val listState = rememberLazyListState()
-    var sortColumn by remember { mutableStateOf("Days Left") }
-    var sortAscending by remember { mutableStateOf(false) }
     val clipboardManager = LocalClipboardManager.current
     val coroutineScope = rememberCoroutineScope()
     

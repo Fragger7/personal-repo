@@ -242,9 +242,26 @@ Addressed significant UX complaints regarding the Android app's tabular data dis
 * **Active Connections Toggle**: Added "Active Only" toggle switches to both Xtream and Stalker tabs to filter out inactive nodes easily, accompanied by descriptive labels.
 * **Floating Scroll Buttons**: Added persistent scroll-to-top and scroll-to-bottom Floating Action Buttons (FABs) across the Master Grid screens to quickly navigate lists containing thousands of nodes.
 * **Connection Detail Actions**: Added quick action buttons to copy raw M3U Playlist URLs for Xtream nodes, enhancing copy-paste flexibility beyond discrete host/username/password combinations.
+### 🐛 Android GitHub Actions Build Failure & Resolution (Completed)
+* **Root Cause Analysis**: The GitHub Actions workflow (`android-build.yml`) failed during `compileDebugKotlin` due to three distinct code errors introduced during state management refactoring:
+  1. `StalkerTab.kt` & `XtreamTab.kt`: State variables (`sortColumn`, `sortAscending`) were referenced in `when (sortColumn)` before their `var sortColumn by remember` declarations lower in `StalkerMasterGrid` / `XtreamMasterGrid`.
+  2. `ScannerTab.kt`: `.awaitAll().awaitAll()` was called on a `List<Unit>` instead of `.awaitAll()`, causing a Kotlin receiver mismatch error.
+  3. Missing Coroutine Imports: `async`, `awaitAll`, and `withContext` imports were missing or unimported across the tab files.
+* **Resolution & Fix**:
+  - Moved state variable definitions (`sortColumn`, `sortAscending`) to the top of `StalkerMasterGrid` and `XtreamMasterGrid` functions before filtered nodes are evaluated.
+  - Fixed `.awaitAll()` invocation in `ScannerTab.kt`.
+  - Added explicit coroutines imports (`import kotlinx.coroutines.async`, `import kotlinx.coroutines.awaitAll`, `import kotlinx.coroutines.withContext`) to `ScannerTab.kt`, `StalkerTab.kt`, and `XtreamTab.kt`.
+  - Verified clean syntax and scoping across all tabs using `kotlinc`.
+
+### 🚀 CI/CD & Deployment Strategy Overview
+* **Workflow Configuration (`.github/workflows/android-build.yml`)**:
+  - Triggers automatically on `push` to `main` for changes inside `project-strong/android/**` or `.github/workflows/android-build.yml`.
+  - Environment: `ubuntu-latest`, JDK 17 (Temurin), Gradle 8.7 (`setup-gradle@v3`).
+  - Output Artifact: `project-strong-debug-apk` containing `app-debug.apk`.
+* **Important Note on Path Filters**: Commits modifying only documentation (`GEMINI.md`) or top-level web files without touching `project-strong/android/**` intentionally bypass the Android APK build workflow to conserve GitHub Actions runner minutes.
+
 ### 🚧 Current WIP & Backlog (To Implement)
 * **Scanner Batching & Concurrency Controls**: Implement proper chunking/batching for scanner tasks to prevent overwhelming the network or device.
 * **Scanner Lifecycle Controls**: Add capabilities to Start, Stop, and Pause the ongoing scan process mid-flight.
-* **Master Grid Data Sorting & Counts**: Ensure Data Grid counts accurately reflect the filtered UI state. Implement proper sorting controls (ascending/descending) on data grid headers (Days Left, Active Conns, etc.) and define intuitive default sorting rules, especially when "Active Only" toggles are engaged.
+* **Master Grid Data Sorting & Counts**: Ensure Data Grid counts accurately reflect the filtered UI state. Verify header column click sorting (Days Left, Active Conns, Host, Status) behaves smoothly.
 * **Per-Connection Channel Queries**: Support robust, distinct querying of Channels/VODs for individual connections from the detail drawer without polluting global state.
-* **Android CI/CD Build Flakiness**: The Android APK build failed repeatedly due to syntax errors (Kotlin unresolved references and unclosed brackets in Composables) introduced during UI refactoring. These have been successfully reverted and patched (compilation is now clean), but we must monitor the GitHub Actions pipeline to ensure stability.
