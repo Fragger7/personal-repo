@@ -262,10 +262,21 @@ Addressed significant UX complaints regarding the Android app's tabular data dis
 * **Important Note on Path Filters**: Commits modifying only documentation (`GEMINI.md`) or top-level web files without touching `project-strong/android/**` intentionally bypass the Android APK build workflow to conserve GitHub Actions runner minutes.
 
 ### 🚧 Backlog & Priority Bugs for Next Session (To Implement)
-1. **Scanner Batching & Concurrency Controls**:
-   - Implement proper chunking/batching for scanner tasks to prevent overwhelming the network or device.
-2. **Scanner Lifecycle Controls**:
+1. **Scanner Lifecycle Controls**:
    - Add capabilities to Start, Stop, and Pause the ongoing scan process mid-flight.
+
+### ⚡ Performance & UX Polish Updates (Completed)
+* **1st Level Query Optimization**: 
+  - **Android**: Rewrote the scanner array mapping logic. Instead of executing chunks sequentially (which caused huge lockups waiting on slow/dead hosts), the scanner now utilizes a unified `Semaphore` across all concurrent coroutines. This keeps maximum throughput perfectly saturated. Reduced `OkHttpClient` timeout bounds from 15s down to 7s to fail faster.
+  - **Python (Streamlit)**: Added an `asyncio.Semaphore(25)` wrapper to the first-tier `evaluate_account` batch processor to prevent blasting 100+ uncontrolled concurrent requests instantly, keeping server CPU threads stable.
+* **Connection Details Enhancements**:
+  - **Xtream (Android)**: Removed the redundant "Query Channels & VODs" button from the details pane (users should rely on the master grid or "Load Categories" which handles this implicitly).
+  - Added dedicated **Copy Icons** for the "Host URL" fields across both Xtream and Stalker detail screens to match the Username/Password UX.
+  - Built a dynamic **M3U PLAYLIST URL** constructor inside the Xtream Details drawer, allowing quick 1-click copying of the fully assembled download link.
+* **Committed Data Sync Logic**:
+  - **Issue**: Clicking "Reload from Cloud" previously overwrote and wiped out any un-pushed local commits.
+  - **Resolution**: Refactored `CommittedManager.kt`'s cloud synchronization to actively **merge** lists. Any local unpushed connections will now persist and append alongside the fetched cloud JSON.
+  - Added a dedicated **"Push to Cloud"** action button in the Android `CommittedTab.kt`. Selecting this will prompt a one-time dialog requesting a GitHub Personal Access Token (stored safely in memory for the session) and will securely push the merged local lists up to the master branch using the GitHub REST API without overwriting cloud histories.
 
 ### 🐛 Bulk Connection Query Crash & OOM Fix (Completed)
 * **Issue**: Triggering "Query All Active" connections caused severe performance degradation and crashed the app (OOM Exceptions / Freezing) when executing against large lists on the Xtream tab.

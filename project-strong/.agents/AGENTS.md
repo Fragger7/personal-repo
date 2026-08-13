@@ -104,7 +104,6 @@ When building UI components, adding new screens, or refactoring the application 
 ---
 
 ## 📋 Next Session Backlog & Priority Fixes
-1. **Scanner Batching & Concurrency Controls**: Implement proper chunking/batching for scanner tasks to prevent overwhelming the network or device.
-2. **Scanner Lifecycle Controls**: Add capabilities to Start, Stop, and Pause the ongoing scan process mid-flight.
+1. **Scanner Lifecycle Controls**: Add capabilities to Start, Stop, and Pause the ongoing scan process mid-flight.
 
 
