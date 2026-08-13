@@ -7,16 +7,13 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material.icons.filled.KeyboardArrowUp
-import androidx.compose.material.icons.filled.KeyboardArrowDown
-import kotlinx.coroutines.Dispatchers
-
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.key
@@ -35,13 +32,12 @@ import com.projectstrong.iptv.network.IPTVClient
 import com.projectstrong.iptv.network.ParsedCredential
 import com.projectstrong.iptv.network.VerificationResult
 import com.projectstrong.iptv.ui.components.*
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
-import kotlinx.coroutines.withContext
 import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.async
-import kotlinx.coroutines.withContext
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.json.JSONArray
 
 @Composable
