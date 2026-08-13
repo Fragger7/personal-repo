@@ -120,9 +120,9 @@ fun XtreamMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCredent
                                 for (chunk in chunks) {
                                     if (!isQueryingAll) break
                                     
-                                    kotlinx.coroutines.coroutineScope {
+                                    coroutineScope {
                                         chunk.map { node: ParsedCredential ->
-                                            kotlinx.coroutines.async(Dispatchers.IO) {
+                                            async(Dispatchers.IO) {
                                                 val key = node.baseUrl + node.user
                                                 withContext(Dispatchers.Main) { fetchingRows = fetchingRows + key }
                                                 
