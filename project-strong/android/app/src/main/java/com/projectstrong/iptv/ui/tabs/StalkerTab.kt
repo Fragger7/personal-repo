@@ -58,9 +58,9 @@ fun StalkerTab() {
 
 @Composable
 fun StalkerMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCredential) -> Unit) {
-    var sortColumn by remember { mutableStateOf("Days Left") }
+    var sortColumn by remember { mutableStateOf("") }
     var sortAscending by remember { mutableStateOf(false) }
-    
+
     val filteredNodes = (if (DataStore.activeOnlyStalker) nodes.filter { it.status.contains("Active", ignoreCase = true) } else nodes)
         .let { list ->
             when (sortColumn) {
@@ -78,7 +78,7 @@ fun StalkerMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCreden
     val listState = rememberLazyListState()
     val clipboardManager = LocalClipboardManager.current
     val coroutineScope = rememberCoroutineScope()
-    
+
     Column(modifier = Modifier.fillMaxSize()) {
         Row(
             modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
@@ -105,107 +105,111 @@ fun StalkerMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCreden
                 )
             }
         }
-        
+
         if (filteredNodes.isEmpty()) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Text("No Stalker portals found.", color = Color.Gray)
             }
         } else {
-        
-        Box(modifier = Modifier.fillMaxSize()) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .horizontalScroll(scrollState)
-            ) {
-                Column {
-                    // Header Row
-                    Row(
-                        modifier = Modifier
-                            .background(Color(0xFF1E1E2E))
-                            .padding(horizontal = 16.dp, vertical = 12.dp)
-                    ) {
-                        val headerClick = { col: String -> 
-                            if (sortColumn == col) sortAscending = !sortAscending else { sortColumn = col; sortAscending = false }
-                        }
-                        GridHeader("Host URL", 250.dp, { headerClick("Host URL") })
-                        GridHeader("Status", 120.dp, { headerClick("Status") })
-                        GridHeader("Provider", 150.dp, { headerClick("Provider") })
-                        GridHeader("Timezone", 120.dp, null)
-                        GridHeader("MAC Address", 150.dp, { headerClick("MAC") })
-                        GridHeader("Expires", 100.dp, null)
-                        GridHeader("Days Left", 100.dp, { headerClick("Days Left") })
-                        GridHeader("Actions", 180.dp, null)
-                    }
-                    
-                    Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(Color(0xFF333344)))
-                    
-                    LazyColumn(modifier = Modifier.fillMaxSize(), state = listState) {
-                        items(filteredNodes, key = { it.baseUrl + it.mac }) { node: ParsedCredential ->
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable { onSelectNode(node) }
-                                    .padding(horizontal = 16.dp, vertical = 12.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                GridCell(node.baseUrl, 250.dp, isBold = true)
-                                StatusBadge(node.status, 120.dp)
-                                GridCell(node.mac, 160.dp)
-                                GridCell(node.provider, 150.dp)
-                                GridCell(node.serverTimezone, 120.dp)
-                                
-                                Row(modifier = Modifier.width(180.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                    SecondaryButton(
-                                        text = "Copy",
-                                        onClick = {
-                                            clipboardManager.setText(AnnotatedString("${node.baseUrl} / ${node.mac}"))
-                                        },
-                                        modifier = Modifier.height(36.dp).weight(1f)
-                                    )
-                                    PrimaryButton(
-                                        text = "Commit",
-                                        onClick = {
-                                            CommittedManager.commit(CommittedRecord(type = node.type, baseUrl = node.baseUrl, user = node.user, pass = node.pass, mac = node.mac, notes = ""))
-                                        },
-                                        modifier = Modifier.height(36.dp).weight(1f)
-                                    )
+            Box(modifier = Modifier.fillMaxSize()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .horizontalScroll(scrollState)
+                ) {
+                    Column {
+                        Row(
+                            modifier = Modifier
+                                .background(Color(0xFF1E1E2E))
+                                .padding(horizontal = 16.dp, vertical = 12.dp)
+                        ) {
+                            val headerClick = { col: String ->
+                                if (sortColumn == col) {
+                                    sortAscending = !sortAscending
+                                } else {
+                                    sortColumn = col
+                                    sortAscending = false
                                 }
                             }
-                            Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(Color(0xFF222233)))
+                            GridHeader("Host URL", 250.dp, onClick = { headerClick("Host URL") }, isSorted = (sortColumn == "Host URL"), isAscending = sortAscending)
+                            GridHeader("Status", 120.dp, onClick = { headerClick("Status") }, isSorted = (sortColumn == "Status"), isAscending = sortAscending)
+                            GridHeader("MAC Address", 160.dp, onClick = { headerClick("MAC") }, isSorted = (sortColumn == "MAC"), isAscending = sortAscending)
+                            GridHeader("Provider", 150.dp, onClick = { headerClick("Provider") }, isSorted = (sortColumn == "Provider"), isAscending = sortAscending)
+                            GridHeader("Timezone", 120.dp, null)
+                            GridHeader("Expires", 100.dp, null)
+                            GridHeader("Days Left", 100.dp, onClick = { headerClick("Days Left") }, isSorted = (sortColumn == "Days Left"), isAscending = sortAscending)
+                            GridHeader("Actions", 180.dp, null)
+                        }
+
+                        Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(Color(0xFF333344)))
+
+                        LazyColumn(modifier = Modifier.fillMaxSize(), state = listState) {
+                            items(filteredNodes, key = { it.baseUrl + it.mac }) { node: ParsedCredential ->
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable { onSelectNode(node) }
+                                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    GridCell(node.baseUrl, 250.dp, isBold = true)
+                                    StatusBadge(node.status, 120.dp)
+                                    GridCell(node.mac, 160.dp)
+                                    GridCell(node.provider, 150.dp)
+                                    GridCell(node.serverTimezone, 120.dp)
+                                    GridCell(node.expires, 100.dp)
+                                    GridCell(node.daysLeft, 100.dp)
+
+                                    Row(modifier = Modifier.width(180.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                        SecondaryButton(
+                                            text = "Copy",
+                                            onClick = {
+                                                clipboardManager.setText(AnnotatedString("${node.baseUrl} / ${node.mac}"))
+                                            },
+                                            modifier = Modifier.height(36.dp).weight(1f)
+                                        )
+                                        PrimaryButton(
+                                            text = "Commit",
+                                            onClick = {
+                                                CommittedManager.commit(CommittedRecord(type = node.type, baseUrl = node.baseUrl, user = node.user, pass = node.pass, mac = node.mac, notes = ""))
+                                            },
+                                            modifier = Modifier.height(36.dp).weight(1f)
+                                        )
+                                    }
+                                }
+                                Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(Color(0xFF222233)))
+                            }
                         }
                     }
                 }
-            }
-            
-            // Floating scroll buttons
-            Column(
-                modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .padding(end = 16.dp, bottom = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                FloatingActionButton(
-                    onClick = { coroutineScope.launch { listState.animateScrollToItem(0) } },
-                    containerColor = Color(0xFF3B82F6),
-                    contentColor = Color.White,
-                    modifier = Modifier.size(48.dp)
+
+                // Floating scroll buttons
+                Column(
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(end = 16.dp, bottom = 16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Icon(Icons.Default.KeyboardArrowUp, contentDescription = "Scroll to Top")
-                }
-                FloatingActionButton(
-                    onClick = { coroutineScope.launch { listState.animateScrollToItem(if (filteredNodes.isNotEmpty()) filteredNodes.size - 1 else 0) } },
-                    containerColor = Color(0xFF3B82F6),
-                    contentColor = Color.White,
-                    modifier = Modifier.size(48.dp)
-                ) {
-                    Icon(Icons.Default.KeyboardArrowDown, contentDescription = "Scroll to Bottom")
+                    FloatingActionButton(
+                        onClick = { coroutineScope.launch { listState.animateScrollToItem(0) } },
+                        containerColor = Color(0xFF3B82F6),
+                        contentColor = Color.White,
+                        modifier = Modifier.size(48.dp)
+                    ) {
+                        Icon(Icons.Default.KeyboardArrowUp, contentDescription = "Scroll to Top")
+                    }
+                    FloatingActionButton(
+                        onClick = { coroutineScope.launch { listState.animateScrollToItem(if (filteredNodes.isNotEmpty()) filteredNodes.size - 1 else 0) } },
+                        containerColor = Color(0xFF3B82F6),
+                        contentColor = Color.White,
+                        modifier = Modifier.size(48.dp)
+                    ) {
+                        Icon(Icons.Default.KeyboardArrowDown, contentDescription = "Scroll to Bottom")
+                    }
                 }
             }
         }
     }
-}
-
 }
 
 @Composable
@@ -259,7 +263,7 @@ fun StalkerDetailScreen(node: ParsedCredential, onBack: () -> Unit) {
                 }
             }
         }
-        
+
         // Actions
         Row(modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             PrimaryButton(

@@ -16,15 +16,26 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun GridHeader(text: String, width: Dp, onClick: (() -> Unit)? = null) {
+fun GridHeader(
+    text: String,
+    width: Dp,
+    onClick: (() -> Unit)? = null,
+    isSorted: Boolean = false,
+    isAscending: Boolean = false
+) {
+    val indicator = if (isSorted) (if (isAscending) " ▲" else " ▼") else ""
+    val textColor = if (isSorted) Color(0xFF3B82F6) else Color(0xFFA0A0B0)
     Text(
-        text = text.uppercase(),
-        color = Color(0xFFA0A0B0),
+        text = "${text.uppercase()}$indicator",
+        color = textColor,
         style = MaterialTheme.typography.labelSmall,
         fontWeight = FontWeight.Bold,
-        modifier = Modifier.width(width).padding(end = 8.dp).let {
-            if (onClick != null) it.clickable { onClick() } else it
-        }
+        modifier = Modifier
+            .width(width)
+            .padding(end = 8.dp)
+            .let {
+                if (onClick != null) it.clickable { onClick() } else it
+            }
     )
 }
 
@@ -106,7 +117,7 @@ fun SecondaryButton(
 ) {
     OutlinedButton(
         onClick = onClick,
-        colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White),
+        colors = ButtonDefaults.outlinedButtonColors(contentContentColor = Color.White),
         border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF3B82F6)),
         shape = RoundedCornerShape(8.dp),
         contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
