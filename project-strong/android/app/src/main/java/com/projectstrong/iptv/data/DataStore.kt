@@ -5,7 +5,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import com.projectstrong.iptv.network.ParsedCredential
-
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -18,6 +17,7 @@ object DataStore {
     var scanProgress by mutableStateOf(0f)
     var scanCountText by mutableStateOf("")
     var ipInfo by mutableStateOf("")
+    var isCloudHosting by mutableStateOf(false)
     var showVpnWarning by mutableStateOf(false)
     var activeOnlyXtream by mutableStateOf(false)
     var activeOnlyStalker by mutableStateOf(false)

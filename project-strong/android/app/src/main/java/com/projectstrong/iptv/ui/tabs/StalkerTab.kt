@@ -206,6 +206,8 @@ fun StalkerMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCreden
     }
 }
 
+}
+
 @Composable
 fun StalkerDetailScreen(node: ParsedCredential, onBack: () -> Unit) {
     val clipboardManager = LocalClipboardManager.current
@@ -288,5 +290,3 @@ fun StalkerDetailScreen(node: ParsedCredential, onBack: () -> Unit) {
         }
     }
 }
-
-        }

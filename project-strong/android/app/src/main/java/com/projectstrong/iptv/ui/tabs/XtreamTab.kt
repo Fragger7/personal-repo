@@ -300,6 +300,8 @@ fun XtreamMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCredent
     }
 }
 
+}
+
 @Composable
 fun XtreamDetailScreen(node: ParsedCredential, onBack: () -> Unit) {
     var categories by remember { mutableStateOf<JSONArray?>(null) }
@@ -531,5 +533,3 @@ fun XtreamDetailScreen(node: ParsedCredential, onBack: () -> Unit) {
         }
     }
 }
-
-        }
