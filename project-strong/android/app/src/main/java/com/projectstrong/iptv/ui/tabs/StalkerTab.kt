@@ -31,7 +31,8 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun StalkerTab(onNextTab: (() -> Unit)? = null) {
-    val stalkerNodes = DataStore.scannedNodes.filter { it.type == "Stalker" }
+    // Implement chunked/dynamic loading: only show nodes that have finished verifying
+    val stalkerNodes = DataStore.scannedNodes.filter { it.type == "Stalker" && (!it.isVerifying && it.status.isNotEmpty()) }
     var selectedNode by remember { mutableStateOf<ParsedCredential?>(null) }
 
     AnimatedContent(targetState = selectedNode != null) { isDetail: Boolean ->
@@ -164,7 +165,7 @@ fun StalkerMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCreden
                         Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(Color(0xFF333344)))
 
                         LazyColumn(modifier = Modifier.fillMaxSize(), state = listState) {
-                            items(filteredNodes, key = { it.baseUrl + it.mac }) { node: ParsedCredential ->
+                            items(filteredNodes) { node: ParsedCredential ->
                                 Row(
                                     modifier = Modifier
                                         .fillMaxWidth()

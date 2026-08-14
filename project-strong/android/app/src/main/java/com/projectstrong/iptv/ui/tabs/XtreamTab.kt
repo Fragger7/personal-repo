@@ -47,7 +47,9 @@ import java.util.concurrent.atomic.AtomicInteger
 
 @Composable
 fun XtreamTab(onNextTab: (() -> Unit)? = null) {
-    val xtreamNodes = DataStore.scannedNodes.filter { it.type == "Xtream" }
+    // Implement chunked/dynamic loading: only show nodes that have finished verifying
+    // This prevents rendering thousands of "Connecting..." items and massively improves performance.
+    val xtreamNodes = DataStore.scannedNodes.filter { it.type == "Xtream" && (!it.isVerifying && it.status.isNotEmpty()) }
     var selectedNode by remember { mutableStateOf<ParsedCredential?>(null) }
 
     AnimatedContent(targetState = selectedNode != null) { isDetail: Boolean ->
@@ -146,13 +148,15 @@ fun XtreamMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCredent
 
             // Throttled UI batch loop
             while (DataStore.isQueryingCatalogs && completedCount.get() < total) {
-                delay(120)
+                delay(500)
                 val batch = mutableListOf<Triple<String, String, Pair<Int, Int>>>()
                 while (true) {
                     val item = updateQueue.poll() ?: break
                     batch.add(item)
-                    if (batch.size >= 50) break
+                    if (batch.size >= 250) break
                 }
+
+                if (batch.isEmpty()) continue
 
                 val currentDone = completedCount.get()
                 withContext(Dispatchers.Main) {
@@ -380,7 +384,7 @@ fun XtreamMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCredent
                         Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(Color(0xFF333344)))
 
                         LazyColumn(modifier = Modifier.fillMaxSize(), state = listState) {
-                            items(filteredNodes, key = { it.baseUrl + it.user }) { node: ParsedCredential ->
+                            items(filteredNodes) { node: ParsedCredential ->
                                 Row(
                                     modifier = Modifier
                                         .fillMaxWidth()

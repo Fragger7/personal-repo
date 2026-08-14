@@ -128,13 +128,15 @@ fun ScannerTab(onNextTab: (() -> Unit)? = null) {
 
             // Throttled UI updater loop to eliminate Choreographer starvation / ANR
             while (DataStore.isScanning && completedCount.get() < total) {
-                delay(120) // Batch updates every 120ms
+                delay(500) // Adaptive delay: wait 500ms between batches to let the UI breathe
                 val batch = mutableListOf<Pair<Int, ParsedCredential>>()
                 while (true) {
                     val item = updateQueue.poll() ?: break
                     batch.add(item)
-                    if (batch.size >= 100) break
+                    if (batch.size >= 500) break
                 }
+
+                if (batch.isEmpty()) continue
 
                 val currentDone = completedCount.get()
                 withContext(Dispatchers.Main) {
