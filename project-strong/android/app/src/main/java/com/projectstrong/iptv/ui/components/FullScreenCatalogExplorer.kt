@@ -452,29 +452,35 @@ fun FullScreenCatalogExplorer(
                         }
 
                         // Copied Feedback Banner
-                        AnimatedVisibility(
-                            visible = showCopiedToast,
-                            enter = fadeIn() + slideInVertically { it },
-                            exit = fadeOut() + slideOutVertically { it },
-                            modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 24.dp)
+                        Column(
+                            modifier = Modifier
+                                .align(Alignment.BottomCenter)
+                                .padding(bottom = 24.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
                         ) {
-                            LaunchedEffect(showCopiedToast) {
-                                if (showCopiedToast) {
-                                    kotlinx.coroutines.delay(1800)
-                                    showCopiedToast = false
-                                }
-                            }
-                            Card(
-                                shape = RoundedCornerShape(20.dp),
-                                colors = CardDefaults.cardColors(containerColor = Color(0xFF10B981))
+                            androidx.compose.animation.AnimatedVisibility(
+                                visible = showCopiedToast,
+                                enter = fadeIn() + slideInVertically { it },
+                                exit = fadeOut() + slideOutVertically { it }
                             ) {
-                                Row(
-                                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                                    verticalAlignment = Alignment.CenterVertically
+                                LaunchedEffect(showCopiedToast) {
+                                    if (showCopiedToast) {
+                                        kotlinx.coroutines.delay(1800)
+                                        showCopiedToast = false
+                                    }
+                                }
+                                Card(
+                                    shape = RoundedCornerShape(20.dp),
+                                    colors = CardDefaults.cardColors(containerColor = Color(0xFF10B981))
                                 ) {
-                                    Icon(Icons.Default.Check, contentDescription = null, tint = Color.White, modifier = Modifier.size(16.dp))
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    Text(toastText, color = Color.White, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold)
+                                    Row(
+                                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Icon(Icons.Default.Check, contentDescription = null, tint = Color.White, modifier = Modifier.size(16.dp))
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Text(toastText, color = Color.White, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold)
+                                    }
                                 }
                             }
                         }

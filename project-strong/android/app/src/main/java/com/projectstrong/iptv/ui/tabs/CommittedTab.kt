@@ -200,13 +200,13 @@ fun CommittedTab() {
         )
     }
 
-    AnimatedContent(targetState = selectedRecord != null) { isDetail ->
-        if (isDetail && selectedRecord != null) {
+    AnimatedContent(targetState = selectedRecord) { activeRecord ->
+        if (activeRecord != null) {
             CommittedDetailScreen(
-                record = selectedRecord!,
+                record = activeRecord,
                 onBack = { selectedRecord = null },
                 onDelete = {
-                    CommittedManager.delete(selectedRecord!)
+                    CommittedManager.delete(activeRecord)
                     selectedRecord = null
                 }
             )

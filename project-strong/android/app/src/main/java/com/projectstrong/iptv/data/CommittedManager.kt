@@ -340,51 +340,60 @@ object CommittedManager {
                         try {
                             if (record.safeType == "Xtream") {
                                 val res = IPTVClient.verifyXtream(record.safeBaseUrl, record.safeUser, record.safePass)
-                                if (res is VerificationResult.Success) {
-                                    val updated = record.copy(
-                                        status = if (res.status == "Active") "🟢 Active" else "🟡 ${res.status}",
-                                        expires = if (res.expires != "N/A") res.expires else record.safeExpires,
-                                        daysLeft = if (res.daysLeft != "N/A") res.daysLeft else record.safeDaysLeft,
-                                        activeConn = if (res.activeConn != "N/A") res.activeConn else record.safeActiveConn,
-                                        maxConn = if (res.maxConn != "N/A") res.maxConn else record.safeMaxConn,
-                                        serverTimezone = if (res.serverTimezone != "N/A") res.serverTimezone else record.safeTimezone
-                                    )
-                                    withContext(Dispatchers.Main) {
-                                        records[index] = updated
+                                when (res) {
+                                    is VerificationResult.Success -> {
+                                        val updated = record.copy(
+                                            status = if (res.status == "Active") "🟢 Active" else "🟡 ${res.status}",
+                                            expires = if (res.expires != "N/A") res.expires else record.safeExpires,
+                                            daysLeft = if (res.daysLeft != "N/A") res.daysLeft else record.safeDaysLeft,
+                                            activeConn = if (res.activeConn != "N/A") res.activeConn else record.safeActiveConn,
+                                            maxConn = if (res.maxConn != "N/A") res.maxConn else record.safeMaxConn,
+                                            serverTimezone = if (res.serverTimezone != "N/A") res.serverTimezone else record.safeTimezone
+                                        )
+                                        withContext(Dispatchers.Main) {
+                                            records[index] = updated
+                                        }
+                                        updatedCount++
                                     }
-                                    updatedCount++
-                                } else if (res is VerificationResult.Failed) {
-                                    val updated = record.copy(
-                                        status = "🔴 ${res.reason.take(20)}"
-                                    )
-                                    withContext(Dispatchers.Main) {
-                                        records[index] = updated
+                                    is VerificationResult.Failed -> {
+                                        val updated = record.copy(
+                                            status = "🔴 ${res.reason.take(20)}"
+                                        )
+                                        withContext(Dispatchers.Main) {
+                                            records[index] = updated
+                                        }
+                                        updatedCount++
                                     }
-                                    updatedCount++
+                                    else -> {}
                                 }
                             } else if (record.safeType == "Stalker") {
                                 val res = IPTVClient.verifyStalker(record.safeBaseUrl, record.safeMac)
-                                if (res is VerificationResult.Success) {
-                                    val updated = record.copy(
-                                        status = "🟢 Active"
-                                    )
-                                    withContext(Dispatchers.Main) {
-                                        records[index] = updated
+                                when (res) {
+                                    is VerificationResult.Success -> {
+                                        val updated = record.copy(
+                                            status = "🟢 Active"
+                                        )
+                                        withContext(Dispatchers.Main) {
+                                            records[index] = updated
+                                        }
+                                        updatedCount++
                                     }
-                                    updatedCount++
-                                } else if (res is VerificationResult.Failed) {
-                                    val updated = record.copy(
-                                        status = "🔴 ${res.reason.take(20)}"
-                                    )
-                                    withContext(Dispatchers.Main) {
-                                        records[index] = updated
+                                    is VerificationResult.Failed -> {
+                                        val updated = record.copy(
+                                            status = "🔴 ${res.reason.take(20)}"
+                                        )
+                                        withContext(Dispatchers.Main) {
+                                            records[index] = updated
+                                        }
+                                        updatedCount++
                                     }
-                                    updatedCount++
+                                    else -> {}
                                 }
                             }
                         } catch (e: Exception) {
                             e.printStackTrace()
                         }
+                        Unit
                     }
                 }
             }
