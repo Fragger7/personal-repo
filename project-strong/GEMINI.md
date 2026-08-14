@@ -291,3 +291,49 @@ Addressed significant UX complaints regarding the Android app's tabular data dis
 ### 📋 "Paste from Clipboard" Action Buttons (Completed)
 * **Issue**: Input forms featured "Clear" buttons, but lacked corresponding "Paste from Clipboard" buttons.
 * **Resolution**: Added dedicated 1-click "Paste" buttons using Android's `LocalClipboardManager` natively into the `Base64Tab` and `ScannerTab` UIs adjacent to the "Clear" and action buttons for rapid credential ingesting. *(Note: Paste buttons were strictly implemented in Android; Python Streamlit web apps natively block direct OS clipboard reading via JS security limits without user interaction events, so Ctrl+V is standard there).*
+
+### 📊 16-Column Committed Data Grid & Master-Detail Navigation (Completed)
+* **Master Grid Overhaul**: Expanded the Android `CommittedTab.kt` data table from a partial subset of fields to a comprehensive **16-column enterprise grid**, achieving complete structural parity with the Python dashboard and beyond:
+  1. **Date Added** (Primary sorting column, formatted as `YYYY-MM-DD HH:MM:SS`)
+  2. **Type** (Xtream / Stalker badges)
+  3. **Status** (Color-coded indicators: 🟢 Active, 🔴 Expired, 🟡 Invalid)
+  4. **Sync Status** (☁️ Cloud / 📱 Local badges)
+  5. **Host URL** (Base URL with 1-click copy)
+  6. **Provider** (Provider intelligence branding)
+  7. **Username** (Xtream discrete credentials)
+  8. **Password** (Xtream discrete credentials)
+  9. **MAC** (Stalker hardware identity)
+  10. **Channels** (Live stream count badge)
+  11. **VODs** (Video on Demand count badge)
+  12. **Days Left** (Account lifespan indicator)
+  13. **Expires** (Date expiration timestamp)
+  14. **Connections** (Active / Max allowed connection ratio)
+  15. **Timezone** (Server regional timezone)
+  16. **Notes** (Custom user annotations)
+* **Default Sort & Header Controls**: Clicking any column header toggles ascending/descending sorts with clear indicator chevrons. Initial view loads default-sorted by **Date Added (Descending / Newest First)**.
+* **Master-Detail Flow**: Selecting any row smoothly navigates into the full `CommittedDetailScreen`, exposing discrete credential copy widgets, full M3U Playlist generation, note editing, live verification re-checks, full-screen catalog exploration, and safe deletion.
+
+### 🛡️ Cloud Overwrite Safeguards & Push Confirmation (Completed)
+* **Accidental Overwrite Prevention**:
+  - **Empty Push Guard**: Implemented strict validation in `CommittedManager.kt` to forbid pushing an empty local dataset over an existing remote database on GitHub.
+  - **Confirmation Dialog**: Added an interactive safety modal in `CommittedTab.kt` triggered before pushing to the cloud. It displays total local records, sync status counts, and explicit warnings against unintentional deletions.
+  - **GitHub Token Persistence**: Added safe in-memory caching for personal access tokens during the active session with one-click "Clear Stored Token" functionality.
+
+### 🍞 Universal Non-Intrusive Toast Feedback System (Completed)
+* **Global Toast Architecture**: Created `ToastManager.kt` and anchored the animated `ToastHost` at the root overlay in `MainActivity.kt`.
+* **Instant Visual Feedback**: Replaced disruptive blocking dialogues and silent state updates with elegant, auto-dismissing Material 3 toasts for:
+  - Account saves and commits across all tabs
+  - Cloud synchronization and GitHub repository push completion
+  - Note modifications and record deletions
+  - Copying credentials (Host, Username, Password, MAC, M3U URL)
+  - Token storage and clearing
+
+### 🔄 End-to-End Metadata Synchronization (Completed)
+* **Deep-Dive Parity**: Ensured `Active Connections`, `Max Connections`, `Provider`, and `Server Timezone` metadata captured during initial Tier 1 scans are seamlessly passed into `CommitAccountDialog.kt`, saved to `CommittedRecord`, persisted across local and cloud JSON schemas, and displayed in both master grids and detail screens.
+
+### 🐛 Kotlin & Gradle Compilation Resolution (Completed)
+* **Root Causes Addressed**:
+  1. Fixed missing exhaustive `else` branches in `CommittedManager.kt` coroutines by replacing expression if-trees with structured `when (res)` matching.
+  2. Fixed `AnimatedVisibility` receiver ambiguity in `FullScreenCatalogExplorer.kt` by wrapping toast banners inside explicit `Column` containers.
+  3. Fixed mutable state smart-cast errors in `CommittedTab.kt` by passing immutable target states through `AnimatedContent(targetState = selectedRecord) { activeRecord -> ... }`.
+* **Verification**: All Kotlin sources now compile cleanly under Gradle 8.7 and AGP 8.4 in GitHub Actions.
