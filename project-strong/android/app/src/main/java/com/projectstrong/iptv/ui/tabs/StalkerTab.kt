@@ -24,17 +24,10 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.projectstrong.iptv.data.CommittedManager
-import com.projectstrong.iptv.data.CommittedRecord
 import com.projectstrong.iptv.data.DataStore
-import com.projectstrong.iptv.network.IPTVClient
 import com.projectstrong.iptv.network.ParsedCredential
 import com.projectstrong.iptv.ui.components.*
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 @Composable
 fun StalkerTab(onNextTab: (() -> Unit)? = null) {
@@ -61,6 +54,7 @@ fun StalkerTab(onNextTab: (() -> Unit)? = null) {
 fun StalkerMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCredential) -> Unit, onNextTab: (() -> Unit)? = null) {
     var sortColumn by remember { mutableStateOf("") }
     var sortAscending by remember { mutableStateOf(false) }
+    var committingNode by remember { mutableStateOf<ParsedCredential?>(null) }
 
     val filteredNodes = (if (DataStore.activeOnlyStalker) nodes.filter { it.status.contains("Active", ignoreCase = true) } else nodes)
         .let { list ->
@@ -79,6 +73,22 @@ fun StalkerMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCreden
     val listState = rememberLazyListState()
     val clipboardManager = LocalClipboardManager.current
     val coroutineScope = rememberCoroutineScope()
+
+    if (committingNode != null) {
+        val node = committingNode!!
+        CommitAccountDialog(
+            type = "Stalker",
+            baseUrl = node.baseUrl,
+            mac = node.mac,
+            status = node.status,
+            expires = node.expires,
+            daysLeft = node.daysLeft,
+            provider = node.provider,
+            serverTimezone = node.serverTimezone,
+            onDismiss = { committingNode = null },
+            onCommitted = { committingNode = null }
+        )
+    }
 
     Column(modifier = Modifier.fillMaxSize()) {
         Row(
@@ -172,7 +182,7 @@ fun StalkerMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCreden
                                         PrimaryButton(
                                             text = "Commit",
                                             onClick = {
-                                                CommittedManager.commit(CommittedRecord(type = node.type, baseUrl = node.baseUrl, user = node.user, pass = node.pass, mac = node.mac, notes = ""))
+                                                committingNode = node
                                             },
                                             modifier = Modifier.height(36.dp).weight(1f)
                                         )
@@ -225,6 +235,22 @@ fun StalkerMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCreden
 @Composable
 fun StalkerDetailScreen(node: ParsedCredential, onBack: () -> Unit) {
     val clipboardManager = LocalClipboardManager.current
+    var showCommitDialog by remember { mutableStateOf(false) }
+
+    if (showCommitDialog) {
+        CommitAccountDialog(
+            type = "Stalker",
+            baseUrl = node.baseUrl,
+            mac = node.mac,
+            status = node.status,
+            expires = node.expires,
+            daysLeft = node.daysLeft,
+            provider = node.provider,
+            serverTimezone = node.serverTimezone,
+            onDismiss = { showCommitDialog = false },
+            onCommitted = { showCommitDialog = false }
+        )
+    }
 
     Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
         // Toolbar
@@ -284,10 +310,8 @@ fun StalkerDetailScreen(node: ParsedCredential, onBack: () -> Unit) {
             PrimaryButton(
                 text = "Commit Account",
                 color = Color(0xFF10B981),
-                onClick = {
-                    CommittedManager.commit(CommittedRecord(type = node.type, baseUrl = node.baseUrl, user = node.user, pass = node.pass, mac = node.mac, notes = ""))
-                },
-                modifier = Modifier.weight(1f)
+                onClick = { showCommitDialog = true },
+                modifier = Modifier.fillMaxWidth()
             )
         }
 

@@ -27,6 +27,11 @@ class MainActivity : ComponentActivity() {
                         .background(Color(0xFF0F172A))
                 ) {
                     MainDashboard()
+                    com.projectstrong.iptv.ui.components.ToastHost(
+                        modifier = Modifier
+                            .align(Alignment.BottomCenter)
+                            .padding(bottom = 24.dp, start = 16.dp, end = 16.dp)
+                    )
                 }
             }
         }

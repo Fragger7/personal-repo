@@ -90,6 +90,36 @@ fun StatusBadge(status: String, width: Dp) {
 }
 
 @Composable
+fun SyncBadge(isLocal: Boolean, width: Dp) {
+    val bgColor = if (isLocal) Color(0xFFF59E0B).copy(alpha = 0.2f) else Color(0xFF3B82F6).copy(alpha = 0.2f)
+    val textColor = if (isLocal) Color(0xFFFBBF24) else Color(0xFF60A5FA)
+    val text = if (isLocal) "🟡 Local" else "🟢 Synced"
+
+    Box(
+        modifier = Modifier
+            .width(width)
+            .padding(end = 8.dp),
+        contentAlignment = Alignment.CenterStart
+    ) {
+        Box(
+            modifier = Modifier
+                .clip(RoundedCornerShape(4.dp))
+                .background(bgColor)
+                .padding(horizontal = 6.dp, vertical = 2.dp)
+        ) {
+            Text(
+                text = text,
+                color = textColor,
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.Bold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
+    }
+}
+
+@Composable
 fun PrimaryButton(
     text: String,
     onClick: () -> Unit,

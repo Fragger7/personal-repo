@@ -2,6 +2,7 @@ package com.projectstrong.iptv.network
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import okhttp3.ConnectionPool
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.json.JSONObject
@@ -24,8 +25,10 @@ sealed class VerificationResult {
 
 object IPTVClient {
     private val client = OkHttpClient.Builder()
-        .connectTimeout(7, TimeUnit.SECONDS)
-        .readTimeout(7, TimeUnit.SECONDS)
+        .connectionPool(ConnectionPool(30, 5, TimeUnit.MINUTES))
+        .connectTimeout(6, TimeUnit.SECONDS)
+        .readTimeout(6, TimeUnit.SECONDS)
+        .retryOnConnectionFailure(false)
         .build()
 
     suspend fun verifyXtream(baseUrl: String, user: String, pass: String): VerificationResult = withContext(Dispatchers.IO) {
@@ -154,13 +157,15 @@ object IPTVClient {
         try {
             val encodedUser = URLEncoder.encode(user, "UTF-8")
             val encodedPass = URLEncoder.encode(pass, "UTF-8")
-            // Bypass server-side category filters which are often broken, fetch all and filter locally
             val url = "${baseUrl.trimEnd('/')}/player_api.php?username=$encodedUser&password=$encodedPass&action=get_live_streams"
             val request = Request.Builder().url(url).header("User-Agent", "IPTVSmartersPro").build()
             val response = client.newCall(request).execute()
             if (response.code == 200) {
                 val body = response.body?.string() ?: ""
                 val allStreams = org.json.JSONArray(body)
+                if (categoryId.isEmpty() || categoryId == "all") {
+                    return@withContext allStreams
+                }
                 val filtered = org.json.JSONArray()
                 for (i in 0 until allStreams.length()) {
                     val stream = allStreams.optJSONObject(i)
@@ -175,6 +180,7 @@ object IPTVClient {
         }
         return@withContext null
     }
+
     suspend fun getVodStreams(baseUrl: String, user: String, pass: String): org.json.JSONArray? = withContext(Dispatchers.IO) {
         try {
             val encodedUser = URLEncoder.encode(user, "UTF-8")
@@ -200,7 +206,7 @@ object IPTVClient {
                 if (response.code == 200) {
                     val body = response.body
                     if (body != null) {
-                        val reader = android.util.JsonReader(java.io.InputStreamReader(body.byteStream(), "UTF-8"))
+                        val reader = android.util.JsonReader(java.io.BufferedReader(java.io.InputStreamReader(body.byteStream(), "UTF-8"), 32768))
                         if (reader.peek() == android.util.JsonToken.BEGIN_ARRAY) {
                             reader.beginArray()
                             while (reader.hasNext()) {
@@ -214,7 +220,7 @@ object IPTVClient {
                 }
             }
         } catch (e: Exception) {
-            e.printStackTrace()
+            // Ignore stream read errors
         }
         return@withContext count
     }

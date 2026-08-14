@@ -15,10 +15,10 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material.icons.filled.LiveTv
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.key
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -39,9 +39,9 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.sync.withPermit
 import kotlinx.coroutines.withContext
-import org.json.JSONArray
-import org.json.JSONObject
 
 @Composable
 fun XtreamTab(onNextTab: (() -> Unit)? = null) {
@@ -68,6 +68,7 @@ fun XtreamTab(onNextTab: (() -> Unit)? = null) {
 fun XtreamMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCredential) -> Unit, onNextTab: (() -> Unit)? = null) {
     var sortColumn by remember { mutableStateOf("") }
     var sortAscending by remember { mutableStateOf(false) }
+    var committingNode by remember { mutableStateOf<ParsedCredential?>(null) }
 
     val filteredNodes = (if (DataStore.activeOnlyXtream) nodes.filter { it.status.contains("Active", ignoreCase = true) } else nodes)
         .let { list ->
@@ -90,6 +91,27 @@ fun XtreamMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCredent
     var fetchingRows by remember { mutableStateOf(emptySet<String>()) }
     var isQueryingAll by remember { mutableStateOf(false) }
     var queryStatusText by remember { mutableStateOf("") }
+
+    if (committingNode != null) {
+        val node = committingNode!!
+        CommitAccountDialog(
+            type = "Xtream",
+            baseUrl = node.baseUrl,
+            user = node.user,
+            pass = node.pass,
+            status = node.status,
+            expires = node.expires,
+            daysLeft = node.daysLeft,
+            channels = node.channels,
+            vods = node.vods,
+            activeConn = node.activeConn,
+            maxConn = node.maxConn,
+            provider = node.provider,
+            serverTimezone = node.serverTimezone,
+            onDismiss = { committingNode = null },
+            onCommitted = { committingNode = null }
+        )
+    }
 
     Column(modifier = Modifier.fillMaxSize()) {
         Row(
@@ -124,25 +146,27 @@ fun XtreamMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCredent
                             }
                             isQueryingAll = true
                             DataStore.scanProgress = 0f
-                            queryStatusText = "Querying 0/${activeNodes.size} active nodes..."
+                            queryStatusText = "High-speed parallel querying 0/${activeNodes.size} nodes..."
                             
                             coroutineScope.launch {
                                 val total = activeNodes.size
                                 var completed = 0
-                                val chunkSize = 3
-                                val chunks = activeNodes.chunked(chunkSize)
+                                // Use 12 concurrent coroutines with Semaphore for maximum throughput
+                                val querySemaphore = Semaphore(12)
 
-                                for (chunk in chunks) {
-                                    if (!isQueryingAll) break
-
-                                    coroutineScope {
-                                        chunk.map { node: ParsedCredential ->
-                                            async(Dispatchers.IO) {
+                                coroutineScope {
+                                    activeNodes.map { node: ParsedCredential ->
+                                        launch(Dispatchers.IO) {
+                                            if (!isQueryingAll) return@launch
+                                            querySemaphore.withPermit {
                                                 val key = node.baseUrl + node.user
                                                 withContext(Dispatchers.Main) { fetchingRows = fetchingRows + key }
 
-                                                val liveCount = IPTVClient.getLiveStreamCount(node.baseUrl, node.user, node.pass)
-                                                val vodCount = IPTVClient.getVodStreamCount(node.baseUrl, node.user, node.pass)
+                                                // Run live & vod count fetching concurrently
+                                                val liveAsync = async { IPTVClient.getLiveStreamCount(node.baseUrl, node.user, node.pass) }
+                                                val vodAsync = async { IPTVClient.getVodStreamCount(node.baseUrl, node.user, node.pass) }
+                                                val liveCount = liveAsync.await()
+                                                val vodCount = vodAsync.await()
 
                                                 withContext(Dispatchers.Main) {
                                                     val newIdx = DataStore.scannedNodes.indexOfFirst { it.baseUrl == node.baseUrl && it.user == node.user && it.type == "Xtream" }
@@ -155,13 +179,11 @@ fun XtreamMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCredent
                                                     queryStatusText = "Querying $completed/$total active nodes..."
                                                 }
                                             }
-                                        }.awaitAll()
+                                        }
                                     }
                                 }
                                 withContext(Dispatchers.Main) {
                                     if (isQueryingAll) {
-                                        // Specific multi-level sort requested:
-                                        // 1. Highest Live count, 2. Highest Days Left, 3. Highest VODs count
                                         DataStore.scannedNodes.sortWith(
                                             compareByDescending<ParsedCredential> { it.channels.toIntOrNull() ?: -1 }
                                                 .thenByDescending { it.daysLeft.toIntOrNull() ?: -1 }
@@ -283,12 +305,10 @@ fun XtreamMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCredent
                                                 if (fetchingRows.contains(key)) return@SecondaryButton
                                                 coroutineScope.launch {
                                                     fetchingRows = fetchingRows + key
-                                                    val liveStreamsAsync = async(Dispatchers.IO) { IPTVClient.getAllLiveStreams(node.baseUrl, node.user, node.pass) }
-                                                    val vodStreamsAsync = async(Dispatchers.IO) { IPTVClient.getVodStreams(node.baseUrl, node.user, node.pass) }
-                                                    val liveStreams = liveStreamsAsync.await()
-                                                    val vodStreams = vodStreamsAsync.await()
-                                                    val liveCount = liveStreams?.length() ?: 0
-                                                    val vodCount = vodStreams?.length() ?: 0
+                                                    val liveStreamsAsync = async(Dispatchers.IO) { IPTVClient.getLiveStreamCount(node.baseUrl, node.user, node.pass) }
+                                                    val vodStreamsAsync = async(Dispatchers.IO) { IPTVClient.getVodStreamCount(node.baseUrl, node.user, node.pass) }
+                                                    val liveCount = liveStreamsAsync.await()
+                                                    val vodCount = vodStreamsAsync.await()
                                                     withContext(Dispatchers.Main) {
                                                         val newIdx = DataStore.scannedNodes.indexOfFirst { it.baseUrl == node.baseUrl && it.user == node.user && it.type == "Xtream" }
                                                         if (newIdx != -1) {
@@ -311,7 +331,7 @@ fun XtreamMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCredent
                                             text = "Commit",
                                             color = Color(0xFF10B981),
                                             onClick = {
-                                                CommittedManager.commit(CommittedRecord(type = node.type, baseUrl = node.baseUrl, user = node.user, pass = node.pass, mac = node.mac, notes = ""))
+                                                committingNode = node
                                             },
                                             modifier = Modifier.height(36.dp).width(60.dp)
                                         )
@@ -364,15 +384,38 @@ fun XtreamMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCredent
 @Composable
 fun XtreamDetailScreen(node: ParsedCredential, onBack: () -> Unit) {
     val clipboardManager = LocalClipboardManager.current
-    val coroutineScope = rememberCoroutineScope()
+    var showCatalogExplorer by remember { mutableStateOf(false) }
+    var showCommitDialog by remember { mutableStateOf(false) }
 
-    var isFetchingCounts by remember { mutableStateOf(false) }
-    var categories by remember { mutableStateOf<JSONArray?>(null) }
-    var selectedCategory by remember { mutableStateOf<JSONObject?>(null) }
-    var channelsList by remember { mutableStateOf<JSONArray?>(null) }
-    var isLoadingCategories by remember { mutableStateOf(false) }
-    var isLoadingChannels by remember { mutableStateOf(false) }
-    var searchQuery by remember { mutableStateOf("") }
+    if (showCommitDialog) {
+        CommitAccountDialog(
+            type = "Xtream",
+            baseUrl = node.baseUrl,
+            user = node.user,
+            pass = node.pass,
+            status = node.status,
+            expires = node.expires,
+            daysLeft = node.daysLeft,
+            channels = node.channels,
+            vods = node.vods,
+            activeConn = node.activeConn,
+            maxConn = node.maxConn,
+            provider = node.provider,
+            serverTimezone = node.serverTimezone,
+            onDismiss = { showCommitDialog = false },
+            onCommitted = { showCommitDialog = false }
+        )
+    }
+
+    if (showCatalogExplorer) {
+        FullScreenCatalogExplorer(
+            baseUrl = node.baseUrl,
+            user = node.user,
+            pass = node.pass,
+            title = node.baseUrl,
+            onDismiss = { showCatalogExplorer = false }
+        )
+    }
 
     Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
         // Toolbar
@@ -454,180 +497,29 @@ fun XtreamDetailScreen(node: ParsedCredential, onBack: () -> Unit) {
             }
         }
 
-        // Actions
-        Row(modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            PrimaryButton(
-                text = "Commit Account",
-                color = Color(0xFF10B981),
-                onClick = {
-                    CommittedManager.commit(CommittedRecord(type = node.type, baseUrl = node.baseUrl, user = node.user, pass = node.pass, mac = node.mac, notes = ""))
-                },
-                modifier = Modifier.fillMaxWidth()
-            )
-        }
-
-        // Deep Dive Section Header
-        Row(modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-            Text(
-                if (selectedCategory == null) "Categories Catalog" else "Channels in ${selectedCategory?.optString("category_name") ?: "Unknown"}", 
-                color = Color.White, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold
-            )
-            SecondaryButton(
-                text = if (isLoadingCategories || isLoadingChannels) "Loading..." else if (selectedCategory != null) "Back to Categories" else "Load Categories",
-                onClick = {
-                    if (selectedCategory != null) {
-                        selectedCategory = null
-                        channelsList = null
-                        searchQuery = ""
-                    } else {
-                        if (isLoadingCategories) return@SecondaryButton
-                        isLoadingCategories = true
-                        searchQuery = ""
-                        coroutineScope.launch {
-                            val catsAsync = async(Dispatchers.IO) { IPTVClient.getLiveCategories(node.baseUrl, node.user, node.pass) }
-                            val allStreamsAsync = async(Dispatchers.IO) { IPTVClient.getAllLiveStreams(node.baseUrl, node.user, node.pass) }
-                            val cats = catsAsync.await()
-                            val allStreams = allStreamsAsync.await()
-                            
-                            if (cats != null && allStreams != null) {
-                                val categoryCounts = mutableMapOf<String, Int>()
-                                for (i in 0 until allStreams.length()) {
-                                    val stream = allStreams.optJSONObject(i)
-                                    val catId = stream?.optString("category_id", "") ?: ""
-                                    if (catId.isNotEmpty()) {
-                                        categoryCounts[catId] = categoryCounts.getOrDefault(catId, 0) + 1
-                                    }
-                                }
-                                
-                                for (i in 0 until cats.length()) {
-                                    val cat = cats.optJSONObject(i)
-                                    if (cat != null) {
-                                        val catId = cat.optString("category_id", "")
-                                        val count = categoryCounts[catId] ?: 0
-                                        cat.put("count", count)
-                                    }
-                                }
-                            }
-                            categories = cats
-                            isLoadingCategories = false
-                        }
-                    }
-                }
-            )
-        }
-
-        // Real-time Level 2 Search Input
-        if (categories != null || channelsList != null) {
-            OutlinedTextField(
-                value = searchQuery,
-                onValueChange = { searchQuery = it },
-                placeholder = { Text(if (selectedCategory != null) "Search channels..." else "Search category groups...", color = Color.Gray) },
-                leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search", tint = Color.Gray) },
-                singleLine = true,
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedTextColor = Color.White,
-                    unfocusedTextColor = Color.White,
-                    focusedBorderColor = Color(0xFF3B82F6),
-                    unfocusedBorderColor = Color(0xFF333344),
-                    focusedContainerColor = Color(0xFF12121A),
-                    unfocusedContainerColor = Color(0xFF12121A)
-                ),
-                modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)
-            )
-        }
-
-        // Data List
-        Box(modifier = Modifier.fillMaxWidth().weight(1f).background(Color(0xFF12121A), RoundedCornerShape(8.dp))) {
-            val currentChannels = channelsList
-            val currentCategories = categories
-            val currentCategory = selectedCategory
-
-            if (isLoadingChannels || isLoadingCategories) {
-                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center), color = Color(0xFF3B82F6))
-            } else if (currentCategory != null) {
-                if (currentChannels == null || currentChannels.length() == 0) {
-                    Text("No channels found.", color = Color.Gray, modifier = Modifier.align(Alignment.Center))
-                } else {
-                    val filteredChannels = remember(currentChannels, searchQuery) {
-                        val list = mutableListOf<JSONObject>()
-                        for (i in 0 until currentChannels.length()) {
-                            val ch = currentChannels.optJSONObject(i)
-                            if (ch != null) {
-                                val name = ch.optString("name", "")
-                                if (searchQuery.isEmpty() || name.contains(searchQuery, ignoreCase = true)) {
-                                    list.add(ch)
-                                }
-                            }
-                        }
-                        list
-                    }
-
-                    if (filteredChannels.isEmpty()) {
-                        Text("No matching channels for '$searchQuery'", color = Color.Gray, modifier = Modifier.align(Alignment.Center))
-                    } else {
-                        key(searchQuery) {
-                            LazyColumn(modifier = Modifier.fillMaxSize().padding(8.dp)) {
-                                items(filteredChannels, key = { it.optString("stream_id", "") + it.optString("name", "") }) { ch ->
-                                    Row(modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp, horizontal = 8.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-                                        Text(ch.optString("name", "Unknown"), color = Color.White, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
-                                        Text("ID: ${ch.optString("stream_id", "")}", color = Color.Gray, style = MaterialTheme.typography.bodySmall)
-                                    }
-                                    Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(Color(0xFF222233)))
-                                }
-                            }
-                        }
-                    }
-                }
-            } else if (currentCategories != null) {
-                val filteredCategories = remember(currentCategories, searchQuery) {
-                    val list = mutableListOf<JSONObject>()
-                    for (i in 0 until currentCategories.length()) {
-                        val cat = currentCategories.optJSONObject(i)
-                        if (cat != null) {
-                            val name = cat.optString("category_name", "")
-                            if (searchQuery.isEmpty() || name.contains(searchQuery, ignoreCase = true)) {
-                                list.add(cat)
-                            }
-                        }
-                    }
-                    list
-                }
-
-                if (filteredCategories.isEmpty()) {
-                    Text("No matching category groups for '$searchQuery'", color = Color.Gray, modifier = Modifier.align(Alignment.Center))
-                } else {
-                    key(searchQuery) {
-                        LazyColumn(modifier = Modifier.fillMaxSize().padding(8.dp)) {
-                            items(filteredCategories, key = { it.optString("category_id", "") }) { cat ->
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .clickable {
-                                            selectedCategory = cat
-                                            isLoadingChannels = true
-                                            searchQuery = ""
-                                            coroutineScope.launch {
-                                                channelsList = IPTVClient.getLiveStreams(node.baseUrl, node.user, node.pass, cat.optString("category_id", ""))
-                                                isLoadingChannels = false
-                                            }
-                                        }
-                                        .padding(vertical = 12.dp, horizontal = 8.dp),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    val catName = cat.optString("category_name", "Unknown")
-                                    val count = cat.optInt("count", 0)
-                                    Text("$catName ($count)", color = Color(0xFF3B82F6), maxLines = 1, overflow = TextOverflow.Ellipsis)
-                                    Text("ID: ${cat.optString("category_id", "")}", color = Color.Gray, style = MaterialTheme.typography.bodySmall)
-                                }
-                                Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(Color(0xFF222233)))
-                            }
-                        }
-                    }
-                }
-            } else {
-                Text("Click Load Categories to fetch catalog data.", color = Color.Gray, modifier = Modifier.align(Alignment.Center))
+        // Full Screen Catalog Button & Commit Action
+        Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Button(
+                onClick = { showCatalogExplorer = true },
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF3B82F6)),
+                shape = RoundedCornerShape(12.dp),
+                modifier = Modifier.fillMaxWidth().height(52.dp)
+            ) {
+                Icon(Icons.Default.LiveTv, contentDescription = null, tint = Color.White)
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "🔍 Explore Full Catalog & Channels (Full Screen)",
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
+                )
             }
+
+            PrimaryButton(
+                text = "Commit Account to Saved Records",
+                color = Color(0xFF10B981),
+                onClick = { showCommitDialog = true },
+                modifier = Modifier.fillMaxWidth().height(48.dp)
+            )
         }
     }
 }
