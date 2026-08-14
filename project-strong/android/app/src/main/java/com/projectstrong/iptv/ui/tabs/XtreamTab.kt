@@ -237,69 +237,80 @@ fun XtreamMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCredent
     }
 
     Column(modifier = Modifier.fillMaxSize()) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
+        Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 16.dp)) {
             Text(
-                text = "Xtream Codes (${filteredNodes.size}/${nodes.size})",
+                text = "Xtream Codes",
                 color = Color.White,
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.weight(1f)
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
             )
+            Spacer(modifier = Modifier.height(2.dp))
+            Text(
+                text = "Discovered ${nodes.size} connections. Showing ${filteredNodes.size} records.",
+                color = Color(0xFFA0A0B0),
+                style = MaterialTheme.typography.bodySmall
+            )
+            
+            Spacer(modifier = Modifier.height(12.dp))
+            
             Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                val activeCount = nodes.count { it.status.contains("Active", ignoreCase = true) }
-                if (nodes.isNotEmpty()) {
-                    if (!DataStore.isQueryingCatalogs) {
-                        PrimaryButton(
-                            text = "Query Catalogs ($activeCount Active)",
-                            onClick = { startOrResumeCatalogQuery() },
-                            modifier = Modifier.height(36.dp)
-                        )
-                    } else {
-                        if (!DataStore.isCatalogQueryPaused) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    val activeCount = nodes.count { it.status.contains("Active", ignoreCase = true) }
+                    if (nodes.isNotEmpty()) {
+                        if (!DataStore.isQueryingCatalogs) {
                             PrimaryButton(
-                                text = "⏸️ Pause",
-                                color = Color(0xFFF59E0B),
-                                onClick = {
-                                    DataStore.isCatalogQueryPaused = true
-                                    ToastManager.warning("Catalog query paused")
-                                },
+                                text = "Query Catalogs ($activeCount Active)",
+                                onClick = { startOrResumeCatalogQuery() },
                                 modifier = Modifier.height(36.dp)
                             )
                         } else {
+                            if (!DataStore.isCatalogQueryPaused) {
+                                PrimaryButton(
+                                    text = "⏸️ Pause",
+                                    color = Color(0xFFF59E0B),
+                                    onClick = {
+                                        DataStore.isCatalogQueryPaused = true
+                                        ToastManager.warning("Catalog query paused")
+                                    },
+                                    modifier = Modifier.height(36.dp)
+                                )
+                            } else {
+                                PrimaryButton(
+                                    text = "▶️ Resume",
+                                    color = Color(0xFF10B981),
+                                    onClick = {
+                                        DataStore.isCatalogQueryPaused = false
+                                        ToastManager.success("Catalog query resumed")
+                                    },
+                                    modifier = Modifier.height(36.dp)
+                                )
+                            }
                             PrimaryButton(
-                                text = "▶️ Resume",
-                                color = Color(0xFF10B981),
+                                text = "⏹️ Stop",
+                                color = Color(0xFFEF4444),
                                 onClick = {
+                                    DataStore.isQueryingCatalogs = false
                                     DataStore.isCatalogQueryPaused = false
-                                    ToastManager.success("Catalog query resumed")
+                                    catalogJob?.cancel()
+                                    DataStore.catalogQueryStatusText = "Catalog query stopped by user."
+                                    ToastManager.error("Catalog query stopped")
                                 },
                                 modifier = Modifier.height(36.dp)
                             )
                         }
-                        PrimaryButton(
-                            text = "⏹️ Stop",
-                            color = Color(0xFFEF4444),
-                            onClick = {
-                                DataStore.isQueryingCatalogs = false
-                                DataStore.isCatalogQueryPaused = false
-                                catalogJob?.cancel()
-                                DataStore.catalogQueryStatusText = "Catalog query stopped by user."
-                                ToastManager.error("Catalog query stopped")
-                            },
-                            modifier = Modifier.height(36.dp)
-                        )
                     }
                 }
+                
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text("Active Only", color = Color.White, style = MaterialTheme.typography.bodySmall)
-                    Spacer(modifier = Modifier.width(6.dp))
+                    Text("Active Only", color = Color(0xFFA0A0B0), style = MaterialTheme.typography.labelMedium)
+                    Spacer(modifier = Modifier.width(8.dp))
                     Switch(
                         checked = DataStore.activeOnlyXtream,
                         onCheckedChange = { DataStore.activeOnlyXtream = it },
@@ -332,14 +343,7 @@ fun XtreamMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCredent
             }
         }
 
-        if (filteredNodes.isNotEmpty()) {
-            Text(
-                text = "Showing ${filteredNodes.size} records.",
-                color = Color(0xFFA0A0B0),
-                style = MaterialTheme.typography.bodySmall,
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
-            )
-        }
+
 
         if (filteredNodes.isEmpty()) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {

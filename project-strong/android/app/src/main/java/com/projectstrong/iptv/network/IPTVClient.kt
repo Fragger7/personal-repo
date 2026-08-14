@@ -136,16 +136,53 @@ object IPTVClient {
         }
     }
 
-    suspend fun getLiveCategories(baseUrl: String, user: String, pass: String): org.json.JSONArray? = withContext(Dispatchers.IO) {
+        suspend fun getLiveCategories(baseUrl: String, user: String, pass: String): org.json.JSONArray? = withContext(Dispatchers.IO) {
         try {
             val encodedUser = URLEncoder.encode(user, "UTF-8")
             val encodedPass = URLEncoder.encode(pass, "UTF-8")
             val url = "${baseUrl.trimEnd('/')}/player_api.php?username=$encodedUser&password=$encodedPass&action=get_live_categories"
             val request = Request.Builder().url(url).header("User-Agent", "IPTVSmartersPro").build()
-            val response = client.newCall(request).execute()
-            if (response.code == 200) {
-                val body = response.body?.string() ?: ""
-                return@withContext org.json.JSONArray(body)
+            client.newCall(request).execute().use { response ->
+                if (response.code == 200) {
+                    val body = response.body
+                    if (body != null) {
+                        val result = org.json.JSONArray()
+                        val reader = android.util.JsonReader(java.io.BufferedReader(java.io.InputStreamReader(body.byteStream(), "UTF-8"), 32768))
+                        if (reader.peek() == android.util.JsonToken.BEGIN_ARRAY) {
+                            reader.beginArray()
+                            while (reader.hasNext()) {
+                                if (reader.peek() == android.util.JsonToken.BEGIN_OBJECT) {
+                                    val obj = org.json.JSONObject()
+                                    reader.beginObject()
+                                    while (reader.hasNext()) {
+                                        val name = reader.nextName()
+                                        val token = reader.peek()
+                                        when (token) {
+                                            android.util.JsonToken.STRING -> obj.put(name, reader.nextString())
+                                            android.util.JsonToken.NUMBER -> {
+                                                try {
+                                                    obj.put(name, reader.nextInt())
+                                                } catch(e:Exception) {
+                                                    obj.put(name, reader.nextDouble())
+                                                }
+                                            }
+                                            android.util.JsonToken.BOOLEAN -> obj.put(name, reader.nextBoolean())
+                                            android.util.JsonToken.NULL -> { reader.nextNull(); obj.put(name, org.json.JSONObject.NULL) }
+                                            else -> reader.skipValue()
+                                        }
+                                    }
+                                    reader.endObject()
+                                    result.put(obj)
+                                } else {
+                                    reader.skipValue()
+                                }
+                            }
+                            reader.endArray()
+                        }
+                        reader.close()
+                        return@withContext result
+                    }
+                }
             }
         } catch (e: Exception) {
             e.printStackTrace()
@@ -239,16 +276,53 @@ object IPTVClient {
         return getStreamCount(url)
     }
 
-    suspend fun getAllLiveStreams(baseUrl: String, user: String, pass: String): org.json.JSONArray? = withContext(Dispatchers.IO) {
+        suspend fun getAllLiveStreams(baseUrl: String, user: String, pass: String): org.json.JSONArray? = withContext(Dispatchers.IO) {
         try {
             val encodedUser = URLEncoder.encode(user, "UTF-8")
             val encodedPass = URLEncoder.encode(pass, "UTF-8")
             val url = "${baseUrl.trimEnd('/')}/player_api.php?username=$encodedUser&password=$encodedPass&action=get_live_streams"
             val request = Request.Builder().url(url).header("User-Agent", "IPTVSmartersPro").build()
-            val response = client.newCall(request).execute()
-            if (response.code == 200) {
-                val body = response.body?.string() ?: ""
-                return@withContext org.json.JSONArray(body)
+            client.newCall(request).execute().use { response ->
+                if (response.code == 200) {
+                    val body = response.body
+                    if (body != null) {
+                        val result = org.json.JSONArray()
+                        val reader = android.util.JsonReader(java.io.BufferedReader(java.io.InputStreamReader(body.byteStream(), "UTF-8"), 32768))
+                        if (reader.peek() == android.util.JsonToken.BEGIN_ARRAY) {
+                            reader.beginArray()
+                            while (reader.hasNext()) {
+                                if (reader.peek() == android.util.JsonToken.BEGIN_OBJECT) {
+                                    val obj = org.json.JSONObject()
+                                    reader.beginObject()
+                                    while (reader.hasNext()) {
+                                        val name = reader.nextName()
+                                        val token = reader.peek()
+                                        when (token) {
+                                            android.util.JsonToken.STRING -> obj.put(name, reader.nextString())
+                                            android.util.JsonToken.NUMBER -> {
+                                                try {
+                                                    obj.put(name, reader.nextInt())
+                                                } catch(e:Exception) {
+                                                    obj.put(name, reader.nextDouble())
+                                                }
+                                            }
+                                            android.util.JsonToken.BOOLEAN -> obj.put(name, reader.nextBoolean())
+                                            android.util.JsonToken.NULL -> { reader.nextNull(); obj.put(name, org.json.JSONObject.NULL) }
+                                            else -> reader.skipValue()
+                                        }
+                                    }
+                                    reader.endObject()
+                                    result.put(obj)
+                                } else {
+                                    reader.skipValue()
+                                }
+                            }
+                            reader.endArray()
+                        }
+                        reader.close()
+                        return@withContext result
+                    }
+                }
             }
         } catch (e: Exception) {
             e.printStackTrace()
