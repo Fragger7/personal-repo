@@ -208,6 +208,19 @@ fun CommittedTab() {
                 onDelete = {
                     CommittedManager.delete(activeRecord)
                     selectedRecord = null
+                },
+                onPush = {
+                    if (isReloading || isPushing || isRechecking || isQueryingStreams) return@CommittedDetailScreen
+                    if (records.isEmpty()) {
+                        ToastManager.warning("Cannot push empty list to cloud.")
+                        return@CommittedDetailScreen
+                    }
+                    if (DataStore.githubToken.isEmpty()) {
+                        tempToken = ""
+                        showTokenDialog = true
+                    } else {
+                        showPushConfirmDialog = true
+                    }
                 }
             )
         } else {
@@ -487,13 +500,17 @@ fun CommittedMasterGrid(
             return
         }
 
-        Box(modifier = Modifier.fillMaxSize()) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f)
+        ) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .horizontalScroll(scrollState)
             ) {
-                Column {
+                Column(modifier = Modifier.fillMaxHeight()) {
                     // Full 16-Column Header Row matching Python Dataframe exactly
                     Row(
                         modifier = Modifier
@@ -517,7 +534,7 @@ fun CommittedMasterGrid(
                         GridHeader("Conns", 80.dp)
                         GridHeader("Timezone", 130.dp)
                         GridHeader("Notes", 200.dp)
-                        GridHeader("Actions", 90.dp)
+                        GridHeader("Actions", 130.dp)
                     }
 
                     Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(Color(0xFF333344)))
@@ -567,8 +584,21 @@ fun CommittedMasterGrid(
                                 // 16. Notes
                                 GridCell(record.safeNotes.ifEmpty { "..." }, 200.dp, color = Color.LightGray)
 
-                                // Actions (Copy & Delete)
-                                Row(modifier = Modifier.width(90.dp), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                                // Actions (Copy, Push if local, & Delete)
+                                Row(modifier = Modifier.width(130.dp), horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) {
+                                    if (record.isLocal) {
+                                        IconButton(
+                                            onClick = { onPush() },
+                                            modifier = Modifier.size(36.dp)
+                                        ) {
+                                            Icon(
+                                                Icons.Default.CloudUpload,
+                                                contentDescription = "Push to Cloud",
+                                                tint = Color(0xFF10B981),
+                                                modifier = Modifier.size(20.dp)
+                                            )
+                                        }
+                                    }
                                     IconButton(
                                         onClick = {
                                             val copyText = if (record.safeType == "Xtream") {
@@ -630,7 +660,7 @@ fun CommittedMasterGrid(
 }
 
 @Composable
-fun CommittedDetailScreen(record: CommittedRecord, onBack: () -> Unit, onDelete: () -> Unit) {
+fun CommittedDetailScreen(record: CommittedRecord, onBack: () -> Unit, onDelete: () -> Unit, onPush: () -> Unit) {
     val clipboardManager = LocalClipboardManager.current
     var currentNotes by remember(record) { mutableStateOf(record.safeNotes) }
     var showCatalogExplorer by remember { mutableStateOf(false) }
@@ -692,9 +722,22 @@ fun CommittedDetailScreen(record: CommittedRecord, onBack: () -> Unit, onDelete:
                             }
                         }
                     }
-                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
                         StatusBadge(record.safeStatus, 100.dp)
                         SyncBadge(record.isLocal, 90.dp)
+                        if (record.isLocal) {
+                            IconButton(
+                                onClick = onPush,
+                                modifier = Modifier.size(28.dp)
+                            ) {
+                                Icon(
+                                    Icons.Default.CloudUpload,
+                                    contentDescription = "Push to Cloud",
+                                    tint = Color(0xFF10B981),
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+                        }
                     }
                 }
                 Spacer(modifier = Modifier.height(12.dp))
@@ -813,9 +856,16 @@ fun CommittedDetailScreen(record: CommittedRecord, onBack: () -> Unit, onDelete:
 
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.End,
+            horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End),
             verticalAlignment = Alignment.CenterVertically
         ) {
+            if (record.isLocal) {
+                PrimaryButton(
+                    text = "Push to Cloud",
+                    color = Color(0xFF10B981),
+                    onClick = onPush
+                )
+            }
             PrimaryButton(
                 text = "Save Note",
                 onClick = {

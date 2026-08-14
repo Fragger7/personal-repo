@@ -1,5 +1,9 @@
 package com.projectstrong.iptv.ui.components
 
+import android.content.Context
+import android.os.Handler
+import android.os.Looper
+import android.widget.Toast
 import androidx.compose.animation.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -35,11 +39,29 @@ data class ToastMessage(
 )
 
 object ToastManager {
-    private val _toastEvents = MutableSharedFlow<ToastMessage>(extraBufferCapacity = 5)
+    private var appContext: Context? = null
+    private val mainHandler = Handler(Looper.getMainLooper())
+    private val _toastEvents = MutableSharedFlow<ToastMessage>(replay = 1, extraBufferCapacity = 10)
     val toastEvents = _toastEvents.asSharedFlow()
 
+    fun init(context: Context) {
+        appContext = context.applicationContext
+    }
+
     fun show(message: String, type: ToastType = ToastType.INFO, durationMs: Long = 2500L) {
-        _toastEvents.tryEmit(ToastMessage(message, type, durationMs))
+        val toast = ToastMessage(message, type, durationMs)
+        _toastEvents.tryEmit(toast)
+
+        // Also trigger guaranteed native Android toast on Main thread
+        appContext?.let { ctx ->
+            mainHandler.post {
+                try {
+                    Toast.makeText(ctx, message, Toast.LENGTH_SHORT).show()
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
+        }
     }
 
     fun success(message: String) = show(message, ToastType.SUCCESS)

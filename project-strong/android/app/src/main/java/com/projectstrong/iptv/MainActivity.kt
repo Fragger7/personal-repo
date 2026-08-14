@@ -18,6 +18,7 @@ import com.projectstrong.iptv.data.CommittedManager
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        com.projectstrong.iptv.ui.components.ToastManager.init(applicationContext)
         CommittedManager.init(applicationContext)
         setContent {
             MaterialTheme(colorScheme = darkColorScheme(background = Color(0xFF0F172A))) {

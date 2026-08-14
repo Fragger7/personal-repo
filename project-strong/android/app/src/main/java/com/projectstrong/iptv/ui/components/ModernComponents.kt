@@ -132,10 +132,18 @@ fun PrimaryButton(
         enabled = enabled,
         colors = ButtonDefaults.buttonColors(containerColor = color),
         shape = RoundedCornerShape(8.dp),
-        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
+        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp),
         modifier = modifier
     ) {
-        Text(text = text, fontWeight = FontWeight.Bold, color = Color.White)
+        Text(
+            text = text,
+            fontWeight = FontWeight.Bold,
+            color = Color.White,
+            style = MaterialTheme.typography.labelMedium,
+            maxLines = 1,
+            softWrap = false,
+            overflow = TextOverflow.Ellipsis
+        )
     }
 }
 
@@ -150,9 +158,17 @@ fun SecondaryButton(
         colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White),
         border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF3B82F6)),
         shape = RoundedCornerShape(8.dp),
-        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
+        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp),
         modifier = modifier
     ) {
-        Text(text = text, fontWeight = FontWeight.SemiBold, color = Color(0xFF3B82F6))
+        Text(
+            text = text,
+            fontWeight = FontWeight.SemiBold,
+            color = Color(0xFF3B82F6),
+            style = MaterialTheme.typography.labelMedium,
+            maxLines = 1,
+            softWrap = false,
+            overflow = TextOverflow.Ellipsis
+        )
     }
 }

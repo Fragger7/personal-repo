@@ -55,6 +55,7 @@ fun FullScreenCatalogExplorer(
     var allChannels by remember { mutableStateOf<List<ChannelItem>>(emptyList()) }
     var selectedCategoryId by remember { mutableStateOf("all") }
     var searchQuery by remember { mutableStateOf("") }
+    var collapsedGroupIds by remember { mutableStateOf<Set<String>>(emptySet()) }
     var showCopiedToast by remember { mutableStateOf(false) }
     var toastText by remember { mutableStateOf("") }
 
@@ -119,6 +120,10 @@ fun FullScreenCatalogExplorer(
         }
     }
 
+    val categoryNameMap = remember(categories) {
+        categories.associate { it.id to it.name }
+    }
+
     // Filtered channel list
     val filteredChannels = remember(allChannels, selectedCategoryId, searchQuery) {
         allChannels.filter { channel ->
@@ -129,6 +134,16 @@ fun FullScreenCatalogExplorer(
             }
             matchesCategory && matchesSearch
         }
+    }
+
+    // Group filtered channels by category
+    val groupedChannels = remember(filteredChannels, categoryNameMap) {
+        filteredChannels.groupBy { it.categoryId }
+            .map { (catId, chs) ->
+                val catName = categoryNameMap[catId] ?: if (catId.isEmpty()) "Uncategorized" else "Category $catId"
+                Triple(catId, catName, chs)
+            }
+            .sortedBy { it.second }
     }
 
     val selectedCategoryName = remember(categories, selectedCategoryId) {
@@ -276,7 +291,7 @@ fun FullScreenCatalogExplorer(
                         }
                     }
 
-                    // Subheader Info
+                    // Subheader Info with Expand / Collapse All button
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -285,23 +300,46 @@ fun FullScreenCatalogExplorer(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(
-                            text = "$selectedCategoryName • ${filteredChannels.size} results",
-                            color = Color(0xFF8B949E),
-                            style = MaterialTheme.typography.labelMedium
-                        )
-                        if (searchQuery.isNotEmpty()) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
                             Text(
-                                text = "Filtered by \"$searchQuery\"",
-                                color = Color(0xFFFBBF24),
-                                style = MaterialTheme.typography.labelSmall
+                                text = "$selectedCategoryName • ${filteredChannels.size} results (${groupedChannels.size} groups)",
+                                color = Color(0xFF8B949E),
+                                style = MaterialTheme.typography.labelMedium
                             )
+                        }
+
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                            if (groupedChannels.size > 1) {
+                                val allCollapsed = groupedChannels.all { collapsedGroupIds.contains(it.first) }
+                                Text(
+                                    text = if (allCollapsed) "Expand All" else "Collapse All",
+                                    color = Color(0xFF60A5FA),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier
+                                        .clickable {
+                                            collapsedGroupIds = if (allCollapsed) {
+                                                emptySet()
+                                            } else {
+                                                groupedChannels.map { it.first }.toSet()
+                                            }
+                                        }
+                                        .padding(4.dp)
+                                )
+                            }
+                            if (searchQuery.isNotEmpty()) {
+                                Text(
+                                    text = "Filtered by \"$searchQuery\"",
+                                    color = Color(0xFFFBBF24),
+                                    style = MaterialTheme.typography.labelSmall
+                                )
+                            }
                         }
                     }
 
                     Divider(color = Color(0xFF21262D), thickness = 1.dp)
 
-                    // Channels List
+                    // Channels List with Group Headers
                     Box(modifier = Modifier.fillMaxSize().weight(1f)) {
                         if (filteredChannels.isEmpty()) {
                             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -316,99 +354,190 @@ fun FullScreenCatalogExplorer(
                                 state = listState,
                                 modifier = Modifier.fillMaxSize().padding(horizontal = 12.dp, vertical = 6.dp)
                             ) {
-                                items(filteredChannels, key = { it.streamId + it.name }) { channel ->
-                                    Card(
-                                        shape = RoundedCornerShape(10.dp),
-                                        colors = CardDefaults.cardColors(containerColor = Color(0xFF161B22)),
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(vertical = 4.dp)
-                                    ) {
-                                        Row(
+                                groupedChannels.forEach { (catId, catName, channelsInCat) ->
+                                    val isCollapsed = collapsedGroupIds.contains(catId)
+
+                                    // Section Header for Category Group
+                                    item(key = "header_$catId") {
+                                        Card(
+                                            shape = RoundedCornerShape(8.dp),
+                                            colors = CardDefaults.cardColors(containerColor = Color(0xFF1F2937)),
                                             modifier = Modifier
                                                 .fillMaxWidth()
-                                                .padding(horizontal = 14.dp, vertical = 10.dp),
-                                            verticalAlignment = Alignment.CenterVertically,
-                                            horizontalArrangement = Arrangement.SpaceBetween
+                                                .padding(top = 8.dp, bottom = 4.dp)
+                                                .clickable {
+                                                    collapsedGroupIds = if (isCollapsed) {
+                                                        collapsedGroupIds - catId
+                                                    } else {
+                                                        collapsedGroupIds + catId
+                                                    }
+                                                }
                                         ) {
                                             Row(
-                                                modifier = Modifier.weight(1f),
-                                                verticalAlignment = Alignment.CenterVertically
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .padding(horizontal = 12.dp, vertical = 10.dp),
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                horizontalArrangement = Arrangement.SpaceBetween
                                             ) {
-                                                Box(
-                                                    modifier = Modifier
-                                                        .size(36.dp)
-                                                        .clip(CircleShape)
-                                                        .background(Color(0xFF21262D)),
-                                                    contentAlignment = Alignment.Center
-                                                ) {
+                                                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
                                                     Icon(
-                                                        Icons.Default.LiveTv,
-                                                        contentDescription = "Live",
+                                                        imageVector = if (isCollapsed) Icons.Default.KeyboardArrowRight else Icons.Default.KeyboardArrowDown,
+                                                        contentDescription = if (isCollapsed) "Expand" else "Collapse",
                                                         tint = Color(0xFF60A5FA),
+                                                        modifier = Modifier.size(20.dp)
+                                                    )
+                                                    Spacer(modifier = Modifier.width(8.dp))
+                                                    Icon(
+                                                        Icons.Default.Folder,
+                                                        contentDescription = null,
+                                                        tint = Color(0xFFFBBF24),
                                                         modifier = Modifier.size(18.dp)
                                                     )
-                                                }
-                                                Spacer(modifier = Modifier.width(12.dp))
-                                                Column {
+                                                    Spacer(modifier = Modifier.width(8.dp))
                                                     Text(
-                                                        text = channel.name,
+                                                        text = catName,
                                                         color = Color.White,
-                                                        style = MaterialTheme.typography.bodyMedium,
-                                                        fontWeight = FontWeight.SemiBold,
+                                                        style = MaterialTheme.typography.titleSmall,
+                                                        fontWeight = FontWeight.Bold,
                                                         maxLines = 1,
                                                         overflow = TextOverflow.Ellipsis
                                                     )
-                                                    Spacer(modifier = Modifier.height(2.dp))
-                                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                                }
+                                                Box(
+                                                    modifier = Modifier
+                                                        .clip(RoundedCornerShape(10.dp))
+                                                        .background(Color(0xFF374151))
+                                                        .padding(horizontal = 8.dp, vertical = 2.dp)
+                                                ) {
+                                                    Text(
+                                                        text = "${channelsInCat.size} ${if (channelsInCat.size == 1) "channel" else "channels"}",
+                                                        color = Color(0xFF34D399),
+                                                        style = MaterialTheme.typography.labelSmall,
+                                                        fontWeight = FontWeight.SemiBold
+                                                    )
+                                                }
+                                            }
+                                        }
+                                    }
+
+                                    // Category items when expanded
+                                    if (!isCollapsed) {
+                                        items(channelsInCat, key = { it.streamId + it.name + catId }) { channel ->
+                                            Card(
+                                                shape = RoundedCornerShape(10.dp),
+                                                colors = CardDefaults.cardColors(containerColor = Color(0xFF161B22)),
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .padding(vertical = 3.dp)
+                                            ) {
+                                                Row(
+                                                    modifier = Modifier
+                                                        .fillMaxWidth()
+                                                        .padding(horizontal = 14.dp, vertical = 10.dp),
+                                                    verticalAlignment = Alignment.CenterVertically,
+                                                    horizontalArrangement = Arrangement.SpaceBetween
+                                                ) {
+                                                    Row(
+                                                        modifier = Modifier.weight(1f),
+                                                        verticalAlignment = Alignment.CenterVertically
+                                                    ) {
                                                         Box(
                                                             modifier = Modifier
-                                                                .clip(RoundedCornerShape(4.dp))
-                                                                .background(Color(0xFF30363D))
-                                                                .padding(horizontal = 4.dp, vertical = 1.dp)
+                                                                .size(36.dp)
+                                                                .clip(CircleShape)
+                                                                .background(Color(0xFF21262D)),
+                                                            contentAlignment = Alignment.Center
                                                         ) {
+                                                            Icon(
+                                                                Icons.Default.LiveTv,
+                                                                contentDescription = "Live",
+                                                                tint = Color(0xFF60A5FA),
+                                                                modifier = Modifier.size(18.dp)
+                                                            )
+                                                        }
+                                                        Spacer(modifier = Modifier.width(12.dp))
+                                                        Column {
                                                             Text(
-                                                                text = "ID: ${channel.streamId}",
-                                                                color = Color(0xFF8B949E),
-                                                                style = MaterialTheme.typography.labelSmall
+                                                                text = channel.name,
+                                                                color = Color.White,
+                                                                style = MaterialTheme.typography.bodyMedium,
+                                                                fontWeight = FontWeight.SemiBold,
+                                                                maxLines = 1,
+                                                                overflow = TextOverflow.Ellipsis
+                                                            )
+                                                            Spacer(modifier = Modifier.height(2.dp))
+                                                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                                                Box(
+                                                                    modifier = Modifier
+                                                                        .clip(RoundedCornerShape(4.dp))
+                                                                        .background(Color(0xFF30363D))
+                                                                        .padding(horizontal = 4.dp, vertical = 1.dp)
+                                                                ) {
+                                                                    Text(
+                                                                        text = "ID: ${channel.streamId}",
+                                                                        color = Color(0xFF8B949E),
+                                                                        style = MaterialTheme.typography.labelSmall
+                                                                    )
+                                                                }
+                                                                // Parent Category Pill
+                                                                Box(
+                                                                    modifier = Modifier
+                                                                        .clip(RoundedCornerShape(4.dp))
+                                                                        .background(Color(0xFF1E3A8A).copy(alpha = 0.5f))
+                                                                        .clickable {
+                                                                            selectedCategoryId = channel.categoryId
+                                                                        }
+                                                                        .padding(horizontal = 6.dp, vertical = 1.dp)
+                                                                ) {
+                                                                    Text(
+                                                                        text = "📁 $catName",
+                                                                        color = Color(0xFF93C5FD),
+                                                                        style = MaterialTheme.typography.labelSmall,
+                                                                        maxLines = 1,
+                                                                        overflow = TextOverflow.Ellipsis
+                                                                    )
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+
+                                                    Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                                                        // Copy Channel Name
+                                                        IconButton(
+                                                            onClick = {
+                                                                clipboardManager.setText(AnnotatedString(channel.name))
+                                                                toastText = "Copied Channel Name"
+                                                                showCopiedToast = true
+                                                                ToastManager.success("Copied: ${channel.name}")
+                                                            },
+                                                            modifier = Modifier.size(36.dp)
+                                                        ) {
+                                                            Icon(
+                                                                Icons.Default.ContentCopy,
+                                                                contentDescription = "Copy Name",
+                                                                tint = Color(0xFF8B949E),
+                                                                modifier = Modifier.size(16.dp)
+                                                            )
+                                                        }
+                                                        // Copy Direct Stream URL
+                                                        IconButton(
+                                                            onClick = {
+                                                                clipboardManager.setText(AnnotatedString(channel.directUrl))
+                                                                toastText = "Copied Direct Stream URL (.ts)"
+                                                                showCopiedToast = true
+                                                                ToastManager.success("Copied Direct Stream URL (.ts)")
+                                                            },
+                                                            modifier = Modifier.size(36.dp)
+                                                        ) {
+                                                            Icon(
+                                                                Icons.Default.Link,
+                                                                contentDescription = "Copy Link",
+                                                                tint = Color(0xFF34D399),
+                                                                modifier = Modifier.size(18.dp)
                                                             )
                                                         }
                                                     }
-                                                }
-                                            }
-
-                                            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                                                // Copy Channel Name
-                                                IconButton(
-                                                    onClick = {
-                                                        clipboardManager.setText(AnnotatedString(channel.name))
-                                                        toastText = "Copied Channel Name"
-                                                        showCopiedToast = true
-                                                    },
-                                                    modifier = Modifier.size(36.dp)
-                                                ) {
-                                                    Icon(
-                                                        Icons.Default.ContentCopy,
-                                                        contentDescription = "Copy Name",
-                                                        tint = Color(0xFF8B949E),
-                                                        modifier = Modifier.size(16.dp)
-                                                    )
-                                                }
-                                                // Copy Direct Stream URL
-                                                IconButton(
-                                                    onClick = {
-                                                        clipboardManager.setText(AnnotatedString(channel.directUrl))
-                                                        toastText = "Copied Direct Stream URL (.ts)"
-                                                        showCopiedToast = true
-                                                    },
-                                                    modifier = Modifier.size(36.dp)
-                                                ) {
-                                                    Icon(
-                                                        Icons.Default.Link,
-                                                        contentDescription = "Copy Link",
-                                                        tint = Color(0xFF34D399),
-                                                        modifier = Modifier.size(18.dp)
-                                                    )
                                                 }
                                             }
                                         }
