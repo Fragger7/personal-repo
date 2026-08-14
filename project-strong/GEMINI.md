@@ -364,3 +364,72 @@ Addressed significant UX complaints regarding the Android app's tabular data dis
 ### ☁️ Cloud Persistence "Zombie Records" Fix (Completed)
 * **Issue**: Deleting records via the Android app correctly pushed the change to the Cloud (8 records remaining). However, the background AI workflow script (`git_push.cjs`) blindly merged its stale, cached memory (12 records) back into the push, restoring the deleted "zombie" records.
 * **Resolution**: Purged the stale `committed.json` cache from the AI workspace environment and corrected the AI developer constraints to ensure cloud database files are respected rather than blindly merged during deployment pipelines.
+
+---
+
+## 🗺️ Next-Phase Strategic Roadmap & Architecture Specifications
+
+### 1. Gap Analysis: Python Streamlit Web vs. Kotlin Jetpack Compose Android
+
+| Feature Area | Python Streamlit Dashboard | Android Jetpack Compose Native App | Status / Action Plan |
+| :--- | :--- | :--- | :--- |
+| **Network Evasion & IP Risk** | Cloud Run / Streamlit Cloud IP ranges get heavily 403-blocked by IPTV firewalls. Requires proxy or local execution. | Runs directly on user's mobile/home WiFi residential carrier IP. Severely minimizes 403 blocks. | ✅ **Android Advantage** — Core architectural win. |
+| **Ingestion / Base64 Decoder** | Base64 tab decodes links, strips garbage, allows 1-click open/copy. | Base64Tab exists with decode and copy, but lacks rich URL action cards and visual payload previews. | 🟡 **Gap to Close** — Upgrade Android Base64 tab to include link preview chips, batch URL launch, and direct scanner pipeline push. |
+| **Discovery Scanner (Tier 1)** | Unthrottled asyncio concurrent scan with progress bars, status badges, summary counts. | High-speed coroutine worker with progressive chunked streaming (500ms batched UI refresh). | 🟢 **Parity Achieved** — Highly performant on both platforms. |
+| **Bulk Catalog Querying** | Background async loop fetching channel & VOD totals on-demand. | Background coroutine worker with Pause, Resume, and Stop controls with live active count badges. | 🟢 **Parity Achieved**. |
+| **Master-Detail & Data Grid** | Streamlit dataframes with single-row selection, auto-scroll injection to deep-dive drawer. | Horizontal scrolling 16-column LazyColumn table with header sorting, sort indicators, and auto-scroll snapping to detail screen. | 🟢 **Parity Achieved** — Android Master-Detail flow is fluid. |
+| **Tier 2 Category & Channel Explorer** | Accordion views listing categories and stream counts. | FullScreenCatalogExplorer with grouped collapsible categories, search filtering, and 1-click stream URL copy. | 🟢 **Parity Achieved** — Android has superior categorized grouping. |
+| **Provider Intelligence Engine** | Automatic fingerprinting, Telegram/Discord/WhatsApp scraper, dummy channel detector, JSON sync. | Provider parsed from domain and server responses, displayed in grids. Advanced Telegram/pattern extraction not yet ported. | 🟡 **Gap to Close** — Port regex brand-fingerprinting and community link detector into Android's `ProviderIntelligence.kt`. |
+| **Dynamic Multi-Theming** | 4 CSS visual themes (Midnight Purple, Ocean Blue, Crimson Dark, Clean Light). | Fixed Dark theme (Indigo/Slate). | 🟡 **Gap to Close** — Implement dynamic ThemeEngine in Android with Material 3 dynamic color palettes and theme switcher. |
+| **Cloud Persistence & Git Sync** | Server-side REST Git pushes with automated comparison. | Full GitHub REST API sync with SHA verification, empty-push guards, toast feedback, and local/cloud badge tracking. | 🟢 **Parity Achieved**. |
+| **In-App Stream Playback** | None (Requires external player). | None (Currently copy URL to clipboard). | 🚀 **New Frontier** — Integrate native ExoPlayer/Media3 player directly into Android catalog explorer for 1-click stream verification. |
+
+---
+
+### 2. Production UI/UX Overhaul & Visual Identity Design System
+
+* **Visual Identity & Vector Branding**:
+  * **App Name**: *Project Strong* / *StreamPulse Analytics* (or custom user-selected brand).
+  * **App Icon**: Modern vector icon with high-contrast gradient (e.g. vibrant indigo/cyan broadcast signal intersecting an analytics wave), adaptive icon XML for Android 13+ with themed icon support.
+  * **Splash & Header Banner**: Sophisticated ambient header with subtle glassmorphic blur and brand accent glow, eliminating flat, dated boxy headers.
+* **Material 3 Design Language & Typography**:
+  * **Typography Scale**: Strict mathematical typography scale pairing a clean geometric sans display font for titles (`titleMedium`, `labelLarge`) with refined, high-legibility body fonts (`bodyMedium`, `bodySmall` in `#A0A0B0`). Banning amateur oversized fonts.
+  * **Card & Elevation Hierarchy**: Level 1 (Surface `#161622`), Level 2 (Elevated Card `#1E1E2E`), Level 3 (Active Focus `#2A2A3E` with 1.5dp `#3B82F6` border). Flat borders with calculated inner corner radii (`Inner = Outer - Padding`).
+  * **Control Grouping**: Dedicated horizontal action bars with consistent 12-16dp padding; no cramping buttons and long status text in the same row.
+  * **Animations & Micro-interactions**: Smooth `AnimatedContent` for tab transitions, subtle spring physics on button clicks, skeleton loaders for data grids during fetch, and pulsing status badges for active connections.
+
+---
+
+### 3. About & Settings Hub Screen
+
+Create a dedicated **⚙️ Settings & About** tab or modal inside the Android app featuring:
+* **Application Metadata**:
+  * App Name, Dynamic Version Name & Version Code (auto-read from `BuildConfig`).
+  * Build Type (Debug / Release), Target SDK (Android 14 / API 34).
+  * Developer & Project Strong credits, link to GitHub repository.
+* **Security & Outbound Network Shield**:
+  * Real-time outbound IP address, ISP, and Organization detector (querying `ip-api.com` with cached protection).
+  * Cloud/Hosting Firewall warning status (detecting AWS/GCP/DigitalOcean ranges).
+* **GitHub Integration & Sync Preferences**:
+  * Secure in-app GitHub Personal Access Token (PAT) configuration with validation indicator.
+  * Default Repository Target (`Fragger7/personal-repo`) & branch config.
+  * "Wipe Cached Token" and "Force Sync from Cloud" master actions.
+* **Storage & Cache Management**:
+  * Database statistics: Total local accounts, cloud accounts, cached provider intelligence records.
+  * 1-click "Clear Volatile Scan Caches" (releasing memory without touching committed records).
+* **Dynamic Theme Selector**:
+  * *Midnight Purple*, *Ocean Blue*, *Crimson Red*, *Cyber Slate (Default)*, and *Dynamic Monet (System Material You)*.
+
+---
+
+### 4. Integrated In-App IPTV Stream & Channel Player (ExoPlayer / Media3)
+
+* **Feasibility Analysis**:
+  * **Verdict: Highly Recommended & Feasible.** Not too ambitious! Android has first-class media capabilities through `androidx.media3:media3-exoplayer` and `androidx.media3:media3-ui`.
+  * **Architecture**:
+    * Xtream Codes delivers direct MPEG-TS / HLS / MP4 stream URLs in the format: `http://{host}:{port}/live/{user}/{pass}/{stream_id}.ts` or `.m3u8`.
+    * By integrating a lightweight `ExoPlayer` overlay directly inside the `FullScreenCatalogExplorer` or `CommittedDetailScreen`, the user can tap any channel in the catalog and immediately see a live video preview in a sleek, floating picture-in-picture or sheet player.
+  * **Diagnostics & Stream Health Metrics**:
+    * Live playback status (Buffering, Playing, Error with exact HTTP/codec code).
+    * Stream technical stats: Resolution (e.g. `1080p60`, `4K`), Video Codec (`H.264`, `HEVC/H.265`), Audio Format (`AAC`, `AC3`), and Real-time Bitrate (kbps).
+    * Quick "Stream Works" / "Stream Dead" diagnostic flag to annotate the playlist node!
