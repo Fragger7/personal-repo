@@ -13,10 +13,11 @@ The Universal Lease Hunter Engine is an autonomous AI lease broker protocol curr
 
 ### 1. Market Intel & Scraping Pipeline (High-ROI Cost Strategy)
 The core aggregation engine relies on backend Node.js fetching logic combined with `@google/genai`. 
-*   **Sequential Scraping**: 1) Extract baselines (MSRP, Residuals, Money Factor) from Edmunds/forums via Gemini search grounding (`/api/scrape/extract-baselines`), 2) Search regional dealership endpoints for matching inventory (`/api/scrape/search-inventory`), 3) Qualify targets using market momentum and AI reasoning derived from Leasehackr/Reddit chatter. (PoC Dashboard UI complete).
-*   **Zero-Cost Bias**: Prioritizes public domains (dealerships, Edmunds) to fetch live data at $0 cost. Minor, low-latency API costs are permissible strictly if they fall within micro-transaction budgets suitable for a solo developer.
-*   **Aged Inventory Priority (Human Intelligence)**: The scraping engine must prioritize and explicitly identify vehicles that have been on the lot for **longer than 6 months (180+ days)**. Integrations with sources like CarGurus should be explored specifically for this metric.
-*   **True Baseline Defense**: The engine must ensure it gets the absolute base Buy Rate MF and RV, utilizing sources like Leasehackr Rate Findr.
+*   **Sequential Scraping**: 1) Extract baselines (MSRP, Residuals, Money Factor) from Edmunds/forums via Gemini search grounding (`/api/scrape/extract-baselines`), 2) Search regional dealership endpoints for matching inventory (`/api/scrape/search-inventory`), 3) Qualify targets using market momentum and AI reasoning derived from Leasehackr/Reddit chatter.
+*   **Local Stealth Network-Trace Crawler (`server/crawler/`)**: Bypasses expensive third-party scrapers (Apify) and Gemini search quotas by launching local Playwright Chromium sessions (`server/crawler/cargurus.ts`, `server/crawler/cargurus-v2.ts`) on a 50-mile target radius around ZIP 78665 (Round Rock/Austin, TX). Intercepts hidden backend XHR JSON payloads (`page.on('response', ...)`) to extract structured vehicle fields (`vin`, `msrp`, `listingPrice`, `daysOnLot`, `dealerName`, `color`, `listingUrl`) with $0 API cost.
+*   **Telegram Push Notification Alert Engine (`server/services/telegram.ts`)**: Automatically dispatches instant formatted lockscreen cards to your phone via the Telegram Bot API when a vehicle is parsed with **Days on Lot ≥ 180** or a **price drop ≥ $5,000**.
+*   **Aged Inventory Priority (Human Intelligence)**: The scraping engine prioritizes and explicitly identifies vehicles that have been on the lot for **longer than 6 months (180+ days)**. CarGurus network interception tracks cross-web VIN history even if dealers reset listing dates.
+*   **True Baseline Defense**: The engine ensures it gets the absolute base Buy Rate MF and RV, utilizing sources like Leasehackr Rate Findr.
 
 ### 2. Deal Engine & Tax Trap Simulator
 Computes depreciation, rent charges, and state-specific tax burdens (prioritizing the ultimate bottom-line monthly number). (Simulator UI complete).
