@@ -5,6 +5,7 @@ import { exec } from 'child_process';
 import dotenv from 'dotenv';
 import { createServer as createViteServer } from 'vite';
 import scrapingRouter from './src/server/scraping.js';
+import { runFullInventoryScan } from './server/crawler/index.js';
 
 dotenv.config();
 
@@ -16,6 +17,34 @@ async function startServer() {
 
   // Mount API routes
   app.use('/api/scrape', scrapingRouter);
+
+  // GET Scraped Inventory Endpoint
+  app.get('/api/inventory', async (req, res) => {
+    try {
+      const inventoryFilePath = path.join(process.cwd(), 'data', 'inventory.json');
+      if (fs.existsSync(inventoryFilePath)) {
+        const data = fs.readFileSync(inventoryFilePath, 'utf-8');
+        return res.json(JSON.parse(data));
+      }
+      // If file doesn't exist yet, seed initial 50mi targets
+      const items = await runFullInventoryScan('78665', 50);
+      res.json(items);
+    } catch (e: any) {
+      res.status(500).json({ error: e.message });
+    }
+  });
+
+  // POST Trigger Local Inventory Crawl (50mi Radius)
+  app.post('/api/scrape/trigger-crawl', async (req, res) => {
+    try {
+      const { zip = '78665', distance = 50 } = req.body || {};
+      console.log(`[Express Route] Triggering local inventory crawl for ZIP ${zip} (${distance}mi)...`);
+      const updatedInventory = await runFullInventoryScan(zip, Number(distance));
+      res.json({ success: true, count: updatedInventory.length, inventory: updatedInventory });
+    } catch (e: any) {
+      res.status(500).json({ error: e.message });
+    }
+  });
 
   // GET API Status & Setup checks
   app.get('/api/status', (req, res) => {

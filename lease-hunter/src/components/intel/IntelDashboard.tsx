@@ -121,6 +121,48 @@ export default function IntelDashboard({ onDealSelect }: { onDealSelect?: (deal:
     }
   };
 
+  const triggerLocalCrawl = async () => {
+    setIsScraping(true);
+    setStep(1);
+    setError('');
+    try {
+      // 1. Extract Baselines
+      if (!baselines) {
+        const resBase = await fetch('/api/scrape/extract-baselines', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(searchParams)
+        });
+        if (resBase.ok) {
+          const dataBase = await resBase.json();
+          setBaselines(dataBase);
+        }
+      }
+      setStep(2);
+
+      // 2. Trigger Playwright Local Stealth Network Crawl
+      const resCrawl = await fetch('/api/scrape/trigger-crawl', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ zip: searchParams.zipCode, distance: searchParams.radius })
+      });
+      
+      if (!resCrawl.ok) {
+        const errData = await resCrawl.json().catch(() => ({}));
+        throw new Error(errData.error || 'Failed to trigger local crawler');
+      }
+
+      const crawlData = await resCrawl.json();
+      setInventory(crawlData.inventory || []);
+      setStep(3);
+    } catch (err: any) {
+      console.error(err);
+      setError(err.message || 'Local crawler scan failed');
+    } finally {
+      setIsScraping(false);
+    }
+  };
+
   return (
     <div className="grid grid-cols-12 gap-6">
       {/* Intelligence Dashboard Setup */}
@@ -129,7 +171,7 @@ export default function IntelDashboard({ onDealSelect }: { onDealSelect?: (deal:
           <div className="bg-slate-800/50 border-b border-white/5 px-6 py-4 flex items-center justify-between">
             <h3 className="text-sm font-medium text-slate-200 flex items-center gap-2">
               <Activity className="h-4 w-4 text-emerald-400" />
-              Live Inventory Feed (North America)
+              Live Local Inventory Feed (50-Mile Radius)
             </h3>
             <span className="text-xs text-slate-500 font-mono">
               {step === 0 ? 'AWAITING SCRAPE PROTOCOL' : step === 3 ? 'SCRAPE COMPLETE' : 'SCRAPING ACTIVE...'}
@@ -229,21 +271,29 @@ export default function IntelDashboard({ onDealSelect }: { onDealSelect?: (deal:
                   </div>
                 </div>
 
-                <div className="flex gap-4 mt-8">
+                <div className="flex flex-col sm:flex-row gap-3 mt-8 w-full">
+                  <button 
+                    onClick={triggerLocalCrawl}
+                    disabled={isScraping}
+                    className="flex-1 flex justify-center items-center gap-2 px-5 py-3 rounded-lg bg-emerald-500 text-white text-sm font-medium hover:bg-emerald-600 transition-colors disabled:opacity-50 shadow-lg shadow-emerald-500/10"
+                  >
+                    <Zap className="h-4 w-4" />
+                    {isScraping ? 'Crawling Dealers...' : '🔄 Scan Local Inventory (50mi)'}
+                  </button>
                   <button 
                     onClick={initializeAggregator}
                     disabled={isScraping}
-                    className="flex-1 flex justify-center items-center gap-2 px-6 py-3 rounded-lg bg-indigo-500 text-white text-sm font-medium hover:bg-indigo-600 transition-colors disabled:opacity-50"
+                    className="flex-1 flex justify-center items-center gap-2 px-5 py-3 rounded-lg bg-indigo-500 text-white text-sm font-medium hover:bg-indigo-600 transition-colors disabled:opacity-50"
                   >
-                    <Zap className="h-4 w-4" />
-                    Initialize Automated Aggregator
+                    <Activity className="h-4 w-4" />
+                    Deep Search
                   </button>
                   <button 
                     onClick={() => setShowManualInput(!showManualInput)}
-                    className="flex-1 flex justify-center items-center gap-2 px-6 py-3 rounded-lg bg-slate-800 text-slate-200 border border-slate-700 text-sm font-medium hover:bg-slate-700 transition-colors"
+                    className="flex-1 flex justify-center items-center gap-2 px-5 py-3 rounded-lg bg-slate-800 text-slate-200 border border-slate-700 text-sm font-medium hover:bg-slate-700 transition-colors"
                   >
                     <Database className="h-4 w-4" />
-                    Manual Intel Dump
+                    Manual Dump
                   </button>
                 </div>
                 

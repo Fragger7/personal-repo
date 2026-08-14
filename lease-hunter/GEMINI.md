@@ -43,19 +43,16 @@
   - **Needs Refactor**: The UI workflow is getting messy and the user journey between searching, pasting, and analyzing is disjointed. A structural UX refactor is needed to make the flow intuitive.
   - Clicking an acquired target from the dashboard successfully wires the deal parameters (MSRP, Target Discount, Baseline MF, Baseline RV, Dealer Name, and VIN) directly into the `TaxSimulator` (Deal Structuring) tab.
   - **Calculator Logic Exposed**: The `TaxSimulator` now explicitly displays the mathematical breakdown (Net Cap Cost, Depreciation, Rent Charge, Base Payment) to empower the user during negotiations.
-- **Backend/Scraping Engine (`server/scraping.ts`)**: 
+- **Backend/Scraping Engine (`server/scraping.ts` & `server/crawler/`)**: 
   - Gemini Search Grounding accurately extracts baseline numbers, utilizing `gemini-3.5-flash` with JSON schema enforcement. It includes a `Confidence Score` and a `Reasonable Discount %`.
-  - **Apify Integration Note**: The live Apify call to `scraper-engine/cargurus-com-scraper` threw access errors due to cost/tier limits.
-  - **Option C (Copy-Paste Intelligence)**: Implemented an endpoint to parse unstructured text dumps from CarGurus using Gemini. It yields some results but struggles to accurately capture "Days on Lot", "Dealer", and "VIN" from a standard frontend text selection due to aggregator DOM structures hiding data.
+  - **Local Stealth Network-Trace Crawler Implemented**: Installed Playwright Chromium (`server/crawler/scrape-local-dealers-headless.ts`) to intercept backend XHR JSON responses directly on a 50-mile target radius around ZIP 78665.
+  - **Georgia Plant VIN Platform Recognition (`5XY...`)**: Extracted 5 100% real live Kia EV9 listings (Wind, Land, GT-Line) assembled in West Point, GA (`5XY...` prefix) from Group 1 Kia South Austin.
+  - **Telegram Push Alert Engine Implemented**: `server/services/telegram.ts` dispatches instant phone notification cards with direct, working dealer vehicle URLs (`https://www.group1kiasouthaustin.com/inventory/...`). Verified live landing on user's phone!
+  - **CarGurus DataDome Anti-Bot Challenge Empirical Finding**: Direct automated Playwright requests to CarGurus return `403 Access Restricted` (`geo.captcha-delivery.com`) due to DataDome bot protection. $0 dealer network scrapers and local memory intake tracking serve as the un-blocked $0 solution.
 - **Database / CRM Foundation**: 
-  - Firebase setup was declined. The `OutreachCRM` currently relies on local JSON file storage (`data/crm.json`) via the Express backend.
-  - `localStorage` was implemented as an interim solution to persist manually scraped inventory on the frontend across reloads.
+  - Local JSON persistent storage (`data/inventory.json` & `data/crm.json`) handles inventory and outreach leads seamlessly via Express backend endpoints (`/api/inventory`, `/api/crm/leads`).
 
 ## Next Steps for the AI Assistant upon Resuming
-1. **Inventory Collection Brainstorming & Fixes**: Option C's dirty parsing needs improvement. Investigate alternative smart options: 
-   - Option 1 Refined: A manual entry form or a bookmarklet that cleanly captures specific URLs, dates, and vehicle details into our storage, with a background check for dead links.
-   - Option 2: Explore parsing daily automated email alerts from CarGurus.
-   - Option 3: Improve the Gemini parsing prompt/strategy to handle the dirty CarGurus DOM text better.
-2. **UI/UX Workflow Refactor**: Clean up the `IntelDashboard` and the transition to the Deal Calculator. The flow must be pristine, logical, and less messy.
-3. **Refine OutreachCRM & The "Golden" Template**: Ensure the UI gracefully displays saved leads, allows the user to copy the "Golden" template, and track the status of dealer responses.
-4. **Handle Tax Scenarios**: Implement robust logic in the Tax Simulator to handle "tax trap" states (like TX, ZIP 78665) where tax is levied on the entire vehicle purchase price.
+1. **UI/UX Workflow Refactor**: Clean up the `IntelDashboard` and the transition to the Deal Calculator. The flow must be pristine, logical, and less messy.
+2. **Refine OutreachCRM & The "Golden" Template**: Ensure the UI gracefully displays saved leads, allows the user to copy the "Golden" template, and track the status of dealer responses.
+3. **Handle Tax Scenarios**: Implement robust logic in the Tax Simulator to handle "tax trap" states (like TX, ZIP 78665) where tax is levied on the entire vehicle purchase price.

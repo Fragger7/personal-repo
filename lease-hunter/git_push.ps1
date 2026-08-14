@@ -1,6 +1,6 @@
 # git_push.ps1 - Automates local push of Lease Hunter files to the mono-repo folder.
 param (
-    [string]$CommitMessage = "Update Lease Hunter application and configs"
+    [string]$CommitMessage = "Update Lease Hunter application, crawler engines, and GEMINI documentation"
 )
 
 $repoUrl = "https://github.com/Fragger7/personal-repo.git"
@@ -12,30 +12,15 @@ Write-Host "Cloning repository..." -ForegroundColor Cyan
 & $gitBin clone $repoUrl $tempDir
 
 if ($LASTEXITCODE -eq 0) {
-    Write-Host "Copying files to repo folder..." -ForegroundColor Cyan
+    Write-Host "Copying all workspace files to repo folder..." -ForegroundColor Cyan
     $targetDir = Join-Path $tempDir "lease-hunter"
-    $targetAgentsDir = Join-Path $targetDir ".agents"
     
-    # Ensure folders exist
+    # Ensure target directory exists
     New-Item -ItemType Directory -Force -Path $targetDir | Out-Null
-    New-Item -ItemType Directory -Force -Path $targetAgentsDir | Out-Null
     
-    # Copy files
-    Copy-Item "$workspace\app.py" "$targetDir\app.py" -Force
-    Copy-Item "$workspace\.gitignore" "$targetDir\.gitignore" -Force
-    Copy-Item "$workspace\requirements.txt" "$targetDir\requirements.txt" -Force
-    Copy-Item "$workspace\LEASE_HUNTER.md" "$targetDir\LEASE_HUNTER.md" -Force
-    Copy-Item "$workspace\run.bat" "$targetDir\run.bat" -Force
-    Copy-Item "$workspace\.agents\AGENTS.md" "$targetAgentsDir\AGENTS.md" -Force
-    Copy-Item "$workspace\flatten_context.py" "$targetDir\flatten_context.py" -Force
-    if (Test-Path "$workspace\git_push.ps1") {
-        Copy-Item "$workspace\git_push.ps1" "$targetDir\git_push.ps1" -Force
-    }
-    if (Test-Path "$workspace\git_push.cjs") {
-        Copy-Item "$workspace\git_push.cjs" "$targetDir\git_push.cjs" -Force
-    }
-    if (Test-Path "$workspace\PROMPT_MANIFEST.txt") {
-        Copy-Item "$workspace\PROMPT_MANIFEST.txt" "$targetDir\PROMPT_MANIFEST.txt" -Force
+    # Copy all files and directories excluding node_modules, temp, scratch, and .git
+    Get-ChildItem -Path $workspace -Exclude "node_modules", "personal-repo-temp", ".git", "scratch" | ForEach-Object {
+        Copy-Item -Path $_.FullName -Destination $targetDir -Recurse -Force
     }
 
     Write-Host "Staging and committing files..." -ForegroundColor Cyan
