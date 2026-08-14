@@ -56,8 +56,6 @@ fun CommittedTab() {
     var isReloading by remember { mutableStateOf(false) }
     var isPushing by remember { mutableStateOf(false) }
     var isRechecking by remember { mutableStateOf(false) }
-    var isQueryingStreams by remember { mutableStateOf(false) }
-    var queryProgressText by remember { mutableStateOf("") }
     var actionMessage by remember { mutableStateOf("") }
     var showTokenDialog by remember { mutableStateOf(false) }
     var showPushConfirmDialog by remember { mutableStateOf(false) }
@@ -200,7 +198,11 @@ fun CommittedTab() {
         )
     }
 
-    AnimatedContent(targetState = selectedRecord) { activeRecord ->
+    AnimatedContent(
+        targetState = selectedRecord,
+        modifier = Modifier.fillMaxSize(),
+        label = "CommittedScreenTransition"
+    ) { activeRecord ->
         if (activeRecord != null) {
             CommittedDetailScreen(
                 record = activeRecord,
@@ -210,7 +212,7 @@ fun CommittedTab() {
                     selectedRecord = null
                 },
                 onPush = {
-                    if (isReloading || isPushing || isRechecking || isQueryingStreams) return@CommittedDetailScreen
+                    if (isReloading || isPushing || isRechecking) return@CommittedDetailScreen
                     if (records.isEmpty()) {
                         ToastManager.warning("Cannot push empty list to cloud.")
                         return@CommittedDetailScreen
@@ -226,12 +228,11 @@ fun CommittedTab() {
         } else {
             CommittedMasterGrid(
                 records = records,
-                isBusy = isReloading || isPushing || isRechecking || isQueryingStreams,
+                isBusy = isReloading || isPushing || isRechecking,
                 statusMessage = actionMessage,
-                queryProgressText = queryProgressText,
                 onSelectRecord = { selectedRecord = it },
                 onRecheckStatus = {
-                    if (isReloading || isPushing || isRechecking || isQueryingStreams || records.isEmpty()) return@CommittedMasterGrid
+                    if (isReloading || isPushing || isRechecking || records.isEmpty()) return@CommittedMasterGrid
                     isRechecking = true
                     actionMessage = "Re-checking live statuses of all ${records.size} saved accounts..."
                     ToastManager.info("Checking live statuses of ${records.size} accounts...")
@@ -249,49 +250,8 @@ fun CommittedTab() {
                         actionMessage = ""
                     }
                 },
-                onQueryStreamCounts = {
-                    if (isReloading || isPushing || isRechecking || isQueryingStreams || records.isEmpty()) return@CommittedMasterGrid
-                    val xtreamRecords = records.filter { it.safeType == "Xtream" && it.safeStatus.contains("Active", ignoreCase = true) }
-                    if (xtreamRecords.isEmpty()) {
-                        ToastManager.warning("No active Xtream nodes to query channels for.")
-                        return@CommittedMasterGrid
-                    }
-                    isQueryingStreams = true
-                    ToastManager.info("Querying Channels & VODs for ${xtreamRecords.size} active nodes...")
-                    coroutineScope.launch {
-                        val semaphore = Semaphore(5)
-                        var done = 0
-                        withContext(Dispatchers.IO) {
-                            coroutineScope {
-                                val deferreds = xtreamRecords.map { rec ->
-                                    async {
-                                        semaphore.withPermit {
-                                            val liveCount = IPTVClient.getLiveStreamCount(rec.safeBaseUrl, rec.safeUser, rec.safePass)
-                                            val vodCount = IPTVClient.getVodStreamCount(rec.safeBaseUrl, rec.safeUser, rec.safePass)
-                                            withContext(Dispatchers.Main) {
-                                                val idx = CommittedManager.records.indexOf(rec)
-                                                if (idx != -1) {
-                                                    CommittedManager.records[idx] = rec.copy(
-                                                        channels = if (liveCount > 0) liveCount.toString() else rec.safeChannels,
-                                                        vods = if (vodCount > 0) vodCount.toString() else rec.safeVods
-                                                    )
-                                                }
-                                                done++
-                                                queryProgressText = "Queried $done/${xtreamRecords.size} catalogs..."
-                                            }
-                                        }
-                                    }
-                                }
-                                deferreds.awaitAll()
-                            }
-                        }
-                        isQueryingStreams = false
-                        queryProgressText = ""
-                        ToastManager.success("Channels & VOD counts updated for $done nodes!")
-                    }
-                },
                 onReload = {
-                    if (isReloading || isPushing || isRechecking || isQueryingStreams) return@CommittedMasterGrid
+                    if (isReloading || isPushing || isRechecking) return@CommittedMasterGrid
                     isReloading = true
                     actionMessage = "Syncing from Git repository..."
                     ToastManager.info("Syncing saved records from GitHub...")
@@ -318,7 +278,7 @@ fun CommittedTab() {
                     }
                 },
                 onPush = {
-                    if (isReloading || isPushing || isRechecking || isQueryingStreams) return@CommittedMasterGrid
+                    if (isReloading || isPushing || isRechecking) return@CommittedMasterGrid
                     // Guard against empty push
                     if (records.isEmpty()) {
                         ToastManager.warning("Cannot push empty list to cloud. Load or sync records first.")
@@ -345,10 +305,8 @@ fun CommittedMasterGrid(
     records: List<CommittedRecord>,
     isBusy: Boolean,
     statusMessage: String,
-    queryProgressText: String,
     onSelectRecord: (CommittedRecord) -> Unit,
     onRecheckStatus: () -> Unit,
-    onQueryStreamCounts: () -> Unit,
     onReload: () -> Unit,
     onPush: () -> Unit,
     onOpenTokenSettings: () -> Unit
@@ -443,17 +401,9 @@ fun CommittedMasterGrid(
                 if (statusMessage.isNotEmpty()) {
                     Text(statusMessage, color = Color(0xFF34D399), style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.SemiBold)
                 }
-                if (queryProgressText.isNotEmpty()) {
-                    Text(queryProgressText, color = Color(0xFF38BDF8), style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.SemiBold)
-                }
             }
 
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                // Query Channels & VODs
-                SecondaryButton(
-                    text = "📺 Query Catalogs",
-                    onClick = onQueryStreamCounts
-                )
                 // Re-check live status
                 SecondaryButton(
                     text = "⚡ Re-Check",
@@ -486,6 +436,15 @@ fun CommittedMasterGrid(
                 modifier = Modifier.fillMaxWidth().height(3.dp),
                 color = Color(0xFF10B981),
                 trackColor = Color(0xFF1E293B)
+            )
+        }
+
+        if (records.isNotEmpty()) {
+            Text(
+                text = "Showing ${records.size} committed records.",
+                color = Color(0xFFA0A0B0),
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
             )
         }
 

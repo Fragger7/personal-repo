@@ -41,8 +41,8 @@ data class ToastMessage(
 object ToastManager {
     private var appContext: Context? = null
     private val mainHandler = Handler(Looper.getMainLooper())
-    private val _toastEvents = MutableSharedFlow<ToastMessage>(replay = 1, extraBufferCapacity = 10)
-    val toastEvents = _toastEvents.asSharedFlow()
+    var currentToastState by mutableStateOf<ToastMessage?>(null)
+        private set
 
     fun init(context: Context) {
         appContext = context.applicationContext
@@ -50,17 +50,22 @@ object ToastManager {
 
     fun show(message: String, type: ToastType = ToastType.INFO, durationMs: Long = 2500L) {
         val toast = ToastMessage(message, type, durationMs)
-        _toastEvents.tryEmit(toast)
-
-        // Also trigger guaranteed native Android toast on Main thread
-        appContext?.let { ctx ->
-            mainHandler.post {
+        mainHandler.post {
+            currentToastState = toast
+            // Also trigger guaranteed native Android toast
+            appContext?.let { ctx ->
                 try {
                     Toast.makeText(ctx, message, Toast.LENGTH_SHORT).show()
                 } catch (e: Exception) {
                     e.printStackTrace()
                 }
             }
+        }
+    }
+
+    fun clear() {
+        mainHandler.post {
+            currentToastState = null
         }
     }
 
@@ -72,14 +77,13 @@ object ToastManager {
 
 @Composable
 fun ToastHost(modifier: Modifier = Modifier) {
-    var currentToast by remember { mutableStateOf<ToastMessage?>(null) }
+    val currentToast = ToastManager.currentToastState
 
-    LaunchedEffect(Unit) {
-        ToastManager.toastEvents.collect { toast ->
-            currentToast = toast
-            delay(toast.durationMs)
-            if (currentToast == toast) {
-                currentToast = null
+    LaunchedEffect(currentToast) {
+        if (currentToast != null) {
+            delay(currentToast.durationMs)
+            if (ToastManager.currentToastState == currentToast) {
+                ToastManager.clear()
             }
         }
     }

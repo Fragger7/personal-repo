@@ -105,6 +105,10 @@ object CommittedManager {
         )
     }
 
+    private fun normalizeUrl(url: String): String {
+        return url.trim().trimEnd('/')
+    }
+
     private fun load() {
         if (!file.exists()) {
             records.clear()
@@ -116,7 +120,7 @@ object CommittedManager {
                 val type = object : TypeToken<List<CommittedRecord>>() {}.type
                 val list: List<CommittedRecord> = gson.fromJson(json, type)
                 records.clear()
-                records.addAll(list)
+                records.addAll(list.map { it.copy(baseUrl = normalizeUrl(it.safeBaseUrl)) })
                 sortByDateAddedDescending()
             }
         } catch (e: Exception) {
@@ -151,17 +155,19 @@ object CommittedManager {
         notes: String = ""
     ) {
         val nowStr = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())
-        val cleanBaseUrl = baseUrl.trimEnd('/')
-        val m3u = if (type.contains("Xtream", ignoreCase = true) && user.isNotEmpty()) {
-            "$cleanBaseUrl/get.php?username=$user&password=$pass&type=m3u_plus&output=ts"
+        val cleanBaseUrl = normalizeUrl(baseUrl)
+        val cleanUser = user.trim()
+        val cleanMac = mac.trim().uppercase()
+        val m3u = if (type.contains("Xtream", ignoreCase = true) && cleanUser.isNotEmpty()) {
+            "$cleanBaseUrl/get.php?username=$cleanUser&password=$pass&type=m3u_plus&output=ts"
         } else ""
 
         val newRecord = CommittedRecord(
             type = type,
             baseUrl = cleanBaseUrl,
-            user = user,
+            user = cleanUser,
             pass = pass,
-            mac = mac,
+            mac = cleanMac,
             status = status,
             expires = expires,
             daysLeft = daysLeft,
@@ -178,10 +184,11 @@ object CommittedManager {
             isLocalOnly = true
         )
 
-        // Check if existing
+        // Check if existing (using normalized comparison)
         val existingIndex = records.indexOfFirst {
-            it.safeBaseUrl == cleanBaseUrl &&
-            ((type == "Xtream" && it.safeUser == user) || (type == "Stalker" && it.safeMac == mac))
+            normalizeUrl(it.safeBaseUrl).equals(cleanBaseUrl, ignoreCase = true) &&
+            ((type == "Xtream" && it.safeUser.trim() == cleanUser) ||
+             (type == "Stalker" && it.safeMac.trim().equals(cleanMac, ignoreCase = true)))
         }
 
         if (existingIndex != -1) {
@@ -229,18 +236,29 @@ object CommittedManager {
                     val type = object : TypeToken<List<CommittedRecord>>() {}.type
                     val remoteList: List<CommittedRecord> = gson.fromJson(json, type)
 
-                    // Mark remote records as not local only (synced)
-                    val normalizedRemote = remoteList.map { it.copy(isLocalOnly = false) }
+                    // Normalize remote records and mark as synced (isLocalOnly = false)
+                    val normalizedRemote = remoteList.map {
+                        it.copy(
+                            baseUrl = normalizeUrl(it.safeBaseUrl),
+                            user = it.safeUser.trim(),
+                            mac = it.safeMac.trim().uppercase(),
+                            isLocalOnly = false
+                        )
+                    }
 
-                    // Merge: keep all remote records, and add any local records that are not in remote as isLocalOnly = true
+                    // Merge: Keep all remote records, and add local records only if they don't match any remote record
                     val merged = normalizedRemote.toMutableList()
                     for (localRec in records) {
-                        val exists = normalizedRemote.any {
-                            it.safeBaseUrl == localRec.safeBaseUrl &&
-                            ((localRec.safeType == "Xtream" && it.safeUser == localRec.safeUser) ||
-                             (localRec.safeType == "Stalker" && it.safeMac == localRec.safeMac))
+                        val localBase = normalizeUrl(localRec.safeBaseUrl)
+                        val localUser = localRec.safeUser.trim()
+                        val localMac = localRec.safeMac.trim().uppercase()
+
+                        val existsInRemote = normalizedRemote.any { rem ->
+                            normalizeUrl(rem.safeBaseUrl).equals(localBase, ignoreCase = true) &&
+                            ((localRec.safeType == "Xtream" && rem.safeUser.trim() == localUser) ||
+                             (localRec.safeType == "Stalker" && rem.safeMac.trim().equals(localMac, ignoreCase = true)))
                         }
-                        if (!exists) {
+                        if (!existsInRemote) {
                             merged.add(localRec.copy(isLocalOnly = true))
                         }
                     }
@@ -249,14 +267,14 @@ object CommittedManager {
                     records.addAll(merged)
                     sortByDateAddedDescending()
                     save()
-
-                    return merged
+                    return records.toList()
                 }
             }
+            return null
         } catch (e: Exception) {
             e.printStackTrace()
+            return null
         }
-        return null
     }
 
     fun pushToCloud(token: String): Boolean {

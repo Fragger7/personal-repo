@@ -117,6 +117,15 @@ fun StalkerMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCreden
             }
         }
 
+        if (filteredNodes.isNotEmpty()) {
+            Text(
+                text = "Showing ${filteredNodes.size} records.",
+                color = Color(0xFFA0A0B0),
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
+            )
+        }
+
         if (filteredNodes.isEmpty()) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Text("No Stalker portals found.", color = Color.Gray)
