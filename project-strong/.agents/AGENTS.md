@@ -222,3 +222,19 @@ Create a dedicated **⚙️ Settings & About** tab or modal inside the Android a
    * **App & Build Metadata**: Sherlock Streams branding, dynamic version name/code from `BuildConfig`, target API, and developer credits.
    * **Outbound IP & ISP Shield**: Real-time IP geolocation and cloud firewall warning detector.
    * **GitHub Integration Controls**: Personal Access Token (PAT) manager, validation tester, and cache clearing utilities.
+
+---
+
+## 🛡️ Ironclad Rule: Non-Negotiable Regression Protection & Stable Baseline
+
+### 1. Stable Production Baseline (v1.x Golden Snapshot)
+* **Status**: As of commit `5d1bf7c` (auto-build pipeline active), the Android native application possesses 100% verified, crash-free stability on massive 5,000+ line unstructured payloads, dynamic chunked streaming, responsive master-detail grids, native JsonReader stream parsing, zero OOM errors, and verified GitHub bidirectional synchronization.
+* **Golden Snapshot Tagging**: This baseline state must NEVER be degraded or regressed. Any new UI, player integration, or engine feature MUST build strictly additively on top of these verified foundations.
+
+### 2. Regression Testing & Safe Deployment Mandates
+* **No Unsolicited Architecture Rewrites**: The core concurrent coroutine loop, OkHttp client setup, 500ms batched UI throttler, and JsonReader stream parsing logic in `IPTVClient.kt` and `ScannerTab.kt` MUST NOT be refactored or replaced without explicit regression testing.
+* **Regression Testing Suite & Test Data**:
+  * Prior to merging major features, run unit tests against realistic unstructured paste data (multi-line Xtream combos, Unicode character mappings like `ᴜꜱᴇʀ` / `ᴩᴀꜱꜱ`, Stalker MAC cookies, and broken/empty JSON object responses `{}` from non-standard servers).
+  * If test datasets are needed, request Pastebin dumps from the user to stress-test candidate builds before pushing.
+* **Dynamic / Flexible Roadmap Sequencing**:
+  * Roadmap phases are flexible. If delivering a dependency requires prior UI infrastructure (e.g. building the **Settings & About Hub** first to house the Theme Selector before rolling out the multi-palette Theme Engine), the agent and developer should logically adapt the execution sequence without friction.
