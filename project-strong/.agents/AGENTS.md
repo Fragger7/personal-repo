@@ -186,3 +186,39 @@ Create a dedicated **⚙️ Settings & About** tab or modal inside the Android a
     * Live playback status (Buffering, Playing, Error with exact HTTP/codec code).
     * Stream technical stats: Resolution (e.g. `1080p60`, `4K`), Video Codec (`H.264`, `HEVC/H.265`), Audio Format (`AAC`, `AC3`), and Real-time Bitrate (kbps).
     * Quick "Stream Works" / "Stream Dead" diagnostic flag to annotate the playlist node!
+
+---
+
+## 🕵️‍♂️ Brand Identity: "Sherlock Streams"
+
+* **Name Inspiration**: An homage to the legendary detective Sherlock Holmes, renowned for astute observation, deductive forensic analysis, and uncovering concealed details. In this application, the engine forensically examines, fingerprints, verifies, and catalogs every minute detail of complex, unstructured IPTV stream nodes and portals.
+* **Visual Identity & Icon Metaphor Concept**:
+  * **Icon**: A sleek, modern glowing neon magnifying glass intersecting an active digital audio/video waveform/pulse stream, set against a dark obsidian cyber-backdrop.
+  * **Color Palette (Creative Deduction Palette)**: 
+    * Primary: *Cyber Amber / Golden Brass* (`#F59E0B` / `#D97706`) + *Detective Navy / Deep Indigo* (`#0F172A` / `#1E1E2E`)
+    * Accents: *Electric Cyan Stream Pulse* (`#06B6D4` / `#38BDF8`) for live telemetry & active connections
+    * Status: *Emerald Green* (`#10B981`) for verified active nodes; *Crimson* (`#EF4444`) for dead/firewalled nodes.
+
+---
+
+## 🎯 Finalized Master Implementation Order
+
+1. **Phase 1: Feature & Parity Gap Closures**
+   * **Base64 Tab Upgrade**: Add rich URL action preview cards, batch external browser/M3U launch, and a direct 1-click "Send to Scanner" pipeline button.
+   * **Provider Intelligence Engine (Android Port)**: Port the Python app's regex brand-fingerprinting, community link detector (Telegram `t.me`, Discord, WhatsApp), and separator/dummy channel identification into Android's `ProviderIntelligence.kt`.
+   * **Dynamic Theme Engine**: Material 3 theme switcher with multi-palette selection (Cyber Sherlock Gold/Navy, Midnight Purple, Ocean Blue, Crimson Dark, and Dynamic Monet).
+
+2. **Phase 2: Production-Level UI/UX Overhaul**
+   * **Vector Icon & App Assets**: Create official Android 13+ adaptive vector icons with themed monochrome variant, splash branding, and ambient glassmorphic header glow.
+   * **Mathematical Typography & Layout Polish**: Refine typography hierarchy across all tabs (banning oversized headers), implement 44dp min touch targets, and ensure clean vertical separation for all action bars.
+   * **Micro-Interactions**: Fluid tab switching animations, skeleton loaders, and pulsing live diagnostic indicators.
+
+3. **Phase 3: Integrated In-App IPTV Stream & Diagnostics Player (Media3 / ExoPlayer)**
+   * **Floating Mini-Player**: Initiates as a sleek picture-in-picture floating mini-player inside the category/channel explorer with play/pause and live buffer progress.
+   * **Expand / Full-Screen Mode**: One-tap expand to a full-screen hardware-accelerated ExoPlayer interface.
+   * **Forensic Diagnostics HUD**: Overlay stream telemetry showing real-time Resolution (e.g. `1080p60`, `4K`), Video/Audio Codecs (`H.264/HEVC`, `AAC/AC3`), and Live Bitrate (kbps) to immediately confirm stream health.
+
+4. **Phase 4: Settings & About Hub**
+   * **App & Build Metadata**: Sherlock Streams branding, dynamic version name/code from `BuildConfig`, target API, and developer credits.
+   * **Outbound IP & ISP Shield**: Real-time IP geolocation and cloud firewall warning detector.
+   * **GitHub Integration Controls**: Personal Access Token (PAT) manager, validation tester, and cache clearing utilities.
