@@ -110,10 +110,10 @@ When building UI components, adding new screens, or refactoring the application 
 ---
 
 ## 🏆 Recent Accomplishments & Milestone Log
+* **Android UI Thread ANR & Rendering Stability Fixes**: Implemented adaptive throttling on background Compose state list updates to stop Choreographer starvation, and stripped strict LazyColumn duplication keys to prevent panicking on massive uncleaned pastes.
+* **Stream Catalog OOM & JSON Crash Resolution**: Rewrote `IPTVClient.getAllLiveStreams()` and `getLiveCategories()` from in-memory JSONArray instantiation to stream parsing using `android.util.JsonReader`, eliminating out-of-memory errors on 50k+ payloads and safely aborting on malformed `{}` responses.
+* **Xtream Tab UI Polish**: Grouped master counts/labels gracefully, downscaled the aggressively large font headers, and separated action toggles into horizontal padded action rows.
+* **Cloud Push AI Workflow Corrections**: Addressed "zombie records" issue by ensuring the AI developer container clears local memory cache of `committed.json` and does not blindly overwrite intentional deletions with stale session cache.
 * **16-Column Committed Data Grid**: Implemented full master table across Android with 16 columns matching Python metadata, sorting headers, and default sort by `Date Added (Descending)`.
-* **Push Safety & Overwrite Protections**: Added validation preventing empty dataset pushes to GitHub and confirmation modals detailing sync counts.
-* **Global Toast Notifications**: Implemented non-intrusive animated `ToastHost` for account commits, cloud syncs, copy events, and deletions.
-* **Full Metadata Lifecycle**: Synchronized active/max connections, provider intelligence, and timezones from discovery scans through commit dialogs to JSON cloud storage.
-* **Kotlin Compiler Fixes**: Cleaned up Kotlin type-casting, animated visibility scopes, and coroutine branch matching.
 
 

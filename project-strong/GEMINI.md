@@ -344,3 +344,23 @@ Addressed significant UX complaints regarding the Android app's tabular data dis
 * **Action Button Text Truncation**: Refactored `PrimaryButton` and `SecondaryButton` in `ModernComponents.kt` to prevent text truncation, adding flexible horizontal padding, single-line text constraints (`maxLines = 1`, `softWrap = false`), and `overflow = TextOverflow.Ellipsis`.
 * **Committed Data Tab Full-Screen Layout Fix**: Fixed the layout collapse issue in `CommittedMasterGrid` by applying `Modifier.fillMaxWidth().weight(1f)` to the table container `Box`. The 16-column enterprise grid now dynamically expands to fill all available vertical space instead of collapsing into a single row.
 * **Discrete Push-to-Cloud for Local Records**: Added a dedicated `CloudUpload` push action button directly in the row actions of un-synced local records (`isLocalOnly == true`) in `CommittedMasterGrid` and within the `CommittedDetailScreen`. This enables one-click synchronization to the GitHub remote repository while strictly preserving the remote SHA fetch safeguards to prevent overwriting cloud records.
+### 🐛 Critical UI Thread ANR & State Rendering Fixes (Completed)
+* **Issue**: Rapid background scanning triggered Application Not Responding (ANR) lockups and erased the `LazyColumn` grids on the Xtream tab when processing massive data blocks (5000+ nodes) due to aggressive state recompilations and duplicate key collisions.
+* **Resolution**:
+  - **Adaptive Throttling**: Implemented an adaptive debounce/throttle inside the background `ScannerTab` and `XtreamTab` coroutines. Background HTTP scanning continues at maximum speed, but the Compose state list is only updated in batched intervals (twice per second), giving the Choreographer (UI thread) breathing room.
+  - **Duplicate Key Protection**: Removed strict `key = { ... }` duplication bindings in `LazyColumn` for master grids. This prevents Compose from panicking and crashing the view when massive raw combo pastes generate multiple identical Host + Username records.
+  - **Dynamic Chunked Streaming (Progressive Loading)**: Refactored the `XtreamTab` and `StalkerTab` to filter out `empty` or `isVerifying` nodes from the grid logic. Instead of rendering a sluggish 5000-row grid of empty statuses, the grids actively stream into existence, showing only nodes that have finished verifying.
+
+### 🐛 Stream Catalog Crash & OOM Optimization (Completed)
+* **Issue**: When clicking to query stream catalogs, the Android app crashed (`Could not load stream catalog from server`) or ran out of memory when parsing massive 50,000+ item provider payloads.
+* **Resolution**: Completely rewrote the parsing architecture in `IPTVClient.getAllLiveStreams()` and `getLiveCategories()` from loading heavy, in-memory `org.json.JSONArray` blobs to using Android's native stream parser (`android.util.JsonReader`). This parses payloads piece-by-piece with near-zero memory footprint, and safely intercepts broken server responses (e.g., returning `{}` instead of `[]`) without throwing JSONExceptions.
+
+### 📱 Xtream Tab UI Redesign & Top Header Polish (Completed)
+* **Issue**: The Xtream Codes tab header felt cramped, and labels competed with action buttons horizontally using amateurishly large fonts.
+* **Resolution**: Redesigned the Xtream Tab top header. 
+  - Downscaled the massive `titleLarge` elements to a sleek `titleMedium`.
+  - Separated the layout into dedicated, clean vertical rows: Counts and labels sit prominently at the top, while the "Query Catalogs" and "Active Only" toggles live in a separate action bar with proper padding, removing the cramped feeling.
+
+### ☁️ Cloud Persistence "Zombie Records" Fix (Completed)
+* **Issue**: Deleting records via the Android app correctly pushed the change to the Cloud (8 records remaining). However, the background AI workflow script (`git_push.cjs`) blindly merged its stale, cached memory (12 records) back into the push, restoring the deleted "zombie" records.
+* **Resolution**: Purged the stale `committed.json` cache from the AI workspace environment and corrected the AI developer constraints to ensure cloud database files are respected rather than blindly merged during deployment pipelines.
