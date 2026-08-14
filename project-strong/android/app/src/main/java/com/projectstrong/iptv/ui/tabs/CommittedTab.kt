@@ -368,67 +368,86 @@ fun CommittedMasterGrid(
     val localCount = records.count { it.isLocal }
 
     Column(modifier = Modifier.fillMaxSize()) {
-        // Control Bar
+        // Compact Control Bar
         Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 8.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = "Committed Data (${records.size})",
-                        color = Color.White,
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold
-                    )
-                    if (localCount > 0) {
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Box(
-                            modifier = Modifier
-                                .background(Color(0xFFF59E0B).copy(alpha = 0.2f), RoundedCornerShape(12.dp))
-                                .padding(horizontal = 8.dp, vertical = 2.dp)
-                        ) {
-                            Text(
-                                text = "$localCount Unpushed",
-                                color = Color(0xFFFBBF24),
-                                style = MaterialTheme.typography.labelSmall,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.weight(1f, fill = false)
+            ) {
+                Text(
+                    text = "Committed Data (${records.size})",
+                    color = Color.White,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+                if (localCount > 0) {
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Box(
+                        modifier = Modifier
+                            .background(Color(0xFFF59E0B).copy(alpha = 0.2f), RoundedCornerShape(12.dp))
+                            .padding(horizontal = 8.dp, vertical = 2.dp)
+                    ) {
+                        Text(
+                            text = "$localCount Unpushed",
+                            color = Color(0xFFFBBF24),
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Bold
+                        )
                     }
-                }
-                if (statusMessage.isNotEmpty()) {
-                    Text(statusMessage, color = Color(0xFF34D399), style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.SemiBold)
                 }
             }
 
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+            // Compact Action Buttons Row
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.horizontalScroll(rememberScrollState())
+            ) {
                 // Re-check live status
                 SecondaryButton(
-                    text = "⚡ Re-Check",
-                    onClick = onRecheckStatus
+                    text = "⚡ Check",
+                    onClick = onRecheckStatus,
+                    modifier = Modifier.height(34.dp)
                 )
                 // Reload from Git
                 SecondaryButton(
-                    text = "Reload Cloud",
-                    onClick = onReload
+                    text = "🔄 Sync",
+                    onClick = onReload,
+                    modifier = Modifier.height(34.dp)
                 )
-                // Push to Git (Disabled if records is empty)
+                // Push to Git
                 PrimaryButton(
-                    text = if (localCount > 0) "Push ($localCount)" else "Push to Cloud",
+                    text = if (localCount > 0) "☁️ Push ($localCount)" else "☁️ Push",
                     color = if (records.isEmpty()) Color.Gray else Color(0xFF10B981),
-                    onClick = onPush
+                    onClick = onPush,
+                    modifier = Modifier.height(34.dp)
                 )
                 // Token Key Button
-                IconButton(onClick = onOpenTokenSettings, modifier = Modifier.size(36.dp)) {
+                IconButton(onClick = onOpenTokenSettings, modifier = Modifier.size(34.dp)) {
                     Icon(
                         Icons.Default.Key,
                         contentDescription = "Token Settings",
-                        tint = if (DataStore.githubToken.isNotEmpty()) Color(0xFF60A5FA) else Color.Gray
+                        tint = if (DataStore.githubToken.isNotEmpty()) Color(0xFF60A5FA) else Color.Gray,
+                        modifier = Modifier.size(20.dp)
                     )
                 }
             }
+        }
+
+        if (statusMessage.isNotEmpty()) {
+            Text(
+                statusMessage,
+                color = Color(0xFF34D399),
+                style = MaterialTheme.typography.bodySmall,
+                fontWeight = FontWeight.SemiBold,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 2.dp)
+            )
         }
 
         if (isBusy) {
@@ -444,7 +463,7 @@ fun CommittedMasterGrid(
                 text = "Showing ${records.size} committed records.",
                 color = Color(0xFFA0A0B0),
                 style = MaterialTheme.typography.bodySmall,
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 2.dp)
             )
         }
 
@@ -474,7 +493,7 @@ fun CommittedMasterGrid(
                     Row(
                         modifier = Modifier
                             .background(Color(0xFF1E1E2E))
-                            .padding(horizontal = 16.dp, vertical = 12.dp),
+                            .padding(horizontal = 16.dp, vertical = 10.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         GridHeader("Date Added", 140.dp, onClick = { toggleSort(CommittedSortColumn.DATE_ADDED) }, isSorted = sortColumn == CommittedSortColumn.DATE_ADDED, isAscending = sortAscending)
@@ -498,7 +517,12 @@ fun CommittedMasterGrid(
 
                     Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(Color(0xFF333344)))
 
-                    LazyColumn(modifier = Modifier.fillMaxSize(), state = listState) {
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f),
+                        state = listState
+                    ) {
                         items(sortedRecords, key = { it.safeBaseUrl + it.safeUser + it.safeMac }) { record ->
                             Row(
                                 modifier = Modifier
@@ -604,7 +628,7 @@ fun CommittedMasterGrid(
                 FloatingActionButton(
                     onClick = {
                         coroutineScope.launch {
-                            if (records.isNotEmpty()) listState.animateScrollToItem(records.size - 1)
+                            if (sortedRecords.isNotEmpty()) listState.animateScrollToItem(sortedRecords.size - 1)
                         }
                     },
                     containerColor = Color(0xFF3B82F6),

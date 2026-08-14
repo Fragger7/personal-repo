@@ -3,9 +3,9 @@ package com.projectstrong.iptv.ui.components
 import android.content.Context
 import android.os.Handler
 import android.os.Looper
-import android.widget.Toast
 import androidx.compose.animation.*
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -21,12 +21,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.asSharedFlow
 
 enum class ToastType {
     SUCCESS, INFO, WARNING, ERROR
@@ -52,14 +52,6 @@ object ToastManager {
         val toast = ToastMessage(message, type, durationMs)
         mainHandler.post {
             currentToastState = toast
-            // Also trigger guaranteed native Android toast
-            appContext?.let { ctx ->
-                try {
-                    Toast.makeText(ctx, message, Toast.LENGTH_SHORT).show()
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                }
-            }
         }
     }
 
@@ -90,24 +82,45 @@ fun ToastHost(modifier: Modifier = Modifier) {
 
     AnimatedVisibility(
         visible = currentToast != null,
-        enter = fadeIn() + slideInVertically(initialOffsetY = { 50 }),
-        exit = fadeOut() + slideOutVertically(targetOffsetY = { 50 }),
+        enter = fadeIn() + slideInVertically(initialOffsetY = { 60 }) + scaleIn(initialScale = 0.92f),
+        exit = fadeOut() + slideOutVertically(targetOffsetY = { 60 }) + scaleOut(targetScale = 0.92f),
         modifier = modifier
     ) {
         currentToast?.let { toast ->
-            val (bgColor, iconTint, icon) = when (toast.type) {
-                ToastType.SUCCESS -> Triple(Color(0xFF064E3B), Color(0xFF34D399), Icons.Default.CheckCircle)
-                ToastType.WARNING -> Triple(Color(0xFF78350F), Color(0xFFFBBF24), Icons.Default.Warning)
-                ToastType.ERROR -> Triple(Color(0xFF7F1D1D), Color(0xFFF87171), Icons.Default.ErrorOutline)
-                ToastType.INFO -> Triple(Color(0xFF1E293B), Color(0xFF60A5FA), Icons.Default.Info)
+            val (bgColor, borderColor, iconTint, icon) = when (toast.type) {
+                ToastType.SUCCESS -> Quadruple(
+                    Color(0xFF064E3B).copy(alpha = 0.95f),
+                    Color(0xFF34D399).copy(alpha = 0.6f),
+                    Color(0xFF34D399),
+                    Icons.Default.CheckCircle
+                )
+                ToastType.WARNING -> Quadruple(
+                    Color(0xFF78350F).copy(alpha = 0.95f),
+                    Color(0xFFFBBF24).copy(alpha = 0.6f),
+                    Color(0xFFFBBF24),
+                    Icons.Default.Warning
+                )
+                ToastType.ERROR -> Quadruple(
+                    Color(0xFF7F1D1D).copy(alpha = 0.95f),
+                    Color(0xFFF87171).copy(alpha = 0.6f),
+                    Color(0xFFF87171),
+                    Icons.Default.ErrorOutline
+                )
+                ToastType.INFO -> Quadruple(
+                    Color(0xFF0F172A).copy(alpha = 0.95f),
+                    Color(0xFF38BDF8).copy(alpha = 0.6f),
+                    Color(0xFF38BDF8),
+                    Icons.Default.Info
+                )
             }
 
             Box(
                 modifier = Modifier
-                    .shadow(12.dp, RoundedCornerShape(12.dp))
-                    .clip(RoundedCornerShape(12.dp))
+                    .shadow(16.dp, RoundedCornerShape(16.dp), spotColor = iconTint)
+                    .clip(RoundedCornerShape(16.dp))
                     .background(bgColor)
-                    .padding(horizontal = 16.dp, vertical = 12.dp)
+                    .border(1.dp, borderColor, RoundedCornerShape(16.dp))
+                    .padding(horizontal = 18.dp, vertical = 12.dp)
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -123,10 +136,13 @@ fun ToastHost(modifier: Modifier = Modifier) {
                         text = toast.message,
                         color = Color.White,
                         style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.SemiBold
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 13.5.sp
                     )
                 }
             }
         }
     }
 }
+
+private data class Quadruple<A, B, C, D>(val first: A, val second: B, val third: C, val fourth: D)

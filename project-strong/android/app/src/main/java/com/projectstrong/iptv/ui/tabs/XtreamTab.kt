@@ -35,13 +35,15 @@ import com.projectstrong.iptv.network.IPTVClient
 import com.projectstrong.iptv.network.ParsedCredential
 import com.projectstrong.iptv.ui.components.*
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.sync.Semaphore
-import kotlinx.coroutines.sync.withPermit
 import kotlinx.coroutines.withContext
+import java.util.concurrent.ConcurrentLinkedQueue
+import java.util.concurrent.atomic.AtomicInteger
 
 @Composable
 fun XtreamTab(onNextTab: (() -> Unit)? = null) {
@@ -89,8 +91,125 @@ fun XtreamMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCredent
     val clipboardManager = LocalClipboardManager.current
     val coroutineScope = rememberCoroutineScope()
     var fetchingRows by remember { mutableStateOf(emptySet<String>()) }
-    var isQueryingAll by remember { mutableStateOf(false) }
-    var queryStatusText by remember { mutableStateOf("") }
+    var catalogJob by remember { mutableStateOf<Job?>(null) }
+
+    fun startOrResumeCatalogQuery() {
+        val activeNodes = nodes.filter { it.status.contains("Active", ignoreCase = true) }
+        if (activeNodes.isEmpty()) {
+            DataStore.catalogQueryStatusText = "No active nodes available to query."
+            ToastManager.warning("No active nodes available to query!")
+            return
+        }
+
+        if (DataStore.isCatalogQueryPaused && DataStore.isQueryingCatalogs) {
+            DataStore.isCatalogQueryPaused = false
+            ToastManager.success("Catalog query resumed")
+            return
+        }
+
+        DataStore.isQueryingCatalogs = true
+        DataStore.isCatalogQueryPaused = false
+        DataStore.catalogQueryProgress = 0f
+        DataStore.catalogQueryStatusText = "Parallel catalog querying ${activeNodes.size} active nodes..."
+        ToastManager.info("Querying catalogs for ${activeNodes.size} nodes...")
+
+        catalogJob?.cancel()
+        catalogJob = DataStore.scanScope.launch(Dispatchers.Default) {
+            val total = activeNodes.size
+            val currentIndex = AtomicInteger(0)
+            val completedCount = AtomicInteger(0)
+            val updateQueue = ConcurrentLinkedQueue<Triple<String, String, Pair<Int, Int>>>()
+
+            val workerCount = 12.coerceAtMost(total.coerceAtLeast(1))
+            val workers = List(workerCount) {
+                launch(Dispatchers.IO) {
+                    while (DataStore.isQueryingCatalogs) {
+                        while (DataStore.isCatalogQueryPaused && DataStore.isQueryingCatalogs) {
+                            delay(150)
+                        }
+                        if (!DataStore.isQueryingCatalogs) break
+
+                        val idx = currentIndex.getAndIncrement()
+                        if (idx >= total) break
+
+                        val node = activeNodes[idx]
+                        val liveAsync = async { IPTVClient.getLiveStreamCount(node.baseUrl, node.user, node.pass) }
+                        val vodAsync = async { IPTVClient.getVodStreamCount(node.baseUrl, node.user, node.pass) }
+                        val liveCount = liveAsync.await()
+                        val vodCount = vodAsync.await()
+
+                        updateQueue.add(Triple(node.baseUrl, node.user, Pair(liveCount, vodCount)))
+                        completedCount.incrementAndGet()
+                    }
+                }
+            }
+
+            // Throttled UI batch loop
+            while (DataStore.isQueryingCatalogs && completedCount.get() < total) {
+                delay(120)
+                val batch = mutableListOf<Triple<String, String, Pair<Int, Int>>>()
+                while (true) {
+                    val item = updateQueue.poll() ?: break
+                    batch.add(item)
+                    if (batch.size >= 50) break
+                }
+
+                val currentDone = completedCount.get()
+                withContext(Dispatchers.Main) {
+                    for ((bUrl, uName, counts) in batch) {
+                        val nodeIdx = DataStore.scannedNodes.indexOfFirst { it.baseUrl == bUrl && it.user == uName && it.type == "Xtream" }
+                        if (nodeIdx != -1) {
+                            DataStore.scannedNodes[nodeIdx] = DataStore.scannedNodes[nodeIdx].copy(
+                                channels = "${counts.first}",
+                                vods = "${counts.second}"
+                            )
+                        }
+                    }
+                    DataStore.catalogQueryProgress = currentDone.toFloat() / total.toFloat()
+                    if (DataStore.isCatalogQueryPaused) {
+                        DataStore.catalogQueryStatusText = "⏸️ Paused query at $currentDone / $total nodes."
+                    } else {
+                        DataStore.catalogQueryStatusText = "Queried $currentDone / $total active nodes (${(DataStore.catalogQueryProgress * 100).toInt()}%)..."
+                    }
+                }
+            }
+
+            workers.forEach { it.join() }
+
+            val finalBatch = mutableListOf<Triple<String, String, Pair<Int, Int>>>()
+            while (true) {
+                val item = updateQueue.poll() ?: break
+                finalBatch.add(item)
+            }
+
+            withContext(Dispatchers.Main) {
+                for ((bUrl, uName, counts) in finalBatch) {
+                    val nodeIdx = DataStore.scannedNodes.indexOfFirst { it.baseUrl == bUrl && it.user == uName && it.type == "Xtream" }
+                    if (nodeIdx != -1) {
+                        DataStore.scannedNodes[nodeIdx] = DataStore.scannedNodes[nodeIdx].copy(
+                            channels = "${counts.first}",
+                            vods = "${counts.second}"
+                        )
+                    }
+                }
+
+                if (DataStore.isQueryingCatalogs) {
+                    DataStore.scannedNodes.sortWith(
+                        compareByDescending<ParsedCredential> { it.channels.toIntOrNull() ?: -1 }
+                            .thenByDescending { it.daysLeft.toIntOrNull() ?: -1 }
+                            .thenByDescending { it.vods.toIntOrNull() ?: -1 }
+                    )
+                    sortColumn = "Live"
+                    sortAscending = false
+                    DataStore.isQueryingCatalogs = false
+                    DataStore.isCatalogQueryPaused = false
+                    DataStore.catalogQueryProgress = 1f
+                    DataStore.catalogQueryStatusText = "Query Complete! Auto-sorted by Live Channels, Days Left, and VODs."
+                    ToastManager.success("Completed catalog query for $total nodes!")
+                }
+            }
+        }
+    }
 
     if (committingNode != null) {
         val node = committingNode!!
@@ -128,106 +247,81 @@ fun XtreamMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCredent
             )
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.horizontalScroll(rememberScrollState())
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
+                val activeCount = nodes.count { it.status.contains("Active", ignoreCase = true) }
                 if (nodes.isNotEmpty()) {
-                    PrimaryButton(
-                        text = if (isQueryingAll) "Stop Query" else "Query All Active",
-                        onClick = {
-                            if (isQueryingAll) {
-                                isQueryingAll = false
-                                queryStatusText = "Query stopped."
-                                return@PrimaryButton
-                            }
-                            val activeNodes = nodes.filter { it.status.contains("Active", ignoreCase = true) }
-                            if (activeNodes.isEmpty()) {
-                                queryStatusText = "No active nodes to query."
-                                return@PrimaryButton
-                            }
-                            isQueryingAll = true
-                            DataStore.scanProgress = 0f
-                            queryStatusText = "High-speed parallel querying 0/${activeNodes.size} nodes..."
-                            
-                            coroutineScope.launch {
-                                val total = activeNodes.size
-                                var completed = 0
-                                // Use 12 concurrent coroutines with Semaphore for maximum throughput
-                                val querySemaphore = Semaphore(12)
-
-                                coroutineScope {
-                                    activeNodes.map { node: ParsedCredential ->
-                                        launch(Dispatchers.IO) {
-                                            if (!isQueryingAll) return@launch
-                                            querySemaphore.withPermit {
-                                                val key = node.baseUrl + node.user
-                                                withContext(Dispatchers.Main) { fetchingRows = fetchingRows + key }
-
-                                                // Run live & vod count fetching concurrently
-                                                val liveAsync = async { IPTVClient.getLiveStreamCount(node.baseUrl, node.user, node.pass) }
-                                                val vodAsync = async { IPTVClient.getVodStreamCount(node.baseUrl, node.user, node.pass) }
-                                                val liveCount = liveAsync.await()
-                                                val vodCount = vodAsync.await()
-
-                                                withContext(Dispatchers.Main) {
-                                                    val newIdx = DataStore.scannedNodes.indexOfFirst { it.baseUrl == node.baseUrl && it.user == node.user && it.type == "Xtream" }
-                                                    if (newIdx != -1) {
-                                                        DataStore.scannedNodes[newIdx] = DataStore.scannedNodes[newIdx].copy(channels = "$liveCount", vods = "$vodCount")
-                                                    }
-                                                    fetchingRows = fetchingRows - key
-                                                    completed++
-                                                    DataStore.scanProgress = completed.toFloat() / total.toFloat()
-                                                    queryStatusText = "Querying $completed/$total active nodes..."
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                                withContext(Dispatchers.Main) {
-                                    if (isQueryingAll) {
-                                        DataStore.scannedNodes.sortWith(
-                                            compareByDescending<ParsedCredential> { it.channels.toIntOrNull() ?: -1 }
-                                                .thenByDescending { it.daysLeft.toIntOrNull() ?: -1 }
-                                                .thenByDescending { it.vods.toIntOrNull() ?: -1 }
-                                        )
-                                        sortColumn = "Live"
-                                        sortAscending = false
-                                        isQueryingAll = false
-                                        queryStatusText = "Query Complete! Sorted by Live Channels, Days Left, and VODs."
-                                    }
-                                }
-                            }
-                        },
-                        modifier = Modifier.height(36.dp)
-                    )
-                    Spacer(modifier = Modifier.width(16.dp))
+                    if (!DataStore.isQueryingCatalogs) {
+                        PrimaryButton(
+                            text = "Query Catalogs ($activeCount Active)",
+                            onClick = { startOrResumeCatalogQuery() },
+                            modifier = Modifier.height(36.dp)
+                        )
+                    } else {
+                        if (!DataStore.isCatalogQueryPaused) {
+                            PrimaryButton(
+                                text = "⏸️ Pause",
+                                color = Color(0xFFF59E0B),
+                                onClick = {
+                                    DataStore.isCatalogQueryPaused = true
+                                    ToastManager.warning("Catalog query paused")
+                                },
+                                modifier = Modifier.height(36.dp)
+                            )
+                        } else {
+                            PrimaryButton(
+                                text = "▶️ Resume",
+                                color = Color(0xFF10B981),
+                                onClick = {
+                                    DataStore.isCatalogQueryPaused = false
+                                    ToastManager.success("Catalog query resumed")
+                                },
+                                modifier = Modifier.height(36.dp)
+                            )
+                        }
+                        PrimaryButton(
+                            text = "⏹️ Stop",
+                            color = Color(0xFFEF4444),
+                            onClick = {
+                                DataStore.isQueryingCatalogs = false
+                                DataStore.isCatalogQueryPaused = false
+                                catalogJob?.cancel()
+                                DataStore.catalogQueryStatusText = "Catalog query stopped by user."
+                                ToastManager.error("Catalog query stopped")
+                            },
+                            modifier = Modifier.height(36.dp)
+                        )
+                    }
                 }
-                Text("Active Only", color = Color.White, style = MaterialTheme.typography.bodyMedium)
-                Spacer(modifier = Modifier.width(8.dp))
-                Switch(
-                    checked = DataStore.activeOnlyXtream,
-                    onCheckedChange = { DataStore.activeOnlyXtream = it },
-                    colors = SwitchDefaults.colors(checkedThumbColor = Color(0xFF3B82F6), checkedTrackColor = Color(0xFF3B82F6).copy(alpha = 0.5f))
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text("Active Only", color = Color.White, style = MaterialTheme.typography.bodySmall)
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Switch(
+                        checked = DataStore.activeOnlyXtream,
+                        onCheckedChange = { DataStore.activeOnlyXtream = it },
+                        colors = SwitchDefaults.colors(checkedThumbColor = Color(0xFF3B82F6), checkedTrackColor = Color(0xFF3B82F6).copy(alpha = 0.5f))
+                    )
+                }
             }
         }
 
-        if (queryStatusText.isNotEmpty()) {
+        if (DataStore.catalogQueryStatusText.isNotEmpty()) {
             Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp)) {
                 Text(
-                    text = queryStatusText,
-                    color = Color(0xFF38BDF8),
+                    text = DataStore.catalogQueryStatusText,
+                    color = if (DataStore.isCatalogQueryPaused) Color(0xFFFBBF24) else Color(0xFF38BDF8),
                     style = MaterialTheme.typography.bodySmall,
                     fontWeight = FontWeight.SemiBold
                 )
-                if (isQueryingAll) {
+                if (DataStore.isQueryingCatalogs) {
                     Spacer(modifier = Modifier.height(4.dp))
                     LinearProgressIndicator(
-                        progress = { DataStore.scanProgress },
+                        progress = { DataStore.catalogQueryProgress },
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(4.dp)
                             .clip(RoundedCornerShape(2.dp)),
-                        color = Color(0xFF10B981),
+                        color = if (DataStore.isCatalogQueryPaused) Color(0xFFF59E0B) else Color(0xFF10B981),
                         trackColor = Color(0xFF1E293B)
                     )
                 }
@@ -333,6 +427,7 @@ fun XtreamMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCredent
                                             text = "Copy",
                                             onClick = {
                                                 clipboardManager.setText(AnnotatedString("${node.baseUrl}/player_api.php?username=${node.user}&password=${node.pass}"))
+                                                ToastManager.success("Copied Xtream API URL to clipboard!")
                                             },
                                             modifier = Modifier.height(36.dp).width(50.dp)
                                         )
@@ -453,7 +548,10 @@ fun XtreamDetailScreen(node: ParsedCredential, onBack: () -> Unit) {
                         Text("HOST URL", color = Color(0xFFA0A0B0), style = MaterialTheme.typography.labelSmall)
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Text(node.baseUrl, color = Color.White, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold)
-                            IconButton(onClick = { clipboardManager.setText(AnnotatedString(node.baseUrl)) }, modifier = Modifier.size(24.dp).padding(start = 8.dp)) {
+                            IconButton(onClick = { 
+                                clipboardManager.setText(AnnotatedString(node.baseUrl))
+                                ToastManager.success("Copied Host URL to clipboard!")
+                            }, modifier = Modifier.size(24.dp).padding(start = 8.dp)) {
                                 Icon(Icons.Default.ContentCopy, contentDescription = "Copy", tint = Color.Gray, modifier = Modifier.size(16.dp))
                             }
                         }
@@ -466,7 +564,10 @@ fun XtreamDetailScreen(node: ParsedCredential, onBack: () -> Unit) {
                         Text("USERNAME", color = Color(0xFFA0A0B0), style = MaterialTheme.typography.labelSmall)
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Text(node.user, color = Color.White, style = MaterialTheme.typography.bodyMedium)
-                            IconButton(onClick = { clipboardManager.setText(AnnotatedString(node.user)) }, modifier = Modifier.size(24.dp).padding(start = 8.dp)) {
+                            IconButton(onClick = { 
+                                clipboardManager.setText(AnnotatedString(node.user))
+                                ToastManager.success("Copied Username to clipboard!")
+                            }, modifier = Modifier.size(24.dp).padding(start = 8.dp)) {
                                 Icon(Icons.Default.ContentCopy, contentDescription = "Copy", tint = Color.Gray, modifier = Modifier.size(16.dp))
                             }
                         }
@@ -475,7 +576,10 @@ fun XtreamDetailScreen(node: ParsedCredential, onBack: () -> Unit) {
                         Text("PASSWORD", color = Color(0xFFA0A0B0), style = MaterialTheme.typography.labelSmall)
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Text(node.pass, color = Color.White, style = MaterialTheme.typography.bodyMedium)
-                            IconButton(onClick = { clipboardManager.setText(AnnotatedString(node.pass)) }, modifier = Modifier.size(24.dp).padding(start = 8.dp)) {
+                            IconButton(onClick = { 
+                                clipboardManager.setText(AnnotatedString(node.pass))
+                                ToastManager.success("Copied Password to clipboard!")
+                            }, modifier = Modifier.size(24.dp).padding(start = 8.dp)) {
                                 Icon(Icons.Default.ContentCopy, contentDescription = "Copy", tint = Color.Gray, modifier = Modifier.size(16.dp))
                             }
                         }
@@ -487,7 +591,10 @@ fun XtreamDetailScreen(node: ParsedCredential, onBack: () -> Unit) {
                     val m3uUrl = "${node.baseUrl.trimEnd('/')}/get.php?username=${node.user}&password=${node.pass}&type=m3u_plus&output=ts"
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(m3uUrl, color = Color.White, style = MaterialTheme.typography.bodyMedium, maxLines = 1, modifier = Modifier.weight(1f))
-                        IconButton(onClick = { clipboardManager.setText(AnnotatedString(m3uUrl)) }, modifier = Modifier.size(24.dp).padding(start = 8.dp)) {
+                        IconButton(onClick = { 
+                            clipboardManager.setText(AnnotatedString(m3uUrl))
+                            ToastManager.success("Copied M3U Playlist URL to clipboard!")
+                        }, modifier = Modifier.size(24.dp).padding(start = 8.dp)) {
                             Icon(Icons.Default.ContentCopy, contentDescription = "Copy", tint = Color.Gray, modifier = Modifier.size(16.dp))
                         }
                     }

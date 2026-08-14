@@ -185,6 +185,7 @@ fun StalkerMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCreden
                                             text = "Copy",
                                             onClick = {
                                                 clipboardManager.setText(AnnotatedString("${node.baseUrl} / ${node.mac}"))
+                                                ToastManager.success("Copied Stalker credentials to clipboard!")
                                             },
                                             modifier = Modifier.height(36.dp).weight(1f)
                                         )
@@ -288,7 +289,10 @@ fun StalkerDetailScreen(node: ParsedCredential, onBack: () -> Unit) {
                         Text("HOST PORTAL", color = Color(0xFFA0A0B0), style = MaterialTheme.typography.labelSmall)
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Text(node.baseUrl, color = Color.White, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold)
-                            IconButton(onClick = { clipboardManager.setText(AnnotatedString(node.baseUrl)) }, modifier = Modifier.size(24.dp).padding(start = 8.dp)) {
+                            IconButton(onClick = { 
+                                clipboardManager.setText(AnnotatedString(node.baseUrl))
+                                ToastManager.success("Copied Host Portal URL to clipboard!")
+                            }, modifier = Modifier.size(24.dp).padding(start = 8.dp)) {
                                 Icon(Icons.Default.ContentCopy, contentDescription = "Copy", tint = Color.Gray, modifier = Modifier.size(16.dp))
                             }
                         }
@@ -301,7 +305,10 @@ fun StalkerDetailScreen(node: ParsedCredential, onBack: () -> Unit) {
                         Text("MAC ADDRESS", color = Color(0xFFA0A0B0), style = MaterialTheme.typography.labelSmall)
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Text(node.mac, color = Color.White, style = MaterialTheme.typography.bodyMedium)
-                            IconButton(onClick = { clipboardManager.setText(AnnotatedString(node.mac)) }, modifier = Modifier.size(24.dp)) {
+                            IconButton(onClick = { 
+                                clipboardManager.setText(AnnotatedString(node.mac))
+                                ToastManager.success("Copied MAC Address to clipboard!")
+                            }, modifier = Modifier.size(24.dp)) {
                                 Icon(Icons.Default.ContentCopy, contentDescription = "Copy", tint = Color.Gray, modifier = Modifier.size(16.dp))
                             }
                         }
