@@ -12,9 +12,15 @@ Validates all 5 system modules:
 from __future__ import annotations
 
 import os
+import sys
 import tempfile
 import unittest
 from pathlib import Path
+
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+if hasattr(sys.stderr, "reconfigure"):
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
 
 from collector import EBayCollector, HardwareCollectorHub, RawListing, RedditCollector, SwappaCollector
 from daemon import DealHunterDaemon
