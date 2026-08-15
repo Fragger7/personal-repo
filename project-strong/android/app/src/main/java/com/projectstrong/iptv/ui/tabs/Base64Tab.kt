@@ -5,13 +5,22 @@ import android.net.Uri
 import android.util.Base64
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.filled.ContentPaste
+import androidx.compose.material.icons.filled.DeleteOutline
+import androidx.compose.material.icons.filled.OpenInBrowser
+import androidx.compose.material.icons.filled.Transform
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.projectstrong.iptv.ui.components.*
@@ -31,129 +40,192 @@ fun Base64Tab(onNextTab: () -> Unit = {}) {
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        Text(
-            text = "Base64 URL Decoder",
-            color = Color.White,
-            style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.Bold
-        )
-        
-        Text(
-            text = "Extract hidden structural links embedded as text chunks inside unstructured text blocks, automatically stripping garbage or padding limits.",
-            color = Color(0xFFA0A0B0),
-            style = MaterialTheme.typography.bodyMedium,
-            modifier = Modifier.padding(bottom = 8.dp)
-        )
-
-        OutlinedTextField(
-            value = input,
-            onValueChange = { input = it },
-            label = { Text("Paste Base64 Encoded Block") },
-            minLines = 6,
-            modifier = Modifier.fillMaxWidth(),
-            colors = OutlinedTextFieldDefaults.colors(
-                unfocusedBorderColor = Color(0xFF333344),
-                focusedBorderColor = Color(0xFF3B82F6),
-                unfocusedTextColor = Color.White,
-                focusedTextColor = Color.White,
-                unfocusedContainerColor = Color(0xFF12121A),
-                focusedContainerColor = Color(0xFF12121A)
-            )
-        )
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        // Description Card
+        Surface(
+            shape = RoundedCornerShape(16.dp),
+            color = AppSurface,
+            border = androidx.compose.foundation.BorderStroke(1.dp, AppSurfaceBorder),
+            modifier = Modifier.fillMaxWidth()
         ) {
-            PrimaryButton(
-                text = "Decode Data",
-                onClick = {
-                    try {
-                        val pattern = java.util.regex.Pattern.compile("[A-Za-z0-9+/]{20,}={0,2}")
-                        val matcher = pattern.matcher(input)
-                        val results = mutableListOf<String>()
-                        while (matcher.find()) {
-                            val p = matcher.group()
-                            val pad = p.length % 4
-                            val padded = p + "=".repeat(if (pad > 0) 4 - pad else 0)
-                            try {
-                                val decodedBytes = Base64.decode(padded, Base64.DEFAULT)
-                                results.add(String(decodedBytes, Charsets.UTF_8))
-                            } catch(e: Exception) {}
-                        }
-                        if (results.isEmpty()) {
-                            val cleanInput = input.replace(Regex("\\s+"), "")
-                            val decodedBytes = Base64.decode(cleanInput, Base64.DEFAULT)
-                            output = String(decodedBytes, Charsets.UTF_8)
-                        } else {
-                            output = results.joinToString("\n\n")
-                        }
-                    } catch (e: Exception) {
-                        output = "Error decoding: ${e.message}"
-                    }
-                },
-                modifier = Modifier.weight(1f)
-            )
-            SecondaryButton(
-                text = "Paste",
-                onClick = {
-                    clipboardManager.getText()?.text?.let { input = it }
-                },
-                modifier = Modifier.weight(1f)
-            )
-            SecondaryButton(
-                text = "Clear",
-                onClick = { 
-                    input = ""
-                    output = ""
-                },
-                modifier = Modifier.weight(1f)
-            )
-        }
-
-        if (output.isNotEmpty()) {
-            Text(
-                text = "Decoded Output",
-                color = Color.White,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(top = 16.dp)
-            )
-            OutlinedTextField(
-                value = output,
-                onValueChange = {},
-                label = { Text("Result") },
-                minLines = 4,
-                modifier = Modifier.fillMaxWidth(),
-                colors = OutlinedTextFieldDefaults.colors(
-                    unfocusedBorderColor = Color(0xFF333344),
-                    focusedBorderColor = Color(0xFF3B82F6),
-                    unfocusedTextColor = Color.White,
-                    focusedTextColor = Color.White,
-                    unfocusedContainerColor = Color(0xFF12121A),
-                    focusedContainerColor = Color(0xFF12121A)
+            Column(modifier = Modifier.padding(16.dp)) {
+                Text(
+                    text = "Base64 URL Decoder",
+                    color = AppTextPrimary,
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold
                 )
-            )
-            
-            val trimmedOutput = output.trim()
-            if (trimmedOutput.startsWith("http://") || trimmedOutput.startsWith("https://")) {
-                Spacer(modifier = Modifier.height(8.dp))
-                PrimaryButton(
-                    text = "🌐 Launch Converted URL in Browser",
-                    onClick = {
-                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(trimmedOutput))
-                        context.startActivity(intent)
-                    },
-                    modifier = Modifier.fillMaxWidth()
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = "Extract hidden structural links embedded as text chunks inside unstructured text blocks, automatically stripping garbage or padding limits.",
+                    color = AppTextSecondary,
+                    style = MaterialTheme.typography.bodyMedium
                 )
             }
         }
+
+        // Input Card
+        Surface(
+            shape = RoundedCornerShape(16.dp),
+            color = AppSurface,
+            border = androidx.compose.foundation.BorderStroke(1.dp, AppSurfaceBorder),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text("Base64 Encoded Block", color = AppTextSecondary, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
+                    Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                        TextButton(
+                            onClick = {
+                                clipboardManager.getText()?.text?.let {
+                                    input = it
+                                    ToastManager.info("Pasted text from clipboard")
+                                }
+                            },
+                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp)
+                        ) {
+                            Icon(Icons.Default.ContentPaste, contentDescription = null, tint = AppPrimary, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("Paste", color = AppPrimary, style = MaterialTheme.typography.labelSmall)
+                        }
+                        TextButton(
+                            onClick = {
+                                input = ""
+                                output = ""
+                            },
+                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp)
+                        ) {
+                            Icon(Icons.Default.DeleteOutline, contentDescription = null, tint = AppError, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("Clear", color = AppError, style = MaterialTheme.typography.labelSmall)
+                        }
+                    }
+                }
+
+                OutlinedTextField(
+                    value = input,
+                    onValueChange = { input = it },
+                    placeholder = { Text("Paste Base64 encoded payload...", color = AppTextMuted) },
+                    minLines = 5,
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(10.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        unfocusedBorderColor = AppSurfaceBorder,
+                        focusedBorderColor = AppPrimary,
+                        unfocusedTextColor = AppTextPrimary,
+                        focusedTextColor = AppTextPrimary,
+                        unfocusedContainerColor = AppSurfaceVariant,
+                        focusedContainerColor = AppSurfaceVariant
+                    )
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                PrimaryButton(
+                    text = "⚡ Decode Data",
+                    onClick = {
+                        try {
+                            val pattern = java.util.regex.Pattern.compile("[A-Za-z0-9+/]{20,}={0,2}")
+                            val matcher = pattern.matcher(input)
+                            val results = mutableListOf<String>()
+                            while (matcher.find()) {
+                                val p = matcher.group()
+                                val pad = p.length % 4
+                                val padded = p + "=".repeat(if (pad > 0) 4 - pad else 0)
+                                try {
+                                    val decodedBytes = Base64.decode(padded, Base64.DEFAULT)
+                                    results.add(String(decodedBytes, Charsets.UTF_8))
+                                } catch(e: Exception) {}
+                            }
+                            if (results.isEmpty()) {
+                                val cleanInput = input.replace(Regex("\\s+"), "")
+                                val decodedBytes = Base64.decode(cleanInput, Base64.DEFAULT)
+                                output = String(decodedBytes, Charsets.UTF_8)
+                            } else {
+                                output = results.joinToString("\n\n")
+                            }
+                            ToastManager.success("Base64 decoded successfully!")
+                        } catch (e: Exception) {
+                            output = "Error decoding: ${e.message}"
+                            ToastManager.error("Failed to decode Base64 data")
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth().height(44.dp)
+                )
+            }
+        }
+
+        // Output Card
+        if (output.isNotEmpty()) {
+            Surface(
+                shape = RoundedCornerShape(16.dp),
+                color = AppSurface,
+                border = androidx.compose.foundation.BorderStroke(1.dp, AppSurfaceBorder),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Decoded Output",
+                            color = AppTextPrimary,
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                        IconButton(
+                            onClick = {
+                                clipboardManager.setText(AnnotatedString(output))
+                                ToastManager.success("Output copied to clipboard!")
+                            },
+                            modifier = Modifier.size(32.dp)
+                        ) {
+                            Icon(Icons.Default.ContentCopy, contentDescription = "Copy Output", tint = AppPrimary, modifier = Modifier.size(18.dp))
+                        }
+                    }
+
+                    OutlinedTextField(
+                        value = output,
+                        onValueChange = {},
+                        readOnly = true,
+                        minLines = 4,
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(10.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            unfocusedBorderColor = AppSurfaceBorder,
+                            focusedBorderColor = AppPrimary,
+                            unfocusedTextColor = AppTextPrimary,
+                            focusedTextColor = AppTextPrimary,
+                            unfocusedContainerColor = AppSurfaceVariant,
+                            focusedContainerColor = AppSurfaceVariant
+                        )
+                    )
+                    
+                    val trimmedOutput = output.trim()
+                    if (trimmedOutput.startsWith("http://") || trimmedOutput.startsWith("https://")) {
+                        Spacer(modifier = Modifier.height(12.dp))
+                        PrimaryButton(
+                            text = "🌐 Launch Converted URL in Browser",
+                            onClick = {
+                                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(trimmedOutput))
+                                context.startActivity(intent)
+                            },
+                            modifier = Modifier.fillMaxWidth().height(44.dp)
+                        )
+                    }
+                }
+            }
+        }
         
-        Spacer(modifier = Modifier.height(16.dp))
-        PrimaryButton(
+        SecondaryButton(
             text = "Continue to Scanner →",
             onClick = onNextTab,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth().height(44.dp)
         )
     }
 }

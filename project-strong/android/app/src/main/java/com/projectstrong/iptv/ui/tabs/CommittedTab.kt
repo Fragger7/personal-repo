@@ -67,28 +67,29 @@ fun CommittedTab() {
     if (showTokenDialog) {
         AlertDialog(
             onDismissRequest = { showTokenDialog = false },
-            title = { Text("GitHub Access Token", color = Color.White, fontWeight = FontWeight.Bold) },
+            title = { Text("GitHub Access Token", color = AppTextPrimary, fontWeight = FontWeight.Bold) },
             text = {
                 Column {
                     Text(
                         "To push saved accounts to your GitHub repository, enter a GitHub Personal Access Token (with repo scope). It is securely stored in your device's private sandboxed app storage and used only to communicate directly with GitHub.",
-                        color = Color.LightGray,
+                        color = AppTextSecondary,
                         style = MaterialTheme.typography.bodySmall
                     )
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(14.dp))
                     OutlinedTextField(
                         value = tempToken,
                         onValueChange = { tempToken = it },
                         label = { Text("GITHUB_TOKEN") },
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(10.dp),
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedTextColor = Color.White,
-                            unfocusedTextColor = Color.White,
-                            focusedBorderColor = Color(0xFF3B82F6),
-                            unfocusedBorderColor = Color(0xFF333344),
-                            focusedContainerColor = Color(0xFF12121A),
-                            unfocusedContainerColor = Color(0xFF12121A)
+                            focusedTextColor = AppTextPrimary,
+                            unfocusedTextColor = AppTextPrimary,
+                            focusedBorderColor = AppPrimary,
+                            unfocusedBorderColor = AppSurfaceBorder,
+                            focusedContainerColor = AppSurfaceVariant,
+                            unfocusedContainerColor = AppSurfaceVariant
                         )
                     )
                     if (DataStore.githubToken.isNotEmpty()) {
@@ -100,7 +101,7 @@ fun CommittedTab() {
                                 showTokenDialog = false
                                 ToastManager.info("GitHub Token cleared")
                             },
-                            colors = ButtonDefaults.textButtonColors(contentColor = Color(0xFFEF4444))
+                            colors = ButtonDefaults.textButtonColors(contentColor = AppError)
                         ) {
                             Text("Clear Saved Token")
                         }
@@ -121,7 +122,8 @@ fun CommittedTab() {
             dismissButton = {
                 SecondaryButton(text = "Cancel", onClick = { showTokenDialog = false })
             },
-            containerColor = Color(0xFF1E1E2E)
+            containerColor = AppSurface,
+            shape = RoundedCornerShape(16.dp)
         )
     }
 
@@ -132,34 +134,34 @@ fun CommittedTab() {
             onDismissRequest = { showPushConfirmDialog = false },
             title = {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Default.CloudUpload, contentDescription = null, tint = Color(0xFF10B981))
+                    Icon(Icons.Default.CloudUpload, contentDescription = null, tint = AppSuccess)
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Confirm Push to GitHub", color = Color.White, fontWeight = FontWeight.Bold)
+                    Text("Confirm Push to GitHub", color = AppTextPrimary, fontWeight = FontWeight.Bold)
                 }
             },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(
                         "You are about to push ${records.size} records to GitHub repository:",
-                        color = Color.White,
+                        color = AppTextPrimary,
                         style = MaterialTheme.typography.bodyMedium
                     )
                     Text(
                         "📁 project-strong/committed.json",
-                        color = Color(0xFF60A5FA),
+                        color = AppPrimary,
                         fontWeight = FontWeight.SemiBold,
                         style = MaterialTheme.typography.bodySmall
                     )
                     if (localCount > 0) {
                         Text(
                             "Includes $localCount newly added/modified local accounts that will be synced to the cloud.",
-                            color = Color(0xFFFBBF24),
+                            color = AppWarning,
                             style = MaterialTheme.typography.bodySmall
                         )
                     }
                     Text(
                         "Existing cloud records will be cleanly merged and updated.",
-                        color = Color.LightGray,
+                        color = AppTextSecondary,
                         style = MaterialTheme.typography.bodySmall
                     )
                 }
@@ -167,7 +169,7 @@ fun CommittedTab() {
             confirmButton = {
                 PrimaryButton(
                     text = "Push Now",
-                    color = Color(0xFF10B981),
+                    color = AppSuccess,
                     onClick = {
                         showPushConfirmDialog = false
                         isPushing = true
@@ -194,7 +196,8 @@ fun CommittedTab() {
             dismissButton = {
                 SecondaryButton(text = "Cancel", onClick = { showPushConfirmDialog = false })
             },
-            containerColor = Color(0xFF1E1E2E)
+            containerColor = AppSurface,
+            shape = RoundedCornerShape(16.dp)
         )
     }
 
@@ -368,74 +371,85 @@ fun CommittedMasterGrid(
     val localCount = records.count { it.isLocal }
 
     Column(modifier = Modifier.fillMaxSize()) {
-        // Compact Control Bar
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 8.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+        // Control Bar
+        Surface(
+            shape = RoundedCornerShape(14.dp),
+            color = AppSurface,
+            border = androidx.compose.foundation.BorderStroke(1.dp, AppSurfaceBorder),
+            modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp)
         ) {
             Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.weight(1f, fill = false)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = "Committed Data (${records.size})",
-                    color = Color.White,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
-                )
-                if (localCount > 0) {
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Box(
-                        modifier = Modifier
-                            .background(Color(0xFFF59E0B).copy(alpha = 0.2f), RoundedCornerShape(12.dp))
-                            .padding(horizontal = 8.dp, vertical = 2.dp)
-                    ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.weight(1f, fill = false)
+                ) {
+                    Column {
                         Text(
-                            text = "$localCount Unpushed",
-                            color = Color(0xFFFBBF24),
-                            style = MaterialTheme.typography.labelSmall,
+                            text = "Committed Data",
+                            color = AppTextPrimary,
+                            style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold
                         )
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Text(
+                            text = "Showing ${records.size} committed records",
+                            color = AppTextSecondary,
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
+                    if (localCount > 0) {
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Box(
+                            modifier = Modifier
+                                .background(AppWarning.copy(alpha = 0.2f), RoundedCornerShape(8.dp))
+                                .padding(horizontal = 8.dp, vertical = 4.dp)
+                        ) {
+                            Text(
+                                text = "$localCount Unpushed",
+                                color = AppWarning,
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
                     }
                 }
-            }
 
-            // Compact Action Buttons Row
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.horizontalScroll(rememberScrollState())
-            ) {
-                // Re-check live status
-                SecondaryButton(
-                    text = "⚡ Check",
-                    onClick = onRecheckStatus,
-                    modifier = Modifier.height(34.dp)
-                )
-                // Reload from Git
-                SecondaryButton(
-                    text = "🔄 Sync",
-                    onClick = onReload,
-                    modifier = Modifier.height(34.dp)
-                )
-                // Push to Git
-                PrimaryButton(
-                    text = if (localCount > 0) "☁️ Push ($localCount)" else "☁️ Push",
-                    color = if (records.isEmpty()) Color.Gray else Color(0xFF10B981),
-                    onClick = onPush,
-                    modifier = Modifier.height(34.dp)
-                )
-                // Token Key Button
-                IconButton(onClick = onOpenTokenSettings, modifier = Modifier.size(34.dp)) {
-                    Icon(
-                        Icons.Default.Key,
-                        contentDescription = "Token Settings",
-                        tint = if (DataStore.githubToken.isNotEmpty()) Color(0xFF60A5FA) else Color.Gray,
-                        modifier = Modifier.size(20.dp)
+                // Action Buttons Row
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.horizontalScroll(rememberScrollState())
+                ) {
+                    SecondaryButton(
+                        text = "⚡ Check",
+                        onClick = onRecheckStatus,
+                        modifier = Modifier.height(36.dp)
                     )
+                    SecondaryButton(
+                        text = "🔄 Sync",
+                        onClick = onReload,
+                        modifier = Modifier.height(36.dp)
+                    )
+                    PrimaryButton(
+                        text = if (localCount > 0) "☁️ Push ($localCount)" else "☁️ Push",
+                        color = if (records.isEmpty()) AppTextMuted else AppSuccess,
+                        onClick = onPush,
+                        modifier = Modifier.height(36.dp)
+                    )
+                    IconButton(onClick = onOpenTokenSettings, modifier = Modifier.size(36.dp)) {
+                        Icon(
+                            Icons.Default.Key,
+                            contentDescription = "Token Settings",
+                            tint = if (DataStore.githubToken.isNotEmpty()) AppPrimary else AppTextMuted,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
                 }
             }
         }
@@ -443,199 +457,203 @@ fun CommittedMasterGrid(
         if (statusMessage.isNotEmpty()) {
             Text(
                 statusMessage,
-                color = Color(0xFF34D399),
+                color = AppSuccess,
                 style = MaterialTheme.typography.bodySmall,
                 fontWeight = FontWeight.SemiBold,
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 2.dp)
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
             )
         }
 
         if (isBusy) {
             LinearProgressIndicator(
-                modifier = Modifier.fillMaxWidth().height(3.dp),
-                color = Color(0xFF10B981),
-                trackColor = Color(0xFF1E293B)
+                modifier = Modifier.fillMaxWidth().height(4.dp).clip(RoundedCornerShape(2.dp)),
+                color = AppSuccess,
+                trackColor = AppSurfaceVariant
             )
-        }
-
-        if (records.isNotEmpty()) {
-            Text(
-                text = "Showing ${records.size} committed records.",
-                color = Color(0xFFA0A0B0),
-                style = MaterialTheme.typography.bodySmall,
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 2.dp)
-            )
+            Spacer(modifier = Modifier.height(6.dp))
         }
 
         if (records.isEmpty()) {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text("No committed records saved.", color = Color.Gray)
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text("Save verified connections from the Xtream or Stalker tabs.", color = Color.DarkGray, style = MaterialTheme.typography.bodySmall)
+            Surface(
+                shape = RoundedCornerShape(14.dp),
+                color = AppSurface,
+                border = androidx.compose.foundation.BorderStroke(1.dp, AppSurfaceBorder),
+                modifier = Modifier.fillMaxWidth().weight(1f)
+            ) {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text("No committed records saved.", color = AppTextMuted, style = MaterialTheme.typography.bodyMedium)
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text("Save verified connections from the Xtream or Stalker tabs.", color = AppTextSecondary, style = MaterialTheme.typography.bodySmall)
+                    }
                 }
             }
             return
         }
 
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .weight(1f)
+        Surface(
+            shape = RoundedCornerShape(14.dp),
+            color = AppSurface,
+            border = androidx.compose.foundation.BorderStroke(1.dp, AppSurfaceBorder),
+            modifier = Modifier.fillMaxWidth().weight(1f)
         ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .horizontalScroll(scrollState)
-            ) {
-                Column(modifier = Modifier.fillMaxHeight()) {
-                    // Full 16-Column Header Row matching Python Dataframe exactly
-                    Row(
-                        modifier = Modifier
-                            .background(Color(0xFF1E1E2E))
-                            .padding(horizontal = 16.dp, vertical = 10.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        GridHeader("Date Added", 140.dp, onClick = { toggleSort(CommittedSortColumn.DATE_ADDED) }, isSorted = sortColumn == CommittedSortColumn.DATE_ADDED, isAscending = sortAscending)
-                        GridHeader("Type", 80.dp, onClick = { toggleSort(CommittedSortColumn.TYPE) }, isSorted = sortColumn == CommittedSortColumn.TYPE, isAscending = sortAscending)
-                        GridHeader("Status", 110.dp, onClick = { toggleSort(CommittedSortColumn.STATUS) }, isSorted = sortColumn == CommittedSortColumn.STATUS, isAscending = sortAscending)
-                        GridHeader("Sync", 110.dp, onClick = { toggleSort(CommittedSortColumn.SYNC) }, isSorted = sortColumn == CommittedSortColumn.SYNC, isAscending = sortAscending)
-                        GridHeader("Server / Host", 230.dp, onClick = { toggleSort(CommittedSortColumn.HOST) }, isSorted = sortColumn == CommittedSortColumn.HOST, isAscending = sortAscending)
-                        GridHeader("Provider", 140.dp, onClick = { toggleSort(CommittedSortColumn.PROVIDER) }, isSorted = sortColumn == CommittedSortColumn.PROVIDER, isAscending = sortAscending)
-                        GridHeader("Username", 140.dp)
-                        GridHeader("Password", 140.dp)
-                        GridHeader("MAC Address", 150.dp)
-                        GridHeader("Channels", 90.dp, onClick = { toggleSort(CommittedSortColumn.CHANNELS) }, isSorted = sortColumn == CommittedSortColumn.CHANNELS, isAscending = sortAscending)
-                        GridHeader("VODs", 90.dp, onClick = { toggleSort(CommittedSortColumn.VODS) }, isSorted = sortColumn == CommittedSortColumn.VODS, isAscending = sortAscending)
-                        GridHeader("Days Left", 90.dp, onClick = { toggleSort(CommittedSortColumn.DAYS_LEFT) }, isSorted = sortColumn == CommittedSortColumn.DAYS_LEFT, isAscending = sortAscending)
-                        GridHeader("Expires", 110.dp, onClick = { toggleSort(CommittedSortColumn.EXPIRES) }, isSorted = sortColumn == CommittedSortColumn.EXPIRES, isAscending = sortAscending)
-                        GridHeader("Conns", 80.dp)
-                        GridHeader("Timezone", 130.dp)
-                        GridHeader("Notes", 200.dp)
-                        GridHeader("Actions", 130.dp)
-                    }
+            Box(modifier = Modifier.fillMaxSize()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .horizontalScroll(scrollState)
+                ) {
+                    Column(modifier = Modifier.fillMaxHeight()) {
+                        // Full 16-Column Header Row matching Python Dataframe exactly
+                        Row(
+                            modifier = Modifier
+                                .background(AppSurfaceVariant)
+                                .padding(horizontal = 16.dp, vertical = 12.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            GridHeader("Date Added", 140.dp, onClick = { toggleSort(CommittedSortColumn.DATE_ADDED) }, isSorted = sortColumn == CommittedSortColumn.DATE_ADDED, isAscending = sortAscending)
+                            GridHeader("Type", 80.dp, onClick = { toggleSort(CommittedSortColumn.TYPE) }, isSorted = sortColumn == CommittedSortColumn.TYPE, isAscending = sortAscending)
+                            GridHeader("Status", 110.dp, onClick = { toggleSort(CommittedSortColumn.STATUS) }, isSorted = sortColumn == CommittedSortColumn.STATUS, isAscending = sortAscending)
+                            GridHeader("Sync", 110.dp, onClick = { toggleSort(CommittedSortColumn.SYNC) }, isSorted = sortColumn == CommittedSortColumn.SYNC, isAscending = sortAscending)
+                            GridHeader("Server / Host", 230.dp, onClick = { toggleSort(CommittedSortColumn.HOST) }, isSorted = sortColumn == CommittedSortColumn.HOST, isAscending = sortAscending)
+                            GridHeader("Provider", 140.dp, onClick = { toggleSort(CommittedSortColumn.PROVIDER) }, isSorted = sortColumn == CommittedSortColumn.PROVIDER, isAscending = sortAscending)
+                            GridHeader("Username", 140.dp)
+                            GridHeader("Password", 140.dp)
+                            GridHeader("MAC Address", 150.dp)
+                            GridHeader("Channels", 90.dp, onClick = { toggleSort(CommittedSortColumn.CHANNELS) }, isSorted = sortColumn == CommittedSortColumn.CHANNELS, isAscending = sortAscending)
+                            GridHeader("VODs", 90.dp, onClick = { toggleSort(CommittedSortColumn.VODS) }, isSorted = sortColumn == CommittedSortColumn.VODS, isAscending = sortAscending)
+                            GridHeader("Days Left", 90.dp, onClick = { toggleSort(CommittedSortColumn.DAYS_LEFT) }, isSorted = sortColumn == CommittedSortColumn.DAYS_LEFT, isAscending = sortAscending)
+                            GridHeader("Expires", 110.dp, onClick = { toggleSort(CommittedSortColumn.EXPIRES) }, isSorted = sortColumn == CommittedSortColumn.EXPIRES, isAscending = sortAscending)
+                            GridHeader("Conns", 80.dp)
+                            GridHeader("Timezone", 130.dp)
+                            GridHeader("Notes", 200.dp)
+                            GridHeader("Actions", 130.dp)
+                        }
 
-                    Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(Color(0xFF333344)))
+                        Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(AppSurfaceBorder))
 
-                    LazyColumn(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .weight(1f),
-                        state = listState
-                    ) {
-                        items(sortedRecords, key = { it.safeBaseUrl + it.safeUser + it.safeMac }) { record ->
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable { onSelectRecord(record) }
-                                    .padding(horizontal = 16.dp, vertical = 12.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                // 1. Date Added
-                                GridCell(record.safeDateAdded.ifEmpty { "-" }, 140.dp, color = Color(0xFFA0A0B0))
-                                // 2. Type
-                                StatusBadge(record.safeType, 80.dp)
-                                // 3. Status
-                                StatusBadge(record.safeStatus, 110.dp)
-                                // 4. Sync
-                                SyncBadge(record.isLocal, 110.dp)
-                                // 5. Server / Host URL
-                                GridCell(record.safeBaseUrl, 230.dp, isBold = true)
-                                // 6. Provider
-                                GridCell(record.safeProvider, 140.dp, color = Color(0xFF93C5FD))
-                                // 7. Username
-                                GridCell(if (record.safeType == "Xtream") record.safeUser.ifEmpty { "-" } else "-", 140.dp)
-                                // 8. Password
-                                GridCell(if (record.safeType == "Xtream") record.safePass.ifEmpty { "-" } else "-", 140.dp, color = Color.Gray)
-                                // 9. MAC Address
-                                GridCell(if (record.safeType == "Stalker") record.safeMac.ifEmpty { "-" } else "-", 150.dp)
-                                // 10. Channels
-                                GridCell(record.safeChannels.ifEmpty { "-" }, 90.dp)
-                                // 11. VODs
-                                GridCell(record.safeVods.ifEmpty { "-" }, 90.dp)
-                                // 12. Days Left
-                                GridCell(record.safeDaysLeft.ifEmpty { "-" }, 90.dp, isBold = true, color = if (record.safeDaysLeft.toIntOrNull() ?: 0 > 30) Color(0xFF34D399) else Color(0xFFFBBF24))
-                                // 13. Expires
-                                GridCell(record.safeExpires.ifEmpty { "-" }, 110.dp, color = Color(0xFFA0A0B0))
-                                // 14. Active/Max Conns
-                                val connsStr = if (record.safeActiveConn.isNotEmpty() || record.safeMaxConn.isNotEmpty()) {
-                                    "${record.safeActiveConn.ifEmpty { "0" }}/${record.safeMaxConn.ifEmpty { "1" }}"
-                                } else "-"
-                                GridCell(connsStr, 80.dp)
-                                // 15. Timezone
-                                GridCell(record.safeTimezone.ifEmpty { "-" }, 130.dp, color = Color.Gray)
-                                // 16. Notes
-                                GridCell(record.safeNotes.ifEmpty { "..." }, 200.dp, color = Color.LightGray)
+                        LazyColumn(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .weight(1f),
+                            state = listState
+                        ) {
+                            items(sortedRecords, key = { it.safeBaseUrl + it.safeUser + it.safeMac }) { record ->
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable { onSelectRecord(record) }
+                                        .padding(horizontal = 16.dp, vertical = 10.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    // 1. Date Added
+                                    GridCell(record.safeDateAdded.ifEmpty { "-" }, 140.dp, color = AppTextSecondary)
+                                    // 2. Type
+                                    StatusBadge(record.safeType, 80.dp)
+                                    // 3. Status
+                                    StatusBadge(record.safeStatus, 110.dp)
+                                    // 4. Sync
+                                    SyncBadge(record.isLocal, 110.dp)
+                                    // 5. Server / Host URL
+                                    GridCell(record.safeBaseUrl, 230.dp, isBold = true)
+                                    // 6. Provider
+                                    GridCell(record.safeProvider, 140.dp, color = AppPrimary)
+                                    // 7. Username
+                                    GridCell(if (record.safeType == "Xtream") record.safeUser.ifEmpty { "-" } else "-", 140.dp)
+                                    // 8. Password
+                                    GridCell(if (record.safeType == "Xtream") record.safePass.ifEmpty { "-" } else "-", 140.dp, color = AppTextMuted)
+                                    // 9. MAC Address
+                                    GridCell(if (record.safeType == "Stalker") record.safeMac.ifEmpty { "-" } else "-", 150.dp)
+                                    // 10. Channels
+                                    GridCell(record.safeChannels.ifEmpty { "-" }, 90.dp)
+                                    // 11. VODs
+                                    GridCell(record.safeVods.ifEmpty { "-" }, 90.dp)
+                                    // 12. Days Left
+                                    GridCell(record.safeDaysLeft.ifEmpty { "-" }, 90.dp, isBold = true, color = if (record.safeDaysLeft.toIntOrNull() ?: 0 > 30) AppSuccess else AppWarning)
+                                    // 13. Expires
+                                    GridCell(record.safeExpires.ifEmpty { "-" }, 110.dp, color = AppTextSecondary)
+                                    // 14. Active/Max Conns
+                                    val connsStr = if (record.safeActiveConn.isNotEmpty() || record.safeMaxConn.isNotEmpty()) {
+                                        "${record.safeActiveConn.ifEmpty { "0" }}/${record.safeMaxConn.ifEmpty { "1" }}"
+                                    } else "-"
+                                    GridCell(connsStr, 80.dp)
+                                    // 15. Timezone
+                                    GridCell(record.safeTimezone.ifEmpty { "-" }, 130.dp, color = AppTextMuted)
+                                    // 16. Notes
+                                    GridCell(record.safeNotes.ifEmpty { "..." }, 200.dp, color = AppTextSecondary)
 
-                                // Actions (Copy, Push if local, & Delete)
-                                Row(modifier = Modifier.width(130.dp), horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) {
-                                    if (record.isLocal) {
+                                    // Actions (Copy, Push if local, & Delete)
+                                    Row(modifier = Modifier.width(130.dp), horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) {
+                                        if (record.isLocal) {
+                                            IconButton(
+                                                onClick = { onPush() },
+                                                modifier = Modifier.size(34.dp)
+                                            ) {
+                                                Icon(
+                                                    Icons.Default.CloudUpload,
+                                                    contentDescription = "Push to Cloud",
+                                                    tint = AppSuccess,
+                                                    modifier = Modifier.size(18.dp)
+                                                )
+                                            }
+                                        }
                                         IconButton(
-                                            onClick = { onPush() },
-                                            modifier = Modifier.size(36.dp)
+                                            onClick = {
+                                                val copyText = if (record.safeType == "Xtream") {
+                                                    "Host: ${record.safeBaseUrl}\nUsername: ${record.safeUser}\nPassword: ${record.safePass}"
+                                                } else {
+                                                    "Host: ${record.safeBaseUrl}\nMAC: ${record.safeMac}"
+                                                }
+                                                clipboardManager.setText(AnnotatedString(copyText))
+                                                ToastManager.success("Copied credentials to clipboard!")
+                                            },
+                                            modifier = Modifier.size(34.dp)
                                         ) {
-                                            Icon(
-                                                Icons.Default.CloudUpload,
-                                                contentDescription = "Push to Cloud",
-                                                tint = Color(0xFF10B981),
-                                                modifier = Modifier.size(20.dp)
-                                            )
+                                            Icon(Icons.Default.ContentCopy, contentDescription = "Copy", tint = AppPrimary, modifier = Modifier.size(18.dp))
+                                        }
+                                        IconButton(
+                                            onClick = { CommittedManager.delete(record) },
+                                            modifier = Modifier.size(34.dp)
+                                        ) {
+                                            Icon(Icons.Default.Delete, contentDescription = "Delete", tint = AppError, modifier = Modifier.size(18.dp))
                                         }
                                     }
-                                    IconButton(
-                                        onClick = {
-                                            val copyText = if (record.safeType == "Xtream") {
-                                                "Host: ${record.safeBaseUrl}\nUsername: ${record.safeUser}\nPassword: ${record.safePass}"
-                                            } else {
-                                                "Host: ${record.safeBaseUrl}\nMAC: ${record.safeMac}"
-                                            }
-                                            clipboardManager.setText(AnnotatedString(copyText))
-                                            ToastManager.success("Copied credentials to clipboard!")
-                                        },
-                                        modifier = Modifier.size(36.dp)
-                                    ) {
-                                        Icon(Icons.Default.ContentCopy, contentDescription = "Copy", tint = Color(0xFF60A5FA), modifier = Modifier.size(18.dp))
-                                    }
-                                    IconButton(
-                                        onClick = { CommittedManager.delete(record) },
-                                        modifier = Modifier.size(36.dp)
-                                    ) {
-                                        Icon(Icons.Default.Delete, contentDescription = "Delete", tint = Color(0xFFEF4444), modifier = Modifier.size(18.dp))
-                                    }
                                 }
+                                Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(AppSurfaceBorder.copy(alpha = 0.5f)))
                             }
-                            Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(Color(0xFF222233)))
                         }
                     }
                 }
-            }
 
-            // Floating scroll buttons
-            Column(
-                modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .padding(end = 16.dp, bottom = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                FloatingActionButton(
-                    onClick = { coroutineScope.launch { listState.animateScrollToItem(0) } },
-                    containerColor = Color(0xFF3B82F6),
-                    contentColor = Color.White,
-                    modifier = Modifier.size(44.dp)
+                // Floating scroll buttons
+                Column(
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(end = 16.dp, bottom = 16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Icon(Icons.Default.KeyboardArrowUp, contentDescription = "Top")
-                }
-                FloatingActionButton(
-                    onClick = {
-                        coroutineScope.launch {
-                            if (sortedRecords.isNotEmpty()) listState.animateScrollToItem(sortedRecords.size - 1)
-                        }
-                    },
-                    containerColor = Color(0xFF3B82F6),
-                    contentColor = Color.White,
-                    modifier = Modifier.size(44.dp)
-                ) {
-                    Icon(Icons.Default.KeyboardArrowDown, contentDescription = "Bottom")
+                    FloatingActionButton(
+                        onClick = { coroutineScope.launch { listState.animateScrollToItem(0) } },
+                        containerColor = AppPrimary,
+                        contentColor = Color.White,
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier.size(44.dp)
+                    ) {
+                        Icon(Icons.Default.KeyboardArrowUp, contentDescription = "Top")
+                    }
+                    FloatingActionButton(
+                        onClick = {
+                            coroutineScope.launch {
+                                if (sortedRecords.isNotEmpty()) listState.animateScrollToItem(sortedRecords.size - 1)
+                            }
+                        },
+                        containerColor = AppPrimary,
+                        contentColor = Color.White,
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier.size(44.dp)
+                    ) {
+                        Icon(Icons.Default.KeyboardArrowDown, contentDescription = "Bottom")
+                    }
                 }
             }
         }
@@ -667,41 +685,43 @@ fun CommittedDetailScreen(record: CommittedRecord, onBack: () -> Unit, onDelete:
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 IconButton(onClick = onBack) {
-                    Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = Color.White)
+                    Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = AppTextPrimary)
                 }
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
                     text = "${record.safeType} Record Details",
-                    color = Color.White,
-                    style = MaterialTheme.typography.headlineMedium,
+                    color = AppTextPrimary,
+                    style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold
                 )
             }
             IconButton(onClick = onDelete) {
-                Icon(Icons.Default.Delete, contentDescription = "Delete", tint = Color(0xFFEF4444))
+                Icon(Icons.Default.Delete, contentDescription = "Delete", tint = AppError)
             }
         }
 
         // Host & Credentials Card
-        Card(
-            colors = CardDefaults.cardColors(containerColor = Color(0xFF1E1E2E)),
-            shape = RoundedCornerShape(12.dp),
+        Surface(
+            shape = RoundedCornerShape(16.dp),
+            color = AppSurface,
+            border = androidx.compose.foundation.BorderStroke(1.dp, AppSurfaceBorder),
             modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)
         ) {
-            Column(modifier = Modifier.padding(16.dp)) {
+            Column(modifier = Modifier.padding(20.dp)) {
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Column {
-                        Text("HOST URL", color = Color(0xFFA0A0B0), style = MaterialTheme.typography.labelSmall)
+                    Column(modifier = Modifier.weight(1f).padding(end = 8.dp)) {
+                        Text("HOST URL", color = AppTextSecondary, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
+                        Spacer(modifier = Modifier.height(2.dp))
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(record.safeBaseUrl, color = Color.White, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold)
+                            Text(record.safeBaseUrl, color = AppTextPrimary, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold)
                             IconButton(
                                 onClick = {
                                     clipboardManager.setText(AnnotatedString(record.safeBaseUrl))
                                     ToastManager.success("Host URL copied to clipboard!")
                                 },
-                                modifier = Modifier.size(24.dp).padding(start = 8.dp)
+                                modifier = Modifier.size(28.dp).padding(start = 6.dp)
                             ) {
-                                Icon(Icons.Default.ContentCopy, contentDescription = "Copy", tint = Color.Gray, modifier = Modifier.size(16.dp))
+                                Icon(Icons.Default.ContentCopy, contentDescription = "Copy", tint = AppTextSecondary, modifier = Modifier.size(16.dp))
                             }
                         }
                     }
@@ -716,60 +736,63 @@ fun CommittedDetailScreen(record: CommittedRecord, onBack: () -> Unit, onDelete:
                                 Icon(
                                     Icons.Default.CloudUpload,
                                     contentDescription = "Push to Cloud",
-                                    tint = Color(0xFF10B981),
+                                    tint = AppSuccess,
                                     modifier = Modifier.size(20.dp)
                                 )
                             }
                         }
                     }
                 }
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(14.dp))
 
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                     if (record.safeType == "Xtream") {
                         Column(modifier = Modifier.weight(1f)) {
-                            Text("USERNAME", color = Color(0xFFA0A0B0), style = MaterialTheme.typography.labelSmall)
+                            Text("USERNAME", color = AppTextSecondary, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
+                            Spacer(modifier = Modifier.height(2.dp))
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text(record.safeUser, color = Color.White, style = MaterialTheme.typography.bodyMedium)
+                                Text(record.safeUser, color = AppTextPrimary, style = MaterialTheme.typography.bodyMedium)
                                 IconButton(
                                     onClick = {
                                         clipboardManager.setText(AnnotatedString(record.safeUser))
                                         ToastManager.success("Username copied to clipboard!")
                                     },
-                                    modifier = Modifier.size(24.dp).padding(start = 8.dp)
+                                    modifier = Modifier.size(28.dp).padding(start = 6.dp)
                                 ) {
-                                    Icon(Icons.Default.ContentCopy, contentDescription = "Copy", tint = Color.Gray, modifier = Modifier.size(16.dp))
+                                    Icon(Icons.Default.ContentCopy, contentDescription = "Copy", tint = AppTextSecondary, modifier = Modifier.size(16.dp))
                                 }
                             }
                         }
                         Column(modifier = Modifier.weight(1f)) {
-                            Text("PASSWORD", color = Color(0xFFA0A0B0), style = MaterialTheme.typography.labelSmall)
+                            Text("PASSWORD", color = AppTextSecondary, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
+                            Spacer(modifier = Modifier.height(2.dp))
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text(record.safePass, color = Color.White, style = MaterialTheme.typography.bodyMedium)
+                                Text(record.safePass, color = AppTextPrimary, style = MaterialTheme.typography.bodyMedium)
                                 IconButton(
                                     onClick = {
                                         clipboardManager.setText(AnnotatedString(record.safePass))
                                         ToastManager.success("Password copied to clipboard!")
                                     },
-                                    modifier = Modifier.size(24.dp).padding(start = 8.dp)
+                                    modifier = Modifier.size(28.dp).padding(start = 6.dp)
                                 ) {
-                                    Icon(Icons.Default.ContentCopy, contentDescription = "Copy", tint = Color.Gray, modifier = Modifier.size(16.dp))
+                                    Icon(Icons.Default.ContentCopy, contentDescription = "Copy", tint = AppTextSecondary, modifier = Modifier.size(16.dp))
                                 }
                             }
                         }
                     } else {
                         Column(modifier = Modifier.weight(1f)) {
-                            Text("MAC ADDRESS", color = Color(0xFFA0A0B0), style = MaterialTheme.typography.labelSmall)
+                            Text("MAC ADDRESS", color = AppTextSecondary, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
+                            Spacer(modifier = Modifier.height(2.dp))
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text(record.safeMac, color = Color.White, style = MaterialTheme.typography.bodyMedium)
+                                Text(record.safeMac, color = AppTextPrimary, style = MaterialTheme.typography.bodyMedium)
                                 IconButton(
                                     onClick = {
                                         clipboardManager.setText(AnnotatedString(record.safeMac))
                                         ToastManager.success("MAC address copied to clipboard!")
                                     },
-                                    modifier = Modifier.size(24.dp).padding(start = 8.dp)
+                                    modifier = Modifier.size(28.dp).padding(start = 6.dp)
                                 ) {
-                                    Icon(Icons.Default.ContentCopy, contentDescription = "Copy", tint = Color.Gray, modifier = Modifier.size(16.dp))
+                                    Icon(Icons.Default.ContentCopy, contentDescription = "Copy", tint = AppTextSecondary, modifier = Modifier.size(16.dp))
                                 }
                             }
                         }
@@ -777,28 +800,29 @@ fun CommittedDetailScreen(record: CommittedRecord, onBack: () -> Unit, onDelete:
                 }
 
                 if (record.safeType == "Xtream" && record.safeUser.isNotEmpty()) {
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(14.dp))
                     Column(modifier = Modifier.fillMaxWidth()) {
-                        Text("M3U PLAYLIST URL", color = Color(0xFFA0A0B0), style = MaterialTheme.typography.labelSmall)
+                        Text("M3U PLAYLIST URL", color = AppTextSecondary, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
+                        Spacer(modifier = Modifier.height(2.dp))
                         val m3uUrl = "${record.safeBaseUrl.trimEnd('/')}/get.php?username=${record.safeUser}&password=${record.safePass}&type=m3u_plus&output=ts"
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(m3uUrl, color = Color.White, style = MaterialTheme.typography.bodyMedium, maxLines = 1, modifier = Modifier.weight(1f))
+                            Text(m3uUrl, color = AppTextPrimary, style = MaterialTheme.typography.bodyMedium, maxLines = 1, modifier = Modifier.weight(1f))
                             IconButton(
                                 onClick = {
                                     clipboardManager.setText(AnnotatedString(m3uUrl))
                                     ToastManager.success("M3U Playlist link copied to clipboard!")
                                 },
-                                modifier = Modifier.size(24.dp).padding(start = 8.dp)
+                                modifier = Modifier.size(28.dp).padding(start = 6.dp)
                             ) {
-                                Icon(Icons.Default.ContentCopy, contentDescription = "Copy", tint = Color.Gray, modifier = Modifier.size(16.dp))
+                                Icon(Icons.Default.ContentCopy, contentDescription = "Copy", tint = AppTextSecondary, modifier = Modifier.size(16.dp))
                             }
                         }
                     }
                 }
 
                 if (record.safeDateAdded.isNotEmpty()) {
-                    Spacer(modifier = Modifier.height(12.dp))
-                    Text("DATE ADDED: ${record.safeDateAdded}", color = Color.Gray, style = MaterialTheme.typography.labelSmall)
+                    Spacer(modifier = Modifier.height(14.dp))
+                    Text("DATE ADDED: ${record.safeDateAdded}", color = AppTextMuted, style = MaterialTheme.typography.labelSmall)
                 }
             }
         }
@@ -807,7 +831,7 @@ fun CommittedDetailScreen(record: CommittedRecord, onBack: () -> Unit, onDelete:
         if (record.safeType == "Xtream") {
             Button(
                 onClick = { showCatalogExplorer = true },
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF3B82F6)),
+                colors = ButtonDefaults.buttonColors(containerColor = AppPrimary),
                 shape = RoundedCornerShape(12.dp),
                 modifier = Modifier.fillMaxWidth().height(48.dp).padding(bottom = 12.dp)
             ) {
@@ -818,21 +842,21 @@ fun CommittedDetailScreen(record: CommittedRecord, onBack: () -> Unit, onDelete:
         }
 
         // Notes Area
-        Text("NOTES & ANNOTATIONS", color = Color(0xFFA0A0B0), style = MaterialTheme.typography.labelSmall, modifier = Modifier.padding(bottom = 6.dp))
+        Text("NOTES & ANNOTATIONS", color = AppTextSecondary, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, modifier = Modifier.padding(bottom = 6.dp))
         OutlinedTextField(
             value = currentNotes,
             onValueChange = { currentNotes = it },
-            placeholder = { Text("Add notes for this account...", color = Color.Gray) },
+            placeholder = { Text("Add notes for this account...", color = AppTextMuted) },
             modifier = Modifier.fillMaxWidth().height(120.dp),
             colors = OutlinedTextFieldDefaults.colors(
-                unfocusedBorderColor = Color(0xFF333344),
-                focusedBorderColor = Color(0xFF3B82F6),
-                unfocusedTextColor = Color.White,
-                focusedTextColor = Color.White,
-                unfocusedContainerColor = Color(0xFF12121A),
-                focusedContainerColor = Color(0xFF12121A)
+                unfocusedBorderColor = AppSurfaceBorder,
+                focusedBorderColor = AppPrimary,
+                unfocusedTextColor = AppTextPrimary,
+                focusedTextColor = AppTextPrimary,
+                unfocusedContainerColor = AppSurfaceVariant,
+                focusedContainerColor = AppSurfaceVariant
             ),
-            shape = RoundedCornerShape(8.dp)
+            shape = RoundedCornerShape(10.dp)
         )
 
         Spacer(modifier = Modifier.height(12.dp))
@@ -845,7 +869,7 @@ fun CommittedDetailScreen(record: CommittedRecord, onBack: () -> Unit, onDelete:
             if (record.isLocal) {
                 PrimaryButton(
                     text = "Push to Cloud",
-                    color = Color(0xFF10B981),
+                    color = AppSuccess,
                     onClick = onPush
                 )
             }

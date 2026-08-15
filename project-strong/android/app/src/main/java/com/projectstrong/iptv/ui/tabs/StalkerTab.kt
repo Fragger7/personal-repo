@@ -92,150 +92,178 @@ fun StalkerMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCreden
     }
 
     Column(modifier = Modifier.fillMaxSize()) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+        Surface(
+            shape = RoundedCornerShape(14.dp),
+            color = AppSurface,
+            border = androidx.compose.foundation.BorderStroke(1.dp, AppSurfaceBorder),
+            modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp)
         ) {
-            Text(
-                text = "Stalker Portals (${filteredNodes.size}/${nodes.size})",
-                color = Color.White,
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.weight(1f)
-            )
             Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.horizontalScroll(rememberScrollState())
+                modifier = Modifier.fillMaxWidth().padding(16.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Text("Active Only", color = Color.White, style = MaterialTheme.typography.bodyMedium)
-                Spacer(modifier = Modifier.width(8.dp))
-                Switch(
-                    checked = DataStore.activeOnlyStalker,
-                    onCheckedChange = { DataStore.activeOnlyStalker = it },
-                    colors = SwitchDefaults.colors(checkedThumbColor = Color(0xFF3B82F6), checkedTrackColor = Color(0xFF3B82F6).copy(alpha = 0.5f))
-                )
+                Column {
+                    Text(
+                        text = "Stalker Portals",
+                        color = AppTextPrimary,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.height(2.dp))
+                    Text(
+                        text = "Discovered ${nodes.size} connections • Showing ${filteredNodes.size} records",
+                        color = AppTextSecondary,
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
+                
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text("Active Only", color = AppTextSecondary, style = MaterialTheme.typography.labelMedium)
+                    Switch(
+                        checked = DataStore.activeOnlyStalker,
+                        onCheckedChange = { DataStore.activeOnlyStalker = it },
+                        colors = SwitchDefaults.colors(
+                            checkedThumbColor = AppPrimary,
+                            checkedTrackColor = AppPrimary.copy(alpha = 0.35f),
+                            uncheckedThumbColor = AppTextMuted,
+                            uncheckedTrackColor = AppSurfaceVariant
+                        )
+                    )
+                }
             }
-        }
-
-        if (filteredNodes.isNotEmpty()) {
-            Text(
-                text = "Showing ${filteredNodes.size} records.",
-                color = Color(0xFFA0A0B0),
-                style = MaterialTheme.typography.bodySmall,
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
-            )
         }
 
         if (filteredNodes.isEmpty()) {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("No Stalker portals found.", color = Color.Gray)
+            Surface(
+                shape = RoundedCornerShape(14.dp),
+                color = AppSurface,
+                border = androidx.compose.foundation.BorderStroke(1.dp, AppSurfaceBorder),
+                modifier = Modifier.fillMaxWidth().weight(1f)
+            ) {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Text("No Stalker portals found.", color = AppTextMuted, style = MaterialTheme.typography.bodyMedium)
+                }
             }
         } else {
-            Box(modifier = Modifier.fillMaxSize()) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .horizontalScroll(scrollState)
-                ) {
-                    Column {
-                        Row(
-                            modifier = Modifier
-                                .background(Color(0xFF1E1E2E))
-                                .padding(horizontal = 16.dp, vertical = 12.dp)
-                        ) {
-                            val headerClick = { col: String ->
-                                if (sortColumn == col) {
-                                    sortAscending = !sortAscending
-                                } else {
-                                    sortColumn = col
-                                    sortAscending = false
-                                }
-                            }
-                            GridHeader("Host URL", 250.dp, onClick = { headerClick("Host URL") }, isSorted = (sortColumn == "Host URL"), isAscending = sortAscending)
-                            GridHeader("Status", 120.dp, onClick = { headerClick("Status") }, isSorted = (sortColumn == "Status"), isAscending = sortAscending)
-                            GridHeader("MAC Address", 160.dp, onClick = { headerClick("MAC") }, isSorted = (sortColumn == "MAC"), isAscending = sortAscending)
-                            GridHeader("Provider", 150.dp, onClick = { headerClick("Provider") }, isSorted = (sortColumn == "Provider"), isAscending = sortAscending)
-                            GridHeader("Timezone", 120.dp, null)
-                            GridHeader("Expires", 100.dp, null)
-                            GridHeader("Days Left", 100.dp, onClick = { headerClick("Days Left") }, isSorted = (sortColumn == "Days Left"), isAscending = sortAscending)
-                            GridHeader("Actions", 180.dp, null)
-                        }
-
-                        Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(Color(0xFF333344)))
-
-                        LazyColumn(modifier = Modifier.fillMaxSize(), state = listState) {
-                            items(filteredNodes) { node: ParsedCredential ->
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .clickable { onSelectNode(node) }
-                                        .padding(horizontal = 16.dp, vertical = 12.dp),
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    GridCell(node.baseUrl, 250.dp, isBold = true)
-                                    StatusBadge(node.status, 120.dp)
-                                    GridCell(node.mac, 160.dp)
-                                    GridCell(node.provider, 150.dp)
-                                    GridCell(node.serverTimezone, 120.dp)
-                                    GridCell(node.expires, 100.dp)
-                                    GridCell(node.daysLeft, 100.dp)
-
-                                    Row(modifier = Modifier.width(180.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                        SecondaryButton(
-                                            text = "Copy",
-                                            onClick = {
-                                                clipboardManager.setText(AnnotatedString("${node.baseUrl} / ${node.mac}"))
-                                                ToastManager.success("Copied Stalker credentials to clipboard!")
-                                            },
-                                            modifier = Modifier.height(36.dp).weight(1f)
-                                        )
-                                        PrimaryButton(
-                                            text = "Commit",
-                                            onClick = {
-                                                committingNode = node
-                                            },
-                                            modifier = Modifier.height(36.dp).weight(1f)
-                                        )
+            Surface(
+                shape = RoundedCornerShape(14.dp),
+                color = AppSurface,
+                border = androidx.compose.foundation.BorderStroke(1.dp, AppSurfaceBorder),
+                modifier = Modifier.fillMaxWidth().weight(1f)
+            ) {
+                Box(modifier = Modifier.fillMaxSize()) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .horizontalScroll(scrollState)
+                    ) {
+                        Column {
+                            Row(
+                                modifier = Modifier
+                                    .background(AppSurfaceVariant)
+                                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                val headerClick = { col: String ->
+                                    if (sortColumn == col) {
+                                        sortAscending = !sortAscending
+                                    } else {
+                                        sortColumn = col
+                                        sortAscending = false
                                     }
                                 }
-                                Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(Color(0xFF222233)))
+                                GridHeader("Host URL", 250.dp, onClick = { headerClick("Host URL") }, isSorted = (sortColumn == "Host URL"), isAscending = sortAscending)
+                                GridHeader("Status", 120.dp, onClick = { headerClick("Status") }, isSorted = (sortColumn == "Status"), isAscending = sortAscending)
+                                GridHeader("MAC Address", 160.dp, onClick = { headerClick("MAC") }, isSorted = (sortColumn == "MAC"), isAscending = sortAscending)
+                                GridHeader("Provider", 150.dp, onClick = { headerClick("Provider") }, isSorted = (sortColumn == "Provider"), isAscending = sortAscending)
+                                GridHeader("Timezone", 120.dp, null)
+                                GridHeader("Expires", 100.dp, null)
+                                GridHeader("Days Left", 100.dp, onClick = { headerClick("Days Left") }, isSorted = (sortColumn == "Days Left"), isAscending = sortAscending)
+                                GridHeader("Actions", 180.dp, null)
                             }
-                            item {
-                                Spacer(modifier = Modifier.height(24.dp))
-                                PrimaryButton(
-                                    text = "Continue to Committed Data →",
-                                    onClick = { onNextTab?.invoke() },
-                                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)
-                                )
-                                Spacer(modifier = Modifier.height(24.dp))
+
+                            Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(AppSurfaceBorder))
+
+                            LazyColumn(modifier = Modifier.fillMaxSize(), state = listState) {
+                                items(filteredNodes) { node: ParsedCredential ->
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .clickable { onSelectNode(node) }
+                                            .padding(horizontal = 16.dp, vertical = 10.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        GridCell(node.baseUrl, 250.dp, isBold = true)
+                                        StatusBadge(node.status, 120.dp)
+                                        GridCell(node.mac, 160.dp)
+                                        GridCell(node.provider, 150.dp)
+                                        GridCell(node.serverTimezone, 120.dp)
+                                        GridCell(node.expires, 100.dp)
+                                        GridCell(node.daysLeft, 100.dp)
+
+                                        Row(modifier = Modifier.width(180.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                            SecondaryButton(
+                                                text = "Copy",
+                                                onClick = {
+                                                    clipboardManager.setText(AnnotatedString("${node.baseUrl} / ${node.mac}"))
+                                                    ToastManager.success("Copied Stalker credentials to clipboard!")
+                                                },
+                                                modifier = Modifier.height(34.dp).weight(1f)
+                                            )
+                                            PrimaryButton(
+                                                text = "Commit",
+                                                color = AppSuccess,
+                                                onClick = {
+                                                    committingNode = node
+                                                },
+                                                modifier = Modifier.height(34.dp).weight(1f)
+                                            )
+                                        }
+                                    }
+                                    Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(AppSurfaceBorder.copy(alpha = 0.5f)))
+                                }
+                                item {
+                                    Spacer(modifier = Modifier.height(16.dp))
+                                    PrimaryButton(
+                                        text = "Continue to Committed Data →",
+                                        onClick = { onNextTab?.invoke() },
+                                        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)
+                                    )
+                                    Spacer(modifier = Modifier.height(16.dp))
+                                }
                             }
                         }
                     }
-                }
 
-                // Floating scroll buttons
-                Column(
-                    modifier = Modifier
-                        .align(Alignment.BottomEnd)
-                        .padding(end = 16.dp, bottom = 16.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    FloatingActionButton(
-                        onClick = { coroutineScope.launch { listState.animateScrollToItem(0) } },
-                        containerColor = Color(0xFF3B82F6),
-                        contentColor = Color.White,
-                        modifier = Modifier.size(48.dp)
+                    // Floating scroll buttons
+                    Column(
+                        modifier = Modifier
+                            .align(Alignment.BottomEnd)
+                            .padding(end = 16.dp, bottom = 16.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Icon(Icons.Default.KeyboardArrowUp, contentDescription = "Scroll to Top")
-                    }
-                    FloatingActionButton(
-                        onClick = { coroutineScope.launch { listState.animateScrollToItem(if (filteredNodes.isNotEmpty()) filteredNodes.size - 1 else 0) } },
-                        containerColor = Color(0xFF3B82F6),
-                        contentColor = Color.White,
-                        modifier = Modifier.size(48.dp)
-                    ) {
-                        Icon(Icons.Default.KeyboardArrowDown, contentDescription = "Scroll to Bottom")
+                        FloatingActionButton(
+                            onClick = { coroutineScope.launch { listState.animateScrollToItem(0) } },
+                            containerColor = AppPrimary,
+                            contentColor = Color.White,
+                            shape = RoundedCornerShape(12.dp),
+                            modifier = Modifier.size(44.dp)
+                        ) {
+                            Icon(Icons.Default.KeyboardArrowUp, contentDescription = "Scroll to Top")
+                        }
+                        FloatingActionButton(
+                            onClick = { coroutineScope.launch { listState.animateScrollToItem(if (filteredNodes.isNotEmpty()) filteredNodes.size - 1 else 0) } },
+                            containerColor = AppPrimary,
+                            contentColor = Color.White,
+                            shape = RoundedCornerShape(12.dp),
+                            modifier = Modifier.size(44.dp)
+                        ) {
+                            Icon(Icons.Default.KeyboardArrowDown, contentDescription = "Scroll to Bottom")
+                        }
                     }
                 }
             }
@@ -267,34 +295,36 @@ fun StalkerDetailScreen(node: ParsedCredential, onBack: () -> Unit) {
         // Toolbar
         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(bottom = 16.dp)) {
             IconButton(onClick = onBack) {
-                Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = Color.White)
+                Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = AppTextPrimary)
             }
             Spacer(modifier = Modifier.width(8.dp))
             Text(
                 text = "Stalker Portal Details",
-                color = Color.White,
-                style = MaterialTheme.typography.headlineMedium,
+                color = AppTextPrimary,
+                style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold
             )
         }
 
         // Host Info Card
-        Card(
-            colors = CardDefaults.cardColors(containerColor = Color(0xFF1E1E2E)),
-            shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp),
+        Surface(
+            shape = RoundedCornerShape(16.dp),
+            color = AppSurface,
+            border = androidx.compose.foundation.BorderStroke(1.dp, AppSurfaceBorder),
             modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)
         ) {
-            Column(modifier = Modifier.padding(16.dp)) {
+            Column(modifier = Modifier.padding(20.dp)) {
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Column {
-                        Text("HOST PORTAL", color = Color(0xFFA0A0B0), style = MaterialTheme.typography.labelSmall)
+                    Column(modifier = Modifier.weight(1f).padding(end = 8.dp)) {
+                        Text("HOST PORTAL", color = AppTextSecondary, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
+                        Spacer(modifier = Modifier.height(2.dp))
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(node.baseUrl, color = Color.White, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold)
+                            Text(node.baseUrl, color = AppTextPrimary, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold)
                             IconButton(onClick = { 
                                 clipboardManager.setText(AnnotatedString(node.baseUrl))
                                 ToastManager.success("Copied Host Portal URL to clipboard!")
-                            }, modifier = Modifier.size(24.dp).padding(start = 8.dp)) {
-                                Icon(Icons.Default.ContentCopy, contentDescription = "Copy", tint = Color.Gray, modifier = Modifier.size(16.dp))
+                            }, modifier = Modifier.size(28.dp).padding(start = 6.dp)) {
+                                Icon(Icons.Default.ContentCopy, contentDescription = "Copy", tint = AppTextSecondary, modifier = Modifier.size(16.dp))
                             }
                         }
                     }
@@ -303,20 +333,22 @@ fun StalkerDetailScreen(node: ParsedCredential, onBack: () -> Unit) {
                 Spacer(modifier = Modifier.height(16.dp))
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                     Column(modifier = Modifier.weight(1f)) {
-                        Text("MAC ADDRESS", color = Color(0xFFA0A0B0), style = MaterialTheme.typography.labelSmall)
+                        Text("MAC ADDRESS", color = AppTextSecondary, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
+                        Spacer(modifier = Modifier.height(2.dp))
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(node.mac, color = Color.White, style = MaterialTheme.typography.bodyMedium)
+                            Text(node.mac, color = AppTextPrimary, style = MaterialTheme.typography.bodyMedium)
                             IconButton(onClick = { 
                                 clipboardManager.setText(AnnotatedString(node.mac))
                                 ToastManager.success("Copied MAC Address to clipboard!")
-                            }, modifier = Modifier.size(24.dp)) {
-                                Icon(Icons.Default.ContentCopy, contentDescription = "Copy", tint = Color.Gray, modifier = Modifier.size(16.dp))
+                            }, modifier = Modifier.size(28.dp).padding(start = 6.dp)) {
+                                Icon(Icons.Default.ContentCopy, contentDescription = "Copy", tint = AppTextSecondary, modifier = Modifier.size(16.dp))
                             }
                         }
                     }
                     Column(modifier = Modifier.weight(1f)) {
-                        Text("TIMEZONE", color = Color(0xFFA0A0B0), style = MaterialTheme.typography.labelSmall)
-                        Text(node.serverTimezone, color = Color.White, style = MaterialTheme.typography.bodyMedium)
+                        Text("TIMEZONE", color = AppTextSecondary, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Text(node.serverTimezone, color = AppTextPrimary, style = MaterialTheme.typography.bodyMedium)
                     }
                 }
             }
@@ -326,25 +358,27 @@ fun StalkerDetailScreen(node: ParsedCredential, onBack: () -> Unit) {
         Row(modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             PrimaryButton(
                 text = "Commit Account",
-                color = Color(0xFF10B981),
+                color = AppSuccess,
                 onClick = { showCommitDialog = true },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth().height(48.dp)
             )
         }
 
         // Deep Dive Section Notice
-        Card(
-            colors = CardDefaults.cardColors(containerColor = Color(0xFF12121A)),
-            shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp),
+        Surface(
+            shape = RoundedCornerShape(14.dp),
+            color = AppSurfaceVariant,
+            border = androidx.compose.foundation.BorderStroke(1.dp, AppWarning.copy(alpha = 0.3f)),
             modifier = Modifier.fillMaxWidth()
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
-                Text("⚠️ Stalker API Limitations", color = Color(0xFFF59E0B), fontWeight = FontWeight.Bold)
+                Text("⚠️ Stalker API Limitations", color = AppWarning, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleSmall)
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     "Deep-dive channel classification and VOD grid streaming is structurally blocked for Stalker Portals due to MAC-driven authentication payload dynamically expiring. Deep-dive discovery is explicitly restricted from accessing these nodes to avoid triggering the target server's firewall banning mechanisms.",
-                    color = Color.Gray,
-                    style = MaterialTheme.typography.bodySmall
+                    color = AppTextSecondary,
+                    style = MaterialTheme.typography.bodySmall,
+                    lineHeight = MaterialTheme.typography.bodySmall.lineHeight
                 )
             }
         }

@@ -1,5 +1,6 @@
 package com.projectstrong.iptv.ui.components
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -14,6 +15,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.projectstrong.iptv.ui.theme.*
 
 @Composable
 fun GridHeader(
@@ -24,12 +26,13 @@ fun GridHeader(
     isAscending: Boolean = false
 ) {
     val indicator = if (isSorted) (if (isAscending) " ▲" else " ▼") else ""
-    val textColor = if (isSorted) Color(0xFF3B82F6) else Color(0xFFA0A0B0)
+    val textColor = if (isSorted) AppPrimary else AppTextSecondary
     Text(
         text = "${text.uppercase()}$indicator",
         color = textColor,
         style = MaterialTheme.typography.labelSmall,
         fontWeight = FontWeight.Bold,
+        maxLines = 1,
         modifier = Modifier
             .width(width)
             .padding(end = 8.dp)
@@ -40,7 +43,7 @@ fun GridHeader(
 }
 
 @Composable
-fun GridCell(text: String, width: Dp, isBold: Boolean = false, color: Color = Color.White) {
+fun GridCell(text: String, width: Dp, isBold: Boolean = false, color: Color = AppTextPrimary) {
     Text(
         text = text,
         color = color,
@@ -54,15 +57,10 @@ fun GridCell(text: String, width: Dp, isBold: Boolean = false, color: Color = Co
 
 @Composable
 fun StatusBadge(status: String, width: Dp) {
-    val bgColor = when {
-        status.contains("Active", true) -> Color(0xFF10B981).copy(alpha = 0.2f)
-        status.contains("Block", true) || status.contains("Fail", true) || status.contains("Expired", true) -> Color(0xFFEF4444).copy(alpha = 0.2f)
-        else -> Color(0xFFF59E0B).copy(alpha = 0.2f)
-    }
-    val textColor = when {
-        status.contains("Active", true) -> Color(0xFF34D399)
-        status.contains("Block", true) || status.contains("Fail", true) || status.contains("Expired", true) -> Color(0xFFF87171)
-        else -> Color(0xFFFBBF24)
+    val (bgColor, textColor, borderColor) = when {
+        status.contains("Active", true) -> Triple(AppSuccessContainer, Color(0xFF34D399), AppSuccess.copy(alpha = 0.4f))
+        status.contains("Block", true) || status.contains("Fail", true) || status.contains("Expired", true) -> Triple(AppErrorContainer, Color(0xFFF87171), AppError.copy(alpha = 0.4f))
+        else -> Triple(AppWarningContainer, Color(0xFFFBBF24), AppWarning.copy(alpha = 0.4f))
     }
     
     Box(
@@ -71,11 +69,10 @@ fun StatusBadge(status: String, width: Dp) {
             .padding(end = 8.dp),
         contentAlignment = Alignment.CenterStart
     ) {
-        Box(
-            modifier = Modifier
-                .clip(RoundedCornerShape(4.dp))
-                .background(bgColor)
-                .padding(horizontal = 6.dp, vertical = 2.dp)
+        Surface(
+            shape = RoundedCornerShape(12.dp),
+            color = bgColor,
+            border = BorderStroke(1.dp, borderColor)
         ) {
             Text(
                 text = status,
@@ -83,7 +80,8 @@ fun StatusBadge(status: String, width: Dp) {
                 style = MaterialTheme.typography.labelSmall,
                 fontWeight = FontWeight.Bold,
                 maxLines = 1,
-                overflow = TextOverflow.Ellipsis
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
             )
         }
     }
@@ -91,8 +89,9 @@ fun StatusBadge(status: String, width: Dp) {
 
 @Composable
 fun SyncBadge(isLocal: Boolean, width: Dp) {
-    val bgColor = if (isLocal) Color(0xFFF59E0B).copy(alpha = 0.2f) else Color(0xFF3B82F6).copy(alpha = 0.2f)
+    val bgColor = if (isLocal) AppWarningContainer else Color(0x1A3B82F6)
     val textColor = if (isLocal) Color(0xFFFBBF24) else Color(0xFF60A5FA)
+    val borderColor = if (isLocal) AppWarning.copy(alpha = 0.4f) else AppPrimary.copy(alpha = 0.4f)
     val text = if (isLocal) "🟡 Local" else "🟢 Synced"
 
     Box(
@@ -101,11 +100,10 @@ fun SyncBadge(isLocal: Boolean, width: Dp) {
             .padding(end = 8.dp),
         contentAlignment = Alignment.CenterStart
     ) {
-        Box(
-            modifier = Modifier
-                .clip(RoundedCornerShape(4.dp))
-                .background(bgColor)
-                .padding(horizontal = 6.dp, vertical = 2.dp)
+        Surface(
+            shape = RoundedCornerShape(12.dp),
+            color = bgColor,
+            border = BorderStroke(1.dp, borderColor)
         ) {
             Text(
                 text = text,
@@ -113,7 +111,8 @@ fun SyncBadge(isLocal: Boolean, width: Dp) {
                 style = MaterialTheme.typography.labelSmall,
                 fontWeight = FontWeight.Bold,
                 maxLines = 1,
-                overflow = TextOverflow.Ellipsis
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
             )
         }
     }
@@ -125,14 +124,14 @@ fun PrimaryButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
-    color: Color = Color(0xFF3B82F6)
+    color: Color = AppPrimary
 ) {
     Button(
         onClick = onClick,
         enabled = enabled,
-        colors = ButtonDefaults.buttonColors(containerColor = color),
-        shape = RoundedCornerShape(8.dp),
-        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp),
+        colors = ButtonDefaults.buttonColors(containerColor = color, disabledContainerColor = color.copy(alpha = 0.4f)),
+        shape = RoundedCornerShape(10.dp),
+        contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp),
         modifier = modifier
     ) {
         Text(
@@ -151,20 +150,21 @@ fun PrimaryButton(
 fun SecondaryButton(
     text: String,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    color: Color = AppPrimary
 ) {
     OutlinedButton(
         onClick = onClick,
-        colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White),
-        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF3B82F6)),
-        shape = RoundedCornerShape(8.dp),
-        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp),
+        colors = ButtonDefaults.outlinedButtonColors(contentColor = color),
+        border = BorderStroke(1.dp, color.copy(alpha = 0.6f)),
+        shape = RoundedCornerShape(10.dp),
+        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
         modifier = modifier
     ) {
         Text(
             text = text,
             fontWeight = FontWeight.SemiBold,
-            color = Color(0xFF3B82F6),
+            color = color,
             style = MaterialTheme.typography.labelMedium,
             maxLines = 1,
             softWrap = false,
@@ -172,3 +172,57 @@ fun SecondaryButton(
         )
     }
 }
+
+@Composable
+fun SectionHeaderCard(
+    title: String,
+    subtitle: String,
+    badgeText: String? = null,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        shape = RoundedCornerShape(14.dp),
+        color = AppSurface,
+        border = BorderStroke(1.dp, AppSurfaceBorder),
+        modifier = modifier.fillMaxWidth()
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = title,
+                    color = AppTextPrimary,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+                if (badgeText != null) {
+                    Surface(
+                        shape = RoundedCornerShape(10.dp),
+                        color = AppPrimary.copy(alpha = 0.15f),
+                        border = BorderStroke(1.dp, AppPrimary.copy(alpha = 0.3f))
+                    ) {
+                        Text(
+                            text = badgeText,
+                            color = Color(0xFF60A5FA),
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                        )
+                    }
+                }
+            }
+            if (subtitle.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = subtitle,
+                    color = AppTextSecondary,
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
+        }
+    }
+}
+

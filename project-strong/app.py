@@ -795,39 +795,66 @@ def parse_credentials(text_block):
     logger.info("Scanning ingested block for Xtream Codes and Stalker Portal layouts...")
     extracted = []
     
-    # Xtream Pattern
-    pattern_xtream = r'(https?://[^/:]+(?::\d+)?)/player_api\.php\?username=([^&\s]+)&password=([^&\s]+)'
+    # 1. Standard Xtream API patterns
+    pattern_xtream = r'(https?://[^/:]+(?::\d+)?)/(?:player_api|get)\.php\?username=([^&\s]+)&password=([^&\s]+)'
     for match in re.findall(pattern_xtream, text_block):
-        extracted.append({"type": "Xtream", "base_url": match[0], "username": match[1], "password": match[2]})
-        
-    pattern_xtream_fallback = r'(https?://[^/:]+(?::\d+)?)/get\.php\?username=([^&\s]+)&password=([^&\s]+)'
-    for match in re.findall(pattern_xtream_fallback, text_block):
-        # avoid duplicates if the string contains both player_api and get.php for the same account
         if not any(a["base_url"] == match[0] and a["username"] == match[1] for a in extracted):
             extracted.append({"type": "Xtream", "base_url": match[0], "username": match[1], "password": match[2]})
 
-    # Combo Pattern (e.g. host:port \s+ user:pass OR host:port:user:pass OR host:port \s+ user OR host:port \s+ :pass)
-    pattern_combo = r'((?:https?://)?(?:(?:[a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}|(?:\d{1,3}\.){3}\d{1,3})(?::\d{2,5})?(?:/[^:\s]*)?)(?:\s+|:)([^:\s]+)(?:\s+|:)([^:\s]+)'
-    for match in re.findall(pattern_combo, text_block):
-        base_url = match[0]
-        if not base_url.startswith("http"):
-            base_url = "http://" + base_url
-            
-        user = match[1]
-        password = match[2]
-        
-        # Skip if it's actually a MAC address disguised as user:pass
-        if re.match(r'^[0-9a-fA-F]{2}$', user) and re.match(r'^(?:[0-9a-fA-F]{2}:){4}[0-9a-fA-F]{2}$', password):
+    # 2. Line-by-line Tabular & Formatted Combos
+    for line in text_block.splitlines():
+        line_clean = line.strip()
+        if not line_clean or "player_api.php" in line_clean or "get.php" in line_clean:
             continue
             
-        # Skip if cred is just a common keyword like 'MAC:' or 'Active' etc.
-        if user.lower() in ["mac", "active", "expired", "http", "https"] or password.lower() in ["mac", "active", "expired", "http", "https"]:
-            continue
+        # Match Tabular / Spaced formats: [URL/Host] [whitespace] [User] [optional whitespace] : [optional whitespace] [Pass] [optional rest]
+        m_tab = re.match(r"^((?:https?://)?[^\s/:]+(?::\d+)?(?:/[^\s:]*)?)\s+([^\s:]+)\s*:\s*([^\s]+)(?:\s+(.*))?$", line_clean)
+        if m_tab:
+            b = m_tab.group(1)
+            if not b.startswith("http"):
+                b = "http://" + b
+            u = m_tab.group(2)
+            p = m_tab.group(3)
+            rest = m_tab.group(4) or ""
             
-        if not any(a["base_url"] == base_url and a["username"] == user for a in extracted):
-            extracted.append({"type": "Xtream", "base_url": base_url, "username": user, "password": password})
+            if re.match(r"^[0-9a-fA-F]{2}$", u) and re.match(r"^(?:[0-9a-fA-F]{2}:){4}[0-9a-fA-F]{2}$", p):
+                continue
+            skip = ["mac", "active", "activa", "expired", "http", "https", "user", "pass", "username", "password", "ᴜꜱᴇʀ", "ᴩᴀꜱꜱ"]
+            if u.lower() in skip or p.lower() in skip:
+                continue
+            if not any(a.get("base_url") == b and a.get("username") == u for a in extracted):
+                rec = {"type": "Xtream", "base_url": b, "username": u, "password": p}
+                tz_match = re.search(r"\b([A-Z]{3,4}|GMT[+-]\d+)\b", rest)
+                if tz_match:
+                    rec["serverTimezone"] = tz_match.group(1)
+                conn_match = re.search(r"(\d+)\s*/\s*(\d+)", rest)
+                if conn_match:
+                    rec["activeConn"] = conn_match.group(1)
+                    rec["maxConn"] = conn_match.group(2)
+                dates = re.findall(r"(\d{1,2}\s+[a-zA-Z]{3,}\s+(?:de\s+)?\d{4}|\d{4}-\d{2}-\d{2}|\d{2}/\d{2}/\d{4})", rest)
+                if dates:
+                    rec["expires"] = dates[-1]
+                extracted.append(rec)
+                continue
 
-    # Unified State-Machine Parser for Multi-line Free Text (Stalker & Xtream)
+        # Match 4-part Colon combo or Space combo: [URL/Host:port]:[User]:[Pass] or [Host:port] [User] [Pass]
+        m_combo = re.match(r"^((?:https?://)?[^\s/:]+(?::\d+)?(?:/[^\s:]*)?)[\s:]([^\s:]+)[\s:]([^\s:]+)$", line_clean)
+        if m_combo:
+            b = m_combo.group(1)
+            if not b.startswith("http"):
+                b = "http://" + b
+            u = m_combo.group(2)
+            p = m_combo.group(3)
+            if re.match(r"^[0-9a-fA-F]{2}$", u) and re.match(r"^(?:[0-9a-fA-F]{2}:){4}[0-9a-fA-F]{2}$", p):
+                continue
+            skip = ["mac", "active", "activa", "expired", "http", "https", "user", "pass", "username", "password", "ᴜꜱᴇʀ", "ᴩᴀꜱꜱ"]
+            if u.lower() in skip or p.lower() in skip:
+                continue
+            if not any(a.get("base_url") == b and a.get("username") == u for a in extracted):
+                extracted.append({"type": "Xtream", "base_url": b, "username": u, "password": p})
+                continue
+
+    # 3. Unified State-Machine Parser for Multi-line Free Text (Stalker & Xtream)
     current_url = None
     current_mac = None
     xt_user = None
@@ -839,9 +866,16 @@ def parse_credentials(text_block):
             current_mac = None
             xt_user = None
             xt_pass = None
+            
+        if "player_api.php" in line or "get.php" in line:
+            current_url = None
+            current_mac = None
+            xt_user = None
+            xt_pass = None
+            continue
         
         url_match = re.search(r'(https?://[^/\s]+(?:/[^/\s]*)?)', line)
-        if url_match and "player_api" not in line and "get.php" not in line:
+        if url_match:
             base_match = re.match(r'(https?://[^/:]+(?::\d+)?)', url_match.group(1))
             if base_match:
                 current_url = base_match.group(1)
@@ -1490,16 +1524,16 @@ if st.session_state["playlist_results"] is not None:
                                                         client.get(vod_url, timeout=10.0),
                                                         return_exceptions=True
                                                     )
-                                                if not isinstance(live_res, Exception) and live_res.status_code == 200:
-                                                    live_data = live_res.json()
-                                                    if isinstance(live_data, list):
-                                                        channels_count = len(live_data)
-                                                if not isinstance(vod_res, Exception) and vod_res.status_code == 200:
-                                                    vod_data = vod_res.json()
-                                                    if isinstance(vod_data, list):
-                                                        vod_count = len(vod_data)
-                                            except Exception as e:
-                                                pass
+                                                    if not isinstance(live_res, Exception) and live_res.status_code == 200:
+                                                        live_data = live_res.json()
+                                                        if isinstance(live_data, list):
+                                                            channels_count = len(live_data)
+                                                    if not isinstance(vod_res, Exception) and vod_res.status_code == 200:
+                                                        vod_data = vod_res.json()
+                                                        if isinstance(vod_data, list):
+                                                            vod_count = len(vod_data)
+                                                except Exception as e:
+                                                    pass
                                             acc["Channels"] = channels_count
                                             acc["VODs"] = vod_count
                                         

@@ -1,7 +1,17 @@
 package com.projectstrong.iptv.ui.tabs
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowForward
+import androidx.compose.material.icons.filled.Cloud
+import androidx.compose.material.icons.filled.CloudOff
+import androidx.compose.material.icons.filled.ContentPaste
+import androidx.compose.material.icons.filled.DeleteOutline
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Stop
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -17,9 +27,7 @@ import com.projectstrong.iptv.network.IPTVClient
 import com.projectstrong.iptv.network.ParsedCredential
 import com.projectstrong.iptv.network.Parser
 import com.projectstrong.iptv.network.VerificationResult
-import com.projectstrong.iptv.ui.components.PrimaryButton
-import com.projectstrong.iptv.ui.components.SecondaryButton
-import com.projectstrong.iptv.ui.components.ToastManager
+import com.projectstrong.iptv.ui.components.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -187,118 +195,165 @@ fun ScannerTab(onNextTab: (() -> Unit)? = null) {
             .fillMaxSize()
             .padding(16.dp)
     ) {
-        Text(
-            text = "Multi-Payload Scanner",
-            color = Color.White,
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-
+        // IP Network Status Banner
         if (DataStore.ipInfo.isNotEmpty()) {
-            Card(
-                colors = CardDefaults.cardColors(
-                    containerColor = if (DataStore.isCloudHosting) MaterialTheme.colorScheme.errorContainer else MaterialTheme.colorScheme.secondaryContainer
+            Surface(
+                shape = RoundedCornerShape(14.dp),
+                color = if (DataStore.isCloudHosting) AppError.copy(alpha = 0.15f) else AppSurfaceVariant,
+                border = androidx.compose.foundation.BorderStroke(
+                    1.dp,
+                    if (DataStore.isCloudHosting) AppError.copy(alpha = 0.5f) else AppSurfaceBorder
                 ),
                 modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp)
             ) {
-                Column(modifier = Modifier.padding(12.dp)) {
-                    Text(DataStore.ipInfo, fontWeight = FontWeight.SemiBold, color = Color.White)
-                    if (DataStore.isCloudHosting) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        if (DataStore.isCloudHosting) Icons.Default.Warning else Icons.Default.Cloud,
+                        contentDescription = null,
+                        tint = if (DataStore.isCloudHosting) AppError else AppSuccess,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            "Warning: Cloud hosting IP detected. Many IPTV providers block public cloud IP ranges.",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = Color(0xFFFCA5A5)
+                            DataStore.ipInfo,
+                            fontWeight = FontWeight.SemiBold,
+                            color = AppTextPrimary,
+                            style = MaterialTheme.typography.bodyMedium
                         )
+                        if (DataStore.isCloudHosting) {
+                            Text(
+                                "Cloud hosting IP detected. Some providers may block datacenter ranges.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = AppError
+                            )
+                        }
                     }
                 }
             }
         }
 
-        OutlinedTextField(
-            value = DataStore.scannerInput,
-            onValueChange = { DataStore.scannerInput = it },
-            label = { Text("Paste Raw Unstructured Credentials / M3U Links", color = Color(0xFFA0A0B0)) },
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedTextColor = Color.White,
-                unfocusedTextColor = Color.White,
-                focusedBorderColor = Color(0xFF3B82F6),
-                unfocusedBorderColor = Color(0xFF333344),
-                focusedContainerColor = Color(0xFF12121A),
-                unfocusedContainerColor = Color(0xFF12121A)
-            ),
-            modifier = Modifier
-                .fillMaxWidth()
-                .weight(1f),
-            minLines = 6
-        )
+        // Input Area Card
+        Surface(
+            shape = RoundedCornerShape(16.dp),
+            color = AppSurface,
+            border = androidx.compose.foundation.BorderStroke(1.dp, AppSurfaceBorder),
+            modifier = Modifier.fillMaxWidth().weight(1f)
+        ) {
+            Column(modifier = Modifier.padding(16.dp).fillMaxSize()) {
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Raw Credential & M3U Input",
+                        color = AppTextPrimary,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        TextButton(
+                            onClick = {
+                                clipboardManager.getText()?.text?.let {
+                                    DataStore.scannerInput = it
+                                    ToastManager.info("Pasted text from clipboard")
+                                }
+                            },
+                            contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
+                            shape = RoundedCornerShape(8.dp)
+                        ) {
+                            Icon(Icons.Default.ContentPaste, contentDescription = null, modifier = Modifier.size(16.dp), tint = AppPrimary)
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("Paste", color = AppPrimary, style = MaterialTheme.typography.labelMedium)
+                        }
+                        TextButton(
+                            onClick = {
+                                DataStore.scannerInput = ""
+                                DataStore.scannedNodes.clear()
+                                DataStore.scanProgress = 0f
+                                DataStore.scanCountText = ""
+                                ToastManager.info("Cleared scanner input")
+                            },
+                            contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
+                            shape = RoundedCornerShape(8.dp)
+                        ) {
+                            Icon(Icons.Default.DeleteOutline, contentDescription = null, modifier = Modifier.size(16.dp), tint = AppError)
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("Clear", color = AppError, style = MaterialTheme.typography.labelMedium)
+                        }
+                    }
+                }
 
-        Spacer(modifier = Modifier.height(12.dp))
+                OutlinedTextField(
+                    value = DataStore.scannerInput,
+                    onValueChange = { DataStore.scannerInput = it },
+                    placeholder = {
+                        Text(
+                            "Paste raw unstructured text, Xtream Codes combos (host user pass), M3U playlists, or Stalker MAC links here...",
+                            color = AppTextMuted,
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    },
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedTextColor = AppTextPrimary,
+                        unfocusedTextColor = AppTextPrimary,
+                        focusedBorderColor = AppPrimary,
+                        unfocusedBorderColor = AppSurfaceBorder,
+                        focusedContainerColor = AppSurfaceVariant,
+                        unfocusedContainerColor = AppSurfaceVariant
+                    ),
+                    shape = RoundedCornerShape(10.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f)
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(14.dp))
 
         // Dynamic State Action Buttons
         if (!DataStore.isScanning) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                PrimaryButton(
-                    text = "Analyze Playlist Nodes",
-                    onClick = { startOrRestartScan() },
-                    modifier = Modifier.weight(1.8f)
-                )
-                SecondaryButton(
-                    text = "Paste",
-                    onClick = {
-                        clipboardManager.getText()?.text?.let {
-                            DataStore.scannerInput = it
-                            ToastManager.info("Pasted text from clipboard")
-                        }
-                    },
-                    modifier = Modifier.weight(1f)
-                )
-                SecondaryButton(
-                    text = "Clear",
-                    onClick = {
-                        DataStore.scannerInput = ""
-                        DataStore.scannedNodes.clear()
-                        DataStore.scanProgress = 0f
-                        DataStore.scanCountText = ""
-                        ToastManager.info("Cleared scanner input")
-                    },
-                    modifier = Modifier.weight(1f)
-                )
-            }
+            PrimaryButton(
+                text = "⚡ Analyze Playlist Nodes",
+                onClick = { startOrRestartScan() },
+                modifier = Modifier.fillMaxWidth().height(48.dp)
+            )
         } else {
             // Active or Paused Scan State
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 if (!DataStore.isScanPaused) {
                     PrimaryButton(
                         text = "⏸️ Pause Scan",
-                        color = Color(0xFFF59E0B),
+                        color = AppWarning,
                         onClick = {
                             DataStore.isScanPaused = true
                             ToastManager.warning("Scanning paused")
                         },
-                        modifier = Modifier.weight(1.2f)
+                        modifier = Modifier.weight(1.2f).height(48.dp)
                     )
                 } else {
                     PrimaryButton(
                         text = "▶️ Resume Scan",
-                        color = Color(0xFF10B981),
+                        color = AppSuccess,
                         onClick = {
                             DataStore.isScanPaused = false
                             ToastManager.success("Scanning resumed")
                         },
-                        modifier = Modifier.weight(1.2f)
+                        modifier = Modifier.weight(1.2f).height(48.dp)
                     )
                 }
 
                 PrimaryButton(
                     text = "⏹️ Stop Scan",
-                    color = Color(0xFFEF4444),
+                    color = AppError,
                     onClick = {
                         DataStore.isScanning = false
                         DataStore.isScanPaused = false
@@ -306,44 +361,48 @@ fun ScannerTab(onNextTab: (() -> Unit)? = null) {
                         DataStore.scanCountText = "Scan stopped by user."
                         ToastManager.error("Scan stopped")
                     },
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f).height(48.dp)
                 )
             }
         }
 
         if (DataStore.scanCountText.isNotEmpty()) {
             Spacer(modifier = Modifier.height(12.dp))
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+            Surface(
+                shape = RoundedCornerShape(12.dp),
+                color = AppSurfaceVariant,
+                border = androidx.compose.foundation.BorderStroke(1.dp, AppSurfaceBorder),
+                modifier = Modifier.fillMaxWidth()
             ) {
-                Text(
-                    text = DataStore.scanCountText,
-                    color = if (DataStore.isScanPaused) Color(0xFFFBBF24) else Color(0xFF38BDF8),
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.SemiBold
-                )
-            }
-            if (DataStore.isScanning) {
-                Spacer(modifier = Modifier.height(6.dp))
-                LinearProgressIndicator(
-                    progress = { DataStore.scanProgress },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(6.dp)
-                        .clip(RoundedCornerShape(3.dp)),
-                    color = if (DataStore.isScanPaused) Color(0xFFF59E0B) else Color(0xFF3B82F6),
-                    trackColor = Color(0xFF1E293B)
-                )
+                Column(modifier = Modifier.padding(12.dp)) {
+                    Text(
+                        text = DataStore.scanCountText,
+                        color = if (DataStore.isScanPaused) AppWarning else AppPrimary,
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    if (DataStore.isScanning) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        LinearProgressIndicator(
+                            progress = { DataStore.scanProgress },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(6.dp)
+                                .clip(RoundedCornerShape(3.dp)),
+                            color = if (DataStore.isScanPaused) AppWarning else AppPrimary,
+                            trackColor = AppSurface
+                        )
+                    }
+                }
             }
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
-        PrimaryButton(
+        Spacer(modifier = Modifier.height(12.dp))
+
+        SecondaryButton(
             text = "Continue to Xtream Nodes →",
             onClick = { onNextTab?.invoke() },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth().height(44.dp)
         )
     }
 }
