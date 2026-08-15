@@ -359,7 +359,7 @@ class RedditCollector:
                     author = author_a.text.strip() if author_a else "anonymous"
                     post_id = entry.get("data-fullname", f"hws_{abs(hash(title)) % 1000000}")
                     href = title_a.get("href", "")
-                    url_full = f"https://old.reddit.com{href}" if href.startswith("/") else href
+                    url_full = f"https://www.reddit.com{href}" if href.startswith("/") else href.replace("old.reddit.com", "www.reddit.com")
 
                     if "[H]" not in title and "[h]" not in title:
                         continue
