@@ -1,5 +1,5 @@
 import React from "react";
-import { Cpu, RefreshCw, Sparkles, Code2, Bell, ShieldCheck } from "lucide-react";
+import { Cpu, RefreshCw, Sparkles, Code2, Bell, GitBranch } from "lucide-react";
 
 interface HeaderProps {
   onSync: () => void;
@@ -7,6 +7,8 @@ interface HeaderProps {
   onOpenEvaluate: () => void;
   onOpenCode: () => void;
   onOpenNotify: () => void;
+  onGitPush?: () => void;
+  isPushingGit?: boolean;
   totalDeals: number;
 }
 
@@ -16,6 +18,8 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenEvaluate,
   onOpenCode,
   onOpenNotify,
+  onGitPush,
+  isPushingGit,
   totalDeals,
 }) => {
   return (
@@ -77,6 +81,19 @@ export const Header: React.FC<HeaderProps> = ({
             <Bell className="h-3.5 w-3.5 text-amber-400" />
             <span>Push Alerts</span>
           </button>
+
+          {onGitPush && (
+            <button
+              id="btn-git-push"
+              onClick={onGitPush}
+              disabled={isPushingGit}
+              className="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-200 text-xs font-semibold border border-slate-700 transition duration-150 disabled:opacity-50"
+              title="Push latest changes to GitHub (Fragger7/personal-repo:ws-deal-hunter)"
+            >
+              <GitBranch className={`h-3.5 w-3.5 text-purple-400 ${isPushingGit ? "animate-spin" : ""}`} />
+              <span>{isPushingGit ? "Pushing to Repo..." : "Push to GitHub"}</span>
+            </button>
+          )}
 
           <button
             id="btn-open-code-explorer"

@@ -15,6 +15,7 @@ export function App() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [isPushingGit, setIsPushingGit] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   // Modals state
@@ -88,6 +89,29 @@ export function App() {
     }
   };
 
+  const handleGitPush = async () => {
+    setIsPushingGit(true);
+    try {
+      const res = await fetch("/api/git/push", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message: `feat(ws-deal-hunter): update workstation deal hunter at ${new Date().toLocaleTimeString()}`,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast("🎉 Pushed to GitHub repo (Fragger7/personal-repo:ws-deal-hunter)!");
+      } else {
+        showToast(`Git push failed: ${data.error || data.stdout}`);
+      }
+    } catch (err: any) {
+      showToast(`Git push failed: ${err.message}`);
+    } finally {
+      setIsPushingGit(false);
+    }
+  };
+
   const handleSendPush = async (deal: DealRecord) => {
     try {
       const res = await fetch("/api/notify/pushover", {
@@ -155,6 +179,8 @@ export function App() {
         onOpenEvaluate={() => setIsEvaluateOpen(true)}
         onOpenCode={() => setIsCodeOpen(true)}
         onOpenNotify={() => setIsNotifyOpen(true)}
+        onGitPush={handleGitPush}
+        isPushingGit={isPushingGit}
         totalDeals={deals.length}
       />
 

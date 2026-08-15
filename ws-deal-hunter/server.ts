@@ -400,6 +400,29 @@ app.get("/api/python/files", (_req: Request, res: Response) => {
   res.json({ success: true, files });
 });
 
+// 9. Git Push API endpoint
+app.post("/api/git/push", (req: Request, res: Response) => {
+  const message = req.body.message || "feat(ws-deal-hunter): update workstation deal hunter system";
+  exec(`python3 git_sync.py --push "${message.replace(/"/g, '\\"')}"`, (error, stdout, stderr) => {
+    res.json({
+      success: !error,
+      stdout: stdout || stderr,
+      error: error ? error.message : null,
+    });
+  });
+});
+
+// 10. Git Pull API endpoint
+app.post("/api/git/pull", (_req: Request, res: Response) => {
+  exec("python3 git_sync.py --pull", (error, stdout, stderr) => {
+    res.json({
+      success: !error,
+      stdout: stdout || stderr,
+      error: error ? error.message : null,
+    });
+  });
+});
+
 // ==========================================
 // VITE MIDDLEWARE SETUP
 // ==========================================
