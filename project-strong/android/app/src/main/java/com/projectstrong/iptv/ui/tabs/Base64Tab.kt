@@ -24,6 +24,7 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.projectstrong.iptv.ui.components.*
+import com.projectstrong.iptv.ui.theme.*
 
 @Composable
 fun Base64Tab(onNextTab: () -> Unit = {}) {
