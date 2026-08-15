@@ -533,25 +533,22 @@ class SwappaCollector:
         """Scrape live hardware deals from syndicated tech deal RSS feeds."""
         try:
             import cloudscraper
-            from bs4 import BeautifulSoup, XMLParsedAsHTMLWarning
-            import warnings
-
-            warnings.filterwarnings("ignore", category=XMLParsedAsHTMLWarning)
+            import html
 
             scraper = cloudscraper.create_scraper()
             url = "https://slickdeals.net/newsearch.php?searchfirst=1&q=laptop&rss=1"
             res = scraper.get(url, timeout=4.0)
             if res.status_code == 200:
-                soup = BeautifulSoup(res.text, "html.parser")
-                items = soup.find_all("item")
+                item_blocks = re.findall(r"<item>([\s\S]*?)</item>", res.text)
                 listings: List[RawListing] = []
-                for idx, item in enumerate(items):
-                    title_elem = item.find("title")
-                    link_elem = item.find("link")
-                    desc_elem = item.find("description")
-                    title = title_elem.text.strip() if title_elem else ""
-                    link = link_elem.text.strip() if link_elem else "https://slickdeals.net"
-                    desc = desc_elem.text.strip() if desc_elem else title
+                for idx, block in enumerate(item_blocks):
+                    title_m = re.search(r"<title>(?:<!\[CDATA\[)?(.*?)(?:\]\]>)?</title>", block, re.DOTALL)
+                    link_m = re.search(r"<link>(.*?)</link>", block) or re.search(r"<guid[^>]*>(.*?)</guid>", block)
+                    desc_m = re.search(r"<description>(?:<!\[CDATA\[)?(.*?)(?:\]\]>)?</description>", block, re.DOTALL)
+
+                    title = html.unescape(title_m.group(1).strip()) if title_m else ""
+                    link = html.unescape(link_m.group(1).strip()) if link_m else "https://slickdeals.net"
+                    desc = html.unescape(desc_m.group(1).strip()) if desc_m else title
 
                     price_match = re.search(r"\$\s*([0-9,]+(?:\.[0-9]{2})?)", f"{title} {desc}")
                     price = float(price_match.group(1).replace(",", "")) if price_match else 0.0
