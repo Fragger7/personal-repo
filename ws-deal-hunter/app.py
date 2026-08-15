@@ -262,21 +262,40 @@ def main() -> None:
                     st.toast("Deal saved to atomic store!")
 
     with tab_notify:
-        st.subheader("Pushover Mobile Push Notification Settings")
-        st.info("Deals with **Deal Score >= 8.5** and **Asking Price <= $750** automatically trigger Pushover mobile push alerts.")
+        st.subheader("🔔 Real-Time Mobile Push Notification Settings ($0 Options)")
+        st.info("Deals with **Deal Score >= 8.5** and **Asking Price <= $750** automatically trigger instant push alerts.")
         
-        pk = st.text_input("PUSHOVER_USER_KEY", value=os.environ.get("PUSHOVER_USER_KEY", ""), type="password")
-        at = st.text_input("PUSHOVER_API_TOKEN", value=os.environ.get("PUSHOVER_API_TOKEN", ""), type="password")
+        notify_col1, notify_col2 = st.columns(2)
+        with notify_col1:
+            st.markdown("#### 💬 Discord Webhook (100% Free - Zero Keys)")
+            st.caption("Create a free Discord channel $\\rightarrow$ Channel Settings $\\rightarrow$ Integrations $\\rightarrow$ New Webhook $\\rightarrow$ Copy URL.")
+            discord_url = st.text_input("DISCORD_WEBHOOK_URL", value=os.environ.get("DISCORD_WEBHOOK_URL", ""), type="password", placeholder="https://discord.com/api/webhooks/...")
+            if st.button("Send Test Discord Notification Card", type="primary", use_container_width=True):
+                from notifier import DiscordNotifier
+                d_notifier = DiscordNotifier(webhook_url=discord_url)
+                test_deal = filtered_deals[0] if filtered_deals else storage.get_all()[0]
+                with st.spinner("Dispatching Discord card..."):
+                    res = d_notifier.send_deal_alert(test_deal)
+                    if res.success:
+                        st.success("✅ Embed card delivered to your Discord channel!")
+                    else:
+                        st.error(f"Failed: {res.message}")
 
-        if st.button("Send Test Alert to Mobile Device"):
-            test_notifier = PushoverNotifier(user_key=pk, api_token=at)
-            test_deal = filtered_deals[0] if filtered_deals else storage.get_all()[0]
-            with st.spinner("Dispatching Pushover alert..."):
-                res = test_notifier.send_deal_alert(test_deal, force=True)
-                if res.success:
-                    st.success(f"Dispatched! Request ID: {res.request_id or 'simulated'}")
-                else:
-                    st.error(f"Failed: {res.message}")
+        with notify_col2:
+            st.markdown("#### 📱 Pushover API (Optional)")
+            st.caption("Mobile push alerts to the native Pushover iOS/Android app.")
+            pk = st.text_input("PUSHOVER_USER_KEY", value=os.environ.get("PUSHOVER_USER_KEY", ""), type="password")
+            at = st.text_input("PUSHOVER_API_TOKEN", value=os.environ.get("PUSHOVER_API_TOKEN", ""), type="password")
+
+            if st.button("Send Test Pushover Alert", use_container_width=True):
+                test_notifier = PushoverNotifier(user_key=pk, api_token=at)
+                test_deal = filtered_deals[0] if filtered_deals else storage.get_all()[0]
+                with st.spinner("Dispatching Pushover alert..."):
+                    res = test_notifier.send_deal_alert(test_deal, force=True)
+                    if res.success:
+                        st.success(f"Dispatched! Request ID: {res.request_id or 'simulated'}")
+                    else:
+                        st.error(f"Failed: {res.message}")
 
     with tab_json:
         st.subheader("Atomic Storage Inspector")

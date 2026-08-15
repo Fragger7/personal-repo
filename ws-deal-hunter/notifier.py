@@ -157,6 +157,70 @@ class PushoverNotifier:
             )
 
 
+class DiscordNotifier:
+    """
+    Discord Webhook notifier requiring ZERO paid API keys or developer accounts.
+    Allows 100% free mobile push notifications via Discord mobile app.
+    """
+
+    def __init__(self, webhook_url: Optional[str] = None) -> None:
+        self.webhook_url = webhook_url or os.environ.get("DISCORD_WEBHOOK_URL", "")
+
+    def send_deal_alert(self, deal: DealRecord) -> NotificationResult:
+        """Send rich embed notification card to a Discord channel."""
+        if not self.webhook_url:
+            return NotificationResult(
+                success=False,
+                status_code=400,
+                message="Discord webhook URL not configured.",
+                deal_id=deal.id,
+            )
+
+        embed = {
+            "title": f"🔥 [{deal.deal_score:.1f}/10 DEAL] ${deal.price:.0f} - {deal.specs.cpu}",
+            "description": f"**{deal.title}**\n\n_{deal.summary}_",
+            "url": deal.url,
+            "color": 3066993 if deal.deal_score >= 9.0 else 5814783,
+            "fields": [
+                {"name": "💰 Asking Price", "value": f"${deal.price:.2f}", "inline": True},
+                {"name": "📈 Est. FMV", "value": f"${deal.fair_market_value:.2f}", "inline": True},
+                {"name": "💵 Arbitrage Spread", "value": f"+${deal.estimated_profit:.2f} (+{deal.arbitrage_margin_pct:.0f}% ROI)", "inline": True},
+                {"name": "⚙️ Hardware Specs", "value": f"• **RAM:** {deal.specs.ram_gb} GB\n• **SSD:** {deal.specs.ssd_gb} GB NVMe\n• **GPU:** {deal.specs.gpu}\n• **Screen:** {deal.specs.screen}", "inline": False},
+                {"name": "🎯 AI Action Recommendation", "value": f"**{deal.actionable_recommendation}**", "inline": False},
+            ],
+            "footer": {"text": f"Source: {deal.source.upper()} | Seller: {deal.seller}"},
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+        }
+
+        payload = {
+            "username": "Workstation Deal Hunter",
+            "avatar_url": "https://cdn-icons-png.flaticon.com/512/689/689396.png",
+            "embeds": [embed],
+        }
+
+        try:
+            req = urllib.request.Request(
+                self.webhook_url,
+                data=json.dumps(payload).encode("utf-8"),
+                headers={"Content-Type": "application/json", "User-Agent": "WorkstationDealHunter/1.0"},
+                method="POST",
+            )
+            with urllib.request.urlopen(req, timeout=5.0) as res:
+                return NotificationResult(
+                    success=True,
+                    status_code=res.status,
+                    message="Discord notification card dispatched successfully.",
+                    deal_id=deal.id,
+                )
+        except Exception as e:
+            return NotificationResult(
+                success=False,
+                status_code=500,
+                message=f"Discord webhook error: {e}",
+                deal_id=deal.id,
+            )
+
+
 if __name__ == "__main__":
     from storage import AtomicDealStorage
     storage = AtomicDealStorage()

@@ -151,7 +151,49 @@ class EBayCollector:
             except Exception as err:
                 print(f"[EBayCollector] Browse API request error: {err}")
 
-        # Syndicated realistic fallback feed when credentials not present in demo sandbox
+        # Syndicated realistic fallback feed or public RSS when credentials not present
+        return self._fetch_ebay_rss()
+
+    def _fetch_ebay_rss(self) -> List[RawListing]:
+        """Fetch newly listed items from eBay public search RSS feed without needing API credentials."""
+        rss_url = "https://www.ebay.com/sch/i.html?_nkw=thinkpad+p16+OR+precision+7680+OR+zbook+fury+OR+rtx+4080&_sop=10&_rss=1"
+        try:
+            req = urllib.request.Request(
+                rss_url,
+                headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
+            )
+            with urllib.request.urlopen(req, timeout=1.5) as res:
+                content = res.read().decode("utf-8", errors="ignore")
+                root = ET.fromstring(content)
+                listings: List[RawListing] = []
+                for item in root.findall(".//item"):
+                    title_elem = item.find("title")
+                    link_elem = item.find("link")
+                    desc_elem = item.find("description")
+                    title = title_elem.text if title_elem is not None and title_elem.text else "eBay Item"
+                    link = link_elem.text if link_elem is not None and link_elem.text else "https://www.ebay.com"
+                    desc = desc_elem.text if desc_elem is not None and desc_elem.text else title
+                    price_match = re.search(r"\$([0-9]+(?:\.[0-9]{2})?)", f"{title} {desc}")
+                    price = float(price_match.group(1)) if price_match else 550.0
+                    item_id_match = re.search(r"/itm/([0-9]+)", link)
+                    item_id = item_id_match.group(1) if item_id_match else f"rss_{abs(hash(link)) % 1000000}"
+                    listings.append(
+                        RawListing(
+                            id=f"ebay_{item_id}",
+                            source="ebay",
+                            title=title,
+                            description=desc,
+                            price=price,
+                            url=link,
+                            seller="eBay Seller",
+                            location="US",
+                            condition_raw="Used",
+                        )
+                    )
+                if listings:
+                    return listings[:10]
+        except Exception:
+            pass
         return self._get_syndicated_fallback()
 
     def _get_syndicated_fallback(self) -> List[RawListing]:

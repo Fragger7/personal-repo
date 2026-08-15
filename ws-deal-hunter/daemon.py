@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import argparse
 import signal
+import subprocess
 import sys
 import threading
 import time
@@ -21,7 +22,7 @@ from typing import Any, Dict, List, Optional
 
 from collector import HardwareCollectorHub, RawListing
 from evaluator import GeminiHardwareEvaluator
-from notifier import PushoverNotifier
+from notifier import DiscordNotifier, PushoverNotifier
 from storage import AtomicDealStorage, DealRecord
 
 
@@ -51,10 +52,13 @@ class DealHunterDaemon:
         min_deal_score: float = 8.5,
         max_alert_price: float = 750.0,
         storage_path: str = "deals.json",
+        auto_push: bool = False,
+        discord_webhook: Optional[str] = None,
     ) -> None:
         self.poll_interval = poll_interval
         self.min_deal_score = min_deal_score
         self.max_alert_price = max_alert_price
+        self.auto_push = auto_push
         
         self.storage = AtomicDealStorage(filepath=storage_path)
         self.collector = HardwareCollectorHub()
@@ -63,6 +67,7 @@ class DealHunterDaemon:
             min_deal_score=min_deal_score,
             max_price=max_alert_price,
         )
+        self.discord_notifier = DiscordNotifier(webhook_url=discord_webhook)
 
         self._running = False
         self._thread: Optional[threading.Thread] = None
@@ -126,7 +131,13 @@ class DealHunterDaemon:
                         deal.alerted = True
                         alerts_in_cycle += 1
                         self.status.total_alerts_sent += 1
-                        self.log(f"📱 Pushover alert dispatched successfully for deal: {deal.id}")
+                        self.log(f"📱 Pushover alert dispatched for deal: {deal.id}")
+
+                    # Also send to Discord if configured
+                    if self.discord_notifier.webhook_url:
+                        discord_res = self.discord_notifier.send_deal_alert(deal)
+                        if discord_res.success:
+                            self.log(f"💬 Discord embed alert dispatched for deal: {deal.id}")
 
             except Exception as eval_err:
                 self.log(f"Error evaluating listing {raw.id}: {eval_err}")
@@ -135,6 +146,18 @@ class DealHunterDaemon:
         if evaluated_deals:
             upserted = self.storage.upsert_many(evaluated_deals)
             self.log(f"Atomically committed {upserted} evaluated deals to {self.storage.filepath.name}.")
+
+            # 6. Optional auto-push to GitHub repo
+            if self.auto_push:
+                self.log("Pushing updated deals.json to GitHub repository...")
+                try:
+                    subprocess.run(
+                        ["python3", "git_sync.py", "--push", f"chore(deals): sync {len(evaluated_deals)} new deals"],
+                        check=False,
+                        capture_output=True,
+                    )
+                except Exception as push_err:
+                    self.log(f"Auto-push error: {push_err}")
 
         elapsed = round(time.time() - cycle_start, 2)
         self.status.cycle_count += 1
@@ -190,6 +213,8 @@ def main() -> None:
     parser.add_argument("--min-score", type=float, default=8.5, help="Minimum Deal Score for mobile push alerts (default: 8.5)")
     parser.add_argument("--max-price", type=float, default=750.0, help="Maximum Asking Price for mobile push alerts (default: 750.0)")
     parser.add_argument("--once", action="store_true", help="Run a single evaluation cycle and exit")
+    parser.add_argument("--auto-push", action="store_true", help="Auto-push deals.json to GitHub when new deals arrive")
+    parser.add_argument("--discord-webhook", type=str, default="", help="Discord webhook URL for 100% free mobile push alerts")
     parser.add_argument("--storage", type=str, default="deals.json", help="Path to atomic storage JSON file")
     
     args = parser.parse_args()
@@ -199,6 +224,8 @@ def main() -> None:
         min_deal_score=args.min_score,
         max_alert_price=args.max_price,
         storage_path=args.storage,
+        auto_push=args.auto_push,
+        discord_webhook=args.discord_webhook or None,
     )
 
     if args.once:
