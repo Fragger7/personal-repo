@@ -320,7 +320,7 @@ fun ScannerTab(onNextTab: (() -> Unit)? = null) {
                 ) {
                     val lineCount = if (DataStore.scannerInput.isEmpty()) 0 else DataStore.scannerInput.lines().size
                     val charCount = DataStore.scannerInput.length
-                    val discoveredCount = parsedNodes.size
+                    val discoveredCount = if (DataStore.scannerInput.isEmpty()) 0 else Parser.parseCredentials(DataStore.scannerInput).size
 
                     Surface(
                         shape = RoundedCornerShape(8.dp),
