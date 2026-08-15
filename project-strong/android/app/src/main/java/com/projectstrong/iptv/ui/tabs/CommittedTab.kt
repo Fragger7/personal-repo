@@ -546,7 +546,7 @@ fun CommittedMasterGrid(
                             GridHeader("Conns", 80.dp)
                             GridHeader("Timezone", 130.dp)
                             GridHeader("Notes", 200.dp)
-                            GridHeader("Actions", 130.dp)
+                            GridHeader("Actions", 180.dp)
                         }
 
                         Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(AppSurfaceBorder))
@@ -601,22 +601,25 @@ fun CommittedMasterGrid(
                                     // 16. Notes
                                     GridCell(record.safeNotes.ifEmpty { "..." }, 200.dp, color = AppTextSecondary)
 
-                                    // Actions (Copy, Push if local, & Delete)
-                                    Row(modifier = Modifier.width(130.dp), horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) {
+                                    // Actions (Push if local, Copy, Copy M3U, & Delete)
+                                    Row(
+                                        modifier = Modifier.width(180.dp),
+                                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
                                         if (record.isLocal) {
-                                            IconButton(
-                                                onClick = { onPush() },
-                                                modifier = Modifier.size(34.dp)
-                                            ) {
-                                                Icon(
-                                                    Icons.Default.CloudUpload,
-                                                    contentDescription = "Push to Cloud",
-                                                    tint = AppSuccess,
-                                                    modifier = Modifier.size(18.dp)
-                                                )
-                                            }
+                                            GridActionIconButton(
+                                                icon = Icons.Default.CloudUpload,
+                                                tooltip = "Push to Cloud",
+                                                color = AppSuccess,
+                                                onClick = { onPush() }
+                                            )
                                         }
-                                        IconButton(
+
+                                        GridActionIconButton(
+                                            icon = Icons.Default.ContentCopy,
+                                            tooltip = "Copy Credentials",
+                                            color = AppPrimary,
                                             onClick = {
                                                 val copyText = if (record.safeType == "Xtream") {
                                                     "Host: ${record.safeBaseUrl}\nUsername: ${record.safeUser}\nPassword: ${record.safePass}"
@@ -625,17 +628,28 @@ fun CommittedMasterGrid(
                                                 }
                                                 clipboardManager.setText(AnnotatedString(copyText))
                                                 ToastManager.success("Copied credentials to clipboard!")
-                                            },
-                                            modifier = Modifier.size(34.dp)
-                                        ) {
-                                            Icon(Icons.Default.ContentCopy, contentDescription = "Copy", tint = AppPrimary, modifier = Modifier.size(18.dp))
+                                            }
+                                        )
+
+                                        if (record.safeType == "Xtream" && record.safeUser.isNotEmpty() && record.safePass.isNotEmpty()) {
+                                            GridActionIconButton(
+                                                icon = Icons.Default.FileDownload,
+                                                tooltip = "Copy M3U Playlist Link",
+                                                color = Color(0xFFA78BFA),
+                                                onClick = {
+                                                    val m3uUrl = "${record.safeBaseUrl}/get.php?username=${record.safeUser}&password=${record.safePass}&type=m3u_plus&output=ts"
+                                                    clipboardManager.setText(AnnotatedString(m3uUrl))
+                                                    ToastManager.success("Copied M3U Playlist URL to clipboard!")
+                                                }
+                                            )
                                         }
-                                        IconButton(
-                                            onClick = { CommittedManager.delete(record) },
-                                            modifier = Modifier.size(34.dp)
-                                        ) {
-                                            Icon(Icons.Default.Delete, contentDescription = "Delete", tint = AppError, modifier = Modifier.size(18.dp))
-                                        }
+
+                                        GridActionIconButton(
+                                            icon = Icons.Default.Delete,
+                                            tooltip = "Delete Record",
+                                            color = AppError,
+                                            onClick = { CommittedManager.delete(record) }
+                                        )
                                     }
                                 }
                                 Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(AppSurfaceBorder.copy(alpha = 0.5f)))

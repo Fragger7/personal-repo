@@ -282,41 +282,19 @@ fun XtreamMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCredent
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                // Tier 2: Sub-toolbar containing Active Only chip filter & Query actions
+                // Tier 2: Sub-toolbar containing Active Only switch filter & Query actions
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // Modern Active Filter Pill
-                    Surface(
-                        shape = RoundedCornerShape(8.dp),
-                        color = if (DataStore.activeOnlyXtream) AppPrimary.copy(alpha = 0.18f) else AppSurfaceVariant,
-                        border = androidx.compose.foundation.BorderStroke(
-                            1.dp,
-                            if (DataStore.activeOnlyXtream) AppPrimary.copy(alpha = 0.5f) else AppSurfaceBorder
-                        ),
-                        modifier = Modifier.clickable { DataStore.activeOnlyXtream = !DataStore.activeOnlyXtream }
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Icon(
-                                if (DataStore.activeOnlyXtream) Icons.Default.FilterList else Icons.Default.FilterAlt,
-                                contentDescription = null,
-                                tint = if (DataStore.activeOnlyXtream) Color(0xFF60A5FA) else AppTextMuted,
-                                modifier = Modifier.size(16.dp)
-                            )
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text(
-                                text = if (DataStore.activeOnlyXtream) "Active Only" else "All Nodes",
-                                color = if (DataStore.activeOnlyXtream) Color(0xFF60A5FA) else AppTextSecondary,
-                                style = MaterialTheme.typography.labelMedium,
-                                fontWeight = if (DataStore.activeOnlyXtream) FontWeight.Bold else FontWeight.Medium
-                            )
-                        }
-                    }
+                    // Modern Active Filter Switch
+                    FilterToggleSwitch(
+                        checked = DataStore.activeOnlyXtream,
+                        onCheckedChange = { DataStore.activeOnlyXtream = it },
+                        activeCount = activeCount,
+                        totalCount = nodes.size
+                    )
 
                     // Query Catalogs / Progress Controls
                     if (nodes.isNotEmpty()) {
@@ -470,12 +448,21 @@ fun XtreamMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCredent
                                         GridCell(node.maxConn, 80.dp)
                                         GridCell(node.expires, 100.dp)
 
-                                        Row(modifier = Modifier.width(230.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                            SecondaryButton(
-                                                text = if (fetchingRows.contains(node.baseUrl + node.user)) "..." else "Qry",
+                                        Row(
+                                            modifier = Modifier.width(230.dp),
+                                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            // 1. Single Node Live/VOD Query
+                                            val isNodeFetching = fetchingRows.contains(node.baseUrl + node.user)
+                                            GridActionIconButton(
+                                                icon = Icons.Default.Refresh,
+                                                tooltip = "Query Channels & VOD Counts",
+                                                color = Color(0xFF38BDF8),
+                                                isLoading = isNodeFetching,
                                                 onClick = {
                                                     val key = node.baseUrl + node.user
-                                                    if (fetchingRows.contains(key)) return@SecondaryButton
+                                                    if (fetchingRows.contains(key)) return@GridActionIconButton
                                                     coroutineScope.launch {
                                                         fetchingRows = fetchingRows + key
                                                         val liveStreamsAsync = async(Dispatchers.IO) { IPTVClient.getLiveStreamCount(node.baseUrl, node.user, node.pass) }
@@ -490,24 +477,38 @@ fun XtreamMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCredent
                                                             fetchingRows = fetchingRows - key
                                                         }
                                                     }
-                                                },
-                                                modifier = Modifier.height(34.dp).width(50.dp)
+                                                }
                                             )
-                                            SecondaryButton(
-                                                text = "Copy",
+
+                                            // 2. Copy Xtream API Player URL
+                                            GridActionIconButton(
+                                                icon = Icons.Default.ContentCopy,
+                                                tooltip = "Copy API Endpoint",
+                                                color = Color(0xFF60A5FA),
                                                 onClick = {
                                                     clipboardManager.setText(AnnotatedString("${node.baseUrl}/player_api.php?username=${node.user}&password=${node.pass}"))
                                                     ToastManager.success("Copied Xtream API URL to clipboard!")
-                                                },
-                                                modifier = Modifier.height(34.dp).width(50.dp)
+                                                }
                                             )
-                                            PrimaryButton(
-                                                text = "Commit",
-                                                color = AppSuccess,
+
+                                            // 3. Copy M3U Playlist Download Link (preserved per user request)
+                                            GridActionIconButton(
+                                                icon = Icons.Default.FileDownload,
+                                                tooltip = "Copy M3U Playlist Link",
+                                                color = Color(0xFFA78BFA),
                                                 onClick = {
-                                                    committingNode = node
-                                                },
-                                                modifier = Modifier.height(34.dp).width(64.dp)
+                                                    val m3uUrl = "${node.baseUrl}/get.php?username=${node.user}&password=${node.pass}&type=m3u_plus&output=ts"
+                                                    clipboardManager.setText(AnnotatedString(m3uUrl))
+                                                    ToastManager.success("Copied M3U Playlist URL to clipboard!")
+                                                }
+                                            )
+
+                                            // 4. Commit to Permanent Database
+                                            GridActionIconButton(
+                                                icon = Icons.Default.BookmarkAdd,
+                                                tooltip = "Commit Account",
+                                                color = AppSuccess,
+                                                onClick = { committingNode = node }
                                             )
                                         }
                                     }

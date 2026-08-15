@@ -25,6 +25,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.projectstrong.iptv.data.DataStore
 import com.projectstrong.iptv.network.IPTVClient
+import com.projectstrong.iptv.network.NetworkMonitor
 import com.projectstrong.iptv.network.ParsedCredential
 import com.projectstrong.iptv.network.Parser
 import com.projectstrong.iptv.network.VerificationResult
@@ -48,23 +49,7 @@ fun ScannerTab(onNextTab: (() -> Unit)? = null) {
     // Query external IP info if empty
     LaunchedEffect(Unit) {
         if (DataStore.ipInfo.isEmpty()) {
-            coroutineScope.launch(Dispatchers.IO) {
-                try {
-                    val client = okhttp3.OkHttpClient()
-                    val request = okhttp3.Request.Builder().url("http://ip-api.com/json/").build()
-                    val response = client.newCall(request).execute()
-                    val body = response.body?.string() ?: "{}"
-                    val json = org.json.JSONObject(body)
-                    val isp = json.optString("isp", "Unknown ISP")
-                    val org = json.optString("org", "")
-                    DataStore.ipInfo = "Connected via $isp"
-                    val clouds = listOf("amazon", "aws", "google", "azure", "cloudflare", "digitalocean", "linode", "hetzner", "ovh")
-                    DataStore.isCloudHosting = clouds.any { isp.lowercase().contains(it) || org.lowercase().contains(it) }
-                } catch (e: Exception) {
-                    DataStore.ipInfo = "DISCONNECTED / UNKNOWN"
-                    DataStore.isCloudHosting = false
-                }
-            }
+            NetworkMonitor.refreshNetworkState()
         }
     }
 

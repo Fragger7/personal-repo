@@ -140,40 +140,18 @@ fun StalkerMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCreden
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                // Tier 2: Filter Toolbar
+                // Tier 2: Filter Toolbar with FilterToggleSwitch
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.Start,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Surface(
-                        shape = RoundedCornerShape(8.dp),
-                        color = if (DataStore.activeOnlyStalker) AppPrimary.copy(alpha = 0.18f) else AppSurfaceVariant,
-                        border = androidx.compose.foundation.BorderStroke(
-                            1.dp,
-                            if (DataStore.activeOnlyStalker) AppPrimary.copy(alpha = 0.5f) else AppSurfaceBorder
-                        ),
-                        modifier = Modifier.clickable { DataStore.activeOnlyStalker = !DataStore.activeOnlyStalker }
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Icon(
-                                if (DataStore.activeOnlyStalker) Icons.Default.FilterList else Icons.Default.FilterAlt,
-                                contentDescription = null,
-                                tint = if (DataStore.activeOnlyStalker) Color(0xFF60A5FA) else AppTextMuted,
-                                modifier = Modifier.size(16.dp)
-                            )
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text(
-                                text = if (DataStore.activeOnlyStalker) "Active Only" else "All Nodes",
-                                color = if (DataStore.activeOnlyStalker) Color(0xFF60A5FA) else AppTextSecondary,
-                                style = MaterialTheme.typography.labelMedium,
-                                fontWeight = if (DataStore.activeOnlyStalker) FontWeight.Bold else FontWeight.Medium
-                            )
-                        }
-                    }
+                    FilterToggleSwitch(
+                        checked = DataStore.activeOnlyStalker,
+                        onCheckedChange = { DataStore.activeOnlyStalker = it },
+                        activeCount = activeCount,
+                        totalCount = nodes.size
+                    )
                 }
             }
         }
@@ -246,22 +224,25 @@ fun StalkerMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCreden
                                         GridCell(node.expires, 100.dp)
                                         GridCell(node.daysLeft, 100.dp)
 
-                                        Row(modifier = Modifier.width(180.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                            SecondaryButton(
-                                                text = "Copy",
+                                        Row(
+                                            modifier = Modifier.width(180.dp),
+                                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            GridActionIconButton(
+                                                icon = Icons.Default.ContentCopy,
+                                                tooltip = "Copy Stalker Credentials",
+                                                color = Color(0xFF60A5FA),
                                                 onClick = {
                                                     clipboardManager.setText(AnnotatedString("${node.baseUrl} / ${node.mac}"))
                                                     ToastManager.success("Copied Stalker credentials to clipboard!")
-                                                },
-                                                modifier = Modifier.height(34.dp).weight(1f)
+                                                }
                                             )
-                                            PrimaryButton(
-                                                text = "Commit",
+                                            GridActionIconButton(
+                                                icon = Icons.Default.BookmarkAdd,
+                                                tooltip = "Commit Account",
                                                 color = AppSuccess,
-                                                onClick = {
-                                                    committingNode = node
-                                                },
-                                                modifier = Modifier.height(34.dp).weight(1f)
+                                                onClick = { committingNode = node }
                                             )
                                         }
                                     }
