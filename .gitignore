@@ -7,7 +7,6 @@ node_modules/
 dist/
 build/
 .env
-deals.json
 test_pipeline.json
 test_deals.json
 .DS_Store

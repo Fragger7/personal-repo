@@ -38,7 +38,13 @@ def main() -> None:
         initial_sidebar_state="expanded",
     )
 
-    storage = AtomicDealStorage(filepath="deals.json")
+    from pathlib import Path
+
+    db_path = Path(__file__).parent / "deals.json"
+    if not db_path.exists() and Path("deals.json").exists():
+        db_path = Path("deals.json")
+
+    storage = AtomicDealStorage(filepath=db_path)
     evaluator = GeminiHardwareEvaluator()
     notifier = PushoverNotifier()
 
@@ -99,7 +105,7 @@ def main() -> None:
         "Min Deal Score (0 - 10)",
         min_value=0.0,
         max_value=10.0,
-        value=7.0,
+        value=5.0,
         step=0.1,
         help="Scores >= 8.5 qualify for autonomous mobile push alerts.",
     )
@@ -107,8 +113,8 @@ def main() -> None:
     max_price = st.sidebar.slider(
         "Max Asking Price ($)",
         min_value=100,
-        max_value=2500,
-        value=850,
+        max_value=3000,
+        value=2500,
         step=25,
     )
 

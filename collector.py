@@ -205,7 +205,7 @@ class EBayCollector:
                 title="Dell Precision 7680 16\" Laptop Intel Core i9-13950HX 64GB RAM 1TB SSD RTX 4000 Ada 12GB - Excellent",
                 description="Dell Precision 7680 mobile workstation in excellent condition. 16-inch FHD+ 500 nits, i9-13950HX 24 cores, 64GB DDR5 ECC, NVIDIA RTX 4000 Ada 12GB. Comes with original 240W GaN charger.",
                 price=740.0,
-                url="https://www.ebay.com/itm/405128491",
+                url="https://www.ebay.com/sch/i.html?_nkw=Dell+Precision+7680+i9+64GB&_sop=12",
                 seller="tech_vault_resale",
                 location="TX, USA",
                 condition_raw="Certified Refurbished",
@@ -217,7 +217,7 @@ class EBayCollector:
                 title="Lenovo ThinkPad P1 Gen 6 Core i7-13800H 32GB RAM 1TB SSD RTX 4080 12GB 16\" OLED Touch Clean",
                 description="ThinkPad P1 Gen 6 creator workstation. Super clean condition, battery 98% health. Intel 13th gen i7, 32GB DDR5, 1TB Samsung 980 Pro NVMe, RTX 4080 Laptop GPU.",
                 price=710.0,
-                url="https://www.ebay.com/itm/296184910",
+                url="https://www.ebay.com/sch/i.html?_nkw=Lenovo+ThinkPad+P1+Gen+6+i7+32GB&_sop=12",
                 seller="corporate_it_liquidators",
                 location="CA, USA",
                 condition_raw="Used - Like New",
@@ -229,7 +229,7 @@ class EBayCollector:
                 title="HP ZBook Fury 16 G10 Mobile Workstation (i7-13700HX, 32GB DDR5, 512GB SSD, RTX A2000 Ada 8GB)",
                 description="HP ZBook Fury 16 G10, high-end aluminum chassis. Dual Thunderbolt 4 ports, ISV certified RTX A2000 Ada 8GB graphics. Ships fast with genuine charger.",
                 price=630.0,
-                url="https://www.ebay.com/itm/185934812",
+                url="https://www.ebay.com/sch/i.html?_nkw=HP+ZBook+Fury+16+G10+i7+32GB&_sop=12",
                 seller="midwest_pc_outlet",
                 location="IL, USA",
                 condition_raw="Used - Very Good",
@@ -359,7 +359,7 @@ class RedditCollector:
                     author = author_a.text.strip() if author_a else "anonymous"
                     post_id = entry.get("data-fullname", f"hws_{abs(hash(title)) % 1000000}")
                     href = title_a.get("href", "")
-                    url_full = f"https://old.reddit.com{href}" if href.startswith("/") else href
+                    url_full = f"https://www.reddit.com{href}" if href.startswith("/") else href.replace("old.reddit.com", "www.reddit.com")
 
                     if "[H]" not in title and "[h]" not in title:
                         continue
@@ -533,25 +533,22 @@ class SwappaCollector:
         """Scrape live hardware deals from syndicated tech deal RSS feeds."""
         try:
             import cloudscraper
-            from bs4 import BeautifulSoup, XMLParsedAsHTMLWarning
-            import warnings
-
-            warnings.filterwarnings("ignore", category=XMLParsedAsHTMLWarning)
+            import html
 
             scraper = cloudscraper.create_scraper()
             url = "https://slickdeals.net/newsearch.php?searchfirst=1&q=laptop&rss=1"
             res = scraper.get(url, timeout=4.0)
             if res.status_code == 200:
-                soup = BeautifulSoup(res.text, "html.parser")
-                items = soup.find_all("item")
+                item_blocks = re.findall(r"<item>([\s\S]*?)</item>", res.text)
                 listings: List[RawListing] = []
-                for idx, item in enumerate(items):
-                    title_elem = item.find("title")
-                    link_elem = item.find("link")
-                    desc_elem = item.find("description")
-                    title = title_elem.text.strip() if title_elem else ""
-                    link = link_elem.text.strip() if link_elem else "https://slickdeals.net"
-                    desc = desc_elem.text.strip() if desc_elem else title
+                for idx, block in enumerate(item_blocks):
+                    title_m = re.search(r"<title>(?:<!\[CDATA\[)?(.*?)(?:\]\]>)?</title>", block, re.DOTALL)
+                    link_m = re.search(r"<link>(.*?)</link>", block) or re.search(r"<guid[^>]*>(.*?)</guid>", block)
+                    desc_m = re.search(r"<description>(?:<!\[CDATA\[)?(.*?)(?:\]\]>)?</description>", block, re.DOTALL)
+
+                    title = html.unescape(title_m.group(1).strip()) if title_m else ""
+                    link = html.unescape(link_m.group(1).strip()) if link_m else "https://slickdeals.net"
+                    desc = html.unescape(desc_m.group(1).strip()) if desc_m else title
 
                     price_match = re.search(r"\$\s*([0-9,]+(?:\.[0-9]{2})?)", f"{title} {desc}")
                     price = float(price_match.group(1).replace(",", "")) if price_match else 0.0
