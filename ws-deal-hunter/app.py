@@ -38,7 +38,13 @@ def main() -> None:
         initial_sidebar_state="expanded",
     )
 
-    storage = AtomicDealStorage(filepath="deals.json")
+    from pathlib import Path
+
+    db_path = Path(__file__).parent / "deals.json"
+    if not db_path.exists() and Path("deals.json").exists():
+        db_path = Path("deals.json")
+
+    storage = AtomicDealStorage(filepath=db_path)
     evaluator = GeminiHardwareEvaluator()
     notifier = PushoverNotifier()
 
