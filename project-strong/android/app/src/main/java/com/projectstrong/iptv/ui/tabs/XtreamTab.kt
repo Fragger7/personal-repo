@@ -422,7 +422,7 @@ fun XtreamMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCredent
                                 GridHeader("Active", 80.dp, onClick = { headerClick("Active") }, isSorted = (sortColumn == "Active"), isAscending = sortAscending)
                                 GridHeader("Max", 80.dp, null)
                                 GridHeader("Expires", 100.dp, null)
-                                GridHeader("Actions", 230.dp, null)
+                                GridHeader("Actions", 140.dp, null)
                             }
 
                             Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(AppSurfaceBorder))
@@ -449,15 +449,15 @@ fun XtreamMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCredent
                                         GridCell(node.expires, 100.dp)
 
                                         Row(
-                                            modifier = Modifier.width(230.dp),
+                                            modifier = Modifier.width(140.dp),
                                             horizontalArrangement = Arrangement.spacedBy(6.dp),
                                             verticalAlignment = Alignment.CenterVertically
                                         ) {
-                                            // 1. Single Node Live/VOD Query
+                                            // 1. Single Node Live/VOD Query / Inspect
                                             val isNodeFetching = fetchingRows.contains(node.baseUrl + node.user)
                                             GridActionIconButton(
-                                                icon = Icons.Default.Refresh,
-                                                tooltip = "Query Channels & VOD Counts",
+                                                icon = Icons.Default.Search,
+                                                tooltip = "Inspect Channels & VODs",
                                                 color = Color(0xFF38BDF8),
                                                 isLoading = isNodeFetching,
                                                 onClick = {
@@ -480,18 +480,7 @@ fun XtreamMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCredent
                                                 }
                                             )
 
-                                            // 2. Copy Xtream API Player URL
-                                            GridActionIconButton(
-                                                icon = Icons.Default.ContentCopy,
-                                                tooltip = "Copy API Endpoint",
-                                                color = Color(0xFF60A5FA),
-                                                onClick = {
-                                                    clipboardManager.setText(AnnotatedString("${node.baseUrl}/player_api.php?username=${node.user}&password=${node.pass}"))
-                                                    ToastManager.success("Copied Xtream API URL to clipboard!")
-                                                }
-                                            )
-
-                                            // 3. Copy M3U Playlist Download Link (preserved per user request)
+                                            // 2. Copy M3U Playlist Download Link
                                             GridActionIconButton(
                                                 icon = Icons.Default.FileDownload,
                                                 tooltip = "Copy M3U Playlist Link",
@@ -503,7 +492,7 @@ fun XtreamMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCredent
                                                 }
                                             )
 
-                                            // 4. Commit to Permanent Database
+                                            // 3. Commit to Permanent Database
                                             GridActionIconButton(
                                                 icon = Icons.Default.BookmarkAdd,
                                                 tooltip = "Commit Account",

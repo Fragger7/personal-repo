@@ -23,6 +23,7 @@ object DataStore {
     var detectedOrg by mutableStateOf("")
     var detectedCountry by mutableStateOf("")
     var isCloudHosting by mutableStateOf(false)
+    var isVpnActive by mutableStateOf(false)
     var isCheckingNetwork by mutableStateOf(false)
     var showVpnWarning by mutableStateOf(false)
     var activeOnlyXtream by mutableStateOf(false)

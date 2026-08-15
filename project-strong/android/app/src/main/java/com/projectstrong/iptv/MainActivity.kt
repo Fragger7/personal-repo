@@ -47,22 +47,28 @@ class MainActivity : ComponentActivity() {
 
         // Setup reactive network callback to dynamically track VPN / WiFi / Cellular / Offline transitions
         connectivityManager = getSystemService(Context.CONNECTIVITY_SERVICE) as? ConnectivityManager
+        NetworkMonitor.updateHardwareVpnState(applicationContext)
+
         networkCallback = object : ConnectivityManager.NetworkCallback() {
             override fun onAvailable(network: Network) {
+                NetworkMonitor.updateHardwareVpnState(applicationContext)
                 DataStore.scanScope.launch {
-                    NetworkMonitor.refreshNetworkState()
+                    NetworkMonitor.refreshNetworkState(applicationContext)
                 }
             }
 
             override fun onLost(network: Network) {
+                NetworkMonitor.updateHardwareVpnState(applicationContext)
                 DataStore.scanScope.launch {
-                    NetworkMonitor.refreshNetworkState()
+                    NetworkMonitor.refreshNetworkState(applicationContext)
                 }
             }
 
             override fun onCapabilitiesChanged(network: Network, networkCapabilities: NetworkCapabilities) {
+                val hasVpn = networkCapabilities.hasTransport(NetworkCapabilities.TRANSPORT_VPN)
+                DataStore.isVpnActive = hasVpn
                 DataStore.scanScope.launch {
-                    NetworkMonitor.refreshNetworkState()
+                    NetworkMonitor.refreshNetworkState(applicationContext)
                 }
             }
         }
@@ -78,7 +84,7 @@ class MainActivity : ComponentActivity() {
 
         // Initial fetch
         DataStore.scanScope.launch {
-            NetworkMonitor.refreshNetworkState()
+            NetworkMonitor.refreshNetworkState(applicationContext)
         }
 
         setContent {
@@ -97,6 +103,14 @@ class MainActivity : ComponentActivity() {
                     }
                 }
             }
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        NetworkMonitor.updateHardwareVpnState(applicationContext)
+        DataStore.scanScope.launch {
+            NetworkMonitor.refreshNetworkState(applicationContext)
         }
     }
 
@@ -159,6 +173,7 @@ fun MainDashboard() {
                 shape = RoundedCornerShape(12.dp),
                 color = when {
                     DataStore.detectedIsp == "Offline" || DataStore.ipInfo.contains("DISCONNECTED") -> AppErrorContainer
+                    DataStore.isVpnActive -> AppPrimaryContainer
                     DataStore.isCloudHosting -> AppWarningContainer
                     else -> AppSurfaceVariant
                 },
@@ -166,6 +181,7 @@ fun MainDashboard() {
                     1.dp, 
                     when {
                         DataStore.detectedIsp == "Offline" || DataStore.ipInfo.contains("DISCONNECTED") -> AppError.copy(alpha = 0.5f)
+                        DataStore.isVpnActive -> Color(0xFF38BDF8).copy(alpha = 0.5f)
                         DataStore.isCloudHosting -> AppWarning.copy(alpha = 0.5f)
                         else -> AppSuccess.copy(alpha = 0.4f)
                     }
@@ -191,6 +207,7 @@ fun MainDashboard() {
                                 .background(
                                     when {
                                         DataStore.detectedIsp == "Offline" || DataStore.ipInfo.contains("DISCONNECTED") -> Color(0xFFEF4444)
+                                        DataStore.isVpnActive -> Color(0xFF38BDF8)
                                         DataStore.isCloudHosting -> Color(0xFFFBBF24)
                                         else -> Color(0xFF34D399)
                                     }
@@ -198,13 +215,15 @@ fun MainDashboard() {
                         )
                         Text(
                             text = when {
-                                DataStore.isCheckingNetwork -> "Checking..."
                                 DataStore.detectedIsp == "Offline" || DataStore.ipInfo.contains("DISCONNECTED") -> "Offline"
+                                DataStore.isVpnActive -> "🛡️ VPN Active"
+                                DataStore.isCheckingNetwork -> "Checking..."
                                 DataStore.isCloudHosting -> "⚠️ Cloud Hosting"
                                 else -> "Direct ISP"
                             },
                             color = when {
                                 DataStore.detectedIsp == "Offline" || DataStore.ipInfo.contains("DISCONNECTED") -> Color(0xFFF87171)
+                                DataStore.isVpnActive -> Color(0xFF38BDF8)
                                 DataStore.isCloudHosting -> Color(0xFFFBBF24)
                                 else -> Color(0xFF34D399)
                             },

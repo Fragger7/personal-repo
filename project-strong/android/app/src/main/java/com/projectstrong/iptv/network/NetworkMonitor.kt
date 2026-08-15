@@ -1,5 +1,8 @@
 package com.projectstrong.iptv.network
 
+import android.content.Context
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
 import com.projectstrong.iptv.data.DataStore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -10,12 +13,23 @@ import java.util.concurrent.TimeUnit
 
 object NetworkMonitor {
     private val client = OkHttpClient.Builder()
-        .connectTimeout(5, TimeUnit.SECONDS)
-        .readTimeout(5, TimeUnit.SECONDS)
+        .connectTimeout(4, TimeUnit.SECONDS)
+        .readTimeout(4, TimeUnit.SECONDS)
+        .retryOnConnectionFailure(true)
         .build()
 
-    suspend fun refreshNetworkState(): Boolean = withContext(Dispatchers.IO) {
+    fun updateHardwareVpnState(context: Context) {
+        val cm = context.getSystemService(Context.CONNECTIVITY_SERVICE) as? ConnectivityManager ?: return
+        val activeNetwork = cm.activeNetwork
+        val capabilities = cm.getNetworkCapabilities(activeNetwork)
+        val hasVpn = capabilities?.hasTransport(NetworkCapabilities.TRANSPORT_VPN) == true
+        DataStore.isVpnActive = hasVpn
+    }
+
+    suspend fun refreshNetworkState(context: Context? = null): Boolean = withContext(Dispatchers.IO) {
         DataStore.isCheckingNetwork = true
+        context?.let { updateHardwareVpnState(it) }
+
         try {
             val request = Request.Builder()
                 .url("http://ip-api.com/json/")

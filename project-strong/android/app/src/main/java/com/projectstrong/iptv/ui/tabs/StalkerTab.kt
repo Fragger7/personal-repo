@@ -202,7 +202,7 @@ fun StalkerMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCreden
                                 GridHeader("Timezone", 120.dp, null)
                                 GridHeader("Expires", 100.dp, null)
                                 GridHeader("Days Left", 100.dp, onClick = { headerClick("Days Left") }, isSorted = (sortColumn == "Days Left"), isAscending = sortAscending)
-                                GridHeader("Actions", 180.dp, null)
+                                GridHeader("Actions", 110.dp, null)
                             }
 
                             Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(AppSurfaceBorder))
@@ -225,7 +225,7 @@ fun StalkerMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCreden
                                         GridCell(node.daysLeft, 100.dp)
 
                                         Row(
-                                            modifier = Modifier.width(180.dp),
+                                            modifier = Modifier.width(110.dp),
                                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                                             verticalAlignment = Alignment.CenterVertically
                                         ) {

@@ -17,6 +17,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
@@ -28,6 +29,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun ConnectionStateDialog(onDismiss: () -> Unit) {
     val coroutineScope = rememberCoroutineScope()
+    val context = LocalContext.current
 
     Dialog(onDismissRequest = onDismiss) {
         Surface(
@@ -55,7 +57,11 @@ fun ConnectionStateDialog(onDismiss: () -> Unit) {
                         Icon(
                             Icons.Default.Shield,
                             contentDescription = null,
-                            tint = if (DataStore.isCloudHosting) AppWarning else AppSuccess,
+                            tint = when {
+                                DataStore.isVpnActive -> Color(0xFF38BDF8)
+                                DataStore.isCloudHosting -> AppWarning
+                                else -> AppSuccess
+                            },
                             modifier = Modifier.size(24.dp)
                         )
                         Text(
@@ -75,10 +81,18 @@ fun ConnectionStateDialog(onDismiss: () -> Unit) {
                 // Status Banner
                 Surface(
                     shape = RoundedCornerShape(12.dp),
-                    color = if (DataStore.isCloudHosting) AppWarningContainer else AppSuccessContainer,
+                    color = when {
+                        DataStore.isVpnActive -> AppPrimaryContainer
+                        DataStore.isCloudHosting -> AppWarningContainer
+                        else -> AppSuccessContainer
+                    },
                     border = BorderStroke(
                         1.dp,
-                        if (DataStore.isCloudHosting) AppWarning.copy(alpha = 0.5f) else AppSuccess.copy(alpha = 0.4f)
+                        when {
+                            DataStore.isVpnActive -> Color(0xFF38BDF8).copy(alpha = 0.5f)
+                            DataStore.isCloudHosting -> AppWarning.copy(alpha = 0.5f)
+                            else -> AppSuccess.copy(alpha = 0.4f)
+                        }
                     ),
                     modifier = Modifier.fillMaxWidth()
                 ) {
@@ -91,20 +105,35 @@ fun ConnectionStateDialog(onDismiss: () -> Unit) {
                             modifier = Modifier
                                 .size(10.dp)
                                 .clip(CircleShape)
-                                .background(if (DataStore.isCloudHosting) Color(0xFFFBBF24) else Color(0xFF34D399))
+                                .background(
+                                    when {
+                                        DataStore.isVpnActive -> Color(0xFF38BDF8)
+                                        DataStore.isCloudHosting -> Color(0xFFFBBF24)
+                                        else -> Color(0xFF34D399)
+                                    }
+                                )
                         )
                         Column {
                             Text(
-                                text = if (DataStore.isCloudHosting) "Cloud Datacenter IP Detected" else "Direct Residential ISP Connection",
-                                color = if (DataStore.isCloudHosting) Color(0xFFFBBF24) else Color(0xFF34D399),
+                                text = when {
+                                    DataStore.isVpnActive -> "Encrypted VPN Tunnel Active"
+                                    DataStore.isCloudHosting -> "Cloud Datacenter IP Detected"
+                                    else -> "Direct Residential ISP Connection"
+                                },
+                                color = when {
+                                    DataStore.isVpnActive -> Color(0xFF38BDF8)
+                                    DataStore.isCloudHosting -> Color(0xFFFBBF24)
+                                    else -> Color(0xFF34D399)
+                                },
                                 style = MaterialTheme.typography.labelMedium,
                                 fontWeight = FontWeight.Bold
                             )
                             Text(
-                                text = if (DataStore.isCloudHosting) 
-                                    "Your outbound traffic originates from a cloud provider range. IPTV firewalls may block queries."
-                                else 
-                                    "Residential / cellular IP active. Optimum for verifying IPTV playlists without Cloudflare blocks.",
+                                text = when {
+                                    DataStore.isVpnActive -> "Android VPN transport active. Traffic is securely routed through your VPN tunnel."
+                                    DataStore.isCloudHosting -> "Outbound traffic originates from a cloud provider range. IPTV firewalls may block queries."
+                                    else -> "Residential / cellular IP active. Optimum for verifying IPTV playlists without Cloudflare blocks."
+                                },
                                 color = AppTextSecondary,
                                 style = MaterialTheme.typography.bodySmall
                             )
@@ -122,6 +151,7 @@ fun ConnectionStateDialog(onDismiss: () -> Unit) {
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        NetworkDetailRow("VPN Transport", if (DataStore.isVpnActive) "Active (Hardware Verified)" else "Disabled")
                         NetworkDetailRow("External IP", DataStore.detectedIp.ifEmpty { "Querying..." })
                         NetworkDetailRow("ISP Provider", DataStore.detectedIsp.ifEmpty { "Direct Connection" })
                         if (DataStore.detectedOrg.isNotEmpty() && DataStore.detectedOrg != DataStore.detectedIsp) {
@@ -140,9 +170,10 @@ fun ConnectionStateDialog(onDismiss: () -> Unit) {
                     text = if (DataStore.isCheckingNetwork) "Checking Network..." else "🔄 Refresh Connection (VPN Test)",
                     onClick = {
                         coroutineScope.launch {
-                            val success = NetworkMonitor.refreshNetworkState()
+                            val success = NetworkMonitor.refreshNetworkState(context)
                             if (success) {
-                                ToastManager.success("Network updated: ${DataStore.detectedIsp}")
+                                val vpnLabel = if (DataStore.isVpnActive) " (VPN Active)" else ""
+                                ToastManager.success("Network updated: ${DataStore.detectedIsp}$vpnLabel")
                             } else {
                                 ToastManager.warning("Could not reach IP diagnostics service.")
                             }
