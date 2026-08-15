@@ -13,6 +13,7 @@ val AppSurfaceBorder = Color(0xFF26334D)  // Subtle card border
 
 val AppPrimary = Color(0xFF3B82F6)    // Modern electric blue
 val AppPrimaryVariant = Color(0xFF2563EB)
+val AppPrimaryContainer = Color(0x1A3B82F6) // Electric blue container tint
 val AppSecondary = Color(0xFF8B5CF6)  // Purple accent
 val AppSuccess = Color(0xFF10B981)    // Emerald green
 val AppSuccessContainer = Color(0x1A10B981)
