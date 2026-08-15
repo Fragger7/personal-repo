@@ -365,6 +365,12 @@ Addressed significant UX complaints regarding the Android app's tabular data dis
 * **Issue**: Deleting records via the Android app correctly pushed the change to the Cloud (8 records remaining). However, the background AI workflow script (`git_push.cjs`) blindly merged its stale, cached memory (12 records) back into the push, restoring the deleted "zombie" records.
 * **Resolution**: Purged the stale `committed.json` cache from the AI workspace environment and corrected the AI developer constraints to ensure cloud database files are respected rather than blindly merged during deployment pipelines.
 
+### 📱 Android UI/UX & Forensic Diagnostics Polish (Completed)
+* **Sherlock Holmes Cyber-Detective App Icon**: Created a high-tech vector asset (`ic_launcher_foreground.xml`) incorporating the classic Sherlock Holmes Deerstalker hat silhouette (crown, ear flaps, and dual visors) paired with an illuminated neon magnifying glass highlighting IPTV signal waves, grip rings, and cyber-reticle corner accents.
+* **Instant Hardware VPN Detection & Network Shield**: Added zero-latency hardware VPN sensing via `NetworkCapabilities.TRANSPORT_VPN` inside `NetworkMonitor.kt` and `MainActivity.kt`. The app updates its top header state immediately to `🛡️ VPN Active` without waiting on external HTTP checks. Created an interactive `ConnectionStateDialog` providing a real-time network breakdown (IP, ISP, Organization, Country) and manual diagnostic refresh.
+* **Scanner Tab Metrics & Controls Separation**: Cleanly separated the action buttons ("Paste from Clipboard" and "Clear Payload") onto their own dedicated top row, and moved the Lines/Character count and Discovered Nodes badges to their own dedicated bottom status bar in `ScannerTab.kt`. Large counts (thousands of nodes) no longer crowd, wrap, or distort button alignments.
+* **Master Grid Action Iconography**: Replaced generic refresh icons with the Search Magnifying Glass (`Icons.Default.Search`) across the master grids to intuitively convey inspecting channels and VODs, while sizing action columns appropriately (`140.dp` for Xtream, `110.dp` for Stalker) for seamless horizontal viewing.
+
 ---
 
 ## 🗺️ Next-Phase Strategic Roadmap & Architecture Specifications
