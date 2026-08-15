@@ -157,6 +157,83 @@ class PushoverNotifier:
             )
 
 
+class TelegramNotifier:
+    """
+    Telegram Bot notifier for 100% free instant push notifications directly to your phone.
+    Requires:
+      - TELEGRAM_BOT_TOKEN: from @BotFather (e.g. 123456789:ABCdefGhIJKlmNoPQRsTUVwxyZ)
+      - TELEGRAM_CHAT_ID: your Telegram chat or channel ID (e.g. from @userinfobot)
+    """
+
+    def __init__(
+        self,
+        bot_token: Optional[str] = None,
+        chat_id: Optional[str] = None,
+    ) -> None:
+        self.bot_token = bot_token or os.environ.get("TELEGRAM_BOT_TOKEN", "")
+        self.chat_id = chat_id or os.environ.get("TELEGRAM_CHAT_ID", "")
+
+    def send_deal_alert(self, deal: DealRecord) -> NotificationResult:
+        """Send rich HTML formatted notification to Telegram."""
+        if not self.bot_token or not self.chat_id:
+            return NotificationResult(
+                success=False,
+                status_code=400,
+                message="Telegram bot token or chat ID not configured.",
+                deal_id=deal.id,
+            )
+
+        api_url = f"https://api.telegram.org/bot{self.bot_token}/sendMessage"
+
+        # Format HTML message
+        text = (
+            f"🔥 <b>[{deal.deal_score:.1f}/10 DEAL FOUND]</b>\n\n"
+            f"💻 <b>{deal.title}</b>\n\n"
+            f"💰 <b>Asking Price:</b> ${deal.price:.2f}\n"
+            f"📈 <b>Est. Market Value:</b> ${deal.fair_market_value:.2f}\n"
+            f"💵 <b>Arbitrage Spread:</b> <b>+${deal.estimated_profit:.2f}</b> (+{deal.arbitrage_margin_pct:.0f}% ROI)\n\n"
+            f"⚙️ <b>Hardware Specs:</b>\n"
+            f"• <b>CPU:</b> {deal.specs.cpu}\n"
+            f"• <b>RAM:</b> {deal.specs.ram_gb} GB\n"
+            f"• <b>SSD:</b> {deal.specs.ssd_gb} GB NVMe\n"
+            f"• <b>GPU:</b> {deal.specs.gpu}\n"
+            f"• <b>Display:</b> {deal.specs.screen}\n\n"
+            f"🎯 <b>Action:</b> {deal.actionable_recommendation}\n"
+            f"📍 <b>Source:</b> {deal.source.upper()} ({deal.seller})\n\n"
+            f"👉 <a href=\"{deal.url}\"><b>[CLICK HERE TO VIEW / BUY LISTING]</b></a>"
+        )
+
+        payload = {
+            "chat_id": self.chat_id,
+            "text": text,
+            "parse_mode": "HTML",
+            "disable_web_page_preview": False,
+        }
+
+        try:
+            req = urllib.request.Request(
+                api_url,
+                data=json.dumps(payload).encode("utf-8"),
+                headers={"Content-Type": "application/json", "User-Agent": "WorkstationDealHunter/1.0"},
+                method="POST",
+            )
+            with urllib.request.urlopen(req, timeout=5.0) as res:
+                response_data = json.loads(res.read().decode("utf-8"))
+                return NotificationResult(
+                    success=response_data.get("ok", False),
+                    status_code=res.status,
+                    message="Telegram message delivered successfully.",
+                    deal_id=deal.id,
+                )
+        except Exception as e:
+            return NotificationResult(
+                success=False,
+                status_code=500,
+                message=f"Telegram API error: {e}",
+                deal_id=deal.id,
+            )
+
+
 class DiscordNotifier:
     """
     Discord Webhook notifier requiring ZERO paid API keys or developer accounts.

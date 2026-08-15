@@ -22,7 +22,7 @@ from typing import Any, Dict, List, Optional
 
 from collector import HardwareCollectorHub, RawListing
 from evaluator import GeminiHardwareEvaluator
-from notifier import DiscordNotifier, PushoverNotifier
+from notifier import DiscordNotifier, PushoverNotifier, TelegramNotifier
 from storage import AtomicDealStorage, DealRecord
 
 
@@ -67,6 +67,7 @@ class DealHunterDaemon:
             min_deal_score=min_deal_score,
             max_price=max_alert_price,
         )
+        self.telegram_notifier = TelegramNotifier()
         self.discord_notifier = DiscordNotifier(webhook_url=discord_webhook)
 
         self._running = False
@@ -132,6 +133,12 @@ class DealHunterDaemon:
                         alerts_in_cycle += 1
                         self.status.total_alerts_sent += 1
                         self.log(f"📱 Pushover alert dispatched for deal: {deal.id}")
+
+                    # Also send to Telegram if configured
+                    if self.telegram_notifier.bot_token and self.telegram_notifier.chat_id:
+                        tg_res = self.telegram_notifier.send_deal_alert(deal)
+                        if tg_res.success:
+                            self.log(f"✈️ Telegram alert dispatched for deal: {deal.id}")
 
                     # Also send to Discord if configured
                     if self.discord_notifier.webhook_url:
