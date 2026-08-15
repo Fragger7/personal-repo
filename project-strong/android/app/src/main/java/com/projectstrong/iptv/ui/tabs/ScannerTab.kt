@@ -254,28 +254,12 @@ fun ScannerTab(onNextTab: (() -> Unit)? = null) {
 
                 Spacer(modifier = Modifier.height(10.dp))
 
-                // Tier 2: Dedicated Action Toolbar
+                // Tier 2: Dedicated Action Controls Row (Paste & Clear)
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
+                    horizontalArrangement = Arrangement.End,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // Line & Char counter badge
-                    val lineCount = if (DataStore.scannerInput.isEmpty()) 0 else DataStore.scannerInput.lines().size
-                    val charCount = DataStore.scannerInput.length
-                    Surface(
-                        shape = RoundedCornerShape(8.dp),
-                        color = AppSurfaceVariant,
-                        border = androidx.compose.foundation.BorderStroke(1.dp, AppSurfaceBorder)
-                    ) {
-                        Text(
-                            text = "$lineCount lines • $charCount chars",
-                            color = AppTextMuted,
-                            style = MaterialTheme.typography.labelSmall,
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                        )
-                    }
-
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         // Paste Button
                         Surface(
@@ -290,12 +274,12 @@ fun ScannerTab(onNextTab: (() -> Unit)? = null) {
                             }
                         ) {
                             Row(
-                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Icon(Icons.Default.ContentPaste, contentDescription = null, modifier = Modifier.size(14.dp), tint = Color(0xFF60A5FA))
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Text("Paste", color = Color(0xFF60A5FA), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text("Paste from Clipboard", color = Color(0xFF60A5FA), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
                             }
                         }
 
@@ -314,14 +298,56 @@ fun ScannerTab(onNextTab: (() -> Unit)? = null) {
                                 }
                             ) {
                                 Row(
-                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     Icon(Icons.Default.DeleteOutline, contentDescription = null, modifier = Modifier.size(14.dp), tint = Color(0xFFF87171))
-                                    Spacer(modifier = Modifier.width(4.dp))
-                                    Text("Clear", color = Color(0xFFF87171), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text("Clear Payload", color = Color(0xFFF87171), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
                                 }
                             }
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Tier 3: Dedicated Metrics & Character Status Bar
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    val lineCount = if (DataStore.scannerInput.isEmpty()) 0 else DataStore.scannerInput.lines().size
+                    val charCount = DataStore.scannerInput.length
+                    val discoveredCount = parsedNodes.size
+
+                    Surface(
+                        shape = RoundedCornerShape(8.dp),
+                        color = AppSurfaceVariant,
+                        border = androidx.compose.foundation.BorderStroke(1.dp, AppSurfaceBorder)
+                    ) {
+                        Text(
+                            text = "$lineCount lines • $charCount characters",
+                            color = AppTextMuted,
+                            style = MaterialTheme.typography.labelSmall,
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
+                        )
+                    }
+
+                    if (discoveredCount > 0) {
+                        Surface(
+                            shape = RoundedCornerShape(8.dp),
+                            color = AppPrimary.copy(alpha = 0.12f),
+                            border = androidx.compose.foundation.BorderStroke(1.dp, AppPrimary.copy(alpha = 0.35f))
+                        ) {
+                            Text(
+                                text = "🎯 $discoveredCount Discovered Nodes",
+                                color = Color(0xFF60A5FA),
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.SemiBold,
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
+                            )
                         }
                     }
                 }

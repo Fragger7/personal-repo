@@ -210,15 +210,26 @@ Create a dedicated **⚙️ Settings & About** tab or modal inside the Android a
 
 2. **Phase 2: Production-Level UI/UX Overhaul**
    * **Vector Icon & App Assets**: Create official Android 13+ adaptive vector icons with themed monochrome variant, splash branding, and ambient glassmorphic header glow.
+   * **Playful Cartoon Sherlock Holmes Icon Experiment**: Design an alternative playful, expressive cartoon Sherlock Holmes caricature wearing the Deerstalker hat, a pipe blowing out Wi-Fi/streaming clouds, and an oversized magnifying glass reflecting a glowing TV screen.
    * **Mathematical Typography & Layout Polish**: Refine typography hierarchy across all tabs (banning oversized headers), implement 44dp min touch targets, and ensure clean vertical separation for all action bars.
    * **Micro-Interactions**: Fluid tab switching animations, skeleton loaders, and pulsing live diagnostic indicators.
 
-3. **Phase 3: Integrated In-App IPTV Stream & Diagnostics Player (Media3 / ExoPlayer)**
+3. **Phase 3: Ultra-Scale Performance Tuning (3,000+ Node Payloads & ANR Prevention)**
+   * **Root Cause & Diagnosis**: Large unstructured payloads (3,000+ connections) can trigger Android ANR ("Application Not Responding / Wait or Close") prompts due to:
+     1. High-frequency Compose state recompositions saturating the UI/Render thread.
+     2. Frequent large-array memory copies (`+ item` or full list copies on each node scan).
+     3. High-concurrency socket queueing under low Android thread priority.
+   * **Architectural Mitigations**:
+     * **Chunked Batch State Emits**: Buffer background worker discovery updates and dispatch to `DataStore.scannedNodes` in throttled batch intervals (e.g. every 250ms or every 50 nodes) to keep UI rendering locked at 60fps.
+     * **Coroutine Dispatcher Throttling**: Use `Dispatchers.IO.limitedParallelism(24..32)` and unified coroutine `Semaphore` limits to prevent thread starvation.
+     * **Virtual LazyList Pagination / Index Keys**: Ensure Compose `LazyColumn` uses stable compound keys (`key = { node.baseUrl + node.user }`) with lightweight view-model state mapping.
+
+4. **Phase 4: Integrated In-App IPTV Stream & Diagnostics Player (Media3 / ExoPlayer)**
    * **Floating Mini-Player**: Initiates as a sleek picture-in-picture floating mini-player inside the category/channel explorer with play/pause and live buffer progress.
    * **Expand / Full-Screen Mode**: One-tap expand to a full-screen hardware-accelerated ExoPlayer interface.
    * **Forensic Diagnostics HUD**: Overlay stream telemetry showing real-time Resolution (e.g. `1080p60`, `4K`), Video/Audio Codecs (`H.264/HEVC`, `AAC/AC3`), and Live Bitrate (kbps) to immediately confirm stream health.
 
-4. **Phase 4: Settings & About Hub**
+5. **Phase 5: Settings & About Hub**
    * **App & Build Metadata**: Sherlock Streams branding, dynamic version name/code from `BuildConfig`, target API, and developer credits.
    * **Outbound IP & ISP Shield**: Real-time IP geolocation and cloud firewall warning detector.
    * **GitHub Integration Controls**: Personal Access Token (PAT) manager, validation tester, and cache clearing utilities.
