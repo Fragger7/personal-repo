@@ -245,49 +245,102 @@ fun ScannerTab(onNextTab: (() -> Unit)? = null) {
             modifier = Modifier.fillMaxWidth().weight(1f)
         ) {
             Column(modifier = Modifier.padding(16.dp).fillMaxSize()) {
+                // Tier 1: Title & Description
                 Row(
-                    modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+                    modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(
-                        text = "Raw Credential & M3U Input",
-                        color = AppTextPrimary,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        TextButton(
-                            onClick = {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "Credential & Playlist Ingestion",
+                            color = AppTextPrimary,
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text = "Paste combos, M3U playlists, or Stalker links",
+                            color = AppTextSecondary,
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                // Tier 2: Dedicated Action Toolbar
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    // Line & Char counter badge
+                    val lineCount = if (DataStore.scannerInput.isEmpty()) 0 else DataStore.scannerInput.lines().size
+                    val charCount = DataStore.scannerInput.length
+                    Surface(
+                        shape = RoundedCornerShape(8.dp),
+                        color = AppSurfaceVariant,
+                        border = androidx.compose.foundation.BorderStroke(1.dp, AppSurfaceBorder)
+                    ) {
+                        Text(
+                            text = "$lineCount lines • $charCount chars",
+                            color = AppTextMuted,
+                            style = MaterialTheme.typography.labelSmall,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                        )
+                    }
+
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        // Paste Button
+                        Surface(
+                            shape = RoundedCornerShape(8.dp),
+                            color = AppPrimary.copy(alpha = 0.15f),
+                            border = androidx.compose.foundation.BorderStroke(1.dp, AppPrimary.copy(alpha = 0.4f)),
+                            modifier = Modifier.clickable {
                                 clipboardManager.getText()?.text?.let {
                                     DataStore.scannerInput = it
                                     ToastManager.info("Pasted text from clipboard")
                                 }
-                            },
-                            contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
-                            shape = RoundedCornerShape(8.dp)
+                            }
                         ) {
-                            Icon(Icons.Default.ContentPaste, contentDescription = null, modifier = Modifier.size(16.dp), tint = AppPrimary)
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text("Paste", color = AppPrimary, style = MaterialTheme.typography.labelMedium)
+                            Row(
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(Icons.Default.ContentPaste, contentDescription = null, modifier = Modifier.size(14.dp), tint = Color(0xFF60A5FA))
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text("Paste", color = Color(0xFF60A5FA), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
+                            }
                         }
-                        TextButton(
-                            onClick = {
-                                DataStore.scannerInput = ""
-                                DataStore.scannedNodes.clear()
-                                DataStore.scanProgress = 0f
-                                DataStore.scanCountText = ""
-                                ToastManager.info("Cleared scanner input")
-                            },
-                            contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
-                            shape = RoundedCornerShape(8.dp)
-                        ) {
-                            Icon(Icons.Default.DeleteOutline, contentDescription = null, modifier = Modifier.size(16.dp), tint = AppError)
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text("Clear", color = AppError, style = MaterialTheme.typography.labelMedium)
+
+                        // Clear Button (Interactive when input has text)
+                        if (DataStore.scannerInput.isNotEmpty()) {
+                            Surface(
+                                shape = RoundedCornerShape(8.dp),
+                                color = AppError.copy(alpha = 0.15f),
+                                border = androidx.compose.foundation.BorderStroke(1.dp, AppError.copy(alpha = 0.4f)),
+                                modifier = Modifier.clickable {
+                                    DataStore.scannerInput = ""
+                                    DataStore.scannedNodes.clear()
+                                    DataStore.scanProgress = 0f
+                                    DataStore.scanCountText = ""
+                                    ToastManager.info("Cleared scanner input")
+                                }
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Icon(Icons.Default.DeleteOutline, contentDescription = null, modifier = Modifier.size(14.dp), tint = Color(0xFFF87171))
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text("Clear", color = Color(0xFFF87171), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
+                                }
+                            }
                         }
                     }
                 }
+
+                Spacer(modifier = Modifier.height(10.dp))
 
                 OutlinedTextField(
                     value = DataStore.scannerInput,

@@ -100,41 +100,83 @@ fun StalkerMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCreden
             border = androidx.compose.foundation.BorderStroke(1.dp, AppSurfaceBorder),
             modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp)
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(16.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column {
-                    Text(
-                        text = "Stalker Portals",
-                        color = AppTextPrimary,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Spacer(modifier = Modifier.height(2.dp))
-                    Text(
-                        text = "Discovered ${nodes.size} connections • Showing ${filteredNodes.size} records",
-                        color = AppTextSecondary,
-                        style = MaterialTheme.typography.bodySmall
-                    )
-                }
-                
+            Column(modifier = Modifier.padding(14.dp)) {
+                val activeCount = nodes.count { it.status.contains("Active", ignoreCase = true) }
+
+                // Tier 1: Title and Active Count Badge
                 Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text("Active Only", color = AppTextSecondary, style = MaterialTheme.typography.labelMedium)
-                    Switch(
-                        checked = DataStore.activeOnlyStalker,
-                        onCheckedChange = { DataStore.activeOnlyStalker = it },
-                        colors = SwitchDefaults.colors(
-                            checkedThumbColor = AppPrimary,
-                            checkedTrackColor = AppPrimary.copy(alpha = 0.35f),
-                            uncheckedThumbColor = AppTextMuted,
-                            uncheckedTrackColor = AppSurfaceVariant
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "Stalker Portals",
+                            color = AppTextPrimary,
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
                         )
-                    )
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Text(
+                            text = "Discovered ${nodes.size} connections • Showing ${filteredNodes.size} records",
+                            color = AppTextSecondary,
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
+
+                    if (activeCount > 0) {
+                        Surface(
+                            shape = RoundedCornerShape(8.dp),
+                            color = AppSuccess.copy(alpha = 0.15f),
+                            border = androidx.compose.foundation.BorderStroke(1.dp, AppSuccess.copy(alpha = 0.4f))
+                        ) {
+                            Text(
+                                text = "⚡ $activeCount Active",
+                                color = Color(0xFF34D399),
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                            )
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // Tier 2: Filter Toolbar
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Start,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Surface(
+                        shape = RoundedCornerShape(8.dp),
+                        color = if (DataStore.activeOnlyStalker) AppPrimary.copy(alpha = 0.18f) else AppSurfaceVariant,
+                        border = androidx.compose.foundation.BorderStroke(
+                            1.dp,
+                            if (DataStore.activeOnlyStalker) AppPrimary.copy(alpha = 0.5f) else AppSurfaceBorder
+                        ),
+                        modifier = Modifier.clickable { DataStore.activeOnlyStalker = !DataStore.activeOnlyStalker }
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                if (DataStore.activeOnlyStalker) Icons.Default.FilterList else Icons.Default.FilterAlt,
+                                contentDescription = null,
+                                tint = if (DataStore.activeOnlyStalker) Color(0xFF60A5FA) else AppTextMuted,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = if (DataStore.activeOnlyStalker) "Active Only" else "All Nodes",
+                                color = if (DataStore.activeOnlyStalker) Color(0xFF60A5FA) else AppTextSecondary,
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = if (DataStore.activeOnlyStalker) FontWeight.Bold else FontWeight.Medium
+                            )
+                        }
+                    }
                 }
             }
         }

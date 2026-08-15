@@ -380,77 +380,103 @@ fun CommittedMasterGrid(
             border = androidx.compose.foundation.BorderStroke(1.dp, AppSurfaceBorder),
             modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp)
         ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 12.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
+            Column(modifier = Modifier.padding(14.dp)) {
+                // Tier 1: Title and Cloud/Sync Status Badges
                 Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.weight(1f, fill = false)
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Column {
+                    Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = "Committed Data",
+                            text = "Committed Accounts",
                             color = AppTextPrimary,
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold
                         )
                         Spacer(modifier = Modifier.height(2.dp))
                         Text(
-                            text = "Showing ${records.size} committed records",
+                            text = "Permanent Vault • Showing ${records.size} records",
                             color = AppTextSecondary,
                             style = MaterialTheme.typography.bodySmall
                         )
                     }
+
                     if (localCount > 0) {
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Box(
-                            modifier = Modifier
-                                .background(AppWarning.copy(alpha = 0.2f), RoundedCornerShape(8.dp))
-                                .padding(horizontal = 8.dp, vertical = 4.dp)
+                        Surface(
+                            shape = RoundedCornerShape(8.dp),
+                            color = AppWarning.copy(alpha = 0.15f),
+                            border = androidx.compose.foundation.BorderStroke(1.dp, AppWarning.copy(alpha = 0.4f))
                         ) {
                             Text(
-                                text = "$localCount Unpushed",
-                                color = AppWarning,
+                                text = "⚠️ $localCount Unpushed",
+                                color = Color(0xFFFBBF24),
                                 style = MaterialTheme.typography.labelSmall,
-                                fontWeight = FontWeight.Bold
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                            )
+                        }
+                    } else if (records.isNotEmpty()) {
+                        Surface(
+                            shape = RoundedCornerShape(8.dp),
+                            color = AppSuccess.copy(alpha = 0.12f),
+                            border = androidx.compose.foundation.BorderStroke(1.dp, AppSuccess.copy(alpha = 0.35f))
+                        ) {
+                            Text(
+                                text = "☁️ Synced",
+                                color = Color(0xFF34D399),
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                             )
                         }
                     }
                 }
 
-                // Action Buttons Row
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // Tier 2: Action Buttons Row with equal balance
                 Row(
+                    modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.horizontalScroll(rememberScrollState())
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     SecondaryButton(
                         text = "⚡ Check",
                         onClick = onRecheckStatus,
-                        modifier = Modifier.height(36.dp)
+                        modifier = Modifier.weight(1f).height(38.dp)
                     )
                     SecondaryButton(
                         text = "🔄 Sync",
                         onClick = onReload,
-                        modifier = Modifier.height(36.dp)
+                        modifier = Modifier.weight(1f).height(38.dp)
                     )
                     PrimaryButton(
                         text = if (localCount > 0) "☁️ Push ($localCount)" else "☁️ Push",
                         color = if (records.isEmpty()) AppTextMuted else AppSuccess,
                         onClick = onPush,
-                        modifier = Modifier.height(36.dp)
+                        modifier = Modifier.weight(1.2f).height(38.dp)
                     )
-                    IconButton(onClick = onOpenTokenSettings, modifier = Modifier.size(36.dp)) {
-                        Icon(
-                            Icons.Default.Key,
-                            contentDescription = "Token Settings",
-                            tint = if (DataStore.githubToken.isNotEmpty()) AppPrimary else AppTextMuted,
-                            modifier = Modifier.size(20.dp)
-                        )
+                    Surface(
+                        shape = RoundedCornerShape(8.dp),
+                        color = if (DataStore.githubToken.isNotEmpty()) AppPrimary.copy(alpha = 0.15f) else AppSurfaceVariant,
+                        border = androidx.compose.foundation.BorderStroke(
+                            1.dp, 
+                            if (DataStore.githubToken.isNotEmpty()) AppPrimary.copy(alpha = 0.4f) else AppSurfaceBorder
+                        ),
+                        modifier = Modifier.clickable { onOpenTokenSettings() }
+                    ) {
+                        Box(
+                            modifier = Modifier.size(38.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                Icons.Default.Key,
+                                contentDescription = "Token Settings",
+                                tint = if (DataStore.githubToken.isNotEmpty()) Color(0xFF60A5FA) else AppTextMuted,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
                     }
                 }
             }

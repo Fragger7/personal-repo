@@ -244,13 +244,16 @@ fun XtreamMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCredent
             border = androidx.compose.foundation.BorderStroke(1.dp, AppSurfaceBorder),
             modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp)
         ) {
-            Column(modifier = Modifier.padding(16.dp)) {
+            Column(modifier = Modifier.padding(14.dp)) {
+                val activeCount = nodes.count { it.status.contains("Active", ignoreCase = true) }
+                
+                // Tier 1: Title and Active Count Pill
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Column {
+                    Column(modifier = Modifier.weight(1f)) {
                         Text(
                             text = "Xtream Codes",
                             color = AppTextPrimary,
@@ -264,73 +267,109 @@ fun XtreamMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCredent
                             style = MaterialTheme.typography.bodySmall
                         )
                     }
-                    
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Text("Active Only", color = AppTextSecondary, style = MaterialTheme.typography.labelMedium)
-                        Switch(
-                            checked = DataStore.activeOnlyXtream,
-                            onCheckedChange = { DataStore.activeOnlyXtream = it },
-                            colors = SwitchDefaults.colors(
-                                checkedThumbColor = AppPrimary,
-                                checkedTrackColor = AppPrimary.copy(alpha = 0.35f),
-                                uncheckedThumbColor = AppTextMuted,
-                                uncheckedTrackColor = AppSurfaceVariant
+
+                    if (activeCount > 0) {
+                        Surface(
+                            shape = RoundedCornerShape(8.dp),
+                            color = AppSuccess.copy(alpha = 0.15f),
+                            border = androidx.compose.foundation.BorderStroke(1.dp, AppSuccess.copy(alpha = 0.4f))
+                        ) {
+                            Text(
+                                text = "⚡ $activeCount Active",
+                                color = Color(0xFF34D399),
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                             )
-                        )
+                        }
                     }
                 }
 
-                val activeCount = nodes.count { it.status.contains("Active", ignoreCase = true) }
-                if (nodes.isNotEmpty()) {
-                    Spacer(modifier = Modifier.height(12.dp))
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalAlignment = Alignment.CenterVertically
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // Tier 2: Sub-toolbar containing Active Only chip filter & Query actions
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    // Modern Active Filter Pill
+                    Surface(
+                        shape = RoundedCornerShape(8.dp),
+                        color = if (DataStore.activeOnlyXtream) AppPrimary.copy(alpha = 0.18f) else AppSurfaceVariant,
+                        border = androidx.compose.foundation.BorderStroke(
+                            1.dp,
+                            if (DataStore.activeOnlyXtream) AppPrimary.copy(alpha = 0.5f) else AppSurfaceBorder
+                        ),
+                        modifier = Modifier.clickable { DataStore.activeOnlyXtream = !DataStore.activeOnlyXtream }
                     ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                if (DataStore.activeOnlyXtream) Icons.Default.FilterList else Icons.Default.FilterAlt,
+                                contentDescription = null,
+                                tint = if (DataStore.activeOnlyXtream) Color(0xFF60A5FA) else AppTextMuted,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = if (DataStore.activeOnlyXtream) "Active Only" else "All Nodes",
+                                color = if (DataStore.activeOnlyXtream) Color(0xFF60A5FA) else AppTextSecondary,
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = if (DataStore.activeOnlyXtream) FontWeight.Bold else FontWeight.Medium
+                            )
+                        }
+                    }
+
+                    // Query Catalogs / Progress Controls
+                    if (nodes.isNotEmpty()) {
                         if (!DataStore.isQueryingCatalogs) {
                             PrimaryButton(
                                 text = "Query Catalogs ($activeCount Active)",
                                 onClick = { startOrResumeCatalogQuery() },
-                                modifier = Modifier.height(38.dp)
+                                modifier = Modifier.weight(1f).height(38.dp)
                             )
                         } else {
-                            if (!DataStore.isCatalogQueryPaused) {
+                            Row(
+                                modifier = Modifier.weight(1f),
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                if (!DataStore.isCatalogQueryPaused) {
+                                    PrimaryButton(
+                                        text = "⏸️ Pause",
+                                        color = AppWarning,
+                                        onClick = {
+                                            DataStore.isCatalogQueryPaused = true
+                                            ToastManager.warning("Catalog query paused")
+                                        },
+                                        modifier = Modifier.weight(1f).height(38.dp)
+                                    )
+                                } else {
+                                    PrimaryButton(
+                                        text = "▶️ Resume",
+                                        color = AppSuccess,
+                                        onClick = {
+                                            DataStore.isCatalogQueryPaused = false
+                                            ToastManager.success("Catalog query resumed")
+                                        },
+                                        modifier = Modifier.weight(1f).height(38.dp)
+                                    )
+                                }
                                 PrimaryButton(
-                                    text = "⏸️ Pause",
-                                    color = AppWarning,
+                                    text = "⏹️ Stop",
+                                    color = AppError,
                                     onClick = {
-                                        DataStore.isCatalogQueryPaused = true
-                                        ToastManager.warning("Catalog query paused")
-                                    },
-                                    modifier = Modifier.height(38.dp)
-                                )
-                            } else {
-                                PrimaryButton(
-                                    text = "▶️ Resume",
-                                    color = AppSuccess,
-                                    onClick = {
+                                        DataStore.isQueryingCatalogs = false
                                         DataStore.isCatalogQueryPaused = false
-                                        ToastManager.success("Catalog query resumed")
+                                        catalogJob?.cancel()
+                                        DataStore.catalogQueryStatusText = "Catalog query stopped by user."
+                                        ToastManager.error("Catalog query stopped")
                                     },
-                                    modifier = Modifier.height(38.dp)
+                                    modifier = Modifier.weight(1f).height(38.dp)
                                 )
                             }
-                            PrimaryButton(
-                                text = "⏹️ Stop",
-                                color = AppError,
-                                onClick = {
-                                    DataStore.isQueryingCatalogs = false
-                                    DataStore.isCatalogQueryPaused = false
-                                    catalogJob?.cancel()
-                                    DataStore.catalogQueryStatusText = "Catalog query stopped by user."
-                                    ToastManager.error("Catalog query stopped")
-                                },
-                                modifier = Modifier.height(38.dp)
-                            )
                         }
                     }
                 }

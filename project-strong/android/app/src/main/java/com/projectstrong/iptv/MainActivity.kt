@@ -72,13 +72,13 @@ fun MainDashboard() {
         ) {
             Column {
                 Text(
-                    text = "IPTV Analytics",
+                    text = "Sherlock Streams",
                     color = AppTextPrimary,
                     fontWeight = FontWeight.ExtraBold,
                     style = MaterialTheme.typography.titleLarge
                 )
                 Text(
-                    text = "Diagnostic & Discovery Suite",
+                    text = "IPTV Intelligence & Diagnostics",
                     color = AppTextSecondary,
                     style = MaterialTheme.typography.bodySmall
                 )
@@ -86,15 +86,18 @@ fun MainDashboard() {
             if (DataStore.ipInfo.isNotEmpty()) {
                 Surface(
                     shape = RoundedCornerShape(8.dp),
-                    color = if (DataStore.isCloudHosting) AppWarningContainer else AppSurface,
-                    border = BorderStroke(1.dp, if (DataStore.isCloudHosting) AppWarning.copy(alpha = 0.4f) else AppSurfaceBorder)
+                    color = if (DataStore.isCloudHosting) AppWarningContainer else AppSurfaceVariant,
+                    border = BorderStroke(
+                        1.dp, 
+                        if (DataStore.isCloudHosting) AppWarning.copy(alpha = 0.5f) else AppSuccess.copy(alpha = 0.35f)
+                    )
                 ) {
                     Text(
-                        text = if (DataStore.isCloudHosting) "⚠️ Cloud IP" else "🛡️ Protected",
+                        text = if (DataStore.isCloudHosting) "⚠️ Cloud Hosting" else "🌐 Direct ISP",
                         color = if (DataStore.isCloudHosting) Color(0xFFFBBF24) else Color(0xFF34D399),
                         style = MaterialTheme.typography.labelSmall,
                         fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
                     )
                 }
             }
