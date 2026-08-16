@@ -59,6 +59,33 @@ You must respond ONLY with valid, parseable JSON matching this schema:
 """
 
 
+@dataclass
+class GeminiUsageTracker:
+    total_calls: int = 0
+    cycle_calls: int = 0
+    total_tokens: int = 0
+    daily_quota_limit: int = 1500
+
+    def record_call(self, prompt_tokens: int = 240, candidate_tokens: int = 110) -> None:
+        self.total_calls += 1
+        self.cycle_calls += 1
+        self.total_tokens += (prompt_tokens + candidate_tokens)
+
+    def reset_cycle(self) -> None:
+        self.cycle_calls = 0
+
+    def get_summary(self) -> Dict[str, Any]:
+        remaining = max(0, self.daily_quota_limit - self.total_calls)
+        return {
+            "cycle_calls": self.cycle_calls,
+            "total_calls": self.total_calls,
+            "total_tokens": self.total_tokens,
+            "daily_quota_limit": self.daily_quota_limit,
+            "estimated_daily_left": remaining,
+            "quota_used_pct": round((self.total_calls / self.daily_quota_limit) * 100, 1),
+        }
+
+
 class GeminiHardwareEvaluator:
     """
     AI valuation engine powered by Gemini 2.5 Flash / Gemini models.
@@ -72,6 +99,7 @@ class GeminiHardwareEvaluator:
     ) -> None:
         self.api_key = api_key or os.environ.get("GEMINI_API_KEY", "")
         self.model_name = model_name
+        self.usage_tracker = GeminiUsageTracker()
         self._client: Any = None
         self._init_client()
 
@@ -82,7 +110,7 @@ class GeminiHardwareEvaluator:
         try:
             from google import genai
             self._client = genai.Client(api_key=self.api_key)
-        except ImportError:
+        except Exception:
             self._client = None
 
     def evaluate_listing(self, listing: Union[RawListing, Dict[str, Any]]) -> DealRecord:
@@ -92,7 +120,7 @@ class GeminiHardwareEvaluator:
         raw = listing if isinstance(listing, RawListing) else RawListing(**listing)
 
         # 1. Try Gemini evaluation if valid API key is present
-        if self.api_key and self.api_key.startswith("AIza") and len(self.api_key) >= 30:
+        if self.api_key and len(self.api_key) >= 15:
             try:
                 ai_data = self._call_gemini(raw)
                 if ai_data:
@@ -106,14 +134,13 @@ class GeminiHardwareEvaluator:
 
     def _call_gemini(self, listing: RawListing) -> Optional[Dict[str, Any]]:
         """Call Gemini model with structured JSON response schema."""
-        prompt = f"""Listing Data:
-- Source: {listing.source}
-- Title: {listing.title}
-- Asking Price: ${listing.price:.2f}
-- Seller / Location: {listing.seller} ({listing.location})
-- Description: {listing.description[:800]}
-"""
-
+        prompt = (
+            f"Listing Title: {listing.title}\n"
+            f"Description: {listing.description}\n"
+            f"Asking Price: ${listing.price:.2f}\n"
+            f"Source: {listing.source}\n"
+            f"Seller: {listing.seller}\n"
+        )
         # Method A: Use google-genai SDK if initialized
         if self._client:
             try:
@@ -127,6 +154,7 @@ class GeminiHardwareEvaluator:
                     },
                 )
                 text = response.text if hasattr(response, "text") else str(response)
+                self.usage_tracker.record_call(250, 120)
                 return self._parse_json_response(text)
             except Exception as e:
                 print(f"[GeminiEvaluator] SDK generateContent failed: {e}")
@@ -135,7 +163,7 @@ class GeminiHardwareEvaluator:
         return self._call_gemini_rest(prompt)
 
     def _call_gemini_rest(self, prompt: str) -> Optional[Dict[str, Any]]:
-        """Direct REST invocation for Gemini API."""
+        """Direct REST invocation for Gemini API with usage metadata tracking."""
         url = f"https://generativelanguage.googleapis.com/v1beta/models/{self.model_name}:generateContent?key={self.api_key}"
         payload = {
             "system_instruction": {
@@ -161,8 +189,13 @@ class GeminiHardwareEvaluator:
 
         for attempt in range(2):
             try:
-                with urllib.request.urlopen(req, timeout=3.0) as resp:
+                with urllib.request.urlopen(req, timeout=4.0) as resp:
                     res_json = json.loads(resp.read().decode("utf-8"))
+                    usage = res_json.get("usageMetadata", {})
+                    p_tok = int(usage.get("promptTokenCount", 240))
+                    c_tok = int(usage.get("candidatesTokenCount", 110))
+                    self.usage_tracker.record_call(p_tok, c_tok)
+
                     candidates = res_json.get("candidates", [])
                     if candidates:
                         parts = candidates[0].get("content", {}).get("parts", [])
