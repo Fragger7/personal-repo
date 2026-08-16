@@ -245,7 +245,7 @@ class RedditCollector:
     and multi-stage price extraction.
     """
 
-    SUBREDDITS = ["hardwareswap", "appleswap", "homelab"]
+    SUBREDDITS = ["hardwareswap", "appleswap", "homelabsales"]
 
     # Reject listings that are purely accessories or non-compute items
     EXCLUDED_ACCESSORIES = [
@@ -254,10 +254,12 @@ class RedditCollector:
         "power supply", "psu", "backpack", "headphone", "earbud", "earbuds", "monitor mount"
     ]
 
-    # Target hardware keywords
+    # Target hardware keywords aligned with Knowledge Base Tiers
     TARGET_HARDWARE_KEYWORDS = [
         "thinkpad", "precision", "zbook", "workstation", "macbook", "mac studio",
         "mac mini", "m1", "m2", "m3", "m4", "m5", "rtx", "geforce", "radeon",
+        "xps 15", "9520", "9530", "5560", "5570", "5580", "5680", "p1 gen", "p16", "t16",
+        "minisforum", "beelink", "ser7", "ser8", "um780", "ms-01", "optiplex", "mini pc", "micro pc",
         "threadripper", "ryzen", "intel core", "ultra 7", "ultra 9", "xeon",
         "laptop", "desktop", "server", "gpu", "oled", "ddr5", "64gb", "32gb", "128gb"
     ]
@@ -413,7 +415,7 @@ class RedditCollector:
                 title="[USA-WA] [H] HP ZBook Power G10 15.6\" (Ryzen 9 Pro 7940HS, 64GB DDR5, 2TB SSD, RTX 4060 8GB) [W] PayPal $690 Shipped",
                 description="Up for sale is my HP ZBook Power G10. Zen 4 Ryzen 9 Pro 7940HS 8-core/16-thread CPU with Radeon 780M + Dedicated NVIDIA RTX 4060 8GB. 64GB DDR5 5600MHz RAM and 2TB PCIe 4.0 NVMe SSD. Asking $690 shipped via PayPal Goods & Services.",
                 price=690.0,
-                url="https://reddit.com/r/hardwareswap/comments/seed_zbook_power",
+                url="https://www.reddit.com/r/hardwareswap/search/?q=HP+ZBook+Power&sort=new",
                 seller="u/CloudArchitect_PNW",
                 location="USA-WA",
                 condition_raw="Like New (Includes Box)",
@@ -425,7 +427,7 @@ class RedditCollector:
                 title="[USA-IL] [H] Dell Precision 5570 Creator Laptop (i7-12800H, 32GB RAM, 1TB NVMe, RTX A2000 8GB, 4K Touch) [W] $580 PayPal",
                 description="Selling my Dell Precision 5570 (same premium chassis as XPS 15 9520). 4K UHD+ 3840x2400 Touch 500nits panel. Core i7-12800H, 32GB RAM, 1TB SSD, RTX A2000. $580 shipped.",
                 price=580.0,
-                url="https://reddit.com/r/hardwareswap/comments/seed_precision_5570",
+                url="https://www.reddit.com/r/hardwareswap/search/?q=Dell+Precision+5570&sort=new",
                 seller="u/MidwestCoder92",
                 location="USA-IL",
                 condition_raw="Good (Minor scuff on corner)",
@@ -518,13 +520,13 @@ class SwappaCollector:
 
             scraper = cloudscraper.create_scraper()
             target_queries = [
-                "ThinkPad+P16+P1",
-                "Precision+laptop",
-                "HP+ZBook",
-                "MacBook+Pro",
-                "RTX+5080+laptop",
-                "RTX+5070+laptop",
-                "RTX+4080+laptop",
+                "ThinkPad+P1+P16",
+                "Precision+5570+5580",
+                "XPS+15+9520+9530",
+                "HP+ZBook+Studio",
+                "MacBook+Pro+32GB+64GB",
+                "Mini+PC+64GB+32GB",
+                "RTX+5080+4080+laptop",
                 "laptop+oled",
             ]
             

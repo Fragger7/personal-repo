@@ -56,10 +56,29 @@ class PushoverNotifier:
         self._sent_deals: set[str] = set()
 
     def should_alert(self, deal: DealRecord) -> bool:
-        """Evaluate if deal meets notification criteria: Score >= 8.5 and Price <= $750."""
-        if deal.id in self._sent_deals or deal.alerted:
+        """
+        Evaluate if deal meets multi-tier dynamic notification criteria:
+        1. Never alert on hard excluded items (score 0.0) or duplicate alerts
+        2. 🦄 Halo / Unicorn: Estimated profit >= $600 OR deal_score >= 9.0 (No rigid price cap)
+        3. 🎯 Sweet Spot Workstation: Score >= 8.5 AND price <= $850 AND RAM >= 32GB
+        4. ⚡ High-ROI Anomaly: Margin >= 45% AND Estimated profit >= $350
+        """
+        if deal.id in self._sent_deals or deal.alerted or deal.deal_score <= 0.0:
             return False
-        return deal.deal_score >= self.min_deal_score and deal.price <= self.max_price
+
+        # 1. Halo / Unicorn Spread ($600+ profit or 9.0+ score regardless of price)
+        if deal.estimated_profit >= 600.0 or deal.deal_score >= 9.0:
+            return True
+
+        # 2. Sweet-Spot Workstation Value
+        if deal.deal_score >= self.min_deal_score and deal.price <= 850.0 and deal.specs.ram_gb >= 32:
+            return True
+
+        # 3. High-ROI Anomaly
+        if deal.arbitrage_margin_pct >= 45.0 and deal.estimated_profit >= 350.0:
+            return True
+
+        return False
 
     def send_deal_alert(self, deal: DealRecord, force: bool = False) -> NotificationResult:
         """

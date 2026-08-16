@@ -203,93 +203,152 @@ class GeminiHardwareEvaluator:
 
     def _heuristic_evaluate(self, listing: RawListing) -> Dict[str, Any]:
         """
-        Sophisticated rule-based hardware valuation fallback.
-        Estimates baseline market value from CPU generation, RAM, GPU tier, and display.
+        Sophisticated rule-based hardware valuation aligned with AGENT_KNOWLEDGE_BASE.
+        Applies hard exclusions, deep RAM extraction, and component arbitrage scoring.
         """
         text = f"{listing.title} {listing.description}".lower()
 
-        # 1. CPU extraction & baseline score
+        # ==========================================
+        # 0. HARD EXCLUSION CHECKS (Score 0.0)
+        # ==========================================
+        # A. All Intel MacBook Pros (2016-2020) (Butterfly keys, EOL, thermal throttle)
+        if any(w in text for w in ["macbook", "mac book"]) and any(w in text for w in ["intel", "i7", "i9", "touch bar", "touchbar", "2016", "2017", "2018", "2019", "2020"]) and not any(m in text for m in ["m1", "m2", "m3", "m4", "m5"]):
+            return {
+                "cpu": "Intel MacBook (Legacy/EOL)",
+                "ram_gb": 16,
+                "ssd_gb": 512,
+                "gpu": "Legacy Intel/Radeon",
+                "screen": "MacBook Display",
+                "condition": "Hard Excluded (Intel Mac)",
+                "fair_market_value": 0.0,
+                "deal_score": 0.0,
+                "summary": "Hard Excluded: Legacy Intel MacBook Pro (2016-2020) rejected per Knowledge Base.",
+                "actionable_recommendation": "REJECT / EOL HARDWARE",
+                "confidence_score": 0.99,
+            }
+
+        # B. Damaged / Parts Only
+        if any(w in text for w in ["for parts", "parts only", "broken screen", "cracked screen", "no power", "bad logic board", "broken hinge"]):
+            return {
+                "cpu": "Damaged Hardware",
+                "ram_gb": 0,
+                "ssd_gb": 0,
+                "gpu": "Damaged",
+                "screen": "Broken/Defective",
+                "condition": "Broken / For Parts",
+                "fair_market_value": 0.0,
+                "deal_score": 0.0,
+                "summary": "Hard Excluded: Damaged / Parts-only listing.",
+                "actionable_recommendation": "REJECT / DAMAGED",
+                "confidence_score": 0.99,
+            }
+
+        # ==========================================
+        # 1. DEEP RAM EXTRACTION (Body vs. Title)
+        # ==========================================
+        ram_gb = 16
+        is_ddr5 = any(w in text for w in ["ddr5", "5600mhz", "5200mhz", "4800mhz", "lpddr5"])
+        
+        # Deep extraction: detect aftermarket 64GB upgrades in description
+        if any(w in text for w in ["128gb", "128 gb"]):
+            ram_gb = 128
+        elif any(w in text for w in ["96gb", "96 gb"]):
+            ram_gb = 96
+        elif any(w in text for w in ["64gb", "64 gb", "2x32gb", "2x 32gb", "crucial 64", "corsair 64", "upgraded to 64", "upgraded 64"]):
+            ram_gb = 64
+        elif any(w in text for w in ["48gb", "48 gb"]):
+            ram_gb = 48
+        elif any(w in text for w in ["36gb", "36 gb"]):
+            ram_gb = 36
+        elif any(w in text for w in ["32gb", "32 gb", "2x16gb", "2x 16gb", "upgraded to 32"]):
+            ram_gb = 32
+        elif any(w in text for w in ["24gb", "24 gb"]):
+            ram_gb = 24
+        elif any(w in text for w in ["18gb", "18 gb"]):
+            ram_gb = 18
+        elif any(w in text for w in ["16gb", "16 gb"]):
+            ram_gb = 16
+        elif any(w in text for w in ["8gb", "8 gb"]):
+            ram_gb = 8
+
+        # C. Hard Exclude <= 16GB Apple Silicon (Strict User Directive)
+        is_apple_silicon = any(m in text for m in ["m1", "m2", "m3", "m4", "m5", "apple silicon"])
+        if is_apple_silicon and ram_gb <= 16:
+            return {
+                "cpu": "Apple Silicon (<=16GB RAM)",
+                "ram_gb": ram_gb,
+                "ssd_gb": 512,
+                "gpu": "Apple Silicon GPU",
+                "screen": "Liquid Retina XDR",
+                "condition": "Hard Excluded (<=16GB RAM)",
+                "fair_market_value": 0.0,
+                "deal_score": 0.0,
+                "summary": f"Hard Excluded: Apple Silicon with only {ram_gb}GB Unified RAM is insufficient for multi-agent container workloads.",
+                "actionable_recommendation": "REJECT / INSUFFICIENT RAM",
+                "confidence_score": 0.99,
+            }
+
+        # ==========================================
+        # 2. CPU & SILICON VALUATION
+        # ==========================================
         cpu = "Intel Core i7 / AMD Ryzen 7"
         cpu_val = 250.0
 
-        # Apple Silicon Hierarchy
         if "m4 max" in text or "m3 max" in text or "m2 ultra" in text:
             cpu = "Apple Silicon M-Series Max/Ultra"
-            cpu_val = 750.0
+            cpu_val = 850.0
         elif "m4 pro" in text or "m3 pro" in text or "m2 max" in text:
             cpu = "Apple Silicon Pro/Max"
-            cpu_val = 580.0
+            cpu_val = 680.0
+        elif "m1 max" in text or "m2 pro" in text:
+            cpu = "Apple M1 Max / M2 Pro"
+            cpu_val = 550.0
+        elif "m1 pro" in text or "m3" in text:
+            cpu = "Apple M1 Pro / M3"
+            cpu_val = 450.0
         elif "m4" in text or "m5" in text:
-            cpu = "Apple M4 / M5 (Latest Gen)"
-            cpu_val = 520.0
-        elif "m3" in text or "m2 pro" in text or "m1 max" in text:
-            cpu = "Apple M3 / M2 Pro / M1 Max"
-            cpu_val = 460.0
-        elif "m2" in text or "m1 pro" in text:
-            cpu = "Apple M2 / M1 Pro"
-            cpu_val = 380.0
-        elif "m1" in text:
-            cpu = "Apple M1"
-            cpu_val = 280.0
-        # Intel Core Ultra & Extreme Gen
+            cpu = "Apple M4/M5 Base"
+            cpu_val = 480.0
+        elif "ai max pro" in text or "ai max 390" in text or "ai max 385" in text or "hx 375" in text:
+            cpu = "AMD Ryzen AI MAX PRO (Strix Halo Zen 5)"
+            cpu_val = 720.0
         elif "ultra 9" in text or "ultra 7" in text or "255hx" in text or "185h" in text:
             cpu = "Intel Core Ultra 7/9 (AI Workstation)"
-            cpu_val = 500.0
-        elif "ai max pro" in text or "ai max 390" in text or "ai max 385" in text or "hx 375" in text:
-            cpu = "AMD Ryzen AI MAX PRO (Strix Halo 12/16-Core Zen 5)"
-            cpu_val = 680.0
-        elif "i9-14" in text or "14900hx" in text:
-            cpu = "Intel Core i9 14th Gen HX"
+            cpu_val = 520.0
+        elif "i9-14" in text or "14900hx" in text or "i9-13" in text or "13950hx" in text or "13900hx" in text:
+            cpu = "Intel Core i9 13th/14th Gen HX"
             cpu_val = 480.0
-        elif "i9-13" in text or "13950hx" in text or "13900hx" in text or "13980hx" in text:
-            cpu = "Intel Core i9 13th Gen (HX Extreme)"
-            cpu_val = 450.0
-        elif "i9-12" in text or "12950hx" in text or "12900hx" in text:
-            cpu = "Intel Core i9 12th Gen (HX Extreme)"
+        elif "i7-13" in text or "13850hx" in text or "13800h" in text or "13700h" in text or "13620h" in text:
+            cpu = "Intel Core i7 13th Gen Workstation"
             cpu_val = 380.0
-        elif "i7-14" in text or "i7-13" in text or "13850hx" in text or "13800h" in text:
-            cpu = "Intel Core i7 13th/14th Gen"
-            cpu_val = 350.0
+        elif "i9-12" in text or "12950hx" in text or "12900h" in text:
+            cpu = "Intel Core i9 12th Gen"
+            cpu_val = 360.0
         elif "i7-12" in text or "12800h" in text or "12700h" in text:
             cpu = "Intel Core i7 12th Gen"
-            cpu_val = 280.0
-        elif "threadripper" in text:
-            cpu = "AMD Ryzen Threadripper Pro"
-            cpu_val = 650.0
+            cpu_val = 310.0
+        elif "i7-11" in text or "11850h" in text or "11800h" in text:
+            cpu = "Intel Core i7 11th Gen Workstation"
+            cpu_val = 220.0
         elif "ryzen 9" in text or "7940hs" in text or "7945hx" in text or "8945hs" in text:
             cpu = "AMD Ryzen 9 (Zen 4/5)"
-            cpu_val = 420.0
-        elif "ryzen 7" in text or "7840hs" in text or "6800h" in text:
-            cpu = "AMD Ryzen 7 Pro"
-            cpu_val = 300.0
-        elif "xeon" in text:
-            cpu = "Intel Xeon Workstation"
-            cpu_val = 320.0
+            cpu_val = 440.0
+        elif "ryzen 7" in text or "7840hs" in text or "8845hs" in text or "6850u" in text:
+            cpu = "AMD Ryzen 7 Pro (Zen 3+/4)"
+            cpu_val = 340.0
+        elif "threadripper" in text or "xeon" in text:
+            cpu = "Enterprise Xeon / Threadripper Pro"
+            cpu_val = 500.0
 
-        # 2. RAM capacity
-        ram_gb = 16
-        if "128gb" in text or "128 gb" in text:
-            ram_gb = 128
-        elif "96gb" in text or "96 gb" in text:
-            ram_gb = 96
-        elif "64gb" in text or "64 gb" in text:
-            ram_gb = 64
-        elif "48gb" in text or "48 gb" in text:
-            ram_gb = 48
-        elif "36gb" in text or "36 gb" in text:
-            ram_gb = 36
-        elif "32gb" in text or "32 gb" in text:
-            ram_gb = 32
-        elif "24gb" in text or "24 gb" in text:
-            ram_gb = 24
-        elif "18gb" in text or "18 gb" in text:
-            ram_gb = 18
-        elif "16gb" in text or "16 gb" in text:
-            ram_gb = 16
+        # RAM Valuation (Tiered bonus for 64GB DDR5 / 64GB Unified)
+        ram_multiplier = 4.5 if is_ddr5 or is_apple_silicon else 3.0
+        ram_val = ram_gb * ram_multiplier
+        if ram_gb >= 64:
+            ram_val += 80.0  # Enterprise 64GB premium bonus
 
-        ram_val = ram_gb * 3.5
-
-        # 3. SSD capacity
+        # ==========================================
+        # 3. SSD STORAGE VALUATION
+        # ==========================================
         ssd_gb = 512
         if "8tb" in text:
             ssd_gb = 8192
@@ -302,9 +361,11 @@ class GeminiHardwareEvaluator:
         elif "512gb" in text or "512 gb" in text:
             ssd_gb = 512
 
-        ssd_val = (ssd_gb / 512) * 45.0
+        ssd_val = (ssd_gb / 512.0) * 45.0
 
-        # 4. GPU extraction & value
+        # ==========================================
+        # 4. GPU VALUATION
+        # ==========================================
         gpu = "Integrated Graphics"
         gpu_val = 0.0
         if "rtx 5090" in text or "rtx 5080" in text:
@@ -316,65 +377,85 @@ class GeminiHardwareEvaluator:
         elif "rtx 4080" in text:
             gpu = "NVIDIA GeForce RTX 4080 12GB"
             gpu_val = 550.0
-        elif "rtx 5000 ada" in text or "rtx 4000 ada" in text or "rtx pro 3000" in text:
-            gpu = "NVIDIA RTX 4000/5000 Ada Generation 12-16GB"
+        elif "rtx 5000 ada" in text or "rtx 4000 ada" in text or "rtx a5500" in text or "rtx a5000" in text:
+            gpu = "NVIDIA RTX 4000/5000 Ada / A5500 16GB Pro"
             gpu_val = 700.0
-        elif "radeon 8050s" in text or "radeon 8060s" in text or "radeon 890m" in text:
-            gpu = "AMD Radeon 8050S / 8060S RDNA 3.5 (40-CU)"
-            gpu_val = 550.0
-        elif "rtx 3500 ada" in text or "rtx 2000 ada" in text or "rtx pro 2000" in text:
-            gpu = "NVIDIA RTX 2000/3500 Ada Generation"
+        elif "rtx 3500 ada" in text or "rtx 2000 ada" in text or "rtx a4500" in text:
+            gpu = "NVIDIA RTX 2000/3500 Ada / A4500 12-16GB"
             gpu_val = 480.0
         elif "rtx 4070" in text or "rtx 4060" in text or "rtx 5060" in text or "rtx 5070" in text:
             gpu = "NVIDIA GeForce RTX 4060 / 4070 / 5060 8GB"
             gpu_val = 320.0
-        elif "rtx a5000" in text or "rtx a4500" in text:
-            gpu = "NVIDIA RTX A4500 / A5000 16GB"
-            gpu_val = 520.0
-        elif "rtx a4000" in text or "rtx a3000" in text or "rtx a2000" in text:
-            gpu = "NVIDIA RTX A2000 / A3000 / A4000 8-12GB"
-            gpu_val = 360.0
-        elif "rtx 3080" in text or "rtx 3070 ti" in text:
-            gpu = "NVIDIA RTX 3070 Ti / 3080 8-16GB"
-            gpu_val = 340.0
-        elif "40-core gpu" in text or "38-core gpu" in text or "32-core gpu" in text or "18-core" in text:
-            gpu = "Apple Silicon High-Core Workstation GPU"
+        elif "rtx a3000" in text or "rtx a2000" in text or "rtx 3070 ti" in text:
+            gpu = "NVIDIA RTX A2000 / A3000 / 3070 Ti 8GB"
+            gpu_val = 280.0
+        elif "radeon 8050s" in text or "radeon 8060s" in text or "radeon 890m" in text:
+            gpu = "AMD Radeon 8050S / 8060S RDNA 3.5"
             gpu_val = 450.0
+        elif "38-core" in text or "40-core" in text or "32-core" in text:
+            gpu = "Apple Silicon High-Core GPU"
+            gpu_val = 400.0
 
-        # 5. Screen extraction
+        # ==========================================
+        # 5. SCREEN VALUATION
+        # ==========================================
         screen = '15.6" - 16" Workstation Display'
         screen_val = 100.0
-        if "4k" in text or "uhd" in text or "3840x" in text:
-            screen = '16" 4K UHD+ (3840x2400) IPS/OLED'
-            screen_val = 200.0
-        elif "liquid retina" in text or "xdr" in text:
+        if "liquid retina" in text or "xdr" in text:
             screen = '16.2" Liquid Retina XDR 120Hz ProMotion'
-            screen_val = 220.0
-        elif "oled" in text:
-            screen = '16" 3.2K OLED 120Hz'
+            screen_val = 240.0
+        elif "oled" in text or "3.5k" in text:
+            screen = '15.6"/16" 3.5K OLED 120Hz'
+            screen_val = 200.0
+        elif "4k" in text or "uhd" in text or "3840x" in text:
+            screen = '16" 4K UHD+ (3840x2400) IPS 500nits'
             screen_val = 180.0
         elif "qhd" in text or "2560x" in text or "wqxga" in text:
             screen = '16" QHD+ (2560x1600) 165Hz'
             screen_val = 140.0
-        elif "desktop" in text or "mac studio" in text or "sff" in text or "mac mini" in text:
-            screen = "Desktop / SFF Workstation (No screen)"
+        elif "mini pc" in text or "micro" in text or "desktop" in text or "mac mini" in text or "mac studio" in text:
+            screen = "Headless Mini-PC / Micro Desktop (No screen)"
             screen_val = 0.0
 
-        # Calculate Total Fair Market Value (FMV)
-        chassis_base = 250.0
+        # Base chassis value
+        chassis_base = 220.0 if screen_val > 0 else 100.0
         fair_market_value = round(chassis_base + cpu_val + ram_val + ssd_val + gpu_val + screen_val, 2)
 
-        # Price spread & margin
+        # ==========================================
+        # 6. ARBITRAGE & DEAL SCORING CALIBRATION
+        # ==========================================
         asking = max(50.0, listing.price)
         profit = fair_market_value - asking
         margin_pct = (profit / asking) * 100.0
 
-        # Calculate Deal Score (0.0 to 10.0)
-        # Base formula: 5.0 + (profit / 150.0) + (margin_pct / 30.0)
-        score_val = 5.0 + (profit / 180.0) + (margin_pct / 50.0)
-        # Bonus for high-end components priced under $750
-        if asking <= 750.0 and ("a4500" in text or "4000 ada" in text or "64gb" in text or "4k" in text):
-            score_val += 1.2
+        # Base scoring
+        score_val = 5.0 + (profit / 180.0) + (margin_pct / 45.0)
+
+        # Target Sweet-Spot Multipliers:
+        # A. Windows Workstation Sweet Spot: 64GB RAM & <= $750 (Unicorn)
+        if not is_apple_silicon and ram_gb >= 64 and asking <= 750.0:
+            score_val = max(score_val, 9.8)
+
+        # B. Windows Workstation Sweet Spot: 32GB RAM & <= $650
+        elif not is_apple_silicon and ram_gb >= 32 and asking <= 650.0:
+            score_val = max(score_val, 9.0)
+
+        # C. Apple Silicon Sweet Spot: 16" M1/M2/M3 Max + 64GB RAM & <= $1,200 (Halo Pricing Error)
+        elif is_apple_silicon and ram_gb >= 64 and asking <= 1200.0:
+            score_val = max(score_val, 9.9)
+
+        # D. Apple Silicon Sweet Spot: 16" M1/M2/M3 Pro + 32GB RAM & <= $1,050
+        elif is_apple_silicon and ram_gb >= 32 and asking <= 1050.0:
+            score_val = max(score_val, 9.3)
+
+        # E. Mini-PC Sweet Spot: >=32GB RAM & <= $450
+        elif screen_val == 0.0 and ram_gb >= 32 and asking <= 450.0:
+            score_val = max(score_val, 9.2)
+
+        # F. High-Ticket Halo Arbitrage: Profit >= $600
+        if profit >= 600.0:
+            score_val = max(score_val, 9.4)
+
         # Penalize if overpriced
         if profit < 0:
             score_val = max(1.0, 5.0 + (profit / 100.0))
@@ -382,12 +463,12 @@ class GeminiHardwareEvaluator:
         deal_score = round(max(0.5, min(9.9, score_val)), 1)
 
         recommendation = "FAIR VALUE"
-        if deal_score >= 9.0:
-            recommendation = "INSTANT ARBITRAGE BUY"
-        elif deal_score >= 8.5:
-            recommendation = "STRONG BUY (HIGH-YIELD DEAL)"
+        if deal_score >= 9.5:
+            recommendation = "🦄 UNICORN / HALO ARBITRAGE BUY"
+        elif deal_score >= 8.8:
+            recommendation = "🔥 STRONG ARBITRAGE BUY"
         elif deal_score >= 7.5:
-            recommendation = "GOOD BUY FOR PERSONAL WORKSTATION"
+            recommendation = "GOOD VALUE FOR DEVELOPER WORKSTATION"
         elif deal_score < 5.0:
             recommendation = "AVOID / OVERPRICED"
 
@@ -402,7 +483,7 @@ class GeminiHardwareEvaluator:
             "deal_score": deal_score,
             "summary": f"{cpu} with {ram_gb}GB RAM, {ssd_gb}GB NVMe SSD, and {gpu}.",
             "actionable_recommendation": recommendation,
-            "confidence_score": 0.88,
+            "confidence_score": 0.92,
         }
 
     def _build_deal_record(self, raw: RawListing, eval_dict: Dict[str, Any]) -> DealRecord:

@@ -72,7 +72,12 @@ class DealRecord:
             self.estimated_profit = round(self.fair_market_value - self.price, 2)
         if self.arbitrage_margin_pct == 0.0 and self.price > 0:
             self.arbitrage_margin_pct = round((self.estimated_profit / self.price) * 100, 1)
-        self.is_high_yield = self.deal_score >= 8.5 and self.price <= 750.0
+        self.is_high_yield = (
+            (self.deal_score >= 9.0)
+            or (self.deal_score >= 8.5 and self.price <= 850.0 and self.specs.ram_gb >= 32)
+            or (self.estimated_profit >= 600.0)
+            or (self.arbitrage_margin_pct >= 45.0 and self.estimated_profit >= 350.0)
+        ) and (self.deal_score > 0.0)
 
     def to_dict(self) -> Dict[str, Any]:
         data = asdict(self)
@@ -392,7 +397,7 @@ class AtomicDealStorage:
                 "source": "reddit",
                 "title": "[H] Lenovo ThinkPad P16 Gen 1 (i9-12950HX, 64GB DDR5, 2TB NVMe, RTX A4500 16GB, 4K UHD+) [W] PayPal / Local Cash",
                 "price": 680.0,
-                "url": "https://reddit.com/r/hardwareswap/comments/seed_p16",
+                "url": "https://www.reddit.com/r/hardwareswap/search/?q=ThinkPad+P16&sort=new",
                 "specs": {
                     "cpu": "Intel Core i9-12950HX (16C/24T)",
                     "ram_gb": 64,
@@ -420,7 +425,7 @@ class AtomicDealStorage:
                 "source": "ebay",
                 "title": "Dell Precision 7780 17.3\" Workstation Core i7-13850HX 64GB RAM 1TB SSD RTX 3500 Ada 12GB Clean",
                 "price": 720.0,
-                "url": "https://www.ebay.com/itm/seed_dell_7780",
+                "url": "https://www.ebay.com/sch/i.html?_nkw=Dell+Precision+7780+RTX&_sop=12",
                 "specs": {
                     "cpu": "Intel Core i7-13850HX (20C/28T)",
                     "ram_gb": 64,
@@ -448,7 +453,7 @@ class AtomicDealStorage:
                 "source": "swappa",
                 "title": "HP ZBook Studio G9 16\" (Core i7-12800H, 32GB RAM, 1TB SSD, RTX 3070 Ti 8GB)",
                 "price": 540.0,
-                "url": "https://swappa.com/listing/view/seed_zbook_g9",
+                "url": "https://www.ebay.com/sch/i.html?_nkw=HP+ZBook+Studio+G9+RTX&_sop=12",
                 "specs": {
                     "cpu": "Intel Core i7-12800H (14C/20T)",
                     "ram_gb": 32,
@@ -476,7 +481,7 @@ class AtomicDealStorage:
                 "source": "reddit",
                 "title": "[H] Apple Mac Studio M2 Max (12-core CPU, 38-core GPU, 32GB Unified, 1TB SSD) [W] PayPal",
                 "price": 1050.0,
-                "url": "https://reddit.com/r/hardwareswap/comments/seed_mac_studio",
+                "url": "https://www.reddit.com/r/appleswap/search/?q=Mac+Studio+M2+Max&sort=new",
                 "specs": {
                     "cpu": "Apple M2 Max (12-core CPU)",
                     "ram_gb": 32,
