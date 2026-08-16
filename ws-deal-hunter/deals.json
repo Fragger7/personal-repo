@@ -1,5 +1,34 @@
 [
   {
+    "id": "syndicated_sd_lapt_0_889126",
+    "source": "syndicated",
+    "title": "Lenovo Yoga laptop 2in1Lenovo - Yoga 7a $999.99",
+    "price": 999.99,
+    "url": "https://slickdeals.net/f/19882020-lenovo-yoga-laptop-2in1lenovo-yoga-7a-999-99?utm_source=rss&utm_content=def&utm_medium=RSS2",
+    "specs": {
+      "cpu": "Intel Core i7 / AMD Ryzen 7",
+      "ram_gb": 16,
+      "ssd_gb": 512,
+      "gpu": "Integrated Graphics",
+      "screen": "15.6\"/16\" 3.5K OLED 120Hz",
+      "condition": "Brand New / Certified Refurb"
+    },
+    "fair_market_value": 763.0,
+    "estimated_profit": 0.0,
+    "arbitrage_margin_pct": 0.0,
+    "deal_score": 2.6,
+    "summary": "Intel Core i7 / AMD Ryzen 7 with 16GB RAM, 512GB NVMe SSD, and Integrated Graphics.",
+    "actionable_recommendation": "AVOID / OVERPRICED",
+    "confidence_score": 0.92,
+    "seller": "Verified Deal Merchant",
+    "location": "US",
+    "created_utc": "2026-08-15T12:23:52+00:00",
+    "evaluated_at": "2026-08-16T21:08:48.645058+00:00",
+    "alerted": false,
+    "is_high_yield": false,
+    "raw_payload": null
+  },
+  {
     "id": "lenovo_outlet_4_436101",
     "source": "lenovo_outlet",
     "title": "Lenovo Outlet Certified: Lenovo IdeaPad Slim 3x (Excellent Refurb): 15.3\" FHD+ IPS Touch, Snapdragon X1-26-100, 16GB LPDDR5, 1TB SSD $419.99",
@@ -468,7 +497,7 @@
     "source": "dell_refurbished",
     "title": "Dell Certified Refurbished: Precision 7550 Workstation (Core i7-10850H, 32GB RAM, 512GB SSD, RTX Quadro T2000 4GB)",
     "price": 245.0,
-    "url": "https://www.dellrefurbished.com/item/dell-latitude-7340-touch-000018/dell-latitude-7340-touch/1.html",
+    "url": "https://www.dellrefurbished.com/laptops?model_family=266",
     "specs": {
       "cpu": "Intel Core i7 / AMD Ryzen 7",
       "ram_gb": 32,
@@ -523,10 +552,10 @@
   },
   {
     "id": "reddit_hws_precision_5570",
-    "source": "reddit",
-    "title": "[USA-IL] [H] Dell Precision 5570 Creator Laptop (i7-12800H, 32GB RAM, 1TB NVMe, RTX A2000 8GB, 4K Touch) [W] $580 PayPal",
+    "source": "reddit (r/hardwareswap)",
+    "title": "[USA-PA] [H] Intel Core Ultra 9 285, Micron 4600 2TB Gen5 NVMe, 64GB DDR5 [W] PayPal",
     "price": 580.0,
-    "url": "https://www.reddit.com/r/hardwareswap/comments/18x9p2k/usail_h_dell_precision_5570_creator_laptop_i7/",
+    "url": "https://www.reddit.com/r/hardwareswap/comments/1vq8ons/usapa_h_intel_core_ultra_9_285_micron_4600_2tb/",
     "specs": {
       "cpu": "Intel Core i7 12th Gen",
       "ram_gb": 32,
@@ -552,10 +581,10 @@
   },
   {
     "id": "reddit_hws_zbook_power_g10",
-    "source": "reddit",
-    "title": "[USA-WA] [H] HP ZBook Power G10 15.6\" (Ryzen 9 Pro 7940HS, 64GB DDR5, 2TB SSD, RTX 4060 8GB) [W] PayPal $690 Shipped",
+    "source": "reddit (r/hardwareswap)",
+    "title": "[USA-TX] [H] AMD Ryzen 7500X3D / 10900K Workstation Combo, 64GB RAM [W] PayPal",
     "price": 690.0,
-    "url": "https://www.reddit.com/r/hardwareswap/comments/192k7z8/usawa_h_hp_zbook_power_g10_156_ryzen_9_pro_7940hs/",
+    "url": "https://www.reddit.com/r/hardwareswap/comments/1vq7a3l/usatx_h_7500x3d_combo_10900k_combo_raspberry_pi_4/",
     "specs": {
       "cpu": "AMD Ryzen 9 (Zen 4/5)",
       "ram_gb": 64,
