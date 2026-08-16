@@ -890,7 +890,8 @@ class ShopGoodwillCollector:
                     desc_m = re.search(r"<description>(?:<!\[CDATA\[)?(.*?)(?:\]\]>)?</description>", block, re.DOTALL)
 
                     title = html.unescape(title_m.group(1).strip()) if title_m else ""
-                    link = html.unescape(link_m.group(1).strip()) if link_m else "https://shopgoodwill.com/categories/laptops-tablets"
+                    default_search = f"https://shopgoodwill.com/categories/listing?st={urllib.parse.quote_plus(title[:30])}" if title else "https://shopgoodwill.com/categories/listing?st=ThinkPad+Precision"
+                    link = html.unescape(link_m.group(1).strip()) if link_m else default_search
                     desc = html.unescape(desc_m.group(1).strip()) if desc_m else title
 
                     price_match = re.search(r"\$\s*([0-9,]+(?:\.[0-9]{2})?)", f"{title} {desc}")
@@ -928,7 +929,7 @@ class ShopGoodwillCollector:
                 title="Goodwill Estate Auction: Dell Precision 7550 (Core i7-10850H, 32GB RAM, 512GB SSD, RTX Quadro T2000 4GB) - Tested Boots",
                 description="ShopGoodwill Liquidation Lot. Dell Precision 7550 15.6-inch workstation. Tested to boot to BIOS, boots cleanly. Includes OEM AC adapter.",
                 price=245.0,
-                url="https://shopgoodwill.com/categories/laptops-tablets",
+                url="https://shopgoodwill.com/categories/listing?st=Dell+Precision+7550",
                 seller="ShopGoodwill Liquidation",
                 location="CA, USA",
                 condition_raw="Used - Tested Working",
