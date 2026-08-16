@@ -2,8 +2,8 @@ name: Autonomous 24/7 Workstation Deal Hunter
 
 on:
   schedule:
-    # Run every 30 minutes (100% free under GitHub Actions free tier)
-    - cron: '*/30 * * * *'
+    # Run once an hour (100% free under GitHub Actions free tier)
+    - cron: '0 * * * *'
   workflow_dispatch: # Allows manual one-click trigger from GitHub Actions tab
 
 permissions:
