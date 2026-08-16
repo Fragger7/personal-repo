@@ -186,12 +186,15 @@ def main() -> None:
 
     sources = st.sidebar.multiselect(
         "Data Sources",
-        options=["ebay", "reddit", "syndicated", "swappa"],
-        default=["ebay", "reddit", "syndicated", "swappa"],
+        options=["dell_refurbished", "lenovo_outlet", "ebay", "reddit", "goodwill", "syndicated", "swappa"],
+        default=["dell_refurbished", "lenovo_outlet", "ebay", "reddit", "goodwill", "syndicated", "swappa"],
         format_func=lambda s: {
-            "ebay": "eBay API / Live Search",
-            "reddit": "Reddit (r/appleswap, r/hardwareswap, r/homelab)",
-            "syndicated": "Syndicated Deals (Slickdeals / Merchant Refurb)",
+            "dell_refurbished": "Dell Refurbished (DFS 50% Coupon)",
+            "lenovo_outlet": "Lenovo Outlet (Certified ThinkPads)",
+            "ebay": "eBay Live Marketplace",
+            "reddit": "Reddit Hardware Hub (r/appleswap, r/hardwareswap, r/homelabsales)",
+            "goodwill": "ShopGoodwill (Estate Liquidation)",
+            "syndicated": "Syndicated Streams (Woot / Slickdeals Refurbs)",
             "swappa": "Swappa Market",
         }.get(s, s.upper()),
     )
