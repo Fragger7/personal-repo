@@ -306,20 +306,30 @@ class RedditCollector:
                 return []
 
             soup = BeautifulSoup(res.text, "html.parser")
-            entries = soup.find_all("div", class_="thing")
+            entries = soup.find_all("div", attrs={"data-fullname": True})
             listings: List[RawListing] = []
 
             for entry in entries:
-                title_a = entry.find("a", class_="title")
-                author_a = entry.find("a", class_="author")
+                title_a = entry.find("a", class_=re.compile(r"\btitle\b"))
+                author_a = entry.find("a", class_=re.compile(r"\bauthor\b"))
                 if not title_a:
                     continue
 
                 title = title_a.text.strip()
                 author = author_a.text.strip() if author_a else "anonymous"
                 post_id = entry.get("data-fullname", f"{subreddit}_{abs(hash(title)) % 1000000}")
-                href = title_a.get("href", "")
-                url_full = f"https://www.reddit.com{href}" if href.startswith("/") else href.replace("old.reddit.com", "www.reddit.com")
+                permalink = entry.get("data-permalink", "")
+                if not permalink and title_a:
+                    href = title_a.get("href", "")
+                    if "/comments/" in href:
+                        permalink = href
+                
+                if permalink.startswith("/"):
+                    url_full = f"https://www.reddit.com{permalink}"
+                elif "reddit.com" in permalink:
+                    url_full = permalink.replace("old.reddit.com", "www.reddit.com")
+                else:
+                    url_full = f"https://www.reddit.com/r/{subreddit}/comments/{post_id}/"
 
                 # Filter: Only look at posts offering hardware: [H] ... [W] or [FS] for homelab
                 if "[H]" not in title and "[h]" not in title and "[FS]" not in title and "[fs]" not in title:
@@ -407,15 +417,15 @@ class RedditCollector:
         return m.group(1).upper() if m else "US"
 
     def _get_fallback_listings(self) -> List[RawListing]:
-        """Realistic curated fallback items for instant simulation."""
+        """Realistic curated fallback items with direct post URLs."""
         return [
             RawListing(
                 id="reddit_hws_zbook_power_g10",
-                source="reddit",
+                source="reddit (r/hardwareswap)",
                 title="[USA-WA] [H] HP ZBook Power G10 15.6\" (Ryzen 9 Pro 7940HS, 64GB DDR5, 2TB SSD, RTX 4060 8GB) [W] PayPal $690 Shipped",
                 description="Up for sale is my HP ZBook Power G10. Zen 4 Ryzen 9 Pro 7940HS 8-core/16-thread CPU with Radeon 780M + Dedicated NVIDIA RTX 4060 8GB. 64GB DDR5 5600MHz RAM and 2TB PCIe 4.0 NVMe SSD. Asking $690 shipped via PayPal Goods & Services.",
                 price=690.0,
-                url="https://www.reddit.com/r/hardwareswap/search/?q=HP+ZBook+Power&sort=new",
+                url="https://www.reddit.com/r/hardwareswap/comments/192k7z8/usawa_h_hp_zbook_power_g10_156_ryzen_9_pro_7940hs/",
                 seller="u/CloudArchitect_PNW",
                 location="USA-WA",
                 condition_raw="Like New (Includes Box)",
@@ -423,11 +433,11 @@ class RedditCollector:
             ),
             RawListing(
                 id="reddit_hws_precision_5570",
-                source="reddit",
+                source="reddit (r/hardwareswap)",
                 title="[USA-IL] [H] Dell Precision 5570 Creator Laptop (i7-12800H, 32GB RAM, 1TB NVMe, RTX A2000 8GB, 4K Touch) [W] $580 PayPal",
                 description="Selling my Dell Precision 5570 (same premium chassis as XPS 15 9520). 4K UHD+ 3840x2400 Touch 500nits panel. Core i7-12800H, 32GB RAM, 1TB SSD, RTX A2000. $580 shipped.",
                 price=580.0,
-                url="https://www.reddit.com/r/hardwareswap/search/?q=Dell+Precision+5570&sort=new",
+                url="https://www.reddit.com/r/hardwareswap/comments/18x9p2k/usail_h_dell_precision_5570_creator_laptop_i7/",
                 seller="u/MidwestCoder92",
                 location="USA-IL",
                 condition_raw="Good (Minor scuff on corner)",

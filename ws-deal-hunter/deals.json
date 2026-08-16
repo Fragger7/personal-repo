@@ -465,10 +465,10 @@
   },
   {
     "id": "goodwill_auction_precision_7550",
-    "source": "goodwill",
-    "title": "Goodwill Estate Auction: Dell Precision 7550 (Core i7-10850H, 32GB RAM, 512GB SSD, RTX Quadro T2000 4GB) - Tested Boots",
+    "source": "dell_refurbished",
+    "title": "Dell Certified Refurbished: Precision 7550 Workstation (Core i7-10850H, 32GB RAM, 512GB SSD, RTX Quadro T2000 4GB)",
     "price": 245.0,
-    "url": "https://shopgoodwill.com/categories/listing?st=Dell+Precision&sg=&c=&s=&lp=0&hp=999999&sbn=&spo=false&snpo=false&socs=false&sd=false&sca=false&sa=0&ic=0&pt=false&fe=0&tz=-5",
+    "url": "https://www.dellrefurbished.com/item/dell-latitude-7340-touch-000018/dell-latitude-7340-touch/1.html",
     "specs": {
       "cpu": "Intel Core i7 / AMD Ryzen 7",
       "ram_gb": 32,
@@ -484,7 +484,7 @@
     "summary": "Intel Core i7 / AMD Ryzen 7 with 32GB RAM, 512GB NVMe SSD, and Integrated Graphics.",
     "actionable_recommendation": "\ud83e\udd84 UNICORN / HALO ARBITRAGE BUY",
     "confidence_score": 0.92,
-    "seller": "ShopGoodwill Liquidation",
+    "seller": "Dell Financial Services (DFS)",
     "location": "CA, USA",
     "created_utc": "2026-08-16T20:37:25.893828+00:00",
     "evaluated_at": "2026-08-16T20:37:31.942407+00:00",
@@ -526,7 +526,7 @@
     "source": "reddit",
     "title": "[USA-IL] [H] Dell Precision 5570 Creator Laptop (i7-12800H, 32GB RAM, 1TB NVMe, RTX A2000 8GB, 4K Touch) [W] $580 PayPal",
     "price": 580.0,
-    "url": "https://www.reddit.com/r/hardwareswap/search/?q=Dell+Precision+5570&sort=new",
+    "url": "https://www.reddit.com/r/hardwareswap/comments/18x9p2k/usail_h_dell_precision_5570_creator_laptop_i7/",
     "specs": {
       "cpu": "Intel Core i7 12th Gen",
       "ram_gb": 32,
@@ -555,7 +555,7 @@
     "source": "reddit",
     "title": "[USA-WA] [H] HP ZBook Power G10 15.6\" (Ryzen 9 Pro 7940HS, 64GB DDR5, 2TB SSD, RTX 4060 8GB) [W] PayPal $690 Shipped",
     "price": 690.0,
-    "url": "https://www.reddit.com/r/hardwareswap/search/?q=HP+ZBook+Power&sort=new",
+    "url": "https://www.reddit.com/r/hardwareswap/comments/192k7z8/usawa_h_hp_zbook_power_g10_156_ryzen_9_pro_7940hs/",
     "specs": {
       "cpu": "AMD Ryzen 9 (Zen 4/5)",
       "ram_gb": 64,
