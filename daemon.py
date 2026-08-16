@@ -159,6 +159,20 @@ class DealHunterDaemon:
             upserted = self.storage.upsert_many(evaluated_deals)
             self.log(f"Atomically committed {upserted} evaluated deals to {self.storage.filepath.name}.")
 
+            # Send Inventory Update Digest if new items entered deals.json
+            if self.telegram_notifier.bot_token and self.telegram_notifier.chat_id:
+                summary_lines = []
+                for d in evaluated_deals[:5]:
+                    summary_lines.append(f"• <b>${d.price:,.0f}</b> | {d.deal_score}/10 | {d.title[:45]}...")
+                total_active = len(self.storage.get_all())
+                digest_html = (
+                    f"✅ <b>Sync Cycle #{self.status.cycle_count + 1} Complete</b>\n"
+                    f"📥 Ingested <b>{len(evaluated_deals)} new listings</b> (Total Active: {total_active})\n\n"
+                    + "\n".join(summary_lines)
+                    + f"\n\n👉 <a href=\"https://wsdealhunter.streamlit.app/\"><b>[OPEN WEB DASHBOARD]</b></a>"
+                )
+                self.telegram_notifier.send_system_message("Inventory Updated", digest_html)
+
             # 6. Optional auto-push to GitHub repo
             if self.auto_push:
                 self.log("Pushing updated deals.json to GitHub repository...")
