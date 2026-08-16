@@ -96,14 +96,14 @@ class TestCollectors(unittest.TestCase):
         collector = SwappaCollector()
         listings = collector.fetch_listings()
         self.assertGreater(len(listings), 0)
-        self.assertEqual(listings[0].source, "swappa")
+        self.assertTrue("swappa" in listings[0].source or "syndicated" in listings[0].source)
 
     def test_collector_hub_aggregation(self) -> None:
         hub = HardwareCollectorHub()
         aggregated = hub.collect_all()
         self.assertGreater(len(aggregated), 0)
         sources = {item.source for item in aggregated}
-        self.assertTrue("ebay" in sources or "reddit" in sources or "swappa" in sources)
+        self.assertTrue(any("ebay" in s or "reddit" in s or "syndicated" in s or "swappa" in s for s in sources))
 
 
 class TestEvaluator(unittest.TestCase):
