@@ -564,8 +564,8 @@ class SwappaCollector:
                         if price >= 120:
                             listings.append(
                                 RawListing(
-                                    id=f"swappa_sd_{q[:4]}_{idx}_{abs(hash(title)) % 1000000}",
-                                    source="swappa",
+                                    id=f"syndicated_sd_{q[:4]}_{idx}_{abs(hash(title)) % 1000000}",
+                                    source="syndicated",
                                     title=title,
                                     description=desc[:500],
                                     price=price,

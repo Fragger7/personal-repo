@@ -120,12 +120,13 @@ def main() -> None:
 
     sources = st.sidebar.multiselect(
         "Syndicated Endpoints",
-        options=["ebay", "reddit", "swappa"],
-        default=["ebay", "reddit", "swappa"],
+        options=["ebay", "reddit", "syndicated", "swappa"],
+        default=["ebay", "reddit", "syndicated", "swappa"],
         format_func=lambda s: {
-            "ebay": "eBay Browse API",
-            "reddit": "Reddit r/hardwareswap",
-            "swappa": "Swappa RSS",
+            "ebay": "eBay API / Live Search",
+            "reddit": "Reddit (r/appleswap, r/hardwareswap, r/homelab)",
+            "syndicated": "Syndicated Deals (Slickdeals / Merchant Refurb)",
+            "swappa": "Swappa Market",
         }.get(s, s.upper()),
     )
 
