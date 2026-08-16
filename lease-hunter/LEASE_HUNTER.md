@@ -11,46 +11,45 @@ The Universal Lease Hunter Engine is an autonomous AI lease broker protocol curr
 
 ## 🏗️ Phase 1 Architecture & Core Components
 
-### 1. Market Intel & Scraping Pipeline (High-ROI Cost Strategy)
-The core aggregation engine relies on backend Node.js fetching logic combined with `@google/genai`. 
-*   **Sequential Scraping**: 1) Extract baselines (MSRP, Residuals, Money Factor) from Edmunds/forums via Gemini search grounding (`/api/scrape/extract-baselines`), 2) Search regional dealership endpoints for matching inventory (`/api/scrape/search-inventory`), 3) Qualify targets using market momentum and AI reasoning derived from Leasehackr/Reddit chatter.
-*   **Local Stealth Network-Trace Crawler (`server/crawler/`)**: Bypasses expensive third-party scrapers (Apify) and Gemini search quotas by launching local Playwright Chromium sessions (`server/crawler/cargurus.ts`, `server/crawler/cargurus-v2.ts`) on a 50-mile target radius around ZIP 78665 (Round Rock/Austin, TX). Intercepts hidden backend XHR JSON payloads (`page.on('response', ...)`) to extract structured vehicle fields (`vin`, `msrp`, `listingPrice`, `daysOnLot`, `dealerName`, `color`, `listingUrl`) with $0 API cost.
-*   **Telegram Push Notification Alert Engine (`server/services/telegram.ts`)**: Automatically dispatches instant formatted lockscreen cards to your phone via the Telegram Bot API when a vehicle is parsed with **Days on Lot ≥ 180** or a **price drop ≥ $5,000**.
-*   **Aged Inventory Priority (Human Intelligence)**: The scraping engine prioritizes and explicitly identifies vehicles that have been on the lot for **longer than 6 months (180+ days)**. CarGurus network interception tracks cross-web VIN history even if dealers reset listing dates.
-*   **True Baseline Defense**: The engine ensures it gets the absolute base Buy Rate MF and RV, utilizing sources like Leasehackr Rate Findr.
+### 1. Market Intel & Sourcing Pipeline (Multi-Layer Architecture)
+The core aggregation engine relies on backend Node.js fetching logic combined with `@google/genai` and Chrome Remote Debugging Protocol (CDP) attachment:
+*   **CDP-Attached Aggregator Node (`server/crawler/scrape-cars-com-new-ev9.ts`)**: Bypasses bot detection firewalls (DataDome/Cloudflare) at $0 cost by attaching Playwright (`chromium.connectOverCDP('http://127.0.0.1:9222')`) to a real, user-launched Chrome instance. Extracted 22 brand new 2026 Kia EV9 listings (GT-Line, Land, Wind) within 50 miles of Round Rock, TX (ZIP 78665) with live Days on Lot and up to **$13,243 off MSRP**.
+*   **Dealer-Direct Network Scraper Node (`server/crawler/scrape-local-dealers-headless.ts`)**: Scrapes local franchised dealership platforms (Group 1 Kia South Austin, Round Rock Kia) to retrieve exact Monroney window stickers, West Point GA VINs (`5XY...`), and internet sales manager contacts.
+*   **Sequential Baseline Extraction**: Extracts baselines (MSRP, Residuals, Money Factor) from Edmunds/Leasehackr forums via Gemini search grounding (`/api/scrape/extract-baselines`).
+*   **Telegram Push Notification Alert Engine (`server/services/telegram.ts`)**: Dispatches instant formatted deal cards with direct, working vehicle hyperlinks directly to the user's phone.
+*   **Outreach & Negotiation Node (CarGurus / Dealer Chat)**: Optimal platform for initial contact and executing the "Golden Outreach Template".
 
 ### 2. Deal Engine & Tax Trap Simulator
-Computes depreciation, rent charges, and state-specific tax burdens (prioritizing the ultimate bottom-line monthly number). (Simulator UI complete).
+Computes depreciation, rent charges, and state-specific tax burdens (prioritizing the ultimate bottom-line monthly number).
 *   **Tax Trap Focus (ZIP 78665, Texas)**: Evaluates scenarios where taxes are levied on the entire vehicle purchase price. The engine actively researches and applies manufacturer tax credits (e.g. from Kia Finance) to combat this.
-*   **Value Metric**: Utilizes the **Leasehackr Score** combined with current market momentum, eschewing generic boilerplate rules.
-*   **Intelligent Trim Pivots**: The engine autonomously evaluates alternative AWD variants (Land AWD, Wind AWD) and pivots if alternative trims yield significantly higher overall deal scores (e.g., acknowledging recent strong deals on the Wind trim in TX).
+*   **Value Metric**: Utilizes the **Leasehackr Score** combined with current market momentum.
+*   **Intelligent Trim Pivots**: The engine autonomously evaluates alternative AWD variants (Land AWD, Wind AWD) and pivots if alternative trims yield significantly higher overall deal scores.
 
-### 3. CRM & Autnomous Outreach
-A robust module for tracking active leads and negotiating deals. (Tracker UI complete).
-*   **Firebase Persistence**: Firestore serves as the session cache for heavy data computations and the foundational CRM for tracking dealer outreach.
-*   **AI Broker Negotiation**: Once a top-tier deal is targeted, the system generates highly intelligent, precise, data-driven first-contact emails to dealers.
-*   **Anti-Padding Strategy**: The outreach must explicitly request quotes based on the **buy-rate Money Factor** and negotiate a pure **dealer discount % off MSRP** *before* manufacturer rebates are applied, ensuring dealers do not pad the numbers.
+### 3. CRM & Autonomous Outreach
+A robust module for tracking active leads and negotiating deals.
+*   **Persistence**: Local JSON caching (`data/inventory.json` & `data/crm.json`) and Firebase Firestore.
+*   **AI Broker Negotiation**: Generates highly intelligent, precise, data-driven first-contact messages to dealers requesting buy-rate Money Factors and negotiating pure dealer discounts off MSRP *before* manufacturer rebates.
 
 ---
 
 ## 🛠️ Technology Stack
 *   **Frontend**: React, Tailwind CSS, Vite (Dark-mode, high-fidelity UI).
 *   **Backend**: Node.js & Express (TypeScript).
-*   **Database/CRM**: Firebase Firestore.
+*   **Browser Automation**: Playwright over Chrome Remote Debugging Protocol (CDP).
+*   **Notifications**: Telegram Bot API.
+*   **Database/CRM**: Local JSON Store & Firebase Firestore.
 *   **AI Integration**: Google GenAI TypeScript SDK (`@google/genai`).
 
 ---
 
-## ☁️ Cloud Deployment Pipeline
-The application runs as a modern Vite+Express full-stack application.
-*   **Development**: Run `npm run dev` to start the local `vite` and `express` dev servers in AI Studio or local node environments.
-*   **Build**: Run `npm run build` to compile the React frontend into static assets and bundle the server into a standard CommonJS target.
-*   **Production Start**: `npm run start` launches the node backend serving the API routes and static frontend.
+## ☁️ Cloud & Local Execution
+*   **Start Chrome Debug Port**: Run `start-chrome-debug.bat` to launch Chrome on port 9222 for CDP attachment.
+*   **Development**: Run `npm run dev` to start the local `vite` and `express` dev servers.
+*   **Build**: Run `npm run build` to compile the React frontend and server.
 
 ---
 
 ## 🤖 AI Agent Git Operations Lifecycle (Important for LLMs)
-
 Follow the rules defined in [.agents/AGENTS.md](file:///C:/Development/Apps/Lease%20Hunter/.agents/AGENTS.md) exactly:
 1.  **Synchronize on startup** using a temporary clone to fetch updates from `lease-hunter/` in the remote repository.
-2.  **Commit and push in isolation** by copy-staging modifications into a temporary clone of the mono-repo, staging only the `lease-hunter/` folder, and pushing back to `main`.
+2.  **Commit and push in isolation** using `git_push.ps1` (or `git_push.cjs` in cloud environments), ensuring `node_modules`, `personal-repo-temp`, `chrome-debug-profile`, and `scratch` remain excluded.

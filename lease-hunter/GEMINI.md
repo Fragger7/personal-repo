@@ -15,44 +15,35 @@
 - **Value Metric (The Secret Sauce)**: We do not use generic boilerplate rules (e.g., "1% of MSRP"). The ultimate metric of a good deal is the **Leasehackr Score** (years of lease value) paired with qualitative current market momentum scraped from forums.
 - **Human Intelligence & Advanced Strategies (Vetted)**:
   - **Calculator Back-Solving**: Users should be able to input a target "% off MSRP" into the deal calculator to instantly back-calculate their expected monthly payments. This is the primary lever for deal structuring.
-  - **Aggregator Supremacy**: Human success explicitly validates **CarGurus** as the optimal platform for finding comprehensive dealer inventory and executing initial contact.
+  - **Aggregator Supremacy & Multi-Node Architecture**:
+    - **Cars.com via CDP (Primary Workhorse)**: Provides automated unblocked regional search, Days on Lot, and massive dealer discounts ($13k+ off).
+    - **Dealer-Direct Network Scrapers**: Scrapes local franchised dealerships (Group 1 Kia South Austin, Round Rock Kia) for direct showroom stock, Monroney labels, and internet sales contacts.
+    - **CarGurus (Outreach & Intel Channel)**: Optimal platform for initial contact and sending the "Golden Outreach Template" via dealer messaging.
   - **Trim-Level Agility**: Recent human intelligence confirmed a massive payment drop (e.g., ~$741 down to ~$471) by pivoting from GT-Line to Wind trim. The engine MUST actively model these trim step-downs and surface them if the value delta is this extreme.
-  - **Aged Inventory Targeting**: Dealer websites notoriously hide intake dates. To reliably scrape "Days on Lot" (targeting 180+ days), the engine MUST target aggregators (like CarGurus, CarEdge) that track cross-web VIN history, rather than individual dealer sites.
+  - **Aged Inventory Targeting**: Dealer websites notoriously hide intake dates. To reliably scrape "Days on Lot" (targeting 180+ days), the engine queries aggregators (Cars.com, CarEdge) via CDP and tracks local intake history.
   - **True Cost Baseline**: Knowing the exact Buy Rate Money Factor (MF), Residual Value (RV), and exact manufacturer rebates for the current month is the source of all negotiating power. (e.g., via Leasehackr Rate Findr). We will not blindly trust human anecdotes; the AI must mathematically reconstruct and verify deals using live baselines.
   - **Anti-Padding Negotiation**: The outreach and deal structuring must negotiate a "reasonable % off MSRP" *before* rebates are applied, and explicitly demand the "buy rate MF" to ensure the dealer is not padding the numbers.
-  - **Baseline Validation & Confidence Scoring**: Because forums (Leasehackr/Edmunds) can be noisy or contain outdated information, the scraping engine must *cross-reference* multiple sources (e.g. Edmunds vs. Leasehackr vs. Reddit). The engine will output a dynamic `Confidence Score` (0-100) and explicitly cite whether the data points agree across platforms. We will NOT rely on single unverified anecdotes.
-  - **Transparent Negotiation Leverage**: Bringing structural deal knowledge (e.g., showing the app's deal calculator) directly to dealerships, either in person or via chat, bypasses traditional sales tactics. Demonstrating that you have the baseline numbers mathematically reconstructed forces them to compete on the actual "% off MSRP" rather than hiding margin in the MF or accessories.
+  - **Baseline Validation & Confidence Scoring**: Cross-references multiple sources (Edmunds vs. Leasehackr vs. Reddit). The engine outputs a dynamic `Confidence Score` (0-100) and explicitly cites whether data points agree across platforms.
   - **The "Golden" Outreach Template**: Initial contact should be made via CarGurus or Dealer Website Chat using this exact data-driven structure: *"I just paid my last payment on a [Previous Vehicle] lease. Looking for another lease on an [Target Vehicle] by the end of the month. [Term]mo/[Mileage]k mi/yr lease. Base money factor ([MF]). RV [RV]% [Tax Credit Details if applicable]. 1st month payment down. Reasonable % off MSRP, after $[Lease Cash] manufacturer lease cash."*
-- **Autonomous Outreach**: The system will not simply crunch numbers. Once a top-tier deal is identified, the application will generate a highly intelligent, precise, data-driven first-contact email to the dealer to initiate the negotiation on behalf of the user.
 
 ## Architecture & Tech Stack Decisions (Locked)
 - **Frontend Core**: React, Tailwind CSS, Vite. Focus is on dark-mode, high-fidelity, polished, desktop-first data dashboards.
-- **Backend & AI**: Node.js / Express backend routing. We will leverage the explicit use of the `@google/genai` SDK to parse and structure chaotic unstructured data (like Leasehackr forum threads or complex dealer JSONs) into standardized JSON.
-- **Data Aggregation & Quota Strategy**: 
-  - **Gemini Quota Management (Strict limit)**: There are NO backup accounts for Gemini Pro. Gemini Search Grounding is brilliant but quota-heavy. It will be strictly reserved for "Brain" tasks: parsing unstructured Leasehackr forums for baseline MF/RV and market momentum (`/api/scrape/extract-baselines`). It will NOT be used for bulk inventory scraping.
-  - **Option A - Dealer Backend Reverse Engineering**: Building custom scrapers to hit individual dealer inventory APIs directly. This is free and requires zero setup, but data can be skewed (dealers doctor/remove listings, hiding true "Days on Lot") and it is brittle to API changes.
-  - **Option B - Dedicated Third-Party Scrapers (e.g., Apify) with Dummy Accounts**: Using dedicated scraping platforms to hit aggregators like CarGurus. This provides highly reliable cross-web VIN tracking and true "Days on Lot". To keep costs at absolute zero, we will operate a round-robin strategy utilizing ~3 fallback dummy accounts to bypass free tier rate limits.
-  - **Workflow**: 1) Extract baselines via Gemini, 2) Search regional inventory via Option A or B, 3) Qualify targets using AI reasoning.
-- **Ultrathinking Architecture & Future Traps**: The architecture must anticipate severe scraping blocks, rapid state changes, and dealership inventory API shifts. We will design the backend with modular abstraction layers so data sources can be swapped or upgraded without breaking the core deal engine.
-- **Database / CRM Persistence**: Firebase Firestore. The platform provides a highly scalable NoSQL document architecture with a robust free tier. It will serve as both our session cache for the heavy data computations and our foundational CRM for tracking dealer outreach.
+- **Backend & AI**: Node.js / Express backend routing (`@google/genai` SDK for forum unstructured data parsing).
+- **Crawler & Anti-Bot Architecture (Vetted from `vehicle-tracker-main`)**:
+  - **Chrome CDP Attachment (`start-chrome-debug.bat` + `chromium.connectOverCDP('http://127.0.0.1:9222')`)**: Connects to a user-launched Chrome instance carrying genuine OS window tokens, real residential cookies, and clean TLS fingerprints, achieving 100% HTTP 200 responses with zero DataDome/Cloudflare 403 blocks.
+  - **Embedded JSON Parsing**: Extracts raw server state and XHR streams directly, bypassing brittle DOM scrapers.
+  - **Telegram Push Alert Engine (`server/services/telegram.ts`)**: Delivers real-time deal cards with working direct vehicle detail URLs straight to the user's phone.
+- **Database / CRM Persistence**: Firebase Firestore & local persistent JSON (`data/inventory.json` & `data/crm.json`).
 
-## Current Project State (As of Last Session)
-- **UI Progress**: 
-  - The `IntelDashboard` provides dynamic input parameters for Make, Model, Trim, Year, and Target ZIP.
-  - Added "Manual Intel Dump" feature to accept raw Ctrl+A text pastes from CarGurus.
-  - **Needs Refactor**: The UI workflow is getting messy and the user journey between searching, pasting, and analyzing is disjointed. A structural UX refactor is needed to make the flow intuitive.
-  - Clicking an acquired target from the dashboard successfully wires the deal parameters (MSRP, Target Discount, Baseline MF, Baseline RV, Dealer Name, and VIN) directly into the `TaxSimulator` (Deal Structuring) tab.
-  - **Calculator Logic Exposed**: The `TaxSimulator` now explicitly displays the mathematical breakdown (Net Cap Cost, Depreciation, Rent Charge, Base Payment) to empower the user during negotiations.
-- **Backend/Scraping Engine (`server/scraping.ts` & `server/crawler/`)**: 
-  - Gemini Search Grounding accurately extracts baseline numbers, utilizing `gemini-3.5-flash` with JSON schema enforcement. It includes a `Confidence Score` and a `Reasonable Discount %`.
-  - **Local Stealth Network-Trace Crawler Implemented**: Installed Playwright Chromium (`server/crawler/scrape-local-dealers-headless.ts`) to intercept backend XHR JSON responses directly on a 50-mile target radius around ZIP 78665.
-  - **Georgia Plant VIN Platform Recognition (`5XY...`)**: Extracted 5 100% real live Kia EV9 listings (Wind, Land, GT-Line) assembled in West Point, GA (`5XY...` prefix) from Group 1 Kia South Austin.
-  - **Telegram Push Alert Engine Implemented**: `server/services/telegram.ts` dispatches instant phone notification cards with direct, working dealer vehicle URLs (`https://www.group1kiasouthaustin.com/inventory/...`). Verified live landing on user's phone!
-  - **CarGurus DataDome Anti-Bot Challenge Empirical Finding**: Direct automated Playwright requests to CarGurus return `403 Access Restricted` (`geo.captcha-delivery.com`) due to DataDome bot protection. $0 dealer network scrapers and local memory intake tracking serve as the un-blocked $0 solution.
-- **Database / CRM Foundation**: 
-  - Local JSON persistent storage (`data/inventory.json` & `data/crm.json`) handles inventory and outreach leads seamlessly via Express backend endpoints (`/api/inventory`, `/api/crm/leads`).
+## Current Project State (Verified & Working)
+- **Breakthrough Live Inventory Sourcing**:
+  - **Cars.com CDP Node (`server/crawler/scrape-cars-com-new-ev9.ts` & `extract-cars-com-vdp-details.ts`)**: Successfully extracted 22 brand new 2026 Kia EV9s (GT-Line, Land, Wind) within 50 miles of ZIP 78665.
+  - **Verified Live Car Extracted**: 2026 Kia EV9 GT-Line AWD (VIN `5XYAEFS58TG019993`), MSRP $77,245, **Sale Price $64,002 ($13,243 off MSRP / 17.1% discount)**, **115 Days on Lot**, with direct working hyperlink [`https://www.cars.com/vehicledetail/940466ec-7560-455e-bbd3-ded328c62ff0/`](https://www.cars.com/vehicledetail/940466ec-7560-455e-bbd3-ded328c62ff0/).
+  - **Live Mobile Telegram Delivery**: Confirmed working deal notification cards delivered directly to the user's phone.
+- **Git Sync & Tooling**:
+  - `git_push.ps1` updated with clean recursive workspace export excluding `node_modules`, `personal-repo-temp`, `chrome-debug-profile`, and `scratch`. Commits push cleanly to GitHub `main`.
 
-## Next Steps for the AI Assistant upon Resuming
-1. **UI/UX Workflow Refactor**: Clean up the `IntelDashboard` and the transition to the Deal Calculator. The flow must be pristine, logical, and less messy.
-2. **Refine OutreachCRM & The "Golden" Template**: Ensure the UI gracefully displays saved leads, allows the user to copy the "Golden" template, and track the status of dealer responses.
-3. **Handle Tax Scenarios**: Implement robust logic in the Tax Simulator to handle "tax trap" states (like TX, ZIP 78665) where tax is levied on the entire vehicle purchase price.
+## Next Steps for the Next Session
+1. **Wire Cars.com CDP Node to UI**: Connect the live 22-car Cars.com crawler to the React `IntelDashboard` "🔄 Scan Regional Inventory" button and persist to `data/inventory.json`.
+2. **Deal Calculator Auto-Seeding**: Take the live $13,243 discounted 2026 EV9 GT-Line and auto-calculate the exact Texas monthly payment (ZIP 78665) with Kia Finance lease cash and buy-rate MF.
+3. **UI/UX Workflow Refactor**: Clean up the `IntelDashboard` user journey between regional discovery, deal structuring, and dealer outreach.
