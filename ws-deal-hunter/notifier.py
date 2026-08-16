@@ -258,6 +258,31 @@ class TelegramNotifier:
                 deal_id=deal.id,
             )
 
+    def send_system_message(self, title: str, body_html: str) -> NotificationResult:
+        """Send a general system pulse digest or status update."""
+        if not self.bot_token or not self.chat_id:
+            return NotificationResult(success=False, status_code=400, message="Telegram unconfigured.", deal_id="system")
+
+        api_url = f"https://api.telegram.org/bot{self.bot_token}/sendMessage"
+        text = f"📊 <b>[{title}]</b>\n\n{body_html}"
+        payload = {
+            "chat_id": self.chat_id,
+            "text": text,
+            "parse_mode": "HTML",
+            "disable_web_page_preview": True,
+        }
+        try:
+            req = urllib.request.Request(
+                api_url,
+                data=json.dumps(payload).encode("utf-8"),
+                headers={"Content-Type": "application/json", "User-Agent": "WorkstationDealHunter/1.0"},
+                method="POST",
+            )
+            with urllib.request.urlopen(req, timeout=5.0) as res:
+                return NotificationResult(success=True, status_code=res.status, message="Delivered", deal_id="system")
+        except Exception as e:
+            return NotificationResult(success=False, status_code=500, message=str(e), deal_id="system")
+
 
 class DiscordNotifier:
     """
