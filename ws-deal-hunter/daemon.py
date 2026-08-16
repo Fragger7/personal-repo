@@ -126,6 +126,12 @@ class DealHunterDaemon:
             try:
                 self.log(f"Evaluating [{raw.source.upper()}] ${raw.price:.0f} - {raw.title[:60]}...")
                 deal = self.evaluator.evaluate_listing(raw)
+                
+                # Strict Quality Gate: Reject low-grade consumer noise and hard-excluded models
+                if deal.deal_score < 6.0 or "hard excluded" in deal.summary.lower() or "reject" in deal.actionable_recommendation.lower():
+                    self.log(f"⏩ Filtered Out: {raw.title[:45]} (Score {deal.deal_score}/10 | {deal.actionable_recommendation})")
+                    continue
+
                 evaluated_deals.append(deal)
                 self.status.total_evaluated += 1
 

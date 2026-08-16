@@ -321,6 +321,71 @@ class GeminiHardwareEvaluator:
                 "confidence_score": 0.99,
             }
 
+        # D. Hard Exclude Non-Workstation / Low-Grade Budget Consumer Lines (Score 0.0)
+        # 1) Dell Latitude 3000 / 5000 series and Inspiron
+        if any(w in text for w in ["latitude 3", "latitude 5", "latitude 33", "latitude 34", "latitude 35", "latitude 54", "latitude 55", "inspiron", "vostro"]) and not any(w in text for w in ["precision", "xps 15", "xps 17"]):
+            return {
+                "cpu": "Entry Business / Consumer",
+                "ram_gb": ram_gb,
+                "ssd_gb": 256,
+                "gpu": "Integrated Intel Iris/UHD",
+                "screen": "Budget Non-Workstation Display",
+                "condition": "Hard Excluded (Non-Workstation / Budget Latitude/Inspiron)",
+                "fair_market_value": 0.0,
+                "deal_score": 0.0,
+                "summary": "Hard Excluded: Dell Latitude 3000/5000 and Inspiron series lack discrete workstation GPU / H-series thermal envelope.",
+                "actionable_recommendation": "REJECT / NON-WORKSTATION TIER",
+                "confidence_score": 0.99,
+            }
+
+        # 2) Lenovo Consumer Laptops (IdeaPad, Yoga, ThinkBook, Flex, Chromebook)
+        if any(w in text for w in ["ideapad", "yoga", "thinkbook", "flex 5", "chromebook"]) and not any(w in text for w in ["thinkpad p", "p1 gen", "p16", "p15", "p14s", "x1 extreme"]):
+            return {
+                "cpu": "Consumer 2-in-1 / Low Voltage",
+                "ram_gb": ram_gb,
+                "ssd_gb": 256,
+                "gpu": "Integrated Graphics",
+                "screen": "Consumer Display",
+                "condition": "Hard Excluded (Consumer Yoga/IdeaPad)",
+                "fair_market_value": 0.0,
+                "deal_score": 0.0,
+                "summary": "Hard Excluded: Lenovo IdeaPad/Yoga consumer devices lack ISV workstation certification and thermal capacity.",
+                "actionable_recommendation": "REJECT / CONSUMER LINE",
+                "confidence_score": 0.99,
+            }
+
+        # 3) HP Consumer Laptops (Pavilion, Envy, OmniBook, Stream, Victus)
+        if any(w in text for w in ["pavilion", "envy", "omnibook", "stream 14", "victus"]) and not any(w in text for w in ["zbook", "elitebook"]):
+            return {
+                "cpu": "Consumer Laptop",
+                "ram_gb": ram_gb,
+                "ssd_gb": 256,
+                "gpu": "Consumer Graphics",
+                "screen": "Consumer Display",
+                "condition": "Hard Excluded (Consumer HP)",
+                "fair_market_value": 0.0,
+                "deal_score": 0.0,
+                "summary": "Hard Excluded: HP Pavilion/Envy/OmniBook consumer lines rejected per Workstation Deal Hunter mandate.",
+                "actionable_recommendation": "REJECT / CONSUMER LINE",
+                "confidence_score": 0.99,
+            }
+
+        # 4) Low-Voltage 15W U-Series CPUs without Workstation GPU or >=32GB RAM
+        if any(w in text for w in ["-1335u", "-1345u", "-1355u", "-1235u", "-1245u", "-1255u", "-1135g7", "-1165g7"]) and ram_gb < 32 and not any(w in text for w in ["precision", "zbook", "thinkpad p"]):
+            return {
+                "cpu": "Low-Voltage U-Series (15W)",
+                "ram_gb": ram_gb,
+                "ssd_gb": 256,
+                "gpu": "Integrated Intel Iris/UHD",
+                "screen": "Standard Display",
+                "condition": "Hard Excluded (15W U-Series CPU)",
+                "fair_market_value": 0.0,
+                "deal_score": 0.0,
+                "summary": "Hard Excluded: 15W U-Series ultra-low voltage processor is insufficient for workstation arbitrage and heavy multitasking.",
+                "actionable_recommendation": "REJECT / LOW-VOLTAGE CPU",
+                "confidence_score": 0.99,
+            }
+
         # ==========================================
         # 2. CPU & SILICON VALUATION
         # ==========================================

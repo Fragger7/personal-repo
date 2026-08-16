@@ -675,14 +675,14 @@ class DellRefurbishedCollector:
 
     TARGET_URLS = [
         "https://www.dellrefurbished.com/laptops?model_family=266",  # Dell Precision Workstations
-        "https://www.dellrefurbished.com/laptops",                    # All Certified Laptops
+        "https://www.dellrefurbished.com/laptops?model_family=268",  # Dell XPS High-End Creator Laptops
     ]
 
     def __init__(self) -> None:
         self.last_request_time = 0.0
 
     def fetch_listings(self) -> List[RawListing]:
-        """Fetch and parse live certified refurbished workstations from Dell Refurbished."""
+        """Fetch and parse live certified refurbished Precision & XPS workstations from Dell Refurbished."""
         try:
             import cloudscraper
             from bs4 import BeautifulSoup
@@ -711,12 +711,17 @@ class DellRefurbishedCollector:
 
                         full_text = item.get_text(" ", strip=True)
 
+                        # Strict Workstation Whitelist Filter: Skip budget Latitude 3000/5000 and consumer models
+                        full_lower = full_text.lower()
+                        if any(b in full_lower for b in ["latitude 3", "latitude 5", "latitude 33", "latitude 34", "latitude 35", "inspiron", "vostro"]) and not any(w in full_lower for w in ["precision", "xps 15", "xps 17"]):
+                            continue
+
                         # Extract Sale / List price
                         sale_match = re.search(r"SALE\s*\$\s*([0-9,]+(?:\.[0-9]{2})?)", full_text)
                         list_match = re.search(r"\$\s*([0-9,]+(?:\.[0-9]{2})?)", full_text)
                         price = float(sale_match.group(1).replace(",", "")) if sale_match else (float(list_match.group(1).replace(",", "")) if list_match else 0.0)
 
-                        if price < 100:
+                        if price < 250:
                             continue
 
                         # Extract coupon discount if present (e.g. 50% off)
@@ -740,9 +745,9 @@ class DellRefurbishedCollector:
                                 id=item_id,
                                 source="dell_refurbished",
                                 title=clean_title,
-                                description=f"Dell Financial Services Certified Refurbished. {full_text[:300]}",
+                                description=f"Dell Financial Services Certified Refurbished Workstation. {full_text[:300]}",
                                 price=price,
-                                url=link or "https://www.dellrefurbished.com/laptops",
+                                url=link or "https://www.dellrefurbished.com/laptops?model_family=266",
                                 seller="Dell Financial Services (DFS)",
                                 location="TX, USA",
                                 condition_raw="Grade A Certified Refurbished (100-Day Warranty)",
