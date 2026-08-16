@@ -105,16 +105,16 @@ def main() -> None:
         "Min Deal Score (0 - 10)",
         min_value=0.0,
         max_value=10.0,
-        value=5.0,
+        value=0.0,
         step=0.1,
-        help="Scores >= 8.5 qualify for autonomous mobile push alerts.",
+        help="Set to >= 8.5 to see high-yield mobile alert candidates only.",
     )
 
     max_price = st.sidebar.slider(
         "Max Asking Price ($)",
         min_value=100,
-        max_value=3000,
-        value=2500,
+        max_value=5000,
+        value=3500,
         step=25,
     )
 
@@ -154,17 +154,46 @@ def main() -> None:
         only_high_yield=only_high_yield,
     )
     stats = storage.get_statistics()
+    filtered_count = len(filtered_deals)
+    filtered_high_yield = len([d for d in filtered_deals if d.deal_score >= 8.5])
+    filtered_avg_margin = (
+        round(sum(d.arbitrage_margin_pct for d in filtered_deals) / filtered_count, 1)
+        if filtered_count > 0
+        else 0.0
+    )
+    filtered_avg_profit = (
+        round(sum(d.estimated_profit for d in filtered_deals) / filtered_count, 2)
+        if filtered_count > 0
+        else 0.0
+    )
+    filtered_top_score = max([d.deal_score for d in filtered_deals], default=0.0)
 
-    # Top KPI Metrics Banner
+    # Top KPI Metrics Banner (Dynamic to Slider Filters)
     col1, col2, col3, col4 = st.columns(4)
     with col1:
-        st.metric("Total Analyzed Deals", f"{stats['total_deals']} units", delta=f"{stats['source_breakdown'].get('reddit', 0)} Reddit")
+        st.metric(
+            "Visible Filtered Deals",
+            f"{filtered_count} units",
+            delta=f"Pool: {stats['total_deals']} total in DB",
+        )
     with col2:
-        st.metric("🔥 High-Yield (>=8.5)", f"{stats['high_yield_deals']} opportunities", delta="Pushover Ready")
+        st.metric(
+            "🔥 High-Yield (>=8.5)",
+            f"{filtered_high_yield} opportunities",
+            delta="Pushover Ready",
+        )
     with col3:
-        st.metric("Avg Arbitrage Margin", f"{stats['avg_margin_pct']}%", delta=f"+${stats['avg_profit']:.0f} Profit")
+        st.metric(
+            "Avg Arbitrage Margin",
+            f"{filtered_avg_margin}%",
+            delta=f"+${filtered_avg_profit:.0f} Profit",
+        )
     with col4:
-        st.metric("Top Deal Score", f"{stats['top_score']:.1f} / 10.0", delta="Gemini 2.5 Flash")
+        st.metric(
+            "Top Deal Score",
+            f"{filtered_top_score:.1f} / 10.0",
+            delta="Calibrated Valuation",
+        )
 
     st.divider()
 

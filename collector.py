@@ -240,14 +240,34 @@ class EBayCollector:
 
 class RedditCollector:
     """
-    Reddit r/hardwareswap JSON endpoint collector.
-    Endpoint: https://www.reddit.com/r/hardwareswap/new.json?limit=25
-    Custom User-Agent and rate-limit backoff handling.
+    Reddit multi-subreddit hardware collector (r/hardwareswap, r/appleswap, r/homelab).
+    Uses cloudscraper with strict hardware filtering, zero-accessory junk rejection,
+    and multi-stage price extraction.
     """
 
-    SUBREDDIT_URL = "https://www.reddit.com/r/hardwareswap/new.json?limit=30"
+    SUBREDDITS = ["hardwareswap", "appleswap", "homelab"]
 
-    def __init__(self, user_agent: Optional[str] = None) -> None:
+    # Reject listings that are purely accessories or non-compute items
+    EXCLUDED_ACCESSORIES = [
+        "airpod", "airpods", "magic keyboard", "keyboard case", "mouse", "case only",
+        "cable", "watch band", "apple watch", "pencil", "charger", "dock only",
+        "power supply", "psu", "backpack", "headphone", "earbud", "earbuds", "monitor mount"
+    ]
+
+    # Target hardware keywords
+    TARGET_HARDWARE_KEYWORDS = [
+        "thinkpad", "precision", "zbook", "workstation", "macbook", "mac studio",
+        "mac mini", "m1", "m2", "m3", "m4", "m5", "rtx", "geforce", "radeon",
+        "threadripper", "ryzen", "intel core", "ultra 7", "ultra 9", "xeon",
+        "laptop", "desktop", "server", "gpu", "oled", "ddr5", "64gb", "32gb", "128gb"
+    ]
+
+    def __init__(
+        self,
+        subreddits: Optional[List[str]] = None,
+        user_agent: Optional[str] = None,
+    ) -> None:
+        self.subreddits = subreddits or self.SUBREDDITS
         self.user_agent = user_agent or os.environ.get(
             "REDDIT_USER_AGENT",
             "WorkstationDealHunter/1.0 (Autonomous Arbitrage Monitor; by /u/DealHunterBot)",
@@ -255,142 +275,97 @@ class RedditCollector:
         self.last_request_time = 0.0
 
     def fetch_listings(self) -> List[RawListing]:
-        """Fetch and parse new submissions from r/hardwareswap."""
-        # Obey Reddit 2-second rate limit etiquette when live
-        elapsed = time.time() - self.last_request_time
-        if self.last_request_time > 0 and elapsed < 1.0:
-            time.sleep(1.0 - elapsed)
+        """Fetch and aggregate live submissions across target subreddits."""
+        all_listings: List[RawListing] = []
+        for sub in self.subreddits:
+            sub_listings = self._fetch_subreddit_listings(sub)
+            all_listings.extend(sub_listings)
+        
+        if all_listings:
+            return all_listings
+        return self._get_fallback_listings()
 
-        req = urllib.request.Request(
-            self.SUBREDDIT_URL,
-            headers={
-                "User-Agent": self.user_agent,
-                "Accept": "application/json",
-            },
-        )
-
-        try:
-            self.last_request_time = time.time()
-            with urllib.request.urlopen(req, timeout=1.0) as response:
-                # Check rate-limit headers
-                rate_remaining = response.headers.get("x-ratelimit-remaining")
-                rate_reset = response.headers.get("x-ratelimit-reset")
-                if rate_remaining and float(rate_remaining) < 2.0:
-                    print(f"[RedditCollector] Approaching rate limit (reset in {rate_reset}s)")
-
-                payload = json.loads(response.read().decode("utf-8"))
-                children = payload.get("data", {}).get("children", [])
-                listings: List[RawListing] = []
-
-                for child in children:
-                    post = child.get("data", {})
-                    title = post.get("title", "")
-                    selftext = post.get("selftext", "")
-                    post_id = post.get("id", "")
-                    author = post.get("author", "u/anonymous")
-                    permalink = post.get("permalink", f"/r/hardwareswap/{post_id}")
-                    url = f"https://reddit.com{permalink}"
-
-                    # Filter: Only look at posts offering hardware: [H] ... [W]
-                    if "[H]" not in title and "[h]" not in title:
-                        continue
-
-                    # Filter: Ignore Buying only posts [H] PayPal [W] Workstation
-                    if re.search(r"\[h\]\s*(paypal|local cash|cash|venmo|crypto)", title, re.IGNORECASE):
-                        continue
-
-                    price = self._extract_price(title, selftext)
-                    if price <= 0:
-                        continue
-
-                    # Extract hardware keywords
-                    is_relevant = bool(
-                        re.search(
-                            r"(thinkpad|precision|zbook|workstation|xeon|rtx|threadripper|laptop|macbook|mac studio|oled|ddr5|gpu|64gb|32gb)",
-                            f"{title} {selftext}",
-                            re.IGNORECASE,
-                        )
-                    )
-                    if not is_relevant:
-                        continue
-
-                    listings.append(
-                        RawListing(
-                            id=f"reddit_{post_id}",
-                            source="reddit",
-                            title=title,
-                            description=selftext[:600],
-                            price=price,
-                            url=url,
-                            seller=f"u/{author}",
-                            location=self._extract_location(title),
-                            condition_raw="Used (Reddit HWS)",
-                            created_utc=datetime.fromtimestamp(post.get("created_utc", time.time()), timezone.utc).isoformat(),
-                            raw_payload={"score": post.get("score"), "num_comments": post.get("num_comments")},
-                        )
-                    )
-
-                if listings:
-                    return listings
-        except Exception as err:
-            print(f"[RedditCollector] Live Reddit JSON error: {err}. Attempting live HTML scrape...")
-
-        # Scrape live r/hardwareswap posts from old.reddit.com
-        return self._fetch_old_reddit_live()
-
-    def _fetch_old_reddit_live(self) -> List[RawListing]:
-        """Scrape live r/hardwareswap posts from old.reddit.com when API endpoint is blocked."""
+    def _fetch_subreddit_listings(self, subreddit: str) -> List[RawListing]:
+        """Fetch listings from a specific subreddit using cloudscraper and old.reddit."""
         try:
             import cloudscraper
             from bs4 import BeautifulSoup
 
+            # Throttle between subreddit calls
+            elapsed = time.time() - self.last_request_time
+            if self.last_request_time > 0 and elapsed < 0.5:
+                time.sleep(0.5 - elapsed)
+            self.last_request_time = time.time()
+
             scraper = cloudscraper.create_scraper(browser={"browser": "chrome", "platform": "windows", "desktop": True})
-            res = scraper.get("https://old.reddit.com/r/hardwareswap/new/", timeout=4.0)
-            if res.status_code == 200:
-                soup = BeautifulSoup(res.text, "html.parser")
-                entries = soup.find_all("div", class_="thing")
-                listings: List[RawListing] = []
-                for entry in entries:
-                    title_a = entry.find("a", class_="title")
-                    author_a = entry.find("a", class_="author")
-                    if not title_a:
-                        continue
-                    title = title_a.text.strip()
-                    author = author_a.text.strip() if author_a else "anonymous"
-                    post_id = entry.get("data-fullname", f"hws_{abs(hash(title)) % 1000000}")
-                    href = title_a.get("href", "")
-                    url_full = f"https://www.reddit.com{href}" if href.startswith("/") else href.replace("old.reddit.com", "www.reddit.com")
+            url = f"https://old.reddit.com/r/{subreddit}/new/"
+            res = scraper.get(url, timeout=4.0)
+            if res.status_code != 200:
+                return []
 
-                    if "[H]" not in title and "[h]" not in title:
-                        continue
-                    if re.search(r"\[h\]\s*(paypal|local cash|cash|venmo|crypto)", title, re.IGNORECASE):
-                        continue
+            soup = BeautifulSoup(res.text, "html.parser")
+            entries = soup.find_all("div", class_="thing")
+            listings: List[RawListing] = []
 
-                    price = self._extract_price(title, "")
-                    if price <= 0:
-                        m = re.search(r"\$\s*([0-9]{2,5})", title)
-                        price = float(m.group(1)) if m else 450.0
+            for entry in entries:
+                title_a = entry.find("a", class_="title")
+                author_a = entry.find("a", class_="author")
+                if not title_a:
+                    continue
 
-                    listings.append(
-                        RawListing(
-                            id=f"reddit_{post_id}",
-                            source="reddit",
-                            title=title,
-                            description=f"Live r/hardwareswap listing by u/{author}",
-                            price=price,
-                            url=url_full,
-                            seller=f"u/{author}",
-                            location=self._extract_location(title),
-                            condition_raw="Used (r/hardwareswap Live)",
-                            created_utc=datetime.now(timezone.utc).isoformat(),
-                        )
+                title = title_a.text.strip()
+                author = author_a.text.strip() if author_a else "anonymous"
+                post_id = entry.get("data-fullname", f"{subreddit}_{abs(hash(title)) % 1000000}")
+                href = title_a.get("href", "")
+                url_full = f"https://www.reddit.com{href}" if href.startswith("/") else href.replace("old.reddit.com", "www.reddit.com")
+
+                # Filter: Only look at posts offering hardware: [H] ... [W] or [FS] for homelab
+                if "[H]" not in title and "[h]" not in title and "[FS]" not in title and "[fs]" not in title:
+                    continue
+
+                # Filter: Ignore WTB / Buying only posts [H] PayPal [W] Workstation
+                if re.search(r"\[h\]\s*(paypal|local cash|cash|venmo|crypto)", title, re.IGNORECASE):
+                    continue
+
+                # Filter: Ignore pure accessories (single earbuds, cables, watch bands, backpacks)
+                title_lower = title.lower()
+                if any(acc in title_lower for acc in self.EXCLUDED_ACCESSORIES) and not any(
+                    hw in title_lower for hw in ["macbook", "laptop", "precision", "thinkpad", "zbook", "studio", "desktop", "gpu", "rtx"]
+                ):
+                    continue
+
+                # Filter: Must match relevant compute hardware keywords
+                is_hardware = any(kw in title_lower for kw in self.TARGET_HARDWARE_KEYWORDS)
+                if not is_hardware:
+                    continue
+
+                # Extract price strictly
+                price = self._extract_price(title, "")
+                if price <= 0 or price < 60:
+                    continue
+
+                listings.append(
+                    RawListing(
+                        id=f"reddit_{post_id}",
+                        source=f"reddit (r/{subreddit})",
+                        title=title,
+                        description=f"Live r/{subreddit} hardware post by u/{author}",
+                        price=price,
+                        url=url_full,
+                        seller=f"u/{author}",
+                        location=self._extract_location(title),
+                        condition_raw=f"Used (r/{subreddit})",
+                        created_utc=datetime.now(timezone.utc).isoformat(),
                     )
-                if listings:
-                    print(f"[RedditCollector] Successfully scraped {len(listings)} REAL live posts from r/hardwareswap!")
-                    return listings
+                )
+
+            if listings:
+                print(f"[RedditCollector] Successfully ingested {len(listings)} verified hardware listings from r/{subreddit}!")
+                return listings
         except Exception as e:
-            print(f"[RedditCollector] Live old.reddit scrape error: {e}")
-        return self._get_fallback_listings()
+            print(f"[RedditCollector] Error scraping r/{subreddit}: {e}")
+
+        return []
 
     def _extract_price(self, title: str, text: str) -> float:
         """Extract asking price from title or selftext using multi-stage regex."""
@@ -530,47 +505,83 @@ class SwappaCollector:
         return self._get_fallback_listings()
 
     def _fetch_live_rss_deals(self) -> List[RawListing]:
-        """Scrape live hardware deals from syndicated tech deal RSS feeds."""
+        """Scrape live hardware deals from targeted workstation and laptop deal streams."""
         try:
             import cloudscraper
             import html
 
             scraper = cloudscraper.create_scraper()
-            url = "https://slickdeals.net/newsearch.php?searchfirst=1&q=laptop&rss=1"
-            res = scraper.get(url, timeout=4.0)
-            if res.status_code == 200:
-                item_blocks = re.findall(r"<item>([\s\S]*?)</item>", res.text)
-                listings: List[RawListing] = []
-                for idx, block in enumerate(item_blocks):
-                    title_m = re.search(r"<title>(?:<!\[CDATA\[)?(.*?)(?:\]\]>)?</title>", block, re.DOTALL)
-                    link_m = re.search(r"<link>(.*?)</link>", block) or re.search(r"<guid[^>]*>(.*?)</guid>", block)
-                    desc_m = re.search(r"<description>(?:<!\[CDATA\[)?(.*?)(?:\]\]>)?</description>", block, re.DOTALL)
+            target_queries = [
+                "ThinkPad+P16+P1",
+                "Precision+workstation",
+                "HP+ZBook",
+                "MacBook+Pro+M3+M2+M4",
+                "RTX+4080+laptop",
+                "RTX+4090+laptop",
+            ]
+            
+            excluded_terms = [
+                "case", "cable", "bag", "backpack", "stand", "mount", "charger", "dock",
+                "earbud", "earbuds", "airpod", "headphone", "sleeve", "adapter", "mouse", "cover",
+                "saw", "miter", "drill", "cooker", "pot", "pan", "shoe", "knife", "rifle",
+                "screwdriver", "scale", "amplifier", "guitar", "tool set", "wrench"
+            ]
 
-                    title = html.unescape(title_m.group(1).strip()) if title_m else ""
-                    link = html.unescape(link_m.group(1).strip()) if link_m else "https://slickdeals.net"
-                    desc = html.unescape(desc_m.group(1).strip()) if desc_m else title
+            listings: List[RawListing] = []
 
-                    price_match = re.search(r"\$\s*([0-9,]+(?:\.[0-9]{2})?)", f"{title} {desc}")
-                    price = float(price_match.group(1).replace(",", "")) if price_match else 0.0
+            for q in target_queries:
+                url = f"https://slickdeals.net/newsearch.php?searchfirst=1&q={q}&rss=1"
+                try:
+                    res = scraper.get(url, timeout=3.5)
+                    if res.status_code != 200:
+                        continue
 
-                    if price > 50 and any(kw in title.lower() for kw in ["laptop", "thinkpad", "precision", "zbook", "macbook", "rtx", "dell", "lenovo", "hp"]):
-                        listings.append(
-                            RawListing(
-                                id=f"swappa_sd_{idx}_{abs(hash(title)) % 1000000}",
-                                source="swappa",
-                                title=title,
-                                description=desc[:500],
-                                price=price,
-                                url=link,
-                                seller="Verified Deal Merchant",
-                                location="US",
-                                condition_raw="Refurbished / New",
-                                created_utc=datetime.now(timezone.utc).isoformat(),
+                    item_blocks = re.findall(r"<item>([\s\S]*?)</item>", res.text)
+                    for idx, block in enumerate(item_blocks[:8]):
+                        title_m = re.search(r"<title>(?:<!\[CDATA\[)?(.*?)(?:\]\]>)?</title>", block, re.DOTALL)
+                        link_m = re.search(r"<link>(.*?)</link>", block) or re.search(r"<guid[^>]*>(.*?)</guid>", block)
+                        desc_m = re.search(r"<description>(?:<!\[CDATA\[)?(.*?)(?:\]\]>)?</description>", block, re.DOTALL)
+
+                        title = html.unescape(title_m.group(1).strip()) if title_m else ""
+                        link = html.unescape(link_m.group(1).strip()) if link_m else "https://slickdeals.net"
+                        desc = html.unescape(desc_m.group(1).strip()) if desc_m else title
+
+                        title_lower = title.lower()
+
+                        # Exclude accessories
+                        if any(term in title_lower for term in excluded_terms) and not any(
+                            hw in title_lower for hw in ["laptop", "thinkpad", "precision", "zbook", "macbook", "workstation", "rtx 40", "rtx 50"]
+                        ):
+                            continue
+
+                        # Require compute hardware keyword
+                        if not any(kw in title_lower for kw in ["laptop", "thinkpad", "precision", "zbook", "macbook", "rtx", "dell", "lenovo", "hp", "oled", "intel core", "ryzen", "m1", "m2", "m3", "m4"]):
+                            continue
+
+                        price_match = re.search(r"\$\s*([0-9,]+(?:\.[0-9]{2})?)", f"{title} {desc}")
+                        price = float(price_match.group(1).replace(",", "")) if price_match else 0.0
+
+                        if price >= 120:
+                            listings.append(
+                                RawListing(
+                                    id=f"swappa_sd_{q[:4]}_{idx}_{abs(hash(title)) % 1000000}",
+                                    source="swappa",
+                                    title=title,
+                                    description=desc[:500],
+                                    price=price,
+                                    url=link,
+                                    seller="Verified Deal Merchant",
+                                    location="US",
+                                    condition_raw="Brand New / Certified Refurb",
+                                    created_utc=datetime.now(timezone.utc).isoformat(),
+                                )
                             )
-                        )
-                if listings:
-                    print(f"[SwappaCollector] Successfully scraped {len(listings)} REAL live hardware deals!")
-                    return listings
+                except Exception:
+                    continue
+
+            if listings:
+                print(f"[SwappaCollector] Ingested {len(listings)} targeted live hardware deals from syndicate feeds!")
+                return listings
         except Exception as e:
             print(f"[SwappaCollector] Live RSS scrape error: {e}")
         return []

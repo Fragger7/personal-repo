@@ -279,7 +279,7 @@ class AtomicDealStorage:
                 continue
             if max_price is not None and d.price > max_price:
                 continue
-            if sources and d.source.lower() not in [s.lower() for s in sources]:
+            if sources and not any(s.lower() in d.source.lower() for s in sources):
                 continue
             if only_high_yield and not d.is_high_yield:
                 continue

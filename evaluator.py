@@ -211,30 +211,57 @@ class GeminiHardwareEvaluator:
         # 1. CPU extraction & baseline score
         cpu = "Intel Core i7 / AMD Ryzen 7"
         cpu_val = 250.0
-        if "i9-13" in text or "13950hx" in text or "13900hx" in text or "13980hx" in text:
+
+        # Apple Silicon Hierarchy
+        if "m4 max" in text or "m3 max" in text or "m2 ultra" in text:
+            cpu = "Apple Silicon M-Series Max/Ultra"
+            cpu_val = 750.0
+        elif "m4 pro" in text or "m3 pro" in text or "m2 max" in text:
+            cpu = "Apple Silicon Pro/Max"
+            cpu_val = 580.0
+        elif "m4" in text or "m5" in text:
+            cpu = "Apple M4 / M5 (Latest Gen)"
+            cpu_val = 520.0
+        elif "m3" in text or "m2 pro" in text or "m1 max" in text:
+            cpu = "Apple M3 / M2 Pro / M1 Max"
+            cpu_val = 460.0
+        elif "m2" in text or "m1 pro" in text:
+            cpu = "Apple M2 / M1 Pro"
+            cpu_val = 380.0
+        elif "m1" in text:
+            cpu = "Apple M1"
+            cpu_val = 280.0
+        # Intel Core Ultra & Extreme Gen
+        elif "ultra 9" in text or "ultra 7" in text or "255hx" in text or "185h" in text:
+            cpu = "Intel Core Ultra 7/9 (AI Workstation)"
+            cpu_val = 500.0
+        elif "ai max pro" in text or "ai max 390" in text or "ai max 385" in text or "hx 375" in text:
+            cpu = "AMD Ryzen AI MAX PRO (Strix Halo 12/16-Core Zen 5)"
+            cpu_val = 680.0
+        elif "i9-14" in text or "14900hx" in text:
+            cpu = "Intel Core i9 14th Gen HX"
+            cpu_val = 480.0
+        elif "i9-13" in text or "13950hx" in text or "13900hx" in text or "13980hx" in text:
             cpu = "Intel Core i9 13th Gen (HX Extreme)"
             cpu_val = 450.0
         elif "i9-12" in text or "12950hx" in text or "12900hx" in text:
             cpu = "Intel Core i9 12th Gen (HX Extreme)"
             cpu_val = 380.0
-        elif "i7-13" in text or "13850hx" in text or "13800h" in text:
-            cpu = "Intel Core i7 13th Gen"
+        elif "i7-14" in text or "i7-13" in text or "13850hx" in text or "13800h" in text:
+            cpu = "Intel Core i7 13th/14th Gen"
             cpu_val = 350.0
         elif "i7-12" in text or "12800h" in text or "12700h" in text:
             cpu = "Intel Core i7 12th Gen"
             cpu_val = 280.0
-        elif "ryzen 9" in text or "7940hs" in text or "7945hx" in text:
-            cpu = "AMD Ryzen 9 (Zen 4)"
-            cpu_val = 400.0
+        elif "threadripper" in text:
+            cpu = "AMD Ryzen Threadripper Pro"
+            cpu_val = 650.0
+        elif "ryzen 9" in text or "7940hs" in text or "7945hx" in text or "8945hs" in text:
+            cpu = "AMD Ryzen 9 (Zen 4/5)"
+            cpu_val = 420.0
         elif "ryzen 7" in text or "7840hs" in text or "6800h" in text:
             cpu = "AMD Ryzen 7 Pro"
             cpu_val = 300.0
-        elif "m2 max" in text:
-            cpu = "Apple M2 Max (12-Core)"
-            cpu_val = 600.0
-        elif "m1 pro" in text or "m1 max" in text:
-            cpu = "Apple M1 Pro / Max"
-            cpu_val = 420.0
         elif "xeon" in text:
             cpu = "Intel Xeon Workstation"
             cpu_val = 320.0
@@ -243,10 +270,20 @@ class GeminiHardwareEvaluator:
         ram_gb = 16
         if "128gb" in text or "128 gb" in text:
             ram_gb = 128
+        elif "96gb" in text or "96 gb" in text:
+            ram_gb = 96
         elif "64gb" in text or "64 gb" in text:
             ram_gb = 64
+        elif "48gb" in text or "48 gb" in text:
+            ram_gb = 48
+        elif "36gb" in text or "36 gb" in text:
+            ram_gb = 36
         elif "32gb" in text or "32 gb" in text:
             ram_gb = 32
+        elif "24gb" in text or "24 gb" in text:
+            ram_gb = 24
+        elif "18gb" in text or "18 gb" in text:
+            ram_gb = 18
         elif "16gb" in text or "16 gb" in text:
             ram_gb = 16
 
@@ -254,7 +291,9 @@ class GeminiHardwareEvaluator:
 
         # 3. SSD capacity
         ssd_gb = 512
-        if "4tb" in text:
+        if "8tb" in text:
+            ssd_gb = 8192
+        elif "4tb" in text:
             ssd_gb = 4096
         elif "2tb" in text:
             ssd_gb = 2048
@@ -268,21 +307,27 @@ class GeminiHardwareEvaluator:
         # 4. GPU extraction & value
         gpu = "Integrated Graphics"
         gpu_val = 0.0
-        if "rtx 4090" in text:
+        if "rtx 5090" in text or "rtx 5080" in text:
+            gpu = "NVIDIA GeForce RTX 5080 / 5090 16GB"
+            gpu_val = 900.0
+        elif "rtx 4090" in text:
             gpu = "NVIDIA GeForce RTX 4090 16GB"
             gpu_val = 750.0
         elif "rtx 4080" in text:
             gpu = "NVIDIA GeForce RTX 4080 12GB"
             gpu_val = 550.0
-        elif "rtx 4070" in text or "rtx 4060" in text:
-            gpu = "NVIDIA GeForce RTX 4060 / 4070 8GB"
-            gpu_val = 320.0
-        elif "rtx 5000 ada" in text or "rtx 4000 ada" in text:
+        elif "rtx 5000 ada" in text or "rtx 4000 ada" in text or "rtx pro 3000" in text:
             gpu = "NVIDIA RTX 4000/5000 Ada Generation 12-16GB"
             gpu_val = 700.0
-        elif "rtx 3500 ada" in text or "rtx 2000 ada" in text:
+        elif "radeon 8050s" in text or "radeon 8060s" in text or "radeon 890m" in text:
+            gpu = "AMD Radeon 8050S / 8060S RDNA 3.5 (40-CU)"
+            gpu_val = 550.0
+        elif "rtx 3500 ada" in text or "rtx 2000 ada" in text or "rtx pro 2000" in text:
             gpu = "NVIDIA RTX 2000/3500 Ada Generation"
             gpu_val = 480.0
+        elif "rtx 4070" in text or "rtx 4060" in text or "rtx 5060" in text or "rtx 5070" in text:
+            gpu = "NVIDIA GeForce RTX 4060 / 4070 / 5060 8GB"
+            gpu_val = 320.0
         elif "rtx a5000" in text or "rtx a4500" in text:
             gpu = "NVIDIA RTX A4500 / A5000 16GB"
             gpu_val = 520.0
@@ -292,8 +337,8 @@ class GeminiHardwareEvaluator:
         elif "rtx 3080" in text or "rtx 3070 ti" in text:
             gpu = "NVIDIA RTX 3070 Ti / 3080 8-16GB"
             gpu_val = 340.0
-        elif "38-core gpu" in text or "32-core gpu" in text:
-            gpu = "Apple Silicon 38-Core High Performance GPU"
+        elif "40-core gpu" in text or "38-core gpu" in text or "32-core gpu" in text or "18-core" in text:
+            gpu = "Apple Silicon High-Core Workstation GPU"
             gpu_val = 450.0
 
         # 5. Screen extraction
@@ -302,13 +347,16 @@ class GeminiHardwareEvaluator:
         if "4k" in text or "uhd" in text or "3840x" in text:
             screen = '16" 4K UHD+ (3840x2400) IPS/OLED'
             screen_val = 200.0
+        elif "liquid retina" in text or "xdr" in text:
+            screen = '16.2" Liquid Retina XDR 120Hz ProMotion'
+            screen_val = 220.0
         elif "oled" in text:
             screen = '16" 3.2K OLED 120Hz'
             screen_val = 180.0
         elif "qhd" in text or "2560x" in text or "wqxga" in text:
             screen = '16" QHD+ (2560x1600) 165Hz'
             screen_val = 140.0
-        elif "desktop" in text or "mac studio" in text or "sff" in text:
+        elif "desktop" in text or "mac studio" in text or "sff" in text or "mac mini" in text:
             screen = "Desktop / SFF Workstation (No screen)"
             screen_val = 0.0
 
