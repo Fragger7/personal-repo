@@ -165,11 +165,13 @@ class DealHunterDaemon:
                 for d in evaluated_deals[:5]:
                     summary_lines.append(f"• <b>${d.price:,.0f}</b> | {d.deal_score}/10 | {d.title[:45]}...")
                 total_active = len(self.storage.get_all())
+                usage = self.evaluator.usage_tracker.get_summary()
                 digest_html = (
                     f"✅ <b>Sync Cycle #{self.status.cycle_count + 1} Complete</b>\n"
                     f"📥 Ingested <b>{len(evaluated_deals)} new listings</b> (Total Active: {total_active})\n\n"
                     + "\n".join(summary_lines)
-                    + f"\n\n👉 <a href=\"https://wsdealhunter.streamlit.app/\"><b>[OPEN WEB DASHBOARD]</b></a>"
+                    + f"\n\n🤖 <b>AI Usage:</b> {usage['cycle_calls']} calls ({usage['total_tokens']:,} tokens) | ~{usage['estimated_daily_left']:,}/1,500 daily free requests left\n"
+                    + f"\n👉 <a href=\"https://wsdealhunter.streamlit.app/\"><b>[OPEN WEB DASHBOARD]</b></a>"
                 )
                 self.telegram_notifier.send_system_message("Inventory Updated", digest_html)
 
