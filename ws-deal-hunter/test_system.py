@@ -143,15 +143,16 @@ class TestNotifier(unittest.TestCase):
         )
         self.assertTrue(self.notifier.should_alert(high_yield_deal))
 
-        expensive_deal = DealRecord(
+        overpriced_expensive_deal = DealRecord(
             id="deal_alert_2",
             source="ebay",
-            title="Mac Studio M2 Ultra",
+            title="Standard Laptop Overpriced",
             price=1800.0,
             url="https://ebay.com/alert2",
-            deal_score=9.5,
+            deal_score=6.8,
+            estimated_profit=50.0,
         )
-        self.assertFalse(self.notifier.should_alert(expensive_deal))
+        self.assertFalse(self.notifier.should_alert(overpriced_expensive_deal))
 
         low_score_deal = DealRecord(
             id="deal_alert_3",
@@ -160,6 +161,7 @@ class TestNotifier(unittest.TestCase):
             price=300.0,
             url="https://swappa.com/alert3",
             deal_score=6.0,
+            estimated_profit=20.0,
         )
         self.assertFalse(self.notifier.should_alert(low_score_deal))
 

@@ -245,7 +245,7 @@ class RedditCollector:
     and multi-stage price extraction.
     """
 
-    SUBREDDITS = ["hardwareswap", "appleswap", "homelab"]
+    SUBREDDITS = ["hardwareswap", "appleswap", "homelabsales"]
 
     # Reject listings that are purely accessories or non-compute items
     EXCLUDED_ACCESSORIES = [
@@ -254,10 +254,12 @@ class RedditCollector:
         "power supply", "psu", "backpack", "headphone", "earbud", "earbuds", "monitor mount"
     ]
 
-    # Target hardware keywords
+    # Target hardware keywords aligned with Knowledge Base Tiers
     TARGET_HARDWARE_KEYWORDS = [
         "thinkpad", "precision", "zbook", "workstation", "macbook", "mac studio",
         "mac mini", "m1", "m2", "m3", "m4", "m5", "rtx", "geforce", "radeon",
+        "xps 15", "9520", "9530", "5560", "5570", "5580", "5680", "p1 gen", "p16", "t16",
+        "minisforum", "beelink", "ser7", "ser8", "um780", "ms-01", "optiplex", "mini pc", "micro pc",
         "threadripper", "ryzen", "intel core", "ultra 7", "ultra 9", "xeon",
         "laptop", "desktop", "server", "gpu", "oled", "ddr5", "64gb", "32gb", "128gb"
     ]
@@ -518,13 +520,13 @@ class SwappaCollector:
 
             scraper = cloudscraper.create_scraper()
             target_queries = [
-                "ThinkPad+P16+P1",
-                "Precision+laptop",
-                "HP+ZBook",
-                "MacBook+Pro",
-                "RTX+5080+laptop",
-                "RTX+5070+laptop",
-                "RTX+4080+laptop",
+                "ThinkPad+P1+P16",
+                "Precision+5570+5580",
+                "XPS+15+9520+9530",
+                "HP+ZBook+Studio",
+                "MacBook+Pro+32GB+64GB",
+                "Mini+PC+64GB+32GB",
+                "RTX+5080+4080+laptop",
                 "laptop+oled",
             ]
             

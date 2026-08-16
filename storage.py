@@ -72,7 +72,12 @@ class DealRecord:
             self.estimated_profit = round(self.fair_market_value - self.price, 2)
         if self.arbitrage_margin_pct == 0.0 and self.price > 0:
             self.arbitrage_margin_pct = round((self.estimated_profit / self.price) * 100, 1)
-        self.is_high_yield = self.deal_score >= 8.5 and self.price <= 750.0
+        self.is_high_yield = (
+            (self.deal_score >= 9.0)
+            or (self.deal_score >= 8.5 and self.price <= 850.0 and self.specs.ram_gb >= 32)
+            or (self.estimated_profit >= 600.0)
+            or (self.arbitrage_margin_pct >= 45.0 and self.estimated_profit >= 350.0)
+        ) and (self.deal_score > 0.0)
 
     def to_dict(self) -> Dict[str, Any]:
         data = asdict(self)
