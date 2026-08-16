@@ -18,8 +18,8 @@ if ($LASTEXITCODE -eq 0) {
     # Ensure target directory exists
     New-Item -ItemType Directory -Force -Path $targetDir | Out-Null
     
-    # Copy all files and directories excluding node_modules, temp, scratch, and .git
-    Get-ChildItem -Path $workspace -Exclude "node_modules", "personal-repo-temp", ".git", "scratch" | ForEach-Object {
+    # Copy all files and directories excluding node_modules, temp, scratch, .git, and chrome-debug-profile
+    Get-ChildItem -Path $workspace -Exclude "node_modules", "personal-repo-temp", ".git", "scratch", "chrome-debug-profile" | ForEach-Object {
         Copy-Item -Path $_.FullName -Destination $targetDir -Recurse -Force
     }
 

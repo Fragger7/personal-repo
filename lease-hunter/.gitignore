@@ -6,3 +6,6 @@ coverage/
 *.log
 .env*
 !.env.example
+chrome-debug-profile/
+scratch/
+personal-repo-temp/

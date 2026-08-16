@@ -1,0 +1,8 @@
+# Never commit these — they contain personal credentials and runtime state
+config.json
+seen-vins.json
+state.json
+browser-profile/
+chrome-debug-profile/
+node_modules/
+package-lock.json
