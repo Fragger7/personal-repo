@@ -240,12 +240,12 @@ class EBayCollector:
 
 class RedditCollector:
     """
-    Reddit multi-subreddit hardware collector (r/hardwareswap, r/appleswap, r/homelab).
+    Reddit multi-subreddit hardware collector (r/hardwareswap, r/appleswap, r/homelabsales, r/LaptopDeals, r/thinkpad).
     Uses cloudscraper with strict hardware filtering, zero-accessory junk rejection,
     and multi-stage price extraction.
     """
 
-    SUBREDDITS = ["hardwareswap", "appleswap", "homelabsales"]
+    SUBREDDITS = ["hardwareswap", "appleswap", "homelabsales", "LaptopDeals", "thinkpad"]
 
     # Reject listings that are purely accessories or non-compute items
     EXCLUDED_ACCESSORIES = [
