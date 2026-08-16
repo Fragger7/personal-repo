@@ -327,6 +327,10 @@ class RedditCollector:
                 if re.search(r"\[h\]\s*(paypal|local cash|cash|venmo|crypto)", title, re.IGNORECASE):
                     continue
 
+                # Filter: Ignore already sold / closed listings
+                if re.search(r"(\[sold\]|\[closed\]|\bsold\b|\bclosed\b)", title, re.IGNORECASE):
+                    continue
+
                 # Filter: Ignore pure accessories (single earbuds, cables, watch bands, backpacks)
                 title_lower = title.lower()
                 if any(acc in title_lower for acc in self.EXCLUDED_ACCESSORIES) and not any(
@@ -509,59 +513,93 @@ class SwappaCollector:
         try:
             import cloudscraper
             import html
+            from datetime import datetime, timezone
+            from email.utils import parsedate_to_datetime
 
             scraper = cloudscraper.create_scraper()
             target_queries = [
                 "ThinkPad+P16+P1",
-                "Precision+workstation",
+                "Precision+laptop",
                 "HP+ZBook",
-                "MacBook+Pro+M3+M2+M4",
+                "MacBook+Pro",
+                "RTX+5080+laptop",
+                "RTX+5070+laptop",
                 "RTX+4080+laptop",
-                "RTX+4090+laptop",
+                "laptop+oled",
             ]
             
             excluded_terms = [
                 "case", "cable", "bag", "backpack", "stand", "mount", "charger", "dock",
                 "earbud", "earbuds", "airpod", "headphone", "sleeve", "adapter", "mouse", "cover",
                 "saw", "miter", "drill", "cooker", "pot", "pan", "shoe", "knife", "rifle",
-                "screwdriver", "scale", "amplifier", "guitar", "tool set", "wrench"
+                "screwdriver", "scale", "amplifier", "guitar", "tool set", "wrench", "desk", "chair"
             ]
 
+            dead_indicators = [
+                "expired", "oos", "out of stock", "sold out", "deal dead", "ended", "dead deal", "price error fixed"
+            ]
+
+            now = datetime.now(timezone.utc)
             listings: List[RawListing] = []
 
             for q in target_queries:
-                url = f"https://slickdeals.net/newsearch.php?searchfirst=1&q={q}&rss=1"
+                # hideexpired=1 filters out dead deals at the source; sort=newest ensures fresh listings
+                url = f"https://slickdeals.net/newsearch.php?searchfirst=1&q={q}&hideexpired=1&sort=newest&rss=1"
                 try:
-                    res = scraper.get(url, timeout=3.5)
+                    res = scraper.get(url, timeout=4.0)
                     if res.status_code != 200:
                         continue
 
                     item_blocks = re.findall(r"<item>([\s\S]*?)</item>", res.text)
-                    for idx, block in enumerate(item_blocks[:8]):
+                    for idx, block in enumerate(item_blocks[:10]):
                         title_m = re.search(r"<title>(?:<!\[CDATA\[)?(.*?)(?:\]\]>)?</title>", block, re.DOTALL)
                         link_m = re.search(r"<link>(.*?)</link>", block) or re.search(r"<guid[^>]*>(.*?)</guid>", block)
                         desc_m = re.search(r"<description>(?:<!\[CDATA\[)?(.*?)(?:\]\]>)?</description>", block, re.DOTALL)
+                        pub_m = re.search(r"<pubDate>(.*?)</pubDate>", block)
 
                         title = html.unescape(title_m.group(1).strip()) if title_m else ""
                         link = html.unescape(link_m.group(1).strip()) if link_m else "https://slickdeals.net"
                         desc = html.unescape(desc_m.group(1).strip()) if desc_m else title
+                        pub_str = pub_m.group(1).strip() if pub_m else ""
 
                         title_lower = title.lower()
 
-                        # Exclude accessories
+                        # 1. Reject dead / expired / out of stock deals
+                        if any(dead in title_lower for dead in dead_indicators):
+                            continue
+
+                        # 2. Strict Recency / TTL Check (Must be <= 120 hours old to prevent expired deals)
+                        age_hours = 0.0
+                        if pub_str:
+                            try:
+                                pub_dt = parsedate_to_datetime(pub_str)
+                                age_hours = (now - pub_dt).total_seconds() / 3600.0
+                                if age_hours > 120.0:  # Drop deals older than 5 days
+                                    continue
+                            except Exception:
+                                pass
+
+                        # 3. Exclude accessories
                         if any(term in title_lower for term in excluded_terms) and not any(
-                            hw in title_lower for hw in ["laptop", "thinkpad", "precision", "zbook", "macbook", "workstation", "rtx 40", "rtx 50"]
+                            hw in title_lower for hw in ["laptop", "thinkpad", "precision", "zbook", "macbook", "workstation", "rtx 40", "rtx 50", "alienware", "omen"]
                         ):
                             continue
 
-                        # Require compute hardware keyword
-                        if not any(kw in title_lower for kw in ["laptop", "thinkpad", "precision", "zbook", "macbook", "rtx", "dell", "lenovo", "hp", "oled", "intel core", "ryzen", "m1", "m2", "m3", "m4"]):
+                        # 4. Require compute hardware keyword
+                        if not any(kw in title_lower for kw in ["laptop", "thinkpad", "precision", "zbook", "macbook", "rtx", "dell", "lenovo", "hp", "oled", "intel core", "ryzen", "m1", "m2", "m3", "m4", "alienware", "omen", "asus", "loq"]):
                             continue
 
                         price_match = re.search(r"\$\s*([0-9,]+(?:\.[0-9]{2})?)", f"{title} {desc}")
                         price = float(price_match.group(1).replace(",", "")) if price_match else 0.0
 
-                        if price >= 120:
+                        if price >= 150:
+                            pub_iso = datetime.now(timezone.utc).isoformat()
+                            if pub_str:
+                                try:
+                                    pub_iso = parsedate_to_datetime(pub_str).isoformat()
+                                except Exception:
+                                    pass
+
                             listings.append(
                                 RawListing(
                                     id=f"syndicated_sd_{q[:4]}_{idx}_{abs(hash(title)) % 1000000}",
@@ -573,14 +611,14 @@ class SwappaCollector:
                                     seller="Verified Deal Merchant",
                                     location="US",
                                     condition_raw="Brand New / Certified Refurb",
-                                    created_utc=datetime.now(timezone.utc).isoformat(),
+                                    created_utc=pub_iso,
                                 )
                             )
                 except Exception:
                     continue
 
             if listings:
-                print(f"[SwappaCollector] Ingested {len(listings)} targeted live hardware deals from syndicate feeds!")
+                print(f"[SwappaCollector] Ingested {len(listings)} STRICTLY ACTIVE (<120h) live hardware deals from syndicate feeds!")
                 return listings
         except Exception as e:
             print(f"[SwappaCollector] Live RSS scrape error: {e}")
