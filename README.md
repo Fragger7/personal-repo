@@ -14,62 +14,27 @@
 
 ## 🏗️ Architecture & Component Overview
 
+- **24/7 Cloud Automation ([`.github/workflows/hunt_deals.yml`](file:///C:/Development/Apps/WS%20Deal%20Hunter/.github/workflows/hunt_deals.yml))**:
+  - Autonomous scheduled GitHub Actions cron (`0 * * * *`) running hourly scans, committing updated deals, and pushing mobile alerts 24/7 for $0 cost.
+- **Telegram Bot & Push Dispatcher ([`notifier.py`](file:///C:/Development/Apps/WS%20Deal%20Hunter/notifier.py))**:
+  - Rich HTML deal alerts, hourly Inventory Update Pulse digests, and automated self-healing diagnostic health warnings.
 - **Multi-Source Data Collector Hub ([`collector.py`](file:///C:/Development/Apps/WS%20Deal%20Hunter/collector.py))**:
-  - **Reddit `r/hardwareswap`**: Live scraper extracting real-time user submissions, asking prices, authors, and canonical links (`https://www.reddit.com/r/hardwareswap/comments/...`).
-  - **Syndicated Tech Deal Streams**: Live RSS ingestion for merchant laptop deals (Slickdeals, Refurb aggregators, Woot).
-  - **eBay Browse REST API**: OAuth2 Client Credentials authentication with item summary search and search fallback.
+  - Real-time scrapers for Reddit `r/hardwareswap`, `r/appleswap`, and `r/homelabsales`.
+  - Targeted syndicated clearance deal streams (ThinkPad, Precision, ZBook, MacBook, OLED, Mini-PCs).
+  - eBay Browse API integration with canonical fallback.
 - **AI Hardware Valuation Engine ([`evaluator.py`](file:///C:/Development/Apps/WS%20Deal%20Hunter/evaluator.py))**:
-  - Gemini 2.5 Flash structured JSON spec extractor (CPU, RAM, SSD, GPU, Display).
-  - Valuation model computing Fair Market Value (FMV), dollar spread, ROI %, and Deal Score ($0.0 - 10.0$).
-  - Resilient rule-based heuristic pricing engine fallback.
-- **Push Alert Dispatchers ([`notifier.py`](file:///C:/Development/Apps/WS%20Deal%20Hunter/notifier.py))**:
-  - Instant mobile push alerts via Pushover API, Telegram Bot, or Discord Webhook when $\text{Deal Score} \ge 8.5$ and $\text{Price} \le \$750$.
+  - Gemini 2.5 Flash spec extractor & valuation engine with transparent token and daily quota tracking (`GeminiUsageTracker`).
+  - Strict exclusion rules aligned with [`AGENT_KNOWLEDGE_BASE.md`](file:///C:/Development/Apps/WS%20Deal%20Hunter/AGENT_KNOWLEDGE_BASE.md) (auto-drops $\le 16\text{GB}$ Apple Silicon, Intel Macs, damaged units).
 - **Thread-Safe Storage ([`storage.py`](file:///C:/Development/Apps/WS%20Deal%20Hunter/storage.py))**:
-  - RLock-synchronized atomic file writes to [`deals.json`](file:///C:/Development/Apps/WS%20Deal%20Hunter/deals.json) using POSIX temporary file swaps.
-- **Autonomous Polling Daemon ([`daemon.py`](file:///C:/Development/Apps/WS%20Deal%20Hunter/daemon.py))**:
-  - Background polling worker supporting single-shot (`--once`) and continuous loops.
+  - Atomic temporary file replacement for [`deals.json`](file:///C:/Development/Apps/WS%20Deal%20Hunter/deals.json).
 - **Visual Dashboards**:
-  - Streamlit Dashboard ([`app.py`](file:///C:/Development/Apps/WS%20Deal%20Hunter/app.py))
-  - Full-stack Express + React 19 web app ([`server.ts`](file:///C:/Development/Apps/WS%20Deal%20Hunter/server.ts), [`src/App.tsx`](file:///C:/Development/Apps/WS%20Deal%20Hunter/src/App.tsx))
-- **Unit Test Suite ([`test_system.py`](file:///C:/Development/Apps/WS%20Deal%20Hunter/test_system.py))**:
-  - 12 comprehensive unit and integration tests.
+  - Streamlit Dashboard ([`app.py`](file:///C:/Development/Apps/WS%20Deal%20Hunter/app.py)) with faceted filters (Brands, RAM, SSD, GPU, Sorting).
+  - Full-stack Express + React 19 web app ([`server.ts`](file:///C:/Development/Apps/WS%20Deal%20Hunter/server.ts), [`src/App.tsx`](file:///C:/Development/Apps/WS%20Deal%20Hunter/src/App.tsx)).
 
 ---
 
-## ⚙️ Getting Started
+## 📖 Developer & AI Agent Documentation
 
-### 1. Installation
-
-```bash
-# Install Python dependencies
-pip install -r requirements.txt
-
-# Install Node.js dependencies (for React/Express app)
-npm install
-```
-
-### 2. Verification & Testing
-
-```bash
-# Run unit test suite (12/12 passing)
-python test_system.py
-
-# Run a single live deal hunting scan
-python3 daemon.py --once
-```
-
-### 3. Launch Dashboards
-
-```bash
-# Launch Streamlit dashboard locally
-streamlit run app.py
-
-# Launch Express + React dev server
-npm run dev
-```
-
----
-
-## 📖 Developer & AI Context
-
-For full architectural decision logs, component maps, state tracking, and future roadmap, consult [**`AGENTS.md`**](file:///C:/Development/Apps/WS%20Deal%20Hunter/AGENTS.md).
+- **[`AGENTS.md`](file:///C:/Development/Apps/WS%20Deal%20Hunter/AGENTS.md)**: Architectural manual, design decisions log (Decisions 1–13), and system state.
+- **[`AGENT_KNOWLEDGE_BASE.md`](file:///C:/Development/Apps/WS%20Deal%20Hunter/AGENT_KNOWLEDGE_BASE.md)**: Hardware tier scoping, developer use case baselines, and arbitrage heuristics.
+- **[`BACKLOG.md`](file:///C:/Development/Apps/WS%20Deal%20Hunter/BACKLOG.md)**: Complete prioritized technical backlog, world-class UI/UX redesign plan, and scraper expansion roadmap.

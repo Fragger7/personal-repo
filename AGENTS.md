@@ -95,21 +95,47 @@ C:\Development\Apps\WS Deal Hunter\
 
 ---
 
+### Decision 8: 24/7 Cloud Automation via GitHub Actions ($0 Free Tier)
+- **Decision & Solution**: Created [`.github/workflows/hunt_deals.yml`](file:///C:/Development/Apps/WS%20Deal%20Hunter/.github/workflows/hunt_deals.yml) running on an hourly cron schedule (`0 * * * *`). Spawns a lightweight Linux virtual machine, runs `daemon.py --once`, commits updated `deals.json`, and dispatches push alerts 24/7 without needing the user's laptop to remain on. Uses <3.5% of GitHub's free monthly tier.
+
+### Decision 9: Knowledge Base Integration & Hard Exclusions (`AGENT_KNOWLEDGE_BASE.md`)
+- **Decision & Solution**: Aligned [`evaluator.py`](file:///C:/Development/Apps/WS%20Deal%20Hunter/evaluator.py) with user multi-agent workflow requirements:
+  - Hard-excludes all 2016–2020 Intel MacBook Pros (Score 0.0).
+  - Hard-excludes all $\le 16\text{GB}$ Apple Silicon laptops (Score 0.0).
+  - Hard-excludes damaged/broken parts-only hardware (Score 0.0).
+  - Focuses on Dell Precision 5560/5570/5580, ThinkPad P1 Gen 4/5/6, XPS 15 9520/9530, HP ZBook Studio, and 32GB/64GB M-Series Apple Silicon.
+
+### Decision 10: Deep RAM Extraction (Unstructured Body vs. Title)
+- **Decision & Solution**: Enhanced regex in [`evaluator.py`](file:///C:/Development/Apps/WS%20Deal%20Hunter/evaluator.py) to scan listing description text for aftermarket RAM upgrades (`2x32GB Crucial/Corsair 64GB kit`, `upgraded to 64GB`) when titles underestimate capacity.
+
+### Decision 11: Dynamic Multi-Tier Arbitrage Alert Formula
+- **Decision & Solution**: Eliminated rigid flat dollar caps in [`notifier.py`](file:///C:/Development/Apps/WS%20Deal%20Hunter/notifier.py) so halo unicorns ($2,500 machine selling for $1,500) are never missed:
+  1. **🦄 Halo / Unicorn:** Estimated Profit $\ge \$600$ OR Deal Score $\ge 9.0$ (fires regardless of price).
+  2. **🎯 Sweet-Spot Workstation:** Score $\ge 8.5$ AND Price $\le \$850$ AND RAM $\ge 32\text{GB}$.
+  3. **⚡ High-ROI Anomaly:** Margin $\ge 45\%$ AND Estimated Profit $\ge \$350$.
+
+### Decision 12: Telegram Bot Integration & Hourly Pulse Digest with AI Quota Tracker
+- **Decision & Solution**: Wired [`TelegramNotifier`](file:///C:/Development/Apps/WS%20Deal%20Hunter/notifier.py) directly into [`daemon.py`](file:///C:/Development/Apps/WS%20Deal%20Hunter/daemon.py). Sends rich HTML deal alerts, hourly inventory pulse digests, self-healing diagnostic health warnings, and transparent Gemini token/daily quota usage stats (`GeminiUsageTracker`).
+
+### Decision 13: Subreddit Expansion & Active Ingestion
+- **Decision & Solution**: Added `r/homelabsales` alongside `r/hardwareswap` and `r/appleswap` in [`collector.py`](file:///C:/Development/Apps/WS%20Deal%20Hunter/collector.py), and parameterized syndicated streams with `hideexpired=1&sort=newest` and 120h TTL.
+
+---
+
 ## 📌 5. Project Backlog & Future Roadmap
+*See [`BACKLOG.md`](file:///C:/Development/Apps/WS%20Deal%20Hunter/BACKLOG.md) for full technical task breakdown and UI/UX design specifications.*
 
-### 🔴 Immediate Backlog (Short-Term)
-- [ ] **Plug in eBay Production Credentials**: When eBay Developer approval arrives, enter `EBAY_CLIENT_ID` and `EBAY_CLIENT_SECRET` into `.env` to enable direct item URLs (`/itm/<id>`).
-- [ ] **Streamlit Pagination & Sorting**: Add dropdown for sorting deals by `Deal Score`, `Asking Price`, `Arbitrage Profit`, or `Date Discovered`.
-- [ ] **Pushover / Webhook Test Trigger UI**: Add test button in Streamlit sidebar to verify mobile notifications interactively.
-
-### 🟡 Medium-Term Backlog
-- [ ] **Historical Price Trend Tracking**: Extend [`storage.py`](file:///C:/Development/Apps/WS%20Deal%20Hunter/storage.py) to store price history per model and render historical price charts in Streamlit.
-- [ ] **Auto-Git Sync in Daemon**: Add optional `--auto-push` flag in [`daemon.py`](file:///C:/Development/Apps/WS%20Deal%20Hunter/daemon.py) to automatically commit and push [`deals.json`](file:///C:/Development/Apps/WS%20Deal%20Hunter/deals.json) to GitHub when high-yield deals arrive.
-- [ ] **Expand Collector Endpoints**: Add scrapers for **BackMarket**, **Mercari**, and **MicroCenter Refurb Deals**.
-
-### 🟢 Long-Term Roadmap
-- [ ] **ML Price Prediction Model**: Train a custom scikit-learn regression model on historical `deals.json` data to augment Gemini 2.5 Flash valuation.
-- [ ] **Auto-Buy / Auto-Bid Integration**: Provide optional webhook endpoints for automated purchase execution where APIs permit.
+### 🔴 Immediate Backlog (Next Session)
+1. **World-Class Dashboard UI/UX Redesign**:
+   - Collapsible top filter toolbar / horizontal ribbon to free up screen real estate.
+   - High-density "Executive Workstation" card grid and compact data table view toggle.
+   - Streamlit caching (`@st.cache_data`) for instant, frictionless filtering.
+2. **Enterprise Refurbished Scraper Suite**:
+   - Build **`DellRefurbishedCollector`** with automated 40%–50% sitewide coupon extraction.
+   - Build **`LenovoOutletCollector`** for ThinkPad P-Series certified refurb inventory.
+   - Build **`ShopGoodwillCollector`** for sub-$300 workstation auction deals.
+3. **Adaptive "Self-Learning" FMV Price Index**:
+   - Scaffold rolling exponential moving average calibration (`price_benchmarks.json`).
 
 ---
 
