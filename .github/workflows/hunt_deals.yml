@@ -1,0 +1,65 @@
+name: Autonomous 24/7 Workstation Deal Hunter
+
+on:
+  schedule:
+    # Run every 30 minutes (100% free under GitHub Actions free tier)
+    - cron: '*/30 * * * *'
+  workflow_dispatch: # Allows manual one-click trigger from GitHub Actions tab
+
+permissions:
+  contents: write
+
+jobs:
+  hunt-deals:
+    name: Sync Live Feeds & Dispatch Alerts
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run Autonomous Deal Hunter Cycle
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          PUSHOVER_USER_KEY: ${{ secrets.PUSHOVER_USER_KEY }}
+          PUSHOVER_API_TOKEN: ${{ secrets.PUSHOVER_API_TOKEN }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          EBAY_CLIENT_ID: ${{ secrets.EBAY_CLIENT_ID }}
+          EBAY_CLIENT_SECRET: ${{ secrets.EBAY_CLIENT_SECRET }}
+        run: |
+          python daemon.py --once
+
+      - name: Commit and Push Updated deals.json
+        run: |
+          git config --global user.name "DealHunter-Bot"
+          git config --global user.email "dealhunter-bot@users.noreply.github.com"
+          
+          # Sync deals.json if modified
+          if [ -f ws-deal-hunter/deals.json ]; then
+            cp deals.json ws-deal-hunter/deals.json || true
+          fi
+          
+          git add deals.json ws-deal-hunter/deals.json || true
+          
+          if git diff --staged --quiet; then
+            echo "No new deals or changes to commit."
+          else
+            git commit -m "chore(daemon): autonomous sync of live deals [skip ci]"
+            git push origin main
+          fi
