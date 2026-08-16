@@ -32,26 +32,32 @@
 
 ## 🧠 3. Architectural Evolution & Key Decisions Log
 
-### Decision 1: Live Scraping Fallback for Reddit `r/hardwareswap`
-- **Problem**: Reddit's standard API endpoint (`https://www.reddit.com/r/hardwareswap/new.json`) returns `HTTP 403 Forbidden` to generic Python requests due to Cloudflare anti-bot WAF rules.
-- **Decision & Solution**: Implemented `_fetch_old_reddit_live()` in [`collector.py`](file:///C:/Development/Apps/WS%20Deal%20Hunter/collector.py) using `cloudscraper` + `BeautifulSoup` targeting `https://old.reddit.com/r/hardwareswap/new/`.
-- **URL Normalization**: All scraped URLs are transformed to standard canonical links (`https://www.reddit.com/r/hardwareswap/comments/...`) so users open the modern Reddit interface directly when clicking **Open Listing ↗**.
+### Decision 1: Multi-Subreddit Live Scraping (`r/hardwareswap`, `r/appleswap`, `r/homelab`)
+- **Problem**: Ingesting from a single subreddit limited coverage for Apple Silicon (MacBook Pro M-Series) and enterprise server/workstation gear. In addition, accessories (cables, single earbuds, watch bands) caused noise.
+- **Decision & Solution**: Upgraded `RedditCollector` in [`collector.py`](file:///C:/Development/Apps/WS%20Deal%20Hunter/collector.py) to scrape `r/hardwareswap`, `r/appleswap`, and `r/homelab` concurrently. Added strict hardware keyword matching and negative-keyword exclusion for non-compute accessories, with multi-stage price extraction.
 
-### Decision 2: eBay Ingestion Dual-Mode (Browse REST API vs Canonical Live Search)
+### Decision 2: Targeted Hardware Deal Stream Syndication
+- **Problem**: Broad RSS deal feeds included unrelated non-hardware consumer deals and power tools.
+- **Decision & Solution**: Enhanced `SwappaCollector` to query multiple targeted hardware RSS streams (ThinkPad P-Series, Dell Precision, HP ZBook, MacBook Pro M-Series, RTX 4080/4090 laptops) paired with strict negative keyword filtering.
+
+### Decision 3: Expanded Apple Silicon & Modern Architecture Valuation
+- **Decision & Solution**: Extended [`evaluator.py`](file:///C:/Development/Apps/WS%20Deal%20Hunter/evaluator.py) heuristic valuation engine to recognize Apple Silicon (M1–M5 Base/Pro/Max/Ultra), Intel Core Ultra (Series 1 & 2), AMD Ryzen 7000/8000/9000 Zen 4/5, and NVIDIA RTX Ada/RTX 50-series GPUs.
+
+### Decision 4: eBay Ingestion Dual-Mode (Browse REST API vs Canonical Live Search)
 - **Problem**: eBay blocks direct unauthenticated web scraping of individual item pages (`/itm/<id>`) with `403 Forbidden` or CAPTCHA, and static old item URLs expire quickly leading to `404 Not Found` pages.
 - **Decision & Solution**:
   - **Authenticated Mode**: When `EBAY_CLIENT_ID` and `EBAY_CLIENT_SECRET` are provided in [`.env`](file:///C:/Development/Apps/WS%20Deal%20Hunter/.env), `EBayCollector` uses the official OAuth2 Browse REST API (`https://api.ebay.com/buy/browse/v1/item_summary/search`) for direct item URLs.
   - **Fallback Mode**: Without keys, `EBayCollector` generates canonical live search URLs (`https://www.ebay.com/sch/i.html?_nkw=Exact+Hardware+Model&_sop=12`), guaranteeing users land on active, available inventory for that exact model.
 
-### Decision 3: Regex XML Link Parsing for Tech Deal RSS Feeds
+### Decision 5: Regex XML Link Parsing for Tech Deal RSS Feeds
 - **Problem**: Parsing RSS XML documents with BeautifulSoup using `html.parser` treats `<link>URL</link>` XML elements as self-closing HTML head tags, producing empty `""` string URLs.
 - **Decision & Solution**: Replaced BeautifulSoup XML link parsing in `_fetch_live_rss_deals()` with regex block extraction (`re.search(r'<link>(.*?)</link>')`) and HTML entity unescaping (`html.unescape`). 100% of RSS listings now have valid HTTP links.
 
-### Decision 4: Windows UTF-8 Terminal Stream Reconfiguration
+### Decision 6: Windows UTF-8 Terminal Stream Reconfiguration
 - **Problem**: Windows standard `cp1252` encoding threw `UnicodeEncodeError` when printing emoji logs (🔥, 🚨) to console.
 - **Decision & Solution**: Added `sys.stdout.reconfigure(encoding="utf-8", errors="replace")` and `sys.stderr.reconfigure(...)` at the entry point of [`test_system.py`](file:///C:/Development/Apps/WS%20Deal%20Hunter/test_system.py), [`notifier.py`](file:///C:/Development/Apps/WS%20Deal%20Hunter/notifier.py), and [`daemon.py`](file:///C:/Development/Apps/WS%20Deal%20Hunter/daemon.py).
 
-### Decision 5: Streamlit Cloud Deployment Path Resolution
+### Decision 7: Streamlit Cloud Deployment Path Resolution
 - **Problem**: Streamlit Cloud runs `app.py` from repository root (`/app/personal-repo/`), causing `AtomicDealStorage("deals.json")` to look at root instead of `ws-deal-hunter/deals.json`, falling back to 4 initial seed items.
 - **Decision & Solution**: Updated [`app.py`](file:///C:/Development/Apps/WS%20Deal%20Hunter/app.py) to dynamically locate `deals.json` using `Path(__file__).parent / "deals.json"`, and synchronized `deals.json` at both root and subfolder levels in Git.
 
