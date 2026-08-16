@@ -266,28 +266,87 @@ class AtomicDealStorage:
         min_score: float = 0.0,
         max_price: Optional[float] = None,
         sources: Optional[List[str]] = None,
+        brands: Optional[List[str]] = None,
+        min_ram: Optional[int] = None,
+        min_ssd: Optional[int] = None,
+        gpu_type: str = "All",
         search_query: str = "",
         only_high_yield: bool = False,
+        sort_by: str = "Deal Score (High to Low)",
     ) -> List[DealRecord]:
-        """Query and filter deals according to parameters."""
+        """Query and filter deals according to faceted parameters."""
         deals = self.get_all()
         filtered: List[DealRecord] = []
         query_lower = search_query.strip().lower()
 
         for d in deals:
+            # Score filter
             if d.deal_score < min_score:
                 continue
+
+            # Price filter
             if max_price is not None and d.price > max_price:
                 continue
+
+            # Source filter
             if sources and not any(s.lower() in d.source.lower() for s in sources):
                 continue
+
+            # High-yield only filter
             if only_high_yield and not d.is_high_yield:
                 continue
+
+            # Brand filter
+            if brands:
+                title_lower = f"{d.title} {d.specs.cpu}".lower()
+                if not any(b.lower() in title_lower for b in brands):
+                    continue
+
+            # Minimum RAM filter
+            if min_ram is not None and min_ram > 0:
+                if d.specs.ram_gb < min_ram:
+                    continue
+
+            # Minimum SSD filter
+            if min_ssd is not None and min_ssd > 0:
+                if d.specs.ssd_gb < min_ssd:
+                    continue
+
+            # GPU Tier filter
+            if gpu_type == "Dedicated GPU Only":
+                if "integrated" in d.specs.gpu.lower():
+                    continue
+            elif gpu_type == "Workstation / Ada GPU":
+                if not any(k in d.specs.gpu.lower() for k in ["ada", "rtx a", "rtx pro", "quadro"]):
+                    continue
+            elif gpu_type == "High-End Gaming (RTX 4080/5080+)":
+                if not any(k in d.specs.gpu.lower() for k in ["4080", "4090", "5080", "5090"]):
+                    continue
+            elif gpu_type == "Apple Silicon GPU":
+                if not any(k in d.specs.gpu.lower() for k in ["apple", "core gpu"]):
+                    continue
+
+            # Free-text keyword search
             if query_lower:
-                searchable = f"{d.title} {d.specs.cpu} {d.specs.gpu} {d.specs.ram_gb}GB {d.summary} {d.source}".lower()
+                searchable = f"{d.title} {d.specs.cpu} {d.specs.gpu} {d.specs.ram_gb}GB {d.specs.ssd_gb}GB {d.summary} {d.source}".lower()
                 if query_lower not in searchable:
                     continue
+
             filtered.append(d)
+
+        # Apply sorting
+        if sort_by == "Asking Price (Low to High)":
+            filtered.sort(key=lambda x: x.price)
+        elif sort_by == "Asking Price (High to Low)":
+            filtered.sort(key=lambda x: x.price, reverse=True)
+        elif sort_by == "Arbitrage Profit ($ High to Low)":
+            filtered.sort(key=lambda x: x.estimated_profit, reverse=True)
+        elif sort_by == "Arbitrage Margin (% High to Low)":
+            filtered.sort(key=lambda x: x.arbitrage_margin_pct, reverse=True)
+        elif sort_by == "Date Discovered (Newest First)":
+            filtered.sort(key=lambda x: x.created_utc, reverse=True)
+        else:  # Default: Deal Score (High to Low)
+            filtered.sort(key=lambda x: x.deal_score, reverse=True)
 
         return filtered
 

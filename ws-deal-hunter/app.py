@@ -99,8 +99,74 @@ def main() -> None:
     st.caption("Autonomous hardware arbitrage monitor syndicating eBay Browse API, Reddit r/hardwareswap, and Swappa RSS.")
 
     # Sidebar Filters
-    st.sidebar.header("🔍 Filter Controls")
+    st.sidebar.header("🔍 Faceted Search & Filters")
     
+    search_query = st.sidebar.text_input("🔎 Search Keywords", placeholder="e.g. P16, M3 Max, 64GB, Ada, i9")
+
+    sort_by = st.sidebar.selectbox(
+        "📊 Sort Listings By",
+        options=[
+            "Deal Score (High to Low)",
+            "Asking Price (Low to High)",
+            "Asking Price (High to Low)",
+            "Arbitrage Profit ($ High to Low)",
+            "Arbitrage Margin (% High to Low)",
+            "Date Discovered (Newest First)",
+        ],
+        index=0,
+    )
+
+    st.sidebar.subheader("🏷️ Hardware Specifications")
+    
+    selected_brands = st.sidebar.multiselect(
+        "Target Brands",
+        options=["ThinkPad", "Precision", "ZBook", "MacBook", "Apple", "Alienware", "MSI", "ASUS", "Lenovo", "Dell", "HP"],
+        default=[],
+        help="Leave empty to search all brands.",
+    )
+
+    col_ram, col_ssd = st.sidebar.columns(2)
+    with col_ram:
+        min_ram_choice = st.selectbox(
+            "Min RAM",
+            options=["Any", "16 GB+", "32 GB+", "64 GB+", "128 GB+"],
+            index=0,
+        )
+        min_ram_val = {
+            "Any": 0,
+            "16 GB+": 16,
+            "32 GB+": 32,
+            "64 GB+": 64,
+            "128 GB+": 128,
+        }.get(min_ram_choice, 0)
+
+    with col_ssd:
+        min_ssd_choice = st.selectbox(
+            "Min SSD",
+            options=["Any", "512 GB+", "1 TB+", "2 TB+", "4 TB+"],
+            index=0,
+        )
+        min_ssd_val = {
+            "Any": 0,
+            "512 GB+": 512,
+            "1 TB+": 1024,
+            "2 TB+": 2048,
+            "4 TB+": 4096,
+        }.get(min_ssd_choice, 0)
+
+    gpu_choice = st.sidebar.selectbox(
+        "GPU Category",
+        options=[
+            "All",
+            "Dedicated GPU Only",
+            "Workstation / Ada GPU",
+            "High-End Gaming (RTX 4080/5080+)",
+            "Apple Silicon GPU",
+        ],
+        index=0,
+    )
+
+    st.sidebar.subheader("💰 Deal & Price Thresholds")
     min_score = st.sidebar.slider(
         "Min Deal Score (0 - 10)",
         min_value=0.0,
@@ -119,7 +185,7 @@ def main() -> None:
     )
 
     sources = st.sidebar.multiselect(
-        "Syndicated Endpoints",
+        "Data Sources",
         options=["ebay", "reddit", "syndicated", "swappa"],
         default=["ebay", "reddit", "syndicated", "swappa"],
         format_func=lambda s: {
@@ -129,8 +195,6 @@ def main() -> None:
             "swappa": "Swappa Market",
         }.get(s, s.upper()),
     )
-
-    search_query = st.sidebar.text_input("Search specs or model", placeholder="e.g. P16, RTX, 64GB, Ada, i9")
 
     only_high_yield = st.sidebar.checkbox(
         "Show only High-Yield Alerts (Score >= 8.5 & Price <= $750)",
@@ -151,8 +215,13 @@ def main() -> None:
         min_score=min_score,
         max_price=float(max_price),
         sources=sources,
+        brands=selected_brands if selected_brands else None,
+        min_ram=min_ram_val if min_ram_val > 0 else None,
+        min_ssd=min_ssd_val if min_ssd_val > 0 else None,
+        gpu_type=gpu_choice,
         search_query=search_query,
         only_high_yield=only_high_yield,
+        sort_by=sort_by,
     )
     stats = storage.get_statistics()
     filtered_count = len(filtered_deals)
