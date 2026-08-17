@@ -46,7 +46,7 @@ export function App() {
       // In production (Vercel), fetch directly from the raw GitHub JSON
       // In development (npm run dev), fetch from the local Express server
       const url = import.meta.env.PROD 
-        ? "https://raw.githubusercontent.com/Fragger7/personal-repo/main/deals.json"
+        ? "https://raw.githubusercontent.com/Fragger7/personal-repo/main/ws-deal-hunter/deals.json"
         : "/api/deals";
 
       const res = await fetch(url);
