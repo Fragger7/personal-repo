@@ -25,12 +25,12 @@ export function App() {
 
   // Filter state
   const [filters, setFilters] = useState<FilterState>({
-    minScore: 7.0,
-    maxPrice: 850,
-    sources: ["ebay", "reddit", "swappa"],
+    minScore: 0.0,
+    maxPrice: 2500,
+    sources: ["ebay", "reddit", "swappa", "syndicated", "dell_refurbished", "microcenter", "bh_photo", "goodwill", "lenovo_outlet"],
     search: "",
     onlyHighYield: false,
-    sortBy: "score",
+    sortBy: "newest",
     viewMode: "grid",
   });
 
@@ -46,7 +46,7 @@ export function App() {
       // In production (Vercel), fetch directly from the raw GitHub JSON
       // In development (npm run dev), fetch from the local Express server
       const url = import.meta.env.PROD 
-        ? "https://raw.githubusercontent.com/Fragger7/personal-repo/main/deals.json"
+        ? "https://raw.githubusercontent.com/Fragger7/personal-repo/main/ws-deal-hunter/deals.json"
         : "/api/deals";
 
       const res = await fetch(url);
@@ -90,19 +90,33 @@ export function App() {
   // Vercel Dynamic Stats Calculator
   useEffect(() => {
     if (import.meta.env.PROD && deals.length > 0) {
-      const totalDeals = deals.length;
-      const unicornCount = deals.filter(d => d.deal_score >= 9.0).length;
-      const highYieldCount = deals.filter(d => d.is_high_yield || (d.deal_score >= 8.5 && d.price <= 750)).length;
+      const total_deals = deals.length;
+      const high_yield_deals = deals.filter(d => d.is_high_yield || (d.deal_score >= 8.5 && d.price <= 750)).length;
       
-      const avgScore = totalDeals > 0 
-        ? (deals.reduce((acc, d) => acc + d.deal_score, 0) / totalDeals).toFixed(1)
-        : "0.0";
+      const avg_profit = total_deals > 0 
+        ? Math.round(deals.reduce((acc, d) => acc + (d.estimated_profit || 0), 0) / total_deals)
+        : 0;
+        
+      const avg_margin_pct = total_deals > 0 
+        ? Math.round(deals.reduce((acc, d) => acc + (d.arbitrage_margin_pct || 0), 0) / total_deals)
+        : 0;
+        
+      const top_score = total_deals > 0 
+        ? Math.max(...deals.map(d => d.deal_score || 0))
+        : 0;
+
+      const source_breakdown = deals.reduce((acc: Record<string, number>, d) => {
+        acc[d.source] = (acc[d.source] || 0) + 1;
+        return acc;
+      }, {});
         
       setStats({
-        totalDeals,
-        unicornCount,
-        highYieldCount,
-        averageScore: parseFloat(avgScore),
+        total_deals,
+        high_yield_deals,
+        avg_profit,
+        avg_margin_pct,
+        top_score,
+        source_breakdown,
         lastSync: new Date().toISOString()
       });
     }
@@ -204,7 +218,14 @@ export function App() {
   const filteredDeals = deals.filter((d) => {
     if (d.deal_score < filters.minScore) return false;
     if (d.price > filters.maxPrice) return false;
-    if (filters.sources.length > 0 && !filters.sources.includes(d.source.toLowerCase())) return false;
+    
+    // Fuzzy source matching to handle 'reddit (r/hardwareswap)' matching 'reddit'
+    const matchesSource = filters.sources.length === 0 || filters.sources.some(s => 
+      d.source.toLowerCase().includes(s.toLowerCase()) || 
+      (s === 'swappa' && d.source === 'syndicated')
+    );
+    if (!matchesSource) return false;
+
     if (filters.onlyHighYield && !d.is_high_yield && !(d.deal_score >= 8.5 && d.price <= 750)) return false;
     if (filters.search) {
       const query = filters.search.toLowerCase();
@@ -223,57 +244,76 @@ export function App() {
   });
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans antialiased selection:bg-emerald-500/30 selection:text-emerald-200">
+    <div className="min-h-screen w-full bg-[#050505] text-[#e2e8f0] font-sans antialiased selection:bg-emerald-500/30 selection:text-emerald-200">
+      
+      {/* Subtle background tech grid and CRT scanline */}
+      <div className="fixed inset-0 pointer-events-none opacity-[0.03] z-0" style={{ backgroundImage: 'linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)', backgroundSize: '50px 50px' }} />
+      <div className="crt-scanline fixed" />
+
       {/* Top Header */}
-      <Header
-        onSync={handleSyncEndpoints}
-        isSyncing={isSyncing}
-        onOpenEvaluate={() => setIsEvaluateOpen(true)}
-        onOpenCode={() => setIsCodeOpen(true)}
-        onOpenNotify={() => setIsNotifyOpen(true)}
-        onGitPush={handleGitPush}
-        isPushingGit={isPushingGit}
-        totalDeals={deals.length}
-      />
+      <div className="relative z-20 border-b border-[#222] bg-[#0a0a0abf] backdrop-blur-md sticky top-0">
+        <Header
+          onSync={handleSyncEndpoints}
+          isSyncing={isSyncing}
+          onOpenEvaluate={() => setIsEvaluateOpen(true)}
+          onOpenCode={() => setIsCodeOpen(true)}
+          onOpenNotify={() => setIsNotifyOpen(true)}
+          onGitPush={handleGitPush}
+          isPushingGit={isPushingGit}
+          totalDeals={deals.length}
+        />
+        
+        {/* Horizontal Ribbon Filter Bar */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <FilterBar
+            filters={filters}
+            onChange={setFilters}
+            onReset={handleResetFilters}
+          />
+        </div>
+      </div>
 
       {/* Main Layout Container */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <main className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        
         {/* KPI Metrics Dashboard */}
         <KpiMetrics stats={stats} filteredCount={filteredDeals.length} />
 
-        {/* Filter Controls Toolbar */}
-        <FilterBar
-          filters={filters}
-          onChange={setFilters}
-          onReset={handleResetFilters}
-        />
+        <div className="flex items-center justify-between mb-8 mt-4 pb-2 border-b border-[#222]">
+          <h2 className="text-[11px] font-bold uppercase tracking-widest text-[#666] auto-glitch">
+            <span className="text-emerald-500 tech-text">{filteredDeals.length}</span> Active Opportunities
+          </h2>
+          <div className="flex gap-2">
+            <span className="inline-block w-2 h-2 bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)] animate-pulse" />
+          </div>
+        </div>
 
         {/* Content Section */}
         {isLoading ? (
-          <div className="flex flex-col items-center justify-center py-20 text-slate-400">
-            <RefreshCw className="h-8 w-8 text-emerald-400 animate-spin mb-3" />
-            <p className="text-sm">Loading workstation arbitrage deals...</p>
+          <div className="flex flex-col items-center justify-center py-32 text-[#555]">
+            <RefreshCw className="h-10 w-10 text-emerald-500 animate-spin mb-4" />
+            <p className="text-[10px] font-bold uppercase tracking-widest">Intercepting Global Streams...</p>
           </div>
         ) : filteredDeals.length === 0 ? (
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-12 text-center max-w-lg mx-auto my-12">
-            <div className="h-12 w-12 rounded-full bg-slate-800 text-slate-400 flex items-center justify-center mx-auto mb-4">
-              <Layers className="h-6 w-6" />
+          <div className="industrial-panel p-12 text-center max-w-lg mx-auto my-20">
+            <div className="h-12 w-12 border border-[#333] bg-[#111] text-[#666] flex items-center justify-center mx-auto mb-6">
+              <Layers className="h-5 w-5" />
             </div>
-            <h3 className="text-base font-bold text-white mb-1">
-              No Listings Match Filter Parameters
+            <h3 className="text-[13px] font-bold text-[#aaa] uppercase tracking-widest mb-3">
+              No Signals Detected
             </h3>
-            <p className="text-xs text-slate-400 mb-6 leading-relaxed">
-              Try adjusting the Deal Score slider, increasing the maximum asking price, or clicking Reset to view all tracked workstation inventory.
+            <p className="text-[11px] text-[#666] mb-8 leading-relaxed font-medium">
+              Adjust parameters to broaden the search matrix.
             </p>
             <button
               onClick={handleResetFilters}
-              className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold transition"
+              className="px-5 py-2.5 bg-[#111] hover:bg-[#1a1a1a] text-emerald-500 border border-[#333] hover:border-emerald-500/50 text-[10px] font-bold tracking-widest uppercase transition-all"
             >
-              Reset Filters
+              Reset Matrix Filters
             </button>
           </div>
         ) : filters.viewMode === "grid" ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {filteredDeals.map((deal) => (
               <DealCard
                 key={deal.id}
@@ -292,8 +332,8 @@ export function App() {
 
       {/* Floating Toast Notification */}
       {toastMessage && (
-        <div className="fixed bottom-6 right-6 z-50 bg-slate-900 border border-emerald-500/50 text-emerald-300 px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3 text-xs font-semibold animate-in slide-in-from-bottom-5 duration-200">
-          <Sparkles className="h-4 w-4 text-emerald-400 shrink-0" />
+        <div className="fixed bottom-6 right-6 z-50 bg-[#111] border border-emerald-500/50 text-emerald-500 px-5 py-4 shadow-2xl flex items-center gap-3 text-[11px] uppercase tracking-widest font-bold animate-in slide-in-from-bottom-5 duration-200">
+          <Sparkles className="h-4 w-4 text-emerald-500 shrink-0" />
           <span>{toastMessage}</span>
         </div>
       )}

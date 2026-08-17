@@ -127,17 +127,21 @@ C:\Development\Apps\WS Deal Hunter\
   3. **`ShopGoodwillCollector`**: Scrapes enterprise liquidation lots and tested workstation auctions.
 - **Test Coverage**: Extended [`test_system.py`](file:///C:/Development/Apps/WS%20Deal%20Hunter/test_system.py) to **15 / 15 unit tests passing**.
 
+### Decision 15: Modern React 19 / Vite UI Redesign (Horizontal Ribbon)
+- **Problem**: The dashboard needed a modern, immersive UI/UX that moved away from 1995-era scrollbars and dual-pane command consoles.
+- **Decision & Solution**: Redesigned `App.tsx` and `FilterBar.tsx` into a clean, horizontal ribbon layout. Native scrollbars were globally hidden (`scrollbar-width: none`), and the filter controls were compressed into a frosted glass sticky top-nav. Experimental UI effects (CRT scanline overlays and auto-glitch keyframes) were added to enhance the industrial aesthetic.
+
 ---
 
 ## 📌 5. Project Backlog & Future Roadmap
 *See [`BACKLOG.md`](file:///C:/Development/Apps/WS%20Deal%20Hunter/BACKLOG.md) for full technical task breakdown and UI/UX design specifications.*
 
 ### 🔴 Immediate Backlog (Next Session)
-1. **World-Class Dashboard UI/UX Redesign**:
-   - Collapsible top filter toolbar / horizontal ribbon to free up screen real estate.
-   - High-density "Executive Workstation" card grid and compact data table view toggle.
-   - Streamlit caching (`@st.cache_data`) for instant, frictionless filtering.
-2. **Adaptive "Self-Learning" FMV Price Index**:
+1. **Fix Mobile UI Animations**:
+   - The CRT scanline and auto-glitch effects are either not rendering or appearing too subtle on mobile devices (Android Chrome/Safari). Need to debug CSS keyframe compatibility and z-index stacking on touch devices.
+2. **Swappa Playwright Integration**:
+   - Implement deep scraping for Swappa using Playwright.
+3. **Adaptive "Self-Learning" FMV Price Index**:
    - Scaffold rolling exponential moving average calibration (`price_benchmarks.json`).
 
 ---
