@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { ExternalLink, Bell, CheckCircle2, Cpu, HardDrive, Monitor, Shield, Sparkles } from "lucide-react";
+import { ExternalLink, Bell, CheckCircle2, Cpu, HardDrive, Monitor, Shield, Sparkles, Flame } from "lucide-react";
 import { DealRecord } from "../types";
 
 interface DealCardProps {
@@ -44,71 +44,77 @@ export const DealCard: React.FC<DealCardProps> = ({ deal, onSendPush }) => {
   return (
     <div
       id={`deal-card-${deal.id}`}
-      className={`bg-slate-900 border rounded-xl p-5 flex flex-col justify-between transition hover:border-slate-700 relative overflow-hidden group ${
+      className={`glass-card rounded-2xl p-6 flex flex-col justify-between relative overflow-hidden group ${
         deal.is_high_yield
-          ? "border-emerald-500/30 hover:border-emerald-500/50 shadow-sm shadow-emerald-950/30"
-          : "border-slate-800 hover:border-slate-700"
+          ? "border-emerald-500/30 shadow-lg shadow-emerald-950/20 hover:shadow-emerald-950/40"
+          : "shadow-lg shadow-black/20"
       }`}
     >
+      {/* Decorative gradient orb for high yield deals */}
+      {deal.is_high_yield && (
+        <div className="absolute -top-24 -right-24 w-48 h-48 bg-emerald-500/10 rounded-full blur-3xl group-hover:bg-emerald-500/20 transition-all duration-500 pointer-events-none" />
+      )}
+
       {/* Top Banner: Source & Score Badge */}
-      <div>
-        <div className="flex items-start justify-between gap-3 mb-3">
+      <div className="relative z-10">
+        <div className="flex items-start justify-between gap-3 mb-4">
           <div className="flex items-center gap-2 flex-wrap">
             <span
-              className={`px-2.5 py-0.5 rounded-md text-[11px] font-bold border uppercase tracking-wider ${sourceBadgeColors}`}
+              className={`px-2.5 py-1 rounded-[8px] text-[10px] font-bold border uppercase tracking-widest ${sourceBadgeColors}`}
             >
-              {deal.source === "reddit" ? "r/hardwareswap" : deal.source}
+              {deal.source.replace("reddit (r/hardwareswap)", "r/hws").substring(0, 15)}
             </span>
             {deal.is_high_yield && (
-              <span className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider">
-                ⚡ Alert Qualified
+              <span className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 px-2.5 py-1 rounded-[8px] text-[10px] font-bold uppercase tracking-widest flex items-center gap-1">
+                <Flame className="w-3 h-3" />
+                Alert Qualified
               </span>
             )}
-            <span className="text-[11px] text-slate-400 truncate max-w-[120px]">
+            <span className="text-[11px] font-medium text-slate-500 truncate max-w-[100px]">
               {deal.seller}
             </span>
           </div>
 
           <div
-            className={`flex items-center gap-1 px-3 py-1 rounded-lg text-sm font-extrabold border ${scoreBadgeBg}`}
+            className={`flex items-baseline gap-0.5 px-3 py-1.5 rounded-[10px] border shadow-inner ${scoreBadgeBg}`}
           >
-            <span>{deal.deal_score.toFixed(1)}</span>
-            <span className="text-[10px] opacity-70">/10</span>
+            <span className="text-base font-black tracking-tighter">{deal.deal_score.toFixed(1)}</span>
+            <span className="text-[9px] font-bold uppercase opacity-70 tracking-widest">/10</span>
           </div>
         </div>
 
         {/* Title */}
-        <h3 className="text-base font-bold text-slate-100 line-clamp-2 leading-snug mb-3 group-hover:text-emerald-300 transition">
+        <h3 className="text-lg font-bold text-slate-100 line-clamp-2 leading-snug mb-5 group-hover:text-emerald-300 transition-colors duration-300">
           {deal.title}
         </h3>
 
         {/* Price & Arbitrage Profit Box */}
-        <div className="bg-slate-950/80 border border-slate-800/80 rounded-lg p-3 mb-4">
-          <div className="flex items-baseline justify-between mb-1.5">
+        <div className="bg-slate-950/50 backdrop-blur-sm border border-slate-800/80 rounded-xl p-4 mb-5 shadow-inner">
+          <div className="flex items-end justify-between mb-2">
             <div>
-              <span className="text-[10px] uppercase font-semibold text-slate-400 block">
+              <span className="text-[10px] font-bold tracking-widest uppercase text-slate-500 block mb-1">
                 Asking Price
               </span>
-              <span className="text-xl font-black text-white">
+              <span className="text-3xl font-black text-white tracking-tighter">
                 ${deal.price.toFixed(0)}
               </span>
             </div>
             <div className="text-right">
-              <span className="text-[10px] uppercase font-semibold text-slate-400 block">
+              <span className="text-[10px] font-bold tracking-widest uppercase text-slate-500 block mb-1">
                 Fair Market Value
               </span>
-              <span className="text-sm font-semibold text-slate-300">
+              <span className="text-base font-bold text-slate-300 line-through decoration-slate-600/50 decoration-2">
                 ${deal.fair_market_value.toFixed(0)}
               </span>
             </div>
           </div>
 
           {/* Arbitrage Spread Bar */}
-          <div className="pt-2 border-t border-slate-800 flex items-center justify-between text-xs">
-            <span className="text-slate-400 font-medium">Arbitrage Spread:</span>
-            <span className="font-bold text-emerald-400 flex items-center gap-1">
-              +${deal.estimated_profit.toFixed(0)}
-              <span className="text-[10px] text-emerald-500/80">
+          <div className="pt-3 border-t border-slate-800/80 flex items-center justify-between text-xs">
+            <span className="text-slate-400 font-medium text-[11px] uppercase tracking-wider">Arbitrage Spread</span>
+            <span className="font-bold text-emerald-400 flex items-center gap-1.5">
+              <span className="bg-emerald-500/20 px-1.5 py-0.5 rounded text-emerald-300">+${deal.estimated_profit.toFixed(0)}</span>
+              <span className="text-[10px] font-black tracking-widest uppercase text-emerald-500/80">
                 (+{deal.arbitrage_margin_pct.toFixed(0)}% ROI)
               </span>
             </span>
@@ -116,39 +122,39 @@ export const DealCard: React.FC<DealCardProps> = ({ deal, onSendPush }) => {
         </div>
 
         {/* Specs Grid */}
-        <div className="space-y-1.5 text-xs mb-4">
-          <div className="flex items-center gap-2 text-slate-300">
-            <Cpu className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+        <div className="space-y-2.5 text-xs mb-6 px-1">
+          <div className="flex items-center gap-3 text-slate-300">
+            <div className="p-1.5 rounded-lg bg-slate-800/50 text-slate-400 shadow-inner">
+              <Cpu className="h-3.5 w-3.5" />
+            </div>
             <span className="font-medium truncate">{deal.specs.cpu || "N/A"}</span>
           </div>
-          <div className="flex items-center gap-2 text-slate-300">
-            <HardDrive className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+          <div className="flex items-center gap-3 text-slate-300">
+            <div className="p-1.5 rounded-lg bg-slate-800/50 text-slate-400 shadow-inner">
+              <HardDrive className="h-3.5 w-3.5" />
+            </div>
             <span className="font-medium truncate">
-              {deal.specs.ram_gb} GB RAM • {deal.specs.ssd_gb} GB SSD NVMe
+              <strong className="text-white">{deal.specs.ram_gb} GB</strong> RAM <span className="opacity-40 px-1">•</span> <strong className="text-white">{deal.specs.ssd_gb} GB</strong> SSD
             </span>
           </div>
-          <div className="flex items-center gap-2 text-slate-300">
-            <Sparkles className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
-            <span className="font-medium truncate">{deal.specs.gpu || "Integrated"}</span>
-          </div>
-          <div className="flex items-center gap-2 text-slate-400">
-            <Monitor className="h-3.5 w-3.5 text-slate-400 shrink-0" />
-            <span className="truncate">{deal.specs.screen || "Standard Screen"}</span>
+          <div className="flex items-center gap-3 text-slate-300">
+            <div className="p-1.5 rounded-lg bg-emerald-950/30 text-emerald-400 shadow-inner">
+              <Sparkles className="h-3.5 w-3.5" />
+            </div>
+            <span className="font-medium truncate">{deal.specs.gpu || "Integrated Graphics"}</span>
           </div>
         </div>
 
         {/* AI Valuation Recommendation */}
-        <div className="text-xs text-slate-400 bg-slate-950/40 p-2.5 rounded-lg border border-slate-800/60 mb-4">
-          <div className="flex items-center gap-1 text-[11px] font-bold text-slate-300 mb-1">
+        <div className="text-xs text-slate-400 bg-slate-900/40 p-3 rounded-xl border border-slate-800/60 mb-5 relative overflow-hidden">
+          <div className="absolute left-0 top-0 bottom-0 w-1 bg-emerald-500/40" />
+          <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-slate-300 mb-1.5 pl-2">
             <Shield className="h-3 w-3 text-emerald-400" />
-            <span>AI Valuation &amp; Action:</span>
+            <span>AI Valuation &amp; Action</span>
           </div>
-          <p className="line-clamp-2 text-[11px] text-slate-300 leading-relaxed">
-            {deal.summary}
+          <p className="pl-2 line-clamp-2 leading-relaxed text-[11px]">
+            {deal.actionable_recommendation}
           </p>
-          <div className="mt-1 text-[11px] font-bold text-emerald-400">
-            &rarr; {deal.actionable_recommendation}
-          </div>
         </div>
       </div>
 
