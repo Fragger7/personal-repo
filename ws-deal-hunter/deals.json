@@ -1,5 +1,34 @@
 [
   {
+    "id": "syndicated_sd_lapt_1_676889",
+    "source": "syndicated",
+    "title": "27\" LG UltraGear QHD OLED 480Hz Gaming Monitor $499.99 + Free Shipping",
+    "price": 499.99,
+    "url": "https://slickdeals.net/f/19890129-27-lg-ultragear-qhd-oled-480hz-gaming-monitor-499-99-free-shipping?utm_source=rss&utm_content=def&utm_medium=RSS2",
+    "specs": {
+      "cpu": "Intel Core i7 / AMD Ryzen 7",
+      "ram_gb": 16,
+      "ssd_gb": 512,
+      "gpu": "Integrated Graphics",
+      "screen": "15.6\"/16\" 3.5K OLED 120Hz",
+      "condition": "Brand New / Certified Refurb"
+    },
+    "fair_market_value": 763.0,
+    "estimated_profit": 263.01,
+    "arbitrage_margin_pct": 52.6,
+    "deal_score": 7.6,
+    "summary": "Intel Core i7 / AMD Ryzen 7 with 16GB RAM, 512GB NVMe SSD, and Integrated Graphics.",
+    "actionable_recommendation": "GOOD VALUE FOR DEVELOPER WORKSTATION",
+    "confidence_score": 0.92,
+    "seller": "Verified Deal Merchant",
+    "location": "US",
+    "created_utc": "2026-08-17T19:38:28+00:00",
+    "evaluated_at": "2026-08-17T20:32:47.802426+00:00",
+    "alerted": false,
+    "is_high_yield": false,
+    "raw_payload": null
+  },
+  {
     "id": "dell_refurb_901159",
     "source": "dell_refurbished",
     "title": "Dell Certified Refurbished: Dell Latitude 7440 Touch (Intel Core i7-1365U (10-Core, 3.90 GHz), 16GB RAM) (51% OFF Coupon Applied)",
