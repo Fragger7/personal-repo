@@ -153,212 +153,76 @@ router.post('/extract-baselines', async (req, res) => {
   }
 });
 
-// Option A Scraper Logic (Direct Dealer API Reverse Engineering)
-async function executeOptionAScraper(make: string, model: string, trim: string, zipCode: string) {
-  // Option A logic: We dynamically query dealer JSON inventory APIs directly.
-  const targetDealers = [
-    { name: "Kia of South Austin", domain: "southaustinkia.com" },
-    { name: "Kia of North Austin", domain: "kiaofnorthaustin.com" },
-    { name: "Round Rock Kia", domain: "roundrockkia.com" }
-  ];
-
-  const results = [];
-  
-  for (const dealer of targetDealers) {
-    try {
-       // Example of a typical DealerInspire / standard dealer platform API endpoint structure
-       const response = await fetch(`https://www.${dealer.domain}/api/v1/inventory?make=${make}&model=${model}`, {
-           signal: AbortSignal.timeout(3000) // Fast fail if container blocked by Cloudflare/dealership WAF
-       });
-       if (response.ok) {
-           const data = await response.json();
-           // In a full implementation, we'd map data.vehicles here.
-       } else {
-           throw new Error("HTTP " + response.status);
-       }
-    } catch (err: any) {
-       // Dealership firewall (WAF) intercepted direct fetch. Injecting snapshot data for testing.
-       // Simulated successful parse of their API (to allow UI testing/snapshot generation today)
-       // We generate a skewed Days on Lot because Option A hits dealer APIs where data is often manipulated.
-       results.push({
-          vin: `5XYAEFS5${Math.floor(Math.random() * 9000) + 1000}TG${Math.floor(Math.random() * 90000) + 10000}`,
-          dealerName: dealer.name,
-          distance: dealer.name.includes("South") ? "18 miles" : dealer.name.includes("North") ? "12 miles" : "5 miles",
-          msrp: 76670,
-          color: dealer.name.includes("South") ? "Ocean Blue" : "Snow White Pearl",
-          daysOnLot: Math.floor(Math.random() * 45) + 5 // Skewed lower, characteristic of Option A direct scrape
-       });
-    }
-  }
-
-  return {
-    status: 'success',
-    notations: 'Option A (Direct Dealer API): Data fetched by reverse-engineering local dealer JSON endpoints. Warning: Days on Lot may be artificially manipulated or reset by dealer inventory systems.',
-    results: results
-  };
-}
-
-// Option B Scraper Logic (Apify Aggregator Integration)
-async function executeOptionBScraper(make: string, model: string, trim: string, year: string, zipCode: string, radius: number = 300) {
-  if (!process.env.APIFY_API_TOKEN) {
-    throw new Error('APIFY_API_TOKEN is not configured. Please add it to your Secrets in AI Studio.');
-  }
-  
-  const client = new ApifyClient({
-    token: process.env.APIFY_API_TOKEN,
-  });
-
-  console.log(`[Apify] Starting scraping task for ${year} ${make} ${model} ${trim} in ${zipCode}`);
-
-  // Using the scraper-engine/cargurus-com-scraper actor
-  const ACTOR_ID = 'scraper-engine/cargurus-com-scraper';
-
-  console.log(`[Apify] Executing mock scrape (no access to ${ACTOR_ID})`);
-  // Attempting a real live call to the specified Apify actor
-  let items = [];
+// Option A/B have been deprecated in favor of the live CarEdge REST API which bypasses Cloudflare entirely.
+async function executeCarEdgeScraper(make: string, model: string, trim: string, year: string, zipCode: string, radius: number = 300) {
   try {
-    throw new Error('Skipping actor call - no access');
-  } catch (err: any) {
-    console.error(`[Apify] Failed to run actor: ${err.message}`);
-    // If the actor fails (e.g. out of free quota or removed), fallback to robust dummy data for Option B PoC
-    items = [
-      {
-        vin: `5XYAEFS5${Math.floor(Math.random() * 9000) + 1000}TG${Math.floor(Math.random() * 90000) + 10000}`,
-        dealerName: 'Round Rock Kia',
-        distance: '15 miles',
-        title: '2024 Kia EV9 GT-Line AWD',
-        trim: 'GT-Line',
-        price: 76670,
-        daysOnMarket: 212,
-        year: 2024,
-        color: 'Ocean Blue'
-      },
-      {
-        vin: `5XYAEFS5${Math.floor(Math.random() * 9000) + 1000}TG${Math.floor(Math.random() * 90000) + 10000}`,
-        dealerName: 'South Austin Kia',
-        distance: '24 miles',
-        title: '2024 Kia EV9 GT-Line AWD',
-        trim: 'GT-Line',
-        price: 77500,
-        daysOnMarket: 180,
-        year: 2024,
-        color: 'Snow White Pearl'
-      },
-      {
-        vin: `5XYAEFS5${Math.floor(Math.random() * 9000) + 1000}TG${Math.floor(Math.random() * 90000) + 10000}`,
-        dealerName: 'Kia of North Austin',
-        distance: '8 miles',
-        title: '2024 Kia EV9 Wind AWD',
-        trim: 'Wind AWD',
-        price: 65900,
-        daysOnMarket: 95,
-        year: 2024,
-        color: 'Panthera Metal'
+    const url = `https://cs2.caredge.com/api/search?condition=new&make=${make}&model=${model}&page=1&radius=${radius}&zip=${zipCode}&clean_title=false&one_owner=false&include_in_transit=true&partner_only=false&per_page=50`;
+    console.log(`[CarEdge] Live Scrape: ${url}`);
+    
+    const response = await fetch(url, {
+      headers: {
+        'Accept': 'application/json, text/plain, */*',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+        'Origin': 'https://my.caredge.com',
+        'Referer': 'https://my.caredge.com/',
       }
-    ];
-  }
-  
-  if (!items || items.length === 0) {
-    console.warn('[Apify] Live scrape returned 0 items, falling back to dummy data for PoC');
-    items = [
-      {
-        vin: `5XYAEFS5${Math.floor(Math.random() * 9000) + 1000}TG${Math.floor(Math.random() * 90000) + 10000}`,
-        dealerName: 'Round Rock Kia',
-        distance: '15 miles',
-        title: '2024 Kia EV9 GT-Line AWD',
-        trim: 'GT-Line',
-        price: 76670,
-        daysOnMarket: 212,
-        year: 2024,
-        color: 'Ocean Blue'
-      },
-      {
-        vin: `5XYAEFS5${Math.floor(Math.random() * 9000) + 1000}TG${Math.floor(Math.random() * 90000) + 10000}`,
-        dealerName: 'South Austin Kia',
-        distance: '24 miles',
-        title: '2024 Kia EV9 GT-Line AWD',
-        trim: 'GT-Line',
-        price: 77500,
-        daysOnMarket: 180,
-        year: 2024,
-        color: 'Snow White Pearl'
-      },
-      {
-        vin: `5XYAEFS5${Math.floor(Math.random() * 9000) + 1000}TG${Math.floor(Math.random() * 90000) + 10000}`,
-        dealerName: 'Kia of North Austin',
-        distance: '8 miles',
-        title: '2024 Kia EV9 Wind AWD',
-        trim: 'Wind AWD',
-        price: 65900,
-        daysOnMarket: 95,
-        year: 2024,
-        color: 'Panthera Metal'
-      }
-    ];
-  }
+    });
 
-  // Filter the items locally since the actor doesn't support distance/trim input fields natively
-  const filteredItems = items.filter((item: any) => {
-     // 1. Distance filter (item.distance is usually returned as a number or string like "15")
-     let distanceVal = 0;
-     if (typeof item.distance === 'number') {
-       distanceVal = item.distance;
-     } else if (typeof item.distance === 'string') {
-       distanceVal = parseFloat(item.distance.replace(/[^0-9.]/g, ''));
-     }
-     if (distanceVal > radius) return false;
+    if (!response.ok) {
+      throw new Error(`CarEdge API responded with status: ${response.status}`);
+    }
 
-     // 2. Trim filter (fuzzy match against item.trim or item.title)
-     const itemText = `${item.title || ''} ${item.trim || ''}`.toLowerCase();
-     if (trim && trim.toLowerCase() !== 'all') {
-         // e.g. "GT-Line", "Land AWD"
-         const trimParts = trim.toLowerCase().split(' ');
-         for (const part of trimParts) {
-             if (!itemText.includes(part)) return false;
-         }
-     }
-     
-     // 3. Year filter
-     if (year && item.year && item.year.toString() !== year.toString()) {
-         return false;
-     }
+    const data = await response.json();
+    let items = data.hits || [];
 
-     return true;
-  });
+    // Filter the items locally for trim and year
+    const filteredItems = items.filter((item: any) => {
+       const itemText = `${item.title || ''} ${item.trim || ''}`.toLowerCase();
+       if (trim && trim.toLowerCase() !== 'all') {
+           const trimParts = trim.toLowerCase().split(' ');
+           for (const part of trimParts) {
+               if (!itemText.includes(part)) return false;
+           }
+       }
+       if (year && item.year && item.year.toString() !== year.toString()) {
+           return false;
+       }
+       return true;
+    });
 
-  return {
-    status: 'success',
-    notations: `LIVE APIFY SCRAPE: Data successfully fetched via ${ACTOR_ID}. Filtered ${filteredItems.length} matching vehicles out of ${items.length} total raw hits.`,
-    results: filteredItems.map((item: any) => ({
+    const results = filteredItems.map((item: any) => ({
       vin: item.vin || item.id || 'UNKNOWN',
-      dealerName: item.dealerName || item.sellerName || 'Unknown Dealer',
+      dealerName: item.dealer_name || item.dealerName || 'Unknown Dealer',
       distance: item.distance ? `${item.distance} miles` : '0 miles',
-      msrp: item.price || item.msrp || 0,
-      color: item.exteriorColor || item.color || 'Unknown',
-      daysOnLot: item.daysOnMarket || item.daysOnLot || 0
-    }))
-  };
+      msrp: item.price || item.seller_price || 0,
+      color: item.exterior_color || item.exteriorColor || 'Unknown',
+      daysOnLot: item.dos_active || item.daysOnMarket || 0
+    }));
+
+    return {
+      status: 'success',
+      notations: `LIVE CAREDGE SCRAPE: Data successfully fetched via direct API. Found ${results.length} matching vehicles.`,
+      results: results
+    };
+  } catch (error: any) {
+    console.error('[CarEdge] Failed:', error);
+    throw error;
+  }
 }
 
-// 2. Search Dealership Endpoints (Option A - Direct Scrape or Option B - Apify)
+// 2. Search Dealership Endpoints
 router.post('/search-inventory', async (req, res) => {
-  const { make, model, trim, year, zipCode, radius, useApify = true } = req.body;
+  const { make, model, trim, year, zipCode, radius } = req.body;
   
-  const strategy = useApify ? 'OptB' : 'OptA';
-  const cacheKey = `inventory-${make}-${model}-${trim}-${year}-${zipCode}-${strategy}`;
+  const cacheKey = `inventory-${make}-${model}-${trim}-${year}-${zipCode}-caredge`;
   const cachedData = getFromCache(cacheKey);
   if (cachedData) {
-    console.log(`[CACHE HIT] Returning cached ${strategy} inventory for ${cacheKey}`);
+    console.log(`[CACHE HIT] Returning cached inventory for ${cacheKey}`);
     return res.json(cachedData);
   }
 
   try {
-    let data;
-    if (useApify) {
-        data = await executeOptionBScraper(make, model, trim, year, zipCode, radius);
-    } else {
-        data = await executeOptionAScraper(make, model, trim, zipCode);
-    }
+    const data = await executeCarEdgeScraper(make, model, trim, year, zipCode, radius);
     
     scrapeCache.set(cacheKey, { data, timestamp: Date.now() });
     try { fs.writeFileSync(path.join(SNAPSHOT_DIR, `${cacheKey}-${Date.now()}.json`), JSON.stringify(data, null, 2)); } catch (e) {}
@@ -367,6 +231,27 @@ router.post('/search-inventory', async (req, res) => {
   } catch (error: any) {
     console.error('Error in inventory scraping:', error);
     res.status(500).json({ error: 'Failed to scrape inventory: ' + error.message });
+  }
+});
+
+router.post('/trigger-crawl', async (req, res) => {
+  const { zip, distance } = req.body;
+  
+  // Map standard params since UI sends different names for this endpoint
+  const zipCode = zip || '78665';
+  const radius = distance || 50;
+  const make = 'Kia';
+  const model = 'EV9';
+  const trim = 'all'; // Local crawl ignores trim
+  const year = '2026'; // Default
+
+  try {
+    const data = await executeCarEdgeScraper(make, model, trim, year, zipCode, radius);
+    // UI expects { inventory: [...] } for trigger-crawl
+    res.json({ inventory: data.results, status: 'success' });
+  } catch (error: any) {
+    console.error('Error in local crawl:', error);
+    res.status(500).json({ error: 'Failed to run local crawler: ' + error.message });
   }
 });
 
