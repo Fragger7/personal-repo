@@ -17,6 +17,7 @@ export default function IntelDashboard({ onDealSelect }: { onDealSelect?: (deal:
       return [];
     }
   });
+  const [sortOption, setSortOption] = useState<'none' | 'days-desc' | 'price-asc'>('none');
   const [error, setError] = useState('');
 
   // Search Parameters
@@ -368,7 +369,20 @@ export default function IntelDashboard({ onDealSelect }: { onDealSelect?: (deal:
                 {inventory.length > 0 && (
                   <div className="space-y-3 mt-8">
                     <div className="flex items-center justify-between mb-4 border-b border-white/5 pb-2">
-                      <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Acquired Targets</h4>
+                      <div className="flex items-center gap-4">
+                        <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                          Acquired Targets <span className="ml-2 px-2 py-0.5 bg-indigo-500/20 text-indigo-400 rounded-full text-[10px]">{inventory.length}</span>
+                        </h4>
+                        <select
+                          value={sortOption}
+                          onChange={(e) => setSortOption(e.target.value as any)}
+                          className="text-xs bg-slate-900 border border-slate-700 rounded px-2 py-1 text-slate-300 outline-none focus:border-indigo-500/50"
+                        >
+                          <option value="none">Sort by: Default</option>
+                          <option value="days-desc">Days on Lot (High to Low)</option>
+                          <option value="price-asc">Price (Low to High)</option>
+                        </select>
+                      </div>
                       <button 
                         onClick={() => setInventory([])}
                         className="text-xs text-red-400 hover:text-red-300 transition-colors"
@@ -376,7 +390,11 @@ export default function IntelDashboard({ onDealSelect }: { onDealSelect?: (deal:
                         Clear Inventory
                       </button>
                     </div>
-                    {inventory.map((inv, idx) => (
+                    {([...inventory].sort((a, b) => {
+                      if (sortOption === 'days-desc') return (b.daysOnLot || 0) - (a.daysOnLot || 0);
+                      if (sortOption === 'price-asc') return (a.msrp || 0) - (b.msrp || 0);
+                      return 0;
+                    })).map((inv, idx) => (
                       <button
                         key={idx}
                         onClick={() => {
@@ -401,8 +419,19 @@ export default function IntelDashboard({ onDealSelect }: { onDealSelect?: (deal:
                             <Car className="h-5 w-5 text-slate-400 group-hover:text-indigo-400" />
                           </div>
                           <div>
-                            <p className="font-medium text-slate-200">{inv.dealerName}</p>
-                            <p className="text-xs text-slate-500 font-mono">{inv.color} • {inv.distance} • {inv.daysOnLot} Days on Lot</p>
+                            <div className="flex items-center gap-2">
+                              <p className="font-medium text-slate-200">{inv.dealerName}</p>
+                              {inv.source && (
+                                <span className={`text-[9px] px-1.5 py-0.5 rounded font-mono ${
+                                  inv.source.includes('Dealer') 
+                                    ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' 
+                                    : 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/20'
+                                }`}>
+                                  {inv.source}
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-xs text-slate-500 font-mono mt-1">{inv.color} • {inv.distance} • {inv.daysOnLot} Days on Lot</p>
                           </div>
                         </div>
                         <div className="flex items-center gap-6">
@@ -410,6 +439,21 @@ export default function IntelDashboard({ onDealSelect }: { onDealSelect?: (deal:
                             <p className="font-semibold text-emerald-400">${inv.msrp.toLocaleString()}</p>
                             <p className="text-[10px] text-slate-500 uppercase tracking-wider">MSRP</p>
                           </div>
+                          {inv.listingUrl || inv.url || inv.link ? (
+                            <a 
+                              href={inv.listingUrl || inv.url || inv.link} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              onClick={(e) => e.stopPropagation()}
+                              className="text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-500 px-4 py-2 rounded-lg transition-colors whitespace-nowrap shadow-lg shadow-indigo-500/30 flex items-center gap-2"
+                            >
+                              🌐 View Deal
+                            </a>
+                          ) : (
+                            <span className="text-[10px] text-slate-500 border border-slate-700 px-2 py-1 rounded">
+                              Rescan for Link
+                            </span>
+                          )}
                           <ChevronRight className="h-5 w-5 text-slate-600 group-hover:text-indigo-400 transition-colors" />
                         </div>
                       </button>

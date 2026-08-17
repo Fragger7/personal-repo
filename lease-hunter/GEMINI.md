@@ -37,13 +37,19 @@
 
 ## Current Project State (Verified & Working)
 - **Breakthrough Live Inventory Sourcing**:
-  - **Cars.com CDP Node (`server/crawler/scrape-cars-com-new-ev9.ts` & `extract-cars-com-vdp-details.ts`)**: Successfully extracted 22 brand new 2026 Kia EV9s (GT-Line, Land, Wind) within 50 miles of ZIP 78665.
-  - **Verified Live Car Extracted**: 2026 Kia EV9 GT-Line AWD (VIN `5XYAEFS58TG019993`), MSRP $77,245, **Sale Price $64,002 ($13,243 off MSRP / 17.1% discount)**, **115 Days on Lot**, with direct working hyperlink [`https://www.cars.com/vehicledetail/940466ec-7560-455e-bbd3-ded328c62ff0/`](https://www.cars.com/vehicledetail/940466ec-7560-455e-bbd3-ded328c62ff0/).
+  - **CarEdge Backend API**: Successfully bypassed Cloudflare using direct REST API to `cs2.caredge.com`. Currently paginated to scrape up to 5 pages (250 cars) in a single pass.
+  - **Dealer-Direct Headless Nodes**: Playwright fully bypasses Akamai EdgeSuite. Extracts `DDC.dataLayer` and DI data. Successfully scraped Kia of Round Rock (Dealer.com) and Group 1 Kia South Austin (DealerInspire).
+  - **Multi-Node Aggregator**: UI successfully merges CarEdge API data with Dealer-Direct headless data.
   - **Live Mobile Telegram Delivery**: Confirmed working deal notification cards delivered directly to the user's phone.
 - **Git Sync & Tooling**:
   - `git_push.ps1` updated with clean recursive workspace export excluding `node_modules`, `personal-repo-temp`, `chrome-debug-profile`, and `scratch`. Commits push cleanly to GitHub `main`.
 
 ## Next Steps for the Next Session
-1. **Wire Cars.com CDP Node to UI**: Connect the live 22-car Cars.com crawler to the React `IntelDashboard` "🔄 Scan Regional Inventory" button and persist to `data/inventory.json`.
-2. **Deal Calculator Auto-Seeding**: Take the live $13,243 discounted 2026 EV9 GT-Line and auto-calculate the exact Texas monthly payment (ZIP 78665) with Kia Finance lease cash and buy-rate MF.
-3. **UI/UX Workflow Refactor**: Clean up the `IntelDashboard` user journey between regional discovery, deal structuring, and dealer outreach.
+1. **CarGurus Manual Workaround**: Attempt the manual Chrome attachment hack (port 9222) to bypass CarGurus JS challenges and unlock that aggregator.
+2. **Intelligent Baseline Scraper Refactor**: 
+   - Fix the `/api/scrape/extract-baselines` endpoint (currently hitting 400 invalid API key errors).
+   - Revisit intelligent scraping of Edmunds/Leasehackr for ZIP code specific, exact current-month program data (MSRP, MV, RV, MF, and Discount baselines) to structure the perfect initial contact email.
+   - **Data Freshness Tracking**: Track how recently this program guidance was updated.
+   - **Stale Insight Fallback**: If the data cannot be found or is stale, explicitly flag the user in the UI, letting them know the engine is operating on stale insight, and recommend they start a manual thread on Edmunds or Leasehackr to crowdsource the latest data.
+3. **Discrepancy Consolidation**: Intelligently consolidate results from Dealer Sites vs CarEdge to actively call out discrepancies between listed MSRP and hidden API MSRP.
+4. **Intelligent Deal Scoring System**: Automate the Leasehackr scoring system to flag hidden value (e.g. why the Round Rock Kia EV9 Wind has a massive 19.4% discount despite not being the oldest car on the lot).

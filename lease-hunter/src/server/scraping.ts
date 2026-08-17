@@ -156,27 +156,38 @@ router.post('/extract-baselines', async (req, res) => {
 // Option A/B have been deprecated in favor of the live CarEdge REST API which bypasses Cloudflare entirely.
 async function executeCarEdgeScraper(make: string, model: string, trim: string, year: string, zipCode: string, radius: number = 300) {
   try {
-    const url = `https://cs2.caredge.com/api/search?condition=new&make=${make}&model=${model}&page=1&radius=${radius}&zip=${zipCode}&clean_title=false&one_owner=false&include_in_transit=true&partner_only=false&per_page=50`;
-    console.log(`[CarEdge] Live Scrape: ${url}`);
-    
-    const response = await fetch(url, {
-      headers: {
-        'Accept': 'application/json, text/plain, */*',
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
-        'Origin': 'https://my.caredge.com',
-        'Referer': 'https://my.caredge.com/',
-      }
-    });
+    let allItems: any[] = [];
+    const maxPages = 5;
 
-    if (!response.ok) {
-      throw new Error(`CarEdge API responded with status: ${response.status}`);
+    for (let page = 1; page <= maxPages; page++) {
+      const url = `https://cs2.caredge.com/api/search?condition=new&make=${make}&model=${model}&page=${page}&radius=${radius}&zip=${zipCode}&clean_title=false&one_owner=false&include_in_transit=true&partner_only=false&per_page=50`;
+      console.log(`[CarEdge] Live Scrape Page ${page}: ${url}`);
+      
+      const response = await fetch(url, {
+        headers: {
+          'Accept': 'application/json, text/plain, */*',
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+          'Origin': 'https://my.caredge.com',
+          'Referer': 'https://my.caredge.com/',
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`CarEdge API responded with status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      let items = data.hits || [];
+      
+      if (items.length === 0) break;
+      
+      allItems = allItems.concat(items);
+      
+      if (items.length < 50) break; // End of results
     }
 
-    const data = await response.json();
-    let items = data.hits || [];
-
     // Filter the items locally for trim and year
-    const filteredItems = items.filter((item: any) => {
+    const filteredItems = allItems.filter((item: any) => {
        const itemText = `${item.title || ''} ${item.trim || ''}`.toLowerCase();
        if (trim && trim.toLowerCase() !== 'all') {
            const trimParts = trim.toLowerCase().split(' ');
@@ -196,7 +207,9 @@ async function executeCarEdgeScraper(make: string, model: string, trim: string, 
       distance: item.distance ? `${item.distance} miles` : '0 miles',
       msrp: item.price || item.seller_price || 0,
       color: item.exterior_color || item.exteriorColor || 'Unknown',
-      daysOnLot: item.dos_active || item.daysOnMarket || 0
+      daysOnLot: item.dos_active || item.daysOnMarket || 0,
+      listingUrl: item.dealer_vdp_url || item.vdp_url || item.url || item.link || `https://my.caredge.com/buy?radius=${radius}&zip=${zipCode}&make=${make}&model=${model}`,
+      source: 'CarEdge API'
     }));
 
     return {
@@ -234,6 +247,8 @@ router.post('/search-inventory', async (req, res) => {
   }
 });
 
+import { scrapeLocalDealersHeadless } from '../../server/crawler/scrape-local-dealers-headless.js';
+
 router.post('/trigger-crawl', async (req, res) => {
   const { zip, distance } = req.body;
   
@@ -246,9 +261,28 @@ router.post('/trigger-crawl', async (req, res) => {
   const year = '2026'; // Default
 
   try {
-    const data = await executeCarEdgeScraper(make, model, trim, year, zipCode, radius);
-    // UI expects { inventory: [...] } for trigger-crawl
-    res.json({ inventory: data.results, status: 'success' });
+    console.log(`[CRAWL] Starting multi-node aggregator for ZIP ${zipCode}...`);
+    
+    // 1. Fetch from CarEdge API
+    const carEdgeData = await executeCarEdgeScraper(make, model, trim, year, zipCode, radius);
+    
+    // 2. Fetch from Local Dealers Headless Network
+    const dealerData = await scrapeLocalDealersHeadless(zipCode);
+
+    // 3. Merge and deduplicate by VIN
+    const inventoryMap = new Map();
+    
+    // Prioritize Dealer Direct data as it's the ultimate ground truth, but fallback to CarEdge
+    carEdgeData.results.forEach((car: any) => inventoryMap.set(car.vin, car));
+    dealerData.forEach((car: any) => {
+      // Overwrite or append with dealer direct data
+      inventoryMap.set(car.vin, car);
+    });
+
+    const mergedInventory = Array.from(inventoryMap.values());
+    console.log(`[CRAWL] Successfully merged ${mergedInventory.length} total unique targets.`);
+
+    res.json({ inventory: mergedInventory, status: 'success' });
   } catch (error: any) {
     console.error('Error in local crawl:', error);
     res.status(500).json({ error: 'Failed to run local crawler: ' + error.message });
