@@ -47,6 +47,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({ filters, onChange, onReset
             { id: "ebay", label: "eBay API", color: "hover:border-blue-500" },
             { id: "reddit", label: "r/hws", color: "hover:border-orange-500" },
             { id: "swappa", label: "Swappa", color: "hover:border-teal-500" },
+            { id: "syndicated", label: "RSS Feeds", color: "hover:border-yellow-500" },
             { id: "dell_refurbished", label: "Dell Refurb", color: "hover:border-blue-400" },
             { id: "microcenter", label: "Microcenter", color: "hover:border-rose-500" },
             { id: "bh_photo", label: "B&H", color: "hover:border-green-500" },

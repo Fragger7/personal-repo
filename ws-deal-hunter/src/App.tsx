@@ -27,7 +27,7 @@ export function App() {
   const [filters, setFilters] = useState<FilterState>({
     minScore: 0.0,
     maxPrice: 2500,
-    sources: ["ebay", "reddit", "swappa", "dell_refurbished", "microcenter", "bh_photo", "goodwill", "lenovo_outlet"],
+    sources: ["ebay", "reddit", "swappa", "syndicated", "dell_refurbished", "microcenter", "bh_photo", "goodwill", "lenovo_outlet"],
     search: "",
     onlyHighYield: false,
     sortBy: "newest",
@@ -204,7 +204,14 @@ export function App() {
   const filteredDeals = deals.filter((d) => {
     if (d.deal_score < filters.minScore) return false;
     if (d.price > filters.maxPrice) return false;
-    if (filters.sources.length > 0 && !filters.sources.includes(d.source.toLowerCase())) return false;
+    
+    // Fuzzy source matching to handle 'reddit (r/hardwareswap)' matching 'reddit'
+    const matchesSource = filters.sources.length === 0 || filters.sources.some(s => 
+      d.source.toLowerCase().includes(s.toLowerCase()) || 
+      (s === 'swappa' && d.source === 'syndicated')
+    );
+    if (!matchesSource) return false;
+
     if (filters.onlyHighYield && !d.is_high_yield && !(d.deal_score >= 8.5 && d.price <= 750)) return false;
     if (filters.search) {
       const query = filters.search.toLowerCase();
