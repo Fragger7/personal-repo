@@ -17,23 +17,23 @@ export const FilterBar: React.FC<FilterBarProps> = ({ filters, onChange, onReset
   };
 
   return (
-    <div className="glass-panel rounded-2xl p-5 mb-8">
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
+    <div className="industrial-panel p-6 mb-8">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
         {/* Search Bar */}
         <div className="relative flex-1 min-w-[240px]">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-[#555]" />
           <input
             id="input-search-deals"
             type="text"
             value={filters.search}
             onChange={(e) => onChange({ ...filters, search: e.target.value })}
             placeholder="Search specs, model (e.g., P16, RTX, 64GB, Ada, i9)..."
-            className="w-full pl-11 pr-4 py-2.5 bg-slate-950/50 backdrop-blur-sm border border-slate-800/80 rounded-[12px] text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/50 transition-all shadow-inner"
+            className="w-full pl-11 pr-4 py-2.5 bg-[#0a0a0a] border border-[#333] text-[13px] text-[#e2e8f0] placeholder-[#555] focus:outline-none focus:border-emerald-500 transition-colors shadow-inner"
           />
           {filters.search && (
             <button
               onClick={() => onChange({ ...filters, search: "" })}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-[#555] hover:text-[#e2e8f0] transition-colors"
             >
               <X className="h-4 w-4" />
             </button>
@@ -42,27 +42,27 @@ export const FilterBar: React.FC<FilterBarProps> = ({ filters, onChange, onReset
 
         {/* Source Badges */}
         <div className="flex items-center flex-wrap gap-2 lg:justify-end">
-          <span className="text-[10px] uppercase tracking-widest text-slate-500 font-bold mr-1">Sources</span>
+          <span className="text-[10px] uppercase tracking-widest text-[#555] font-bold mr-2">Sources</span>
           {[
-            { id: "ebay", label: "eBay", color: "hover:border-blue-500/50 hover:bg-blue-500/10" },
-            { id: "reddit", label: "r/hws", color: "hover:border-orange-500/50 hover:bg-orange-500/10" },
-            { id: "swappa", label: "Swappa", color: "hover:border-teal-500/50 hover:bg-teal-500/10" },
-            { id: "syndicated", label: "RSS Feeds", color: "hover:border-yellow-500/50 hover:bg-yellow-500/10" },
-            { id: "dell_refurbished", label: "Dell", color: "hover:border-blue-400/50 hover:bg-blue-400/10" },
-            { id: "microcenter", label: "Microcenter", color: "hover:border-rose-500/50 hover:bg-rose-500/10" },
-            { id: "bh_photo", label: "B&H", color: "hover:border-green-500/50 hover:bg-green-500/10" },
-            { id: "goodwill", label: "Goodwill", color: "hover:border-indigo-500/50 hover:bg-indigo-500/10" },
-            { id: "lenovo_outlet", label: "Lenovo", color: "hover:border-red-500/50 hover:bg-red-500/10" },
+            { id: "ebay", label: "eBay", color: "hover:border-blue-500/50 hover:text-blue-500" },
+            { id: "reddit", label: "r/hws", color: "hover:border-orange-500/50 hover:text-orange-500" },
+            { id: "swappa", label: "Swappa", color: "hover:border-teal-500/50 hover:text-teal-500" },
+            { id: "syndicated", label: "RSS Feeds", color: "hover:border-yellow-500/50 hover:text-yellow-500" },
+            { id: "dell_refurbished", label: "Dell", color: "hover:border-blue-400/50 hover:text-blue-400" },
+            { id: "microcenter", label: "Microcenter", color: "hover:border-rose-500/50 hover:text-rose-500" },
+            { id: "bh_photo", label: "B&H", color: "hover:border-green-500/50 hover:text-green-500" },
+            { id: "goodwill", label: "Goodwill", color: "hover:border-indigo-500/50 hover:text-indigo-500" },
+            { id: "lenovo_outlet", label: "Lenovo", color: "hover:border-red-500/50 hover:text-red-500" },
           ].map((src) => {
             const active = filters.sources.includes(src.id);
             return (
               <button
                 key={src.id}
                 onClick={() => toggleSource(src.id)}
-                className={`px-3 py-1.5 rounded-[10px] text-[11px] font-bold uppercase tracking-wider transition-all duration-200 border ${
+                className={`px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider transition-all duration-200 border ${
                   active
-                    ? "bg-emerald-500/15 border-emerald-500/30 text-emerald-400 shadow-inner"
-                    : `bg-slate-950/40 border-slate-800 text-slate-500 ${src.color}`
+                    ? "bg-[#111] border-emerald-500/50 text-emerald-400"
+                    : `bg-transparent border-[#222] text-[#666] ${src.color}`
                 }`}
               >
                 {src.label}
@@ -72,24 +72,24 @@ export const FilterBar: React.FC<FilterBarProps> = ({ filters, onChange, onReset
         </div>
 
         {/* High Yield Switch & View Modes */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-4">
           <button
             onClick={() => onChange({ ...filters, onlyHighYield: !filters.onlyHighYield })}
-            className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-[12px] text-[11px] font-bold uppercase tracking-wider border transition-all shadow-inner ${
+            className={`inline-flex items-center gap-2 px-4 py-2 text-[10px] font-bold uppercase tracking-wider border transition-all ${
               filters.onlyHighYield
-                ? "bg-emerald-500/15 border-emerald-500/30 text-emerald-400"
-                : "bg-slate-950/40 border-slate-800 text-slate-500 hover:text-slate-300 hover:border-slate-700"
+                ? "bg-[#111] border-emerald-500/50 text-emerald-400 laser-accent"
+                : "bg-transparent border-[#222] text-[#666] hover:text-[#e2e8f0] hover:border-[#444]"
             }`}
           >
-            <Flame className={`h-3.5 w-3.5 ${filters.onlyHighYield ? 'text-emerald-400' : 'text-slate-500'}`} />
+            <Flame className={`h-3 w-3 ${filters.onlyHighYield ? 'text-emerald-500' : 'text-[#666]'}`} />
             <span>High-Yield</span>
           </button>
 
-          <div className="flex items-center bg-slate-950/60 border border-slate-800/80 rounded-[12px] p-1 shadow-inner">
+          <div className="flex items-center bg-[#0a0a0a] border border-[#222] p-1">
             <button
               onClick={() => onChange({ ...filters, viewMode: "grid" })}
-              className={`p-1.5 rounded-[8px] transition-all ${
-                filters.viewMode === "grid" ? "bg-slate-800 text-emerald-400 shadow-sm" : "text-slate-500 hover:text-slate-300"
+              className={`p-1.5 transition-all ${
+                filters.viewMode === "grid" ? "bg-[#111] text-emerald-500 border border-[#333]" : "text-[#555] hover:text-[#e2e8f0] border border-transparent"
               }`}
               title="Grid View"
             >
@@ -97,8 +97,8 @@ export const FilterBar: React.FC<FilterBarProps> = ({ filters, onChange, onReset
             </button>
             <button
               onClick={() => onChange({ ...filters, viewMode: "table" })}
-              className={`p-1.5 rounded-[8px] transition-all ${
-                filters.viewMode === "table" ? "bg-slate-800 text-emerald-400 shadow-sm" : "text-slate-500 hover:text-slate-300"
+              className={`p-1.5 transition-all ${
+                filters.viewMode === "table" ? "bg-[#111] text-emerald-500 border border-[#333]" : "text-[#555] hover:text-[#e2e8f0] border border-transparent"
               }`}
               title="Dense Table View"
             >
@@ -109,7 +109,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({ filters, onChange, onReset
       </div>
 
       {/* Sliders Row */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mt-5 pt-5 border-t border-slate-800/60">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mt-6 pt-6 border-t border-[#222]">
         {/* Deal Score Slider */}
         <div>
           <div className="flex justify-between items-center text-xs mb-1.5">
