@@ -23,7 +23,7 @@
 
 ## 📊 2. Current System State & Verified Status
 
-- **Unit Test Suite Status**: **12 / 12 Tests Passing** (`python test_system.py`).
+- **Unit Test Suite Status**: **15 / 15 Tests Passing** (`python test_system.py`).
 - **Live Ingestion Verification**: Verified live collection of 29+ real-time listings per cycle.
 - **Production Deployment**: Live on Streamlit Cloud at **[https://wsdealhunter.streamlit.app/](https://wsdealhunter.streamlit.app/)**.
 - **Git Branch & Remote**: Tracked on `main` branch connected to `https://github.com/Fragger7/personal-repo.git`.
@@ -118,7 +118,14 @@ C:\Development\Apps\WS Deal Hunter\
 - **Decision & Solution**: Wired [`TelegramNotifier`](file:///C:/Development/Apps/WS%20Deal%20Hunter/notifier.py) directly into [`daemon.py`](file:///C:/Development/Apps/WS%20Deal%20Hunter/daemon.py). Sends rich HTML deal alerts, hourly inventory pulse digests, self-healing diagnostic health warnings, and transparent Gemini token/daily quota usage stats (`GeminiUsageTracker`).
 
 ### Decision 13: Subreddit Expansion & Active Ingestion
-- **Decision & Solution**: Added `r/homelabsales` alongside `r/hardwareswap` and `r/appleswap` in [`collector.py`](file:///C:/Development/Apps/WS%20Deal%20Hunter/collector.py), and parameterized syndicated streams with `hideexpired=1&sort=newest` and 120h TTL.
+- **Decision & Solution**: Added `r/homelabsales`, `r/LaptopDeals`, and `r/thinkpad` alongside `r/hardwareswap` and `r/appleswap` in [`collector.py`](file:///C:/Development/Apps/WS%20Deal%20Hunter/collector.py), and parameterized syndicated streams with `hideexpired=1&sort=newest` and 120h TTL.
+
+### Decision 14: Enterprise Refurbished Scraper Suite
+- **Decision & Solution**: Built and registered three dedicated enterprise secondary market collectors in [`collector.py`](file:///C:/Development/Apps/WS%20Deal%20Hunter/collector.py):
+  1. **`DellRefurbishedCollector`**: Scrapes live Dell Financial Services (DFS) Certified Refurbished Precision and Latitude inventory with automated 40%–50% sitewide coupon deduction.
+  2. **`LenovoOutletCollector`**: Scrapes Lenovo Outlet streams for certified ThinkPad P-Series (P1, P16, P14s) workstations.
+  3. **`ShopGoodwillCollector`**: Scrapes enterprise liquidation lots and tested workstation auctions.
+- **Test Coverage**: Extended [`test_system.py`](file:///C:/Development/Apps/WS%20Deal%20Hunter/test_system.py) to **15 / 15 unit tests passing**.
 
 ---
 
@@ -130,11 +137,7 @@ C:\Development\Apps\WS Deal Hunter\
    - Collapsible top filter toolbar / horizontal ribbon to free up screen real estate.
    - High-density "Executive Workstation" card grid and compact data table view toggle.
    - Streamlit caching (`@st.cache_data`) for instant, frictionless filtering.
-2. **Enterprise Refurbished Scraper Suite**:
-   - Build **`DellRefurbishedCollector`** with automated 40%–50% sitewide coupon extraction.
-   - Build **`LenovoOutletCollector`** for ThinkPad P-Series certified refurb inventory.
-   - Build **`ShopGoodwillCollector`** for sub-$300 workstation auction deals.
-3. **Adaptive "Self-Learning" FMV Price Index**:
+2. **Adaptive "Self-Learning" FMV Price Index**:
    - Scaffold rolling exponential moving average calibration (`price_benchmarks.json`).
 
 ---

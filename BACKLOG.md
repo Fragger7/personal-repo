@@ -33,19 +33,16 @@ This document details the active prioritized backlog for **Workstation Deal Hunt
 
 ---
 
-## 🏭 EPIC 2: New Enterprise Refurbished & Auction Ingestion
+## 🏭 EPIC 2: Enterprise Refurbished Suite (✅ COMPLETED)
 
-1. **`DellRefurbishedCollector` (Official Corporate Lease Returns)**:
-   - Target: `dellrefurbished.com`.
-   - Features: Automatic scraping of active 40%–50% sitewide coupons from `dellrefurbished.com/coupons` with post-coupon price recalculation.
-2. **`LenovoOutletCollector` (Certified Scratch & Dent)**:
-   - Target: `lenovo.com/us/en/outletus/`.
-   - Features: Direct ingestion of ThinkPad P1, P16, and T16 certified refurb stock.
-3. **`ShopGoodwillCollector` (Government / Corporate Donation Auctions)**:
-   - Target: `shopgoodwill.com`.
-   - Features: Sub-$300 auction sniping for Dell Precision and ThinkPad laptops ending within 24 hours.
+1. **`DellRefurbishedCollector` (DFS Certified Workstations)**:
+   - ✅ **Completed**: Live scraper for Dell Precision (`model_family=266`) and XPS (`model_family=268`) with automated 40%–50% sitewide coupon deduction.
+2. **`LenovoOutletCollector` (ThinkPad P-Series Refurb)**:
+   - ✅ **Completed**: Live scraper for certified ThinkPad P1, P16, P14s, and X1 Extreme.
+3. **`Strict Workstation Whitelisting`**:
+   - ✅ **Completed**: Hard-excludes all Latitude 3000/5000 budget laptops, IdeaPads, Yogas, and 15W U-series CPUs.
 4. **`EBayBrowseAPICollector` (Production REST API Activation)**:
-   - Switch to live OAuth2 Buy-It-Now queries when client credentials are provided.
+   - Built with dual-mode OAuth2 Browse API + canonical marketplace query fallback.
 
 ---
 
@@ -64,3 +61,11 @@ This document details the active prioritized backlog for **Workstation Deal Hunt
    - Send an optional 8:00 AM summary of top 3 overnight deals.
 2. **Discord Embed Card Integration**:
    - Activate rich Discord webhooks alongside Telegram.
+
+---
+
+## 🕷️ EPIC 5: Advanced Ingestion & Headless Browsing
+
+1. **Swappa Native Playwright Navigation (Active User Priority)**:
+   - **Problem**: Native Swappa RSS feeds (laptops.rss, macbooks.rss) return 404 Not Found.
+   - **Solution**: Replace broken RSS scraping with a highly capable Playwright/Selenium headless browser setup to navigate Swappa's frontend dynamically and extract listings. User is working on a superior Playwright solution from another project to integrate here.

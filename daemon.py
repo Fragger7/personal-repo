@@ -126,6 +126,12 @@ class DealHunterDaemon:
             try:
                 self.log(f"Evaluating [{raw.source.upper()}] ${raw.price:.0f} - {raw.title[:60]}...")
                 deal = self.evaluator.evaluate_listing(raw)
+                
+                # Strict Quality Gate: Reject low-grade consumer noise and hard-excluded models
+                if deal.deal_score < 6.0 or "hard excluded" in deal.summary.lower() or "reject" in deal.actionable_recommendation.lower():
+                    self.log(f"⏩ Filtered Out: {raw.title[:45]} (Score {deal.deal_score}/10 | {deal.actionable_recommendation})")
+                    continue
+
                 evaluated_deals.append(deal)
                 self.status.total_evaluated += 1
 
@@ -159,33 +165,45 @@ class DealHunterDaemon:
             upserted = self.storage.upsert_many(evaluated_deals)
             self.log(f"Atomically committed {upserted} evaluated deals to {self.storage.filepath.name}.")
 
-            # Send Inventory Update Digest if new items entered deals.json
-            if self.telegram_notifier.bot_token and self.telegram_notifier.chat_id:
+        # 6. Always-On Telegram Pulse Digest & Heartbeat (Dispatches every cycle)
+        if self.telegram_notifier.bot_token and self.telegram_notifier.chat_id:
+            total_active = len(self.storage.get_all())
+            usage = self.evaluator.usage_tracker.get_summary()
+
+            if evaluated_deals:
                 summary_lines = []
                 for d in evaluated_deals[:5]:
                     summary_lines.append(f"• <b>${d.price:,.0f}</b> | {d.deal_score}/10 | {d.title[:45]}...")
-                total_active = len(self.storage.get_all())
-                usage = self.evaluator.usage_tracker.get_summary()
                 digest_html = (
-                    f"✅ <b>Sync Cycle #{self.status.cycle_count + 1} Complete</b>\n"
-                    f"📥 Ingested <b>{len(evaluated_deals)} new listings</b> (Total Active: {total_active})\n\n"
+                    f"📥 <b>Sync Cycle #{self.status.cycle_count + 1} Complete</b>\n"
+                    f"✨ Discovered <b>{len(evaluated_deals)} new listings</b> (Total Active: {total_active})\n\n"
                     + "\n".join(summary_lines)
-                    + f"\n\n🤖 <b>AI Usage:</b> {usage['cycle_calls']} calls ({usage['total_tokens']:,} tokens) | ~{usage['estimated_daily_left']:,}/1,500 daily free requests left\n"
+                    + f"\n\n🤖 <b>AI Usage:</b> {usage['cycle_calls']} calls ({usage['total_tokens']:,} tokens) | ~{usage['estimated_daily_left']:,}/1,500 daily requests left\n"
                     + f"\n👉 <a href=\"https://wsdealhunter.streamlit.app/\"><b>[OPEN WEB DASHBOARD]</b></a>"
                 )
                 self.telegram_notifier.send_system_message("Inventory Updated", digest_html)
+            else:
+                heartbeat_html = (
+                    f"💓 <b>Sync Cycle #{self.status.cycle_count + 1} Heartbeat</b>\n"
+                    f"🔍 Scanned <b>{len(raw_listings)} listings</b> across eBay, Reddit & Syndicated Feeds.\n"
+                    f"📊 <b>0 new unanalyzed items</b> this hour (<b>{total_active} active deals</b> monitored in store).\n"
+                    f"🤖 <b>AI Usage:</b> {usage['total_calls']} total calls ({usage['total_tokens']:,} tokens) | ~{usage['estimated_daily_left']:,}/1,500 daily free requests left\n\n"
+                    f"⚡ <i>Autonomous Scraper Online & Standing By</i>\n"
+                    f"👉 <a href=\"https://wsdealhunter.streamlit.app/\"><b>[OPEN WEB DASHBOARD]</b></a>"
+                )
+                self.telegram_notifier.send_system_message("Bot Heartbeat", heartbeat_html)
 
-            # 6. Optional auto-push to GitHub repo
-            if self.auto_push:
-                self.log("Pushing updated deals.json to GitHub repository...")
-                try:
-                    subprocess.run(
-                        ["python3", "git_sync.py", "--push", f"chore(deals): sync {len(evaluated_deals)} new deals"],
-                        check=False,
-                        capture_output=True,
-                    )
-                except Exception as push_err:
-                    self.log(f"Auto-push error: {push_err}")
+        # 7. Optional auto-push to GitHub repo
+        if self.auto_push and evaluated_deals:
+            self.log("Pushing updated deals.json to GitHub repository...")
+            try:
+                subprocess.run(
+                    ["python3", "git_sync.py", "--push", f"chore(deals): sync {len(evaluated_deals)} new deals"],
+                    check=False,
+                    capture_output=True,
+                )
+            except Exception as push_err:
+                self.log(f"Auto-push error: {push_err}")
 
         elapsed = round(time.time() - cycle_start, 2)
         self.status.cycle_count += 1

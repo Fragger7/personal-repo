@@ -43,9 +43,19 @@ export function App() {
 
   const fetchDeals = useCallback(async () => {
     try {
-      const res = await fetch("/api/deals");
+      // In production (Vercel), fetch directly from the raw GitHub JSON
+      // In development (npm run dev), fetch from the local Express server
+      const url = import.meta.env.PROD 
+        ? "https://raw.githubusercontent.com/Fragger7/personal-repo/main/deals.json"
+        : "/api/deals";
+
+      const res = await fetch(url);
       const data = await res.json();
-      if (data.success && Array.isArray(data.deals)) {
+      
+      // Handle both formats (raw array vs express object)
+      if (Array.isArray(data)) {
+        setDeals(data);
+      } else if (data.success && Array.isArray(data.deals)) {
         setDeals(data.deals);
       }
     } catch (err) {
@@ -55,6 +65,12 @@ export function App() {
 
   const fetchStats = useCallback(async () => {
     try {
+      if (import.meta.env.PROD) {
+        // Vercel static fallback: calculate stats dynamically since Express isn't running
+        // This will be updated by a separate effect based on the raw deals array
+        return; 
+      }
+      
       const res = await fetch("/api/stats");
       const data = await res.json();
       if (data.success) {
@@ -71,7 +87,33 @@ export function App() {
     });
   }, [fetchDeals, fetchStats]);
 
+  // Vercel Dynamic Stats Calculator
+  useEffect(() => {
+    if (import.meta.env.PROD && deals.length > 0) {
+      const totalDeals = deals.length;
+      const unicornCount = deals.filter(d => d.deal_score >= 9.0).length;
+      const highYieldCount = deals.filter(d => d.is_high_yield || (d.deal_score >= 8.5 && d.price <= 750)).length;
+      
+      const avgScore = totalDeals > 0 
+        ? (deals.reduce((acc, d) => acc + d.deal_score, 0) / totalDeals).toFixed(1)
+        : "0.0";
+        
+      setStats({
+        totalDeals,
+        unicornCount,
+        highYieldCount,
+        averageScore: parseFloat(avgScore),
+        lastSync: new Date().toISOString()
+      });
+    }
+  }, [deals]);
+
   const handleSyncEndpoints = async () => {
+    if (import.meta.env.PROD) {
+      showToast("⚡ Automated background daemon is running 24/7 on GitHub Actions. Manual sync is disabled on Vercel.");
+      return;
+    }
+    
     setIsSyncing(true);
     try {
       const res = await fetch("/api/collect", { method: "POST" });
@@ -90,6 +132,11 @@ export function App() {
   };
 
   const handleGitPush = async () => {
+    if (import.meta.env.PROD) {
+      showToast("🎉 You are on the live site! Commits happen automatically via GitHub Actions.");
+      return;
+    }
+
     setIsPushingGit(true);
     try {
       const res = await fetch("/api/git/push", {
@@ -113,6 +160,11 @@ export function App() {
   };
 
   const handleSendPush = async (deal: DealRecord) => {
+    if (import.meta.env.PROD) {
+      showToast("📱 Automated alerts are handled securely by the backend daemon.");
+      return;
+    }
+
     try {
       const res = await fetch("/api/notify/pushover", {
         method: "POST",
