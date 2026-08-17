@@ -15,7 +15,6 @@ export const KpiMetrics: React.FC<KpiMetricsProps> = ({ stats, filteredCount }) 
   const topScore = stats?.top_score ?? 0;
 
   return (
-  return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
       {/* Metric 1: Tracked Inventory */}
       <div className="glass-panel rounded-2xl p-5 relative overflow-hidden group hover:border-slate-700 transition-all">
