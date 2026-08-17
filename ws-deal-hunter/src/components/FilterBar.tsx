@@ -45,8 +45,13 @@ export const FilterBar: React.FC<FilterBarProps> = ({ filters, onChange, onReset
           <span className="text-xs text-slate-400 font-medium mr-1">Sources:</span>
           {[
             { id: "ebay", label: "eBay API", color: "hover:border-blue-500" },
-            { id: "reddit", label: "r/hardwareswap", color: "hover:border-orange-500" },
-            { id: "swappa", label: "Swappa RSS", color: "hover:border-teal-500" },
+            { id: "reddit", label: "r/hws", color: "hover:border-orange-500" },
+            { id: "swappa", label: "Swappa", color: "hover:border-teal-500" },
+            { id: "dell_refurbished", label: "Dell Refurb", color: "hover:border-blue-400" },
+            { id: "microcenter", label: "Microcenter", color: "hover:border-rose-500" },
+            { id: "bh_photo", label: "B&H", color: "hover:border-green-500" },
+            { id: "goodwill", label: "Goodwill", color: "hover:border-indigo-500" },
+            { id: "lenovo_outlet", label: "Lenovo", color: "hover:border-red-500" },
           ].map((src) => {
             const active = filters.sources.includes(src.id);
             return (

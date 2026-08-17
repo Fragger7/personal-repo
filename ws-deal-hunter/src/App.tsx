@@ -25,12 +25,12 @@ export function App() {
 
   // Filter state
   const [filters, setFilters] = useState<FilterState>({
-    minScore: 7.0,
-    maxPrice: 850,
-    sources: ["ebay", "reddit", "swappa"],
+    minScore: 0.0,
+    maxPrice: 2500,
+    sources: ["ebay", "reddit", "swappa", "dell_refurbished", "microcenter", "bh_photo", "goodwill", "lenovo_outlet"],
     search: "",
     onlyHighYield: false,
-    sortBy: "score",
+    sortBy: "newest",
     viewMode: "grid",
   });
 
