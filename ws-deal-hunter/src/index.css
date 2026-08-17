@@ -27,7 +27,7 @@
   0% { transform: translateY(-100%); opacity: 0; }
   10% { opacity: 0.5; }
   90% { opacity: 0.5; }
-  100% { transform: translateY(100vh); opacity: 0; }
+  100% { transform: translateY(1000%); opacity: 0; }
 }
 
 @keyframes glitch {
@@ -39,17 +39,28 @@
   100% { transform: translate(0) }
 }
 
+@keyframes auto-glitch-cycle {
+  0%, 96% { transform: translate(0) }
+  97% { transform: translate(-2px, 1px) }
+  98% { transform: translate(-1px, -1px) }
+  99% { transform: translate(2px, 1px) }
+  100% { transform: translate(1px, -1px) }
+}
+
 @layer utilities {
   .crt-scanline {
-    @apply absolute inset-0 pointer-events-none overflow-hidden z-50;
+    @apply absolute inset-0 pointer-events-none overflow-hidden z-50 mix-blend-screen;
   }
   .crt-scanline::after {
     content: '';
-    @apply absolute top-0 left-0 right-0 h-[5vh] bg-gradient-to-b from-transparent via-emerald-500/10 to-transparent;
+    @apply absolute top-0 left-0 right-0 h-[10%] bg-gradient-to-b from-transparent via-emerald-500/20 to-transparent;
     animation: crt-scan 8s linear infinite;
   }
   .glitch-hover:hover {
     animation: glitch 0.2s cubic-bezier(.25, .46, .45, .94) both infinite;
+  }
+  .auto-glitch {
+    animation: auto-glitch-cycle 4s cubic-bezier(.25, .46, .45, .94) both infinite;
   }
   .industrial-panel {
     @apply bg-[#0a0a0a] border border-[#222] shadow-[inset_0_1px_0_rgba(255,255,255,0.05)];

@@ -282,7 +282,7 @@ export function App() {
         {/* Content Section */}
         <div className="relative z-10 max-w-5xl mx-auto">
           <div className="flex items-center justify-between mb-6 pb-2 border-b border-[#222]">
-            <h2 className="text-[10px] font-bold uppercase tracking-widest text-[#666]">
+            <h2 className="text-[10px] font-bold uppercase tracking-widest text-[#666] auto-glitch">
               <span className="text-emerald-500 tech-text">{filteredDeals.length}</span> Active Opportunities
             </h2>
             <div className="flex gap-2">
