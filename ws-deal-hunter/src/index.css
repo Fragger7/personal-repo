@@ -22,13 +22,41 @@
   }
 }
 
+/* Magnificent UI Effects */
+@keyframes crt-scan {
+  0% { transform: translateY(-100%); opacity: 0; }
+  10% { opacity: 0.5; }
+  90% { opacity: 0.5; }
+  100% { transform: translateY(100vh); opacity: 0; }
+}
+
+@keyframes glitch {
+  0% { transform: translate(0) }
+  20% { transform: translate(-2px, 1px) }
+  40% { transform: translate(-1px, -1px) }
+  60% { transform: translate(2px, 1px) }
+  80% { transform: translate(1px, -1px) }
+  100% { transform: translate(0) }
+}
+
 @layer utilities {
+  .crt-scanline {
+    @apply absolute inset-0 pointer-events-none overflow-hidden z-50;
+  }
+  .crt-scanline::after {
+    content: '';
+    @apply absolute top-0 left-0 right-0 h-[5vh] bg-gradient-to-b from-transparent via-emerald-500/10 to-transparent;
+    animation: crt-scan 8s linear infinite;
+  }
+  .glitch-hover:hover {
+    animation: glitch 0.2s cubic-bezier(.25, .46, .45, .94) both infinite;
+  }
   .industrial-panel {
-    @apply bg-[#0a0a0a] border border-white/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)];
+    @apply bg-[#0a0a0a] border border-[#222] shadow-[inset_0_1px_0_rgba(255,255,255,0.05)];
   }
   
   .industrial-card {
-    @apply bg-[#0a0a0a] border border-[#222] hover:border-[#444] transition-colors duration-200 shadow-[inset_0_1px_0_rgba(255,255,255,0.02)];
+    @apply bg-[#080808] border border-[#222] hover:border-[#444] hover:shadow-[0_0_20px_rgba(16,185,129,0.05)] transition-all duration-300 shadow-[inset_0_1px_0_rgba(255,255,255,0.02)];
   }
   
   .tech-text {
@@ -41,6 +69,10 @@
   
   .laser-accent::before {
     content: '';
-    @apply absolute top-0 left-0 h-full w-[2px] bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.8)];
+    @apply absolute top-0 left-0 h-full w-[2px] bg-emerald-500 shadow-[0_0_15px_rgba(16,185,129,1)];
   }
 }
+/* CRT Scanline Effect */  
+@keyframes scanline { 0%% { transform: translateY(-100%%); } 100%% { transform: translateY(100%%); } }  
+.crt-scanline { position: absolute; top: 0; left: 0; right: 0; height: 10px; background: linear-gradient(to bottom, transparent, rgba(16, 185, 129, 0.4), transparent); opacity: 0.5; animation: scanline 8s linear infinite; pointer-events: none; z-index: 50; }  
+.crt-overlay { background: linear-gradient(rgba(18, 16, 16, 0) 50%%, rgba(0, 0, 0, 0.25) 50%%); background-size: 100%% 4px; position: absolute; top: 0; left: 0; right: 0; bottom: 0; pointer-events: none; z-index: 40; } 

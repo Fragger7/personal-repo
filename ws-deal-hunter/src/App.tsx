@@ -244,10 +244,10 @@ export function App() {
   });
 
   return (
-    <div className="h-screen w-full bg-[#050505] text-[#e2e8f0] font-sans antialiased selection:bg-emerald-500/30 selection:text-emerald-200 flex flex-col lg:flex-row overflow-hidden">
+    <div className="min-h-screen lg:h-screen w-full bg-[#050505] text-[#e2e8f0] font-sans antialiased selection:bg-emerald-500/30 selection:text-emerald-200 flex flex-col lg:flex-row lg:overflow-hidden">
       
       {/* Left Sidebar Command Console */}
-      <aside className="w-full lg:w-[420px] shrink-0 border-b lg:border-b-0 lg:border-r border-[#222] bg-[#080808] flex flex-col h-auto lg:h-screen overflow-y-auto custom-scrollbar shadow-[20px_0_50px_rgba(0,0,0,0.5)] z-20 relative">
+      <aside className="w-full lg:w-[420px] shrink-0 border-b lg:border-b-0 lg:border-r border-[#222] bg-[#080808] flex flex-col lg:h-screen lg:overflow-y-auto custom-scrollbar shadow-[20px_0_50px_rgba(0,0,0,0.5)] z-20 relative">
         <Header
           onSync={handleSyncEndpoints}
           isSyncing={isSyncing}
@@ -275,8 +275,9 @@ export function App() {
       {/* Right Content Stream */}
       <main className="flex-1 bg-[#030303] h-screen overflow-y-auto custom-scrollbar relative p-4 sm:p-6 lg:p-8">
         
-        {/* Subtle background tech grid */}
+        {/* Subtle background tech grid and CRT scanline */}
         <div className="absolute inset-0 pointer-events-none opacity-[0.03]" style={{ backgroundImage: 'linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)', backgroundSize: '50px 50px' }} />
+        <div className="crt-scanline" />
 
         {/* Content Section */}
         <div className="relative z-10 max-w-5xl mx-auto">
