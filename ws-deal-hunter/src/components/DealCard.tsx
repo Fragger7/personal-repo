@@ -157,7 +157,7 @@ export const DealCard: React.FC<DealCardProps> = ({ deal, onSendPush }) => {
           href={deal.url}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex-1 inline-flex items-center justify-center gap-2 px-3 py-2.5 bg-[#111] hover:bg-[#1a1a1a] text-emerald-500 border border-[#333] hover:border-emerald-500/50 text-[10px] font-bold uppercase tracking-widest transition duration-150 active:scale-95"
+          className="flex-1 inline-flex items-center justify-center gap-2 px-3 py-2.5 bg-[#111] hover:bg-[#1a1a1a] text-emerald-500 border border-[#333] hover:border-emerald-500/50 text-[10px] font-bold uppercase tracking-widest transition duration-150 active:scale-95 glitch-hover"
         >
           <span>Open Listing</span>
           <ExternalLink className="h-3.5 w-3.5" />
@@ -166,7 +166,7 @@ export const DealCard: React.FC<DealCardProps> = ({ deal, onSendPush }) => {
         <button
           onClick={handlePush}
           disabled={isSending}
-          className={`inline-flex items-center justify-center p-2.5 text-xs font-semibold border transition duration-150 active:scale-95 ${
+          className={`inline-flex items-center justify-center p-2.5 text-xs font-semibold border transition duration-150 active:scale-95 glitch-hover ${
             pushSent
               ? "bg-[#111] border-emerald-500/50 text-emerald-500"
               : "bg-[#0a0a0a] hover:bg-[#111] border-[#333] text-[#666]"
