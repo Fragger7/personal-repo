@@ -90,19 +90,33 @@ export function App() {
   // Vercel Dynamic Stats Calculator
   useEffect(() => {
     if (import.meta.env.PROD && deals.length > 0) {
-      const totalDeals = deals.length;
-      const unicornCount = deals.filter(d => d.deal_score >= 9.0).length;
-      const highYieldCount = deals.filter(d => d.is_high_yield || (d.deal_score >= 8.5 && d.price <= 750)).length;
+      const total_deals = deals.length;
+      const high_yield_deals = deals.filter(d => d.is_high_yield || (d.deal_score >= 8.5 && d.price <= 750)).length;
       
-      const avgScore = totalDeals > 0 
-        ? (deals.reduce((acc, d) => acc + d.deal_score, 0) / totalDeals).toFixed(1)
-        : "0.0";
+      const avg_profit = total_deals > 0 
+        ? Math.round(deals.reduce((acc, d) => acc + (d.estimated_profit || 0), 0) / total_deals)
+        : 0;
+        
+      const avg_margin_pct = total_deals > 0 
+        ? Math.round(deals.reduce((acc, d) => acc + (d.arbitrage_margin_pct || 0), 0) / total_deals)
+        : 0;
+        
+      const top_score = total_deals > 0 
+        ? Math.max(...deals.map(d => d.deal_score || 0))
+        : 0;
+
+      const source_breakdown = deals.reduce((acc: Record<string, number>, d) => {
+        acc[d.source] = (acc[d.source] || 0) + 1;
+        return acc;
+      }, {});
         
       setStats({
-        totalDeals,
-        unicornCount,
-        highYieldCount,
-        averageScore: parseFloat(avgScore),
+        total_deals,
+        high_yield_deals,
+        avg_profit,
+        avg_margin_pct,
+        top_score,
+        source_breakdown,
         lastSync: new Date().toISOString()
       });
     }
