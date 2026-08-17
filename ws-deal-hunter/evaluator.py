@@ -385,6 +385,37 @@ class GeminiHardwareEvaluator:
                 "actionable_recommendation": "REJECT / LOW-VOLTAGE CPU",
                 "confidence_score": 0.99,
             }
+        # 5) Hard Exclude Gaming Laptops (MSI, ROG, Legion, Alienware)
+        if any(w in text for w in ["msi", "gaming laptop", "alienware", "rog strix", "zephyrus", "lenovo legion", "hp omen", "acer predator", "razer blade"]) and not any(w in text for w in ["precision", "zbook", "thinkpad p"]):
+            return {
+                "cpu": "Gaming CPU",
+                "ram_gb": ram_gb,
+                "ssd_gb": 512,
+                "gpu": "Gaming GPU",
+                "screen": "High Refresh Rate",
+                "condition": "Hard Excluded (Gaming Laptop)",
+                "fair_market_value": 0.0,
+                "deal_score": 0.0,
+                "summary": "Hard Excluded: Gaming laptops are rejected per Workstation Deal Hunter mandate.",
+                "actionable_recommendation": "REJECT / GAMING LAPTOP",
+                "confidence_score": 0.99,
+            }
+
+        # 6) Hard Exclude PC Components / Combos
+        if any(w in text for w in ["combo", "bundle", "mobo", "motherboard", "barebone", "cpu cooler", "case", "chassis", "cpu only"]) and not any(w in text for w in ["precision", "zbook", "thinkpad p", "macbook", "mac studio", "mac pro"]):
+            return {
+                "cpu": "Component/Combo",
+                "ram_gb": ram_gb,
+                "ssd_gb": 0,
+                "gpu": "N/A",
+                "screen": "N/A",
+                "condition": "Hard Excluded (PC Components)",
+                "fair_market_value": 0.0,
+                "deal_score": 0.0,
+                "summary": "Hard Excluded: Individual PC components or motherboard combos are not complete workstations.",
+                "actionable_recommendation": "REJECT / PC COMPONENTS",
+                "confidence_score": 0.99,
+            }
 
         # ==========================================
         # 2. CPU & SILICON VALUATION
