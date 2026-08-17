@@ -194,7 +194,7 @@ class EBayCollector:
                     return listings[:10]
         except Exception:
             pass
-        return self._get_syndicated_fallback()
+        return []
 
     def _get_syndicated_fallback(self) -> List[RawListing]:
         """Realistic syndicated mock feeds for seamless testing and zero-setup demonstration."""
@@ -283,9 +283,7 @@ class RedditCollector:
             sub_listings = self._fetch_subreddit_listings(sub)
             all_listings.extend(sub_listings)
         
-        if all_listings:
-            return all_listings
-        return self._get_fallback_listings()
+        return all_listings
 
     def _fetch_subreddit_listings(self, subreddit: str) -> List[RawListing]:
         """Fetch listings from a specific subreddit using cloudscraper and old.reddit."""
@@ -517,8 +515,7 @@ class SwappaCollector:
         if live_deals:
             return live_deals
 
-        # Fallback realistic items
-        return self._get_fallback_listings()
+        return []
 
     def _fetch_live_rss_deals(self) -> List[RawListing]:
         """Scrape live hardware deals from targeted workstation and laptop deal streams."""
@@ -763,7 +760,7 @@ class DellRefurbishedCollector:
         except Exception as e:
             print(f"[DellRefurbishedCollector] Live scrape error: {e}")
 
-        return self._get_fallback_listings()
+        return []
 
     def _get_fallback_listings(self) -> List[RawListing]:
         """Realistic curated fallback items for Dell Refurbished."""
@@ -847,7 +844,7 @@ class LenovoOutletCollector:
         except Exception as e:
             print(f"[LenovoOutletCollector] Scrape error: {e}")
 
-        return self._get_fallback_listings()
+        return []
 
     def _get_fallback_listings(self) -> List[RawListing]:
         """Realistic curated fallback items from Lenovo Outlet."""
@@ -913,10 +910,10 @@ class ShopGoodwillCollector:
                     price_match = re.search(r"\$\s*([0-9,]+(?:\.[0-9]{2})?)", f"{title} {desc}")
                     price = float(price_match.group(1).replace(",", "")) if price_match else 0.0
 
-                    if price >= 80 and any(kw in title.lower() for kw in ["thinkpad", "precision", "zbook", "macbook", "workstation"]):
+                    if price >= 100 and any(kw in title.lower() for kw in ["thinkpad", "precision", "zbook", "workstation"]):
                         listings.append(
                             RawListing(
-                                id=f"goodwill_lot_{idx}_{abs(hash(title)) % 1000000}",
+                                id=f"goodwill_{idx}_{abs(hash(title)) % 1000000}",
                                 source="goodwill",
                                 title=f"Goodwill Estate Liquidation: {title}",
                                 description=desc[:350],
@@ -934,7 +931,7 @@ class ShopGoodwillCollector:
         except Exception as e:
             print(f"[ShopGoodwillCollector] Scrape error: {e}")
 
-        return self._get_fallback_listings()
+        return []
 
     def _get_fallback_listings(self) -> List[RawListing]:
         """Realistic curated fallback liquidation auction items."""
