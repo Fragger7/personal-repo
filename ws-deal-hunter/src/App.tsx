@@ -244,71 +244,91 @@ export function App() {
   });
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans antialiased selection:bg-emerald-500/30 selection:text-emerald-200">
-      {/* Top Header */}
-      <Header
-        onSync={handleSyncEndpoints}
-        isSyncing={isSyncing}
-        onOpenEvaluate={() => setIsEvaluateOpen(true)}
-        onOpenCode={() => setIsCodeOpen(true)}
-        onOpenNotify={() => setIsNotifyOpen(true)}
-        onGitPush={handleGitPush}
-        isPushingGit={isPushingGit}
-        totalDeals={deals.length}
-      />
-
-      {/* Main Layout Container */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        {/* KPI Metrics Dashboard */}
-        <KpiMetrics stats={stats} filteredCount={filteredDeals.length} />
-
-        {/* Filter Controls Toolbar */}
-        <FilterBar
-          filters={filters}
-          onChange={setFilters}
-          onReset={handleResetFilters}
+    <div className="h-screen w-full bg-[#050505] text-[#e2e8f0] font-sans antialiased selection:bg-emerald-500/30 selection:text-emerald-200 flex flex-col lg:flex-row overflow-hidden">
+      
+      {/* Left Sidebar Command Console */}
+      <aside className="w-full lg:w-[420px] shrink-0 border-b lg:border-b-0 lg:border-r border-[#222] bg-[#080808] flex flex-col h-auto lg:h-screen overflow-y-auto custom-scrollbar shadow-[20px_0_50px_rgba(0,0,0,0.5)] z-20 relative">
+        <Header
+          onSync={handleSyncEndpoints}
+          isSyncing={isSyncing}
+          onOpenEvaluate={() => setIsEvaluateOpen(true)}
+          onOpenCode={() => setIsCodeOpen(true)}
+          onOpenNotify={() => setIsNotifyOpen(true)}
+          onGitPush={handleGitPush}
+          isPushingGit={isPushingGit}
+          totalDeals={deals.length}
         />
 
-        {/* Content Section */}
-        {isLoading ? (
-          <div className="flex flex-col items-center justify-center py-20 text-slate-400">
-            <RefreshCw className="h-8 w-8 text-emerald-400 animate-spin mb-3" />
-            <p className="text-sm">Loading workstation arbitrage deals...</p>
-          </div>
-        ) : filteredDeals.length === 0 ? (
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-12 text-center max-w-lg mx-auto my-12">
-            <div className="h-12 w-12 rounded-full bg-slate-800 text-slate-400 flex items-center justify-center mx-auto mb-4">
-              <Layers className="h-6 w-6" />
-            </div>
-            <h3 className="text-base font-bold text-white mb-1">
-              No Listings Match Filter Parameters
-            </h3>
-            <p className="text-xs text-slate-400 mb-6 leading-relaxed">
-              Try adjusting the Deal Score slider, increasing the maximum asking price, or clicking Reset to view all tracked workstation inventory.
-            </p>
-            <button
-              onClick={handleResetFilters}
-              className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold transition"
-            >
-              Reset Filters
-            </button>
-          </div>
-        ) : filters.viewMode === "grid" ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {filteredDeals.map((deal) => (
-              <DealCard
-                key={deal.id}
-                deal={deal}
-                onSendPush={handleSendPush}
-              />
-            ))}
-          </div>
-        ) : (
-          <DealTable
-            deals={filteredDeals}
-            onSendPush={handleSendPush}
+        <div className="p-5 lg:p-6 flex flex-col gap-6">
+          {/* KPI Metrics Dashboard */}
+          <KpiMetrics stats={stats} filteredCount={filteredDeals.length} />
+
+          {/* Filter Controls Toolbar */}
+          <FilterBar
+            filters={filters}
+            onChange={setFilters}
+            onReset={handleResetFilters}
           />
-        )}
+        </div>
+      </aside>
+
+      {/* Right Content Stream */}
+      <main className="flex-1 bg-[#030303] h-screen overflow-y-auto custom-scrollbar relative p-4 sm:p-6 lg:p-8">
+        
+        {/* Subtle background tech grid */}
+        <div className="absolute inset-0 pointer-events-none opacity-[0.03]" style={{ backgroundImage: 'linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)', backgroundSize: '50px 50px' }} />
+
+        {/* Content Section */}
+        <div className="relative z-10 max-w-5xl mx-auto">
+          <div className="flex items-center justify-between mb-6 pb-2 border-b border-[#222]">
+            <h2 className="text-[10px] font-bold uppercase tracking-widest text-[#666]">
+              <span className="text-emerald-500 tech-text">{filteredDeals.length}</span> Active Opportunities
+            </h2>
+            <div className="flex gap-2">
+              <span className="inline-block w-2 h-2 bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)] animate-pulse" />
+            </div>
+          </div>
+
+          {isLoading ? (
+            <div className="flex flex-col items-center justify-center py-32 text-[#555]">
+              <RefreshCw className="h-10 w-10 text-emerald-500 animate-spin mb-4" />
+              <p className="text-[10px] font-bold uppercase tracking-widest">Intercepting Global Streams...</p>
+            </div>
+          ) : filteredDeals.length === 0 ? (
+            <div className="industrial-panel p-12 text-center max-w-lg mx-auto my-20">
+              <div className="h-12 w-12 border border-[#333] bg-[#111] text-[#666] flex items-center justify-center mx-auto mb-6">
+                <Layers className="h-5 w-5" />
+              </div>
+              <h3 className="text-[13px] font-bold text-[#aaa] uppercase tracking-widest mb-3">
+                No Signals Detected
+              </h3>
+              <p className="text-[11px] text-[#666] mb-8 leading-relaxed font-medium">
+                Adjust parameters to broaden the search matrix.
+              </p>
+              <button
+                onClick={handleResetFilters}
+                className="px-5 py-2.5 bg-[#111] hover:bg-[#1a1a1a] text-emerald-500 border border-[#333] hover:border-emerald-500/50 text-[10px] font-bold tracking-widest uppercase transition-all"
+              >
+                Reset Matrix Filters
+              </button>
+            </div>
+          ) : filters.viewMode === "grid" ? (
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+              {filteredDeals.map((deal) => (
+                <DealCard
+                  key={deal.id}
+                  deal={deal}
+                  onSendPush={handleSendPush}
+                />
+              ))}
+            </div>
+          ) : (
+            <DealTable
+              deals={filteredDeals}
+              onSendPush={handleSendPush}
+            />
+          )}
+        </div>
       </main>
 
       {/* Floating Toast Notification */}

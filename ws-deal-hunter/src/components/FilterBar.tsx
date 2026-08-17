@@ -17,8 +17,8 @@ export const FilterBar: React.FC<FilterBarProps> = ({ filters, onChange, onReset
   };
 
   return (
-    <div className="industrial-panel p-6 mb-8">
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+    <div className="industrial-panel p-5">
+      <div className="flex flex-col gap-6">
         {/* Search Bar */}
         <div className="relative flex-1 min-w-[240px]">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-[#555]" />
@@ -41,8 +41,8 @@ export const FilterBar: React.FC<FilterBarProps> = ({ filters, onChange, onReset
         </div>
 
         {/* Source Badges */}
-        <div className="flex items-center flex-wrap gap-2 lg:justify-end">
-          <span className="text-[10px] uppercase tracking-widest text-[#555] font-bold mr-2">Sources</span>
+        <div className="flex items-center flex-wrap gap-2">
+          <span className="text-[10px] uppercase tracking-widest text-[#555] font-bold block w-full mb-1">Sources</span>
           {[
             { id: "ebay", label: "eBay", color: "hover:border-blue-500/50 hover:text-blue-500" },
             { id: "reddit", label: "r/hws", color: "hover:border-orange-500/50 hover:text-orange-500" },
@@ -109,7 +109,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({ filters, onChange, onReset
       </div>
 
       {/* Sliders Row */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mt-6 pt-6 border-t border-[#222]">
+      <div className="flex flex-col gap-6 mt-6 pt-6 border-t border-[#222]">
         {/* Deal Score Slider */}
         <div>
           <div className="flex justify-between items-center text-xs mb-1.5">
