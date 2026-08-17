@@ -244,10 +244,14 @@ export function App() {
   });
 
   return (
-    <div className="min-h-screen lg:h-screen w-full bg-[#050505] text-[#e2e8f0] font-sans antialiased selection:bg-emerald-500/30 selection:text-emerald-200 flex flex-col lg:flex-row lg:overflow-hidden">
+    <div className="min-h-screen w-full bg-[#050505] text-[#e2e8f0] font-sans antialiased selection:bg-emerald-500/30 selection:text-emerald-200">
       
-      {/* Left Sidebar Command Console */}
-      <aside className="w-full lg:w-[420px] shrink-0 border-b lg:border-b-0 lg:border-r border-[#222] bg-[#080808] flex flex-col lg:h-screen lg:overflow-y-auto custom-scrollbar shadow-[20px_0_50px_rgba(0,0,0,0.5)] z-20 relative">
+      {/* Subtle background tech grid and CRT scanline */}
+      <div className="fixed inset-0 pointer-events-none opacity-[0.03] z-0" style={{ backgroundImage: 'linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)', backgroundSize: '50px 50px' }} />
+      <div className="crt-scanline fixed" />
+
+      {/* Top Header */}
+      <div className="relative z-20 border-b border-[#222] bg-[#0a0a0abf] backdrop-blur-md sticky top-0">
         <Header
           onSync={handleSyncEndpoints}
           isSyncing={isSyncing}
@@ -258,84 +262,78 @@ export function App() {
           isPushingGit={isPushingGit}
           totalDeals={deals.length}
         />
-
-        <div className="p-5 lg:p-6 flex flex-col gap-6">
-          {/* KPI Metrics Dashboard */}
-          <KpiMetrics stats={stats} filteredCount={filteredDeals.length} />
-
-          {/* Filter Controls Toolbar */}
+        
+        {/* Horizontal Ribbon Filter Bar */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <FilterBar
             filters={filters}
             onChange={setFilters}
             onReset={handleResetFilters}
           />
         </div>
-      </aside>
+      </div>
 
-      {/* Right Content Stream */}
-      <main className="flex-1 bg-[#030303] h-screen overflow-y-auto custom-scrollbar relative p-4 sm:p-6 lg:p-8">
+      {/* Main Layout Container */}
+      <main className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         
-        {/* Subtle background tech grid and CRT scanline */}
-        <div className="absolute inset-0 pointer-events-none opacity-[0.03]" style={{ backgroundImage: 'linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)', backgroundSize: '50px 50px' }} />
-        <div className="crt-scanline" />
+        {/* KPI Metrics Dashboard */}
+        <KpiMetrics stats={stats} filteredCount={filteredDeals.length} />
+
+        <div className="flex items-center justify-between mb-8 mt-4 pb-2 border-b border-[#222]">
+          <h2 className="text-[11px] font-bold uppercase tracking-widest text-[#666] auto-glitch">
+            <span className="text-emerald-500 tech-text">{filteredDeals.length}</span> Active Opportunities
+          </h2>
+          <div className="flex gap-2">
+            <span className="inline-block w-2 h-2 bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)] animate-pulse" />
+          </div>
+        </div>
 
         {/* Content Section */}
-        <div className="relative z-10 max-w-5xl mx-auto">
-          <div className="flex items-center justify-between mb-6 pb-2 border-b border-[#222]">
-            <h2 className="text-[10px] font-bold uppercase tracking-widest text-[#666] auto-glitch">
-              <span className="text-emerald-500 tech-text">{filteredDeals.length}</span> Active Opportunities
-            </h2>
-            <div className="flex gap-2">
-              <span className="inline-block w-2 h-2 bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)] animate-pulse" />
-            </div>
+        {isLoading ? (
+          <div className="flex flex-col items-center justify-center py-32 text-[#555]">
+            <RefreshCw className="h-10 w-10 text-emerald-500 animate-spin mb-4" />
+            <p className="text-[10px] font-bold uppercase tracking-widest">Intercepting Global Streams...</p>
           </div>
-
-          {isLoading ? (
-            <div className="flex flex-col items-center justify-center py-32 text-[#555]">
-              <RefreshCw className="h-10 w-10 text-emerald-500 animate-spin mb-4" />
-              <p className="text-[10px] font-bold uppercase tracking-widest">Intercepting Global Streams...</p>
+        ) : filteredDeals.length === 0 ? (
+          <div className="industrial-panel p-12 text-center max-w-lg mx-auto my-20">
+            <div className="h-12 w-12 border border-[#333] bg-[#111] text-[#666] flex items-center justify-center mx-auto mb-6">
+              <Layers className="h-5 w-5" />
             </div>
-          ) : filteredDeals.length === 0 ? (
-            <div className="industrial-panel p-12 text-center max-w-lg mx-auto my-20">
-              <div className="h-12 w-12 border border-[#333] bg-[#111] text-[#666] flex items-center justify-center mx-auto mb-6">
-                <Layers className="h-5 w-5" />
-              </div>
-              <h3 className="text-[13px] font-bold text-[#aaa] uppercase tracking-widest mb-3">
-                No Signals Detected
-              </h3>
-              <p className="text-[11px] text-[#666] mb-8 leading-relaxed font-medium">
-                Adjust parameters to broaden the search matrix.
-              </p>
-              <button
-                onClick={handleResetFilters}
-                className="px-5 py-2.5 bg-[#111] hover:bg-[#1a1a1a] text-emerald-500 border border-[#333] hover:border-emerald-500/50 text-[10px] font-bold tracking-widest uppercase transition-all"
-              >
-                Reset Matrix Filters
-              </button>
-            </div>
-          ) : filters.viewMode === "grid" ? (
-            <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-              {filteredDeals.map((deal) => (
-                <DealCard
-                  key={deal.id}
-                  deal={deal}
-                  onSendPush={handleSendPush}
-                />
-              ))}
-            </div>
-          ) : (
-            <DealTable
-              deals={filteredDeals}
-              onSendPush={handleSendPush}
-            />
-          )}
-        </div>
+            <h3 className="text-[13px] font-bold text-[#aaa] uppercase tracking-widest mb-3">
+              No Signals Detected
+            </h3>
+            <p className="text-[11px] text-[#666] mb-8 leading-relaxed font-medium">
+              Adjust parameters to broaden the search matrix.
+            </p>
+            <button
+              onClick={handleResetFilters}
+              className="px-5 py-2.5 bg-[#111] hover:bg-[#1a1a1a] text-emerald-500 border border-[#333] hover:border-emerald-500/50 text-[10px] font-bold tracking-widest uppercase transition-all"
+            >
+              Reset Matrix Filters
+            </button>
+          </div>
+        ) : filters.viewMode === "grid" ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {filteredDeals.map((deal) => (
+              <DealCard
+                key={deal.id}
+                deal={deal}
+                onSendPush={handleSendPush}
+              />
+            ))}
+          </div>
+        ) : (
+          <DealTable
+            deals={filteredDeals}
+            onSendPush={handleSendPush}
+          />
+        )}
       </main>
 
       {/* Floating Toast Notification */}
       {toastMessage && (
-        <div className="fixed bottom-6 right-6 z-50 bg-slate-900 border border-emerald-500/50 text-emerald-300 px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3 text-xs font-semibold animate-in slide-in-from-bottom-5 duration-200">
-          <Sparkles className="h-4 w-4 text-emerald-400 shrink-0" />
+        <div className="fixed bottom-6 right-6 z-50 bg-[#111] border border-emerald-500/50 text-emerald-500 px-5 py-4 shadow-2xl flex items-center gap-3 text-[11px] uppercase tracking-widest font-bold animate-in slide-in-from-bottom-5 duration-200">
+          <Sparkles className="h-4 w-4 text-emerald-500 shrink-0" />
           <span>{toastMessage}</span>
         </div>
       )}
