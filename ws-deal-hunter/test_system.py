@@ -23,10 +23,12 @@ if hasattr(sys.stderr, "reconfigure"):
     sys.stderr.reconfigure(encoding="utf-8", errors="replace")
 
 from collector import (
+    BAndHCollector,
     DellRefurbishedCollector,
     EBayCollector,
     HardwareCollectorHub,
     LenovoOutletCollector,
+    MicroCenterCollector,
     RawListing,
     RedditCollector,
     ShopGoodwillCollector,
@@ -131,6 +133,22 @@ class TestCollectors(unittest.TestCase):
         fixtures = collector._get_fallback_listings()
         self.assertGreater(len(fixtures), 0)
         self.assertEqual(fixtures[0].source, "goodwill")
+
+    def test_bh_photo_collector(self) -> None:
+        collector = BAndHCollector()
+        listings = collector.fetch_listings()
+        self.assertIsInstance(listings, list)
+        fixtures = collector._get_fallback_listings()
+        self.assertGreater(len(fixtures), 0)
+        self.assertEqual(fixtures[0].source, "bh_photo")
+
+    def test_microcenter_collector(self) -> None:
+        collector = MicroCenterCollector()
+        listings = collector.fetch_listings()
+        self.assertIsInstance(listings, list)
+        fixtures = collector._get_fallback_listings()
+        self.assertGreater(len(fixtures), 0)
+        self.assertEqual(fixtures[0].source, "microcenter")
 
     def test_collector_hub_aggregation(self) -> None:
         hub = HardwareCollectorHub()
