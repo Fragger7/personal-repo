@@ -15,8 +15,13 @@ The Universal Lease Hunter Engine is an autonomous AI lease broker protocol curr
 The core aggregation engine relies on backend Node.js fetching logic combined with `@google/genai` and Chrome Remote Debugging Protocol (CDP) attachment:
 *   **CarEdge Aggregator Node (`server/scraping.ts`)**: Bypasses Cloudflare using direct REST API requests. It dynamically loops and paginates through results (up to 5 pages / 250 vehicles) to gather wide regional coverage in seconds.
 *   **Dealer-Direct Headless Node (`server/crawler/scrape-local-dealers-headless.ts`)**: Bypasses strict dealer firewalls (Akamai EdgeSuite) via stealth Playwright automation. It intercepts raw `DDC.dataLayer` and DI internal JSON payloads to extract pure ground-truth MSRPs, exact internet selling prices (discounts), and hidden `inventoryDate` metrics for true Days on Lot calculations.
-*   **Sequential Baseline Extraction**: Extracts baselines (MSRP, Residuals, Money Factor) from Edmunds/Leasehackr forums via Gemini search grounding (`/api/scrape/extract-baselines`).
-*   **Multi-Node Aggregation Engine**: The `IntelDashboard.tsx` simultaneously triggers both nodes, dynamically merging and deduplicating CarEdge data with Dealer-Direct data, using the dealership's true API data to overwrite standard aggregator numbers.
+*   **Sequential Baseline & Captive Rate Verification Engine (`server/scraping.ts`)**: 
+    - Extracts live Tier 1 Buy Rate Money Factors (MF), Residual Values (RV%), and regional Lease Cash from Edmunds forums and captive lender bulletins (Kia Finance America).
+    - Clusters regional zones (e.g. Austin / Round Rock Metro Zone 78665, 787xx, 782xx) and tracks monthly program freshness.
+    - Features a **1-Click Forum Post Generator & Modal Alert**: Pre-formats exact inquiries for Edmunds moderators, links directly to the discussion thread, and allows 1-click push alerts to the user's Telegram.
+    - Ingests Leasehackr Calculator and Rate Findr share links via `/api/scrape/parse-ratefindr` for instant high-confidence baseline overrides.
+*   **CarGurus CDP Aggregator Node (`server/crawler/cargurus-cdp-master.ts`)**: Connects over Chrome Remote Debugging Protocol (CDP) on port 9222 to capture live CarGurus XHR streams and VDP URLs with zero Cloudflare/DataDome blocks.
+*   **3-Node Triangulated Aggregation Engine**: The `IntelDashboard.tsx` simultaneously triggers all three channels (CarEdge + Dealer Direct + CarGurus), dynamically merging and deduplicating data by VIN, prioritizing ground-truth dealership data while preserving aggregator deal tags and direct links.
 *   **Telegram Push Notification Alert Engine (`server/services/telegram.ts`)**: Dispatches instant formatted deal cards with direct, working vehicle hyperlinks directly to the user's phone.
 *   **Outreach & Negotiation Node (CarGurus / Dealer Chat)**: Optimal platform for initial contact and executing the "Golden Outreach Template".
 

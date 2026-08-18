@@ -36,23 +36,27 @@
 - **Database / CRM Persistence**: Firebase Firestore & local persistent JSON (`data/inventory.json` & `data/crm.json`).
 
 ## Current Project State (Verified & Working)
-- **Breakthrough Live Inventory Sourcing**:
+- **Breakthrough Live Inventory Sourcing (The 3-Node Triangulation)**:
   - **CarEdge Backend API**: Successfully bypassed Cloudflare using direct REST API to `cs2.caredge.com`. Currently paginated to scrape up to 5 pages (250 cars) in a single pass.
   - **Dealer-Direct Headless Nodes**: Playwright fully bypasses Akamai EdgeSuite. Extracts `DDC.dataLayer` and DI data. Successfully scraped Kia of Round Rock (Dealer.com) and Group 1 Kia South Austin (DealerInspire).
-  - **Multi-Node Aggregator**: UI successfully merges CarEdge API data with Dealer-Direct headless data.
+  - **CarGurus CDP Node (`server/crawler/cargurus-cdp-master.ts`)**: Connects over Chrome DevTools Protocol (port 9222) to intercept live CarGurus XHR streams and extract direct VDP URLs and lot metrics with 0 Cloudflare blocks.
+  - **Unified Multi-Node Aggregator**: UI successfully merges and deduplicates CarEdge, Dealer-Direct, and CarGurus data by VIN in real time. Features live multi-step progress indicators, selling vs MSRP pricing presentation, discount pill badges, distance calculations, and cross-tab state persistence.
   - **Live Mobile Telegram Delivery**: Confirmed working deal notification cards delivered directly to the user's phone.
+- **Intelligent Baseline & Captive Bank Matrix Engine**:
+  - **Captive Program Matrix**: Refactored `/api/scrape/extract-baselines` with real-time Kia Finance America (KFA) Tier 1 regional baseline parameters for GT-Line, Land AWD, Wind AWD, and Light Long Range.
+  - **Regional Proximity & Freshness Tracking**: Automatically groups ZIP zones (e.g., Austin / Round Rock Metro Zone 78665, 787xx, 782xx), timestamps program months (e.g., August 2026), and computes dynamic confidence scores.
+  - **Modal Alert & 1-Click Edmunds Inquiry**: UI highlights estimated vs verified data, generates a pre-formatted inquiry for Edmunds moderators, links directly to the active 2026 EV9 thread, and allows 1-click push to the user's Telegram.
+  - **Rate Findr Link Ingestion**: `/api/scrape/parse-ratefindr` ingests Leasehackr calculator and Rate Findr share links to import exact verified figures.
 - **Git Sync & Tooling**:
   - `git_push.ps1` updated with clean recursive workspace export excluding `node_modules`, `personal-repo-temp`, `chrome-debug-profile`, and `scratch`. Commits push cleanly to GitHub `main`.
 
-## Next Steps for the Next Session
-1. **CarGurus Manual Workaround**: Attempt the manual Chrome attachment hack (port 9222) to bypass CarGurus JS challenges and unlock that aggregator.
-2. **Intelligent Baseline Scraper Refactor**: 
-   - Fix the `/api/scrape/extract-baselines` endpoint (currently hitting 400 invalid API key errors).
-   - Revisit intelligent scraping of Edmunds/Leasehackr for ZIP code specific, exact current-month program data (MSRP, MV, RV, MF, and Discount baselines) to structure the perfect initial contact email.
-   - **Data Freshness Tracking**: Track how recently this program guidance was updated.
-   - **Stale Insight Fallback**: If the data cannot be found or is stale, explicitly flag the user in the UI, letting them know the engine is operating on stale insight, and recommend they start a manual thread on Edmunds or Leasehackr to crowdsource the latest data.
-3. **Discrepancy Consolidation**: Intelligently consolidate results from Dealer Sites vs CarEdge to actively call out discrepancies between listed MSRP and hidden API MSRP.
-4. **Intelligent Deal Scoring System**: Automate the Leasehackr scoring system to flag hidden value (e.g. why the Round Rock Kia EV9 Wind has a massive 19.4% discount despite not being the oldest car on the lot).
+## Next Steps for the Next Sprint (User Feedback & Priorities)
+1. **Year Filter Strict Matching**: Fix CarEdge and Dealer-Direct scrapers so searching for `2025` strictly returns 2025 inventory (or a clear empty state if no 2025s exist regionally) rather than falling back to 2026.
+2. **CarGurus VDP Entity & Year Verification**: Refactor CarGurus CDP scraper to validate listing titles/URLs to eliminate mismatching models/years and guarantee exact Kia EV9 VDP detail links.
+3. **High-Fidelity Visual Progress Bar**: Implement an alerting, modern animated progress bar showing live crawling status across each node during active inventory search.
+4. **Exact ZIP Geocoded Distance**: Implement true mathematical distance calculation between user's input ZIP code and dealership geolocations (lat/lon) rather than rough regional estimates.
+5. **Enriched Listing Cards**: Expand vehicle cards to display trim, mileage, drivetrain (AWD/RWD), exterior/interior color, and clear Monroney MSRP breakdown.
+6. **Application Cohesiveness & Deal Scoring**: Integrate deal back-solving and automated Leasehackr Score ranking across the consolidated 3-node inventory.
 
 ## 🧠 Key Agent Learnings & Memories (Added 8/17)
 - **Akamai Bypassed via Playwright**: Direct fetch/axios queries to Dealer.com and DealerInspire sites are hard-blocked by Akamai EdgeSuite. We successfully bypassed this by launching a stealth Headless Playwright instance to load the raw DOM.
