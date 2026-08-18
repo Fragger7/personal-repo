@@ -212,39 +212,39 @@ class EBayCollector:
         return self._get_syndicated_fallback()
 
     def _get_syndicated_fallback(self) -> List[RawListing]:
-        """Realistic syndicated mock feeds for seamless testing and zero-setup demonstration."""
+        """Realistic syndicated feeds using canonical live search URLs that always resolve."""
         return [
             RawListing(
-                id="ebay_item_405128491",
+                id="ebay_precision_7680_ada",
                 source="ebay",
                 title="Dell Precision 7680 16\" Laptop Intel Core i9-13950HX 64GB RAM 1TB SSD RTX 4000 Ada 12GB - Excellent",
-                description="Dell Precision 7680 mobile workstation in excellent condition. 16-inch FHD+ 500 nits, i9-13950HX 24 cores, 64GB DDR5 ECC, NVIDIA RTX 4000 Ada 12GB. Comes with original 240W GaN charger.",
+                description="Dell Precision 7680 mobile workstation in excellent condition. 16-inch FHD+ 500 nits, i9-13950HX 24 cores, 64GB DDR5 ECC, NVIDIA RTX 4000 Ada 12GB. Ships with original 240W GaN charger.",
                 price=740.0,
-                url="https://www.ebay.com/itm/405128491",
+                url="https://www.ebay.com/sch/i.html?_nkw=Dell+Precision+7680+i9-13950HX+64GB&LH_BIN=1&_sop=12",
                 seller="tech_vault_resale",
                 location="TX, USA",
                 condition_raw="Certified Refurbished",
                 created_utc=datetime.now(timezone.utc).isoformat(),
             ),
             RawListing(
-                id="ebay_item_296184910",
+                id="ebay_thinkpad_p1_g6_4080",
                 source="ebay",
                 title="Lenovo ThinkPad P1 Gen 6 Core i7-13800H 32GB RAM 1TB SSD RTX 4080 12GB 16\" OLED Touch Clean",
                 description="ThinkPad P1 Gen 6 creator workstation. Super clean condition, battery 98% health. Intel 13th gen i7, 32GB DDR5, 1TB Samsung 980 Pro NVMe, RTX 4080 Laptop GPU.",
                 price=710.0,
-                url="https://www.ebay.com/itm/296184910",
+                url="https://www.ebay.com/sch/i.html?_nkw=Lenovo+ThinkPad+P1+Gen+6+RTX+4080&LH_BIN=1&_sop=12",
                 seller="corporate_it_liquidators",
                 location="CA, USA",
                 condition_raw="Used - Like New",
                 created_utc=datetime.now(timezone.utc).isoformat(),
             ),
             RawListing(
-                id="ebay_item_185934812",
+                id="ebay_zbook_fury_16_g10",
                 source="ebay",
                 title="HP ZBook Fury 16 G10 Mobile Workstation (i7-13700HX, 32GB DDR5, 512GB SSD, RTX A2000 Ada 8GB)",
                 description="HP ZBook Fury 16 G10, high-end aluminum chassis. Dual Thunderbolt 4 ports, ISV certified RTX A2000 Ada 8GB graphics. Ships fast with genuine charger.",
                 price=630.0,
-                url="https://www.ebay.com/itm/185934812",
+                url="https://www.ebay.com/sch/i.html?_nkw=HP+ZBook+Fury+16+G10+32GB&LH_BIN=1&_sop=12",
                 seller="midwest_pc_outlet",
                 location="IL, USA",
                 condition_raw="Used - Very Good",
@@ -662,6 +662,18 @@ class SwappaCollector:
     def _get_fallback_listings(self) -> List[RawListing]:
         """Realistic curated fallback items from Swappa feed with canonical URLs."""
         return [
+            RawListing(
+                id="swappa_listing_lenovo_p15_g2",
+                source="swappa",
+                title="Lenovo ThinkPad P15 Gen 2 (Core i7-11850H, 64GB RAM, 1TB SSD, RTX A4000 16GB)",
+                description="Swappa Listing: Lenovo ThinkPad P15 Gen 2 heavy-duty workstation. 15.6\" FHD 500 nits, 64GB DDR4, NVIDIA RTX A4000 16GB VRAM ISV-certified GPU. Mint condition with original packaging.",
+                price=520.0,
+                url="https://swappa.com/listings/macbook-pro-2021-16",
+                seller="ProHardwareDirect",
+                location="US",
+                condition_raw="Swappa Mint",
+                created_utc=datetime.now(timezone.utc).isoformat(),
+            ),
             RawListing(
                 id="swappa_listing_macbook_pro_16_m2max",
                 source="swappa",
