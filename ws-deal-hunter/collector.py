@@ -668,7 +668,7 @@ class SwappaCollector:
                 title="Lenovo ThinkPad P15 Gen 2 (Core i7-11850H, 64GB RAM, 1TB SSD, RTX A4000 16GB)",
                 description="Swappa Listing: Lenovo ThinkPad P15 Gen 2 heavy-duty workstation. 15.6\" FHD 500 nits, 64GB DDR4, NVIDIA RTX A4000 16GB VRAM ISV-certified GPU. Mint condition with original packaging.",
                 price=520.0,
-                url="https://swappa.com/listings/macbook-pro-2021-16",
+                url="https://swappa.com/listings/lenovo-thinkpad-p15-gen-2",
                 seller="ProHardwareDirect",
                 location="US",
                 condition_raw="Swappa Mint",
