@@ -571,7 +571,7 @@ class SwappaCollector:
                 url = f"https://swappa.com/listings/{slug}"
 
                 try:
-                    res = requests.get(url, impersonate="chrome120", headers=headers, timeout=4.0)
+                    res = requests.get(url, impersonate="chrome120", headers=headers, timeout=8.0)
                     if res.status_code != 200:
                         continue
 
@@ -579,7 +579,7 @@ class SwappaCollector:
                     listing_links = soup.find_all("a", href=lambda h: h and "/listing/view/" in h)
 
                     for a in listing_links:
-                        href = a["href"]
+                        href = a.get("href", "")
                         code_m = re.search(r"/listing/view/([0-9a-zA-Z]+)", href)
                         if not code_m:
                             continue
@@ -589,18 +589,19 @@ class SwappaCollector:
                         seen_codes.add(code)
 
                         # Find the parent card/block with spec metadata
-                        parent_block = (
-                            a.find_parent("div", class_="card")
-                            or a.find_parent("div", class_="list-group-item")
-                            or a.parent.parent.parent
-                        )
-                        raw_text = parent_block.get_text(" | ", strip=True) if parent_block else a.get_text(strip=True)
+                        card = a.find_parent("div", class_="card") or a.parent.parent.parent.parent
+                        raw_text = card.get_text(" | ", strip=True) if card else a.get_text(strip=True)
 
-                        # Extract price
-                        price_match = re.search(r"\$\s*([0-9,]+(?:\.[0-9]{2})?)", raw_text)
-                        if not price_match:
+                        # Extract price directly from link text or card
+                        p_raw = a.get_text(strip=True).replace("$", "").replace(",", "").strip()
+                        try:
+                            price = float(p_raw)
+                        except ValueError:
+                            p_m = re.search(r"\$\s*\|?\s*([0-9,]+(?:\.[0-9]{2})?)", raw_text)
+                            price = float(p_m.group(1).replace(",", "")) if p_m else 0.0
+
+                        if price < 100 or price > 4500:
                             continue
-                        price = float(price_match.group(1).replace(",", ""))
 
                         # Pre-filter blacklist
                         if is_blacklisted_item(raw_text):
@@ -615,8 +616,6 @@ class SwappaCollector:
                         elif "Fair" in raw_text:
                             condition = "Fair"
 
-                        # Build informative title with model name
-                        clean_title = f"{model_name} (Code: {code})"
                         # Extract RAM / Storage snippet if visible
                         specs_snips = []
                         ram_m = re.search(r"\b(16GB|18GB|24GB|32GB|36GB|48GB|64GB|96GB|128GB)\b", raw_text, re.IGNORECASE)
@@ -628,6 +627,8 @@ class SwappaCollector:
 
                         if specs_snips:
                             clean_title = f"{model_name} [{' / '.join(specs_snips)}] - {condition}"
+                        else:
+                            clean_title = f"{model_name} (Code: {code})"
 
                         listing_url = f"https://swappa.com/listing/view/{code}"
 
@@ -636,7 +637,7 @@ class SwappaCollector:
                                 id=f"swappa_{code}",
                                 source="swappa",
                                 title=clean_title,
-                                description=f"Swappa Verified Listing: {raw_text[:350]}",
+                                description=f"Swappa Verified Hardware: {raw_text[:300]}",
                                 price=price,
                                 url=listing_url,
                                 seller="Swappa Verified Seller",
