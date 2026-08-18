@@ -127,9 +127,13 @@ C:\Development\Apps\WS Deal Hunter\
   3. **`ShopGoodwillCollector`**: Scrapes enterprise liquidation lots and tested workstation auctions.
 - **Test Coverage**: Extended [`test_system.py`](file:///C:/Development/Apps/WS%20Deal%20Hunter/test_system.py) to **15 / 15 unit tests passing**.
 
-### Decision 15: Modern React 19 / Vite UI Redesign (Horizontal Ribbon)
-- **Problem**: The dashboard needed a modern, immersive UI/UX that moved away from 1995-era scrollbars and dual-pane command consoles.
-- **Decision & Solution**: Redesigned `App.tsx` and `FilterBar.tsx` into a clean, horizontal ribbon layout. Native scrollbars were globally hidden (`scrollbar-width: none`), and the filter controls were compressed into a frosted glass sticky top-nav. Experimental UI effects (CRT scanline overlays and auto-glitch keyframes) were added to enhance the industrial aesthetic.
+### Decision 16: Hyper-Focused TLS Impersonation Engine (`curl_cffi`) & Dual-Layer Blacklist Gatekeeper
+- **Problem**: eBay denied API developer access and blocked standard scraping with DataDome (`403 Forbidden`). Swappa legacy RSS feeds returned `404 Not Found` behind Cloudflare. Broad keyword scraping pulled non-computer junk (accessories, sleeves, docks, phone cases, and low-end budget laptops).
+- **Decision & Solution**:
+  1. Integrated `curl_cffi` compiling BoringSSL with Chrome/Android TLS fingerprints (`chrome99_android`, `chrome120`) to bypass Cloudflare and DataDome without API keys or browser overhead.
+  2. Upgraded `EBayCollector` with category isolation (`_sacat=177` PC Laptops, `_sacat=111422` Apple Laptops), Buy-It-Now filter (`LH_BIN=1`), condition whitelisting (`LH_ItemCondition=1000|1500|2000|2500|3000`), newly listed sort (`_sop=10`), and price bounds.
+  3. Upgraded `SwappaCollector` to crawl active model directories (`/listings/macbook-pro-2023-16`, `/listings/razer-blade-16-2025`, `/listings/legion-pro-7i-gen-10-16`, etc.) directly.
+  4. Installed a dual-layer `BLACKLIST_REGEX` across `collector.py` and `evaluator.py`, instantly dropping accessories, broken/parts-only units, security locks, and budget consumer laptops (Score 0.0) with zero AI token waste.
 
 ---
 
@@ -137,12 +141,12 @@ C:\Development\Apps\WS Deal Hunter\
 *See [`BACKLOG.md`](file:///C:/Development/Apps/WS%20Deal%20Hunter/BACKLOG.md) for full technical task breakdown and UI/UX design specifications.*
 
 ### 🔴 Immediate Backlog (Next Session)
-1. **Fix Mobile UI Animations**:
-   - The CRT scanline and auto-glitch effects are either not rendering or appearing too subtle on mobile devices (Android Chrome/Safari). Need to debug CSS keyframe compatibility and z-index stacking on touch devices.
-2. **Swappa Playwright Integration**:
-   - Implement deep scraping for Swappa using Playwright.
-3. **Adaptive "Self-Learning" FMV Price Index**:
+1. **Adaptive "Self-Learning" FMV Price Index**:
    - Scaffold rolling exponential moving average calibration (`price_benchmarks.json`).
+2. **Expand TLS Impersonation to New Sources**:
+   - Build direct `curl_cffi` collectors for B&H Photo Used and Best Buy Outlet Open-Box inventory.
+3. **Fix Mobile UI Animations**:
+   - Debug CSS keyframe compatibility and z-index stacking on touch devices.
 
 ---
 

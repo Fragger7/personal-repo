@@ -116,8 +116,39 @@ class GeminiHardwareEvaluator:
     def evaluate_listing(self, listing: Union[RawListing, Dict[str, Any]]) -> DealRecord:
         """
         Evaluate listing using Gemini structured output or heuristic valuation fallback.
+        Instantly drops blacklisted accessories, damaged parts, or non-workstation units (Score 0.0).
         """
         raw = listing if isinstance(listing, RawListing) else RawListing(**listing)
+
+        # 0. Fast Blacklist Gatekeeper: Drop accessories, damaged parts, or low-tier units immediately
+        from collector import is_blacklisted_item
+        if is_blacklisted_item(raw.title, raw.description):
+            return DealRecord(
+                id=raw.id,
+                source=raw.source,
+                title=raw.title,
+                price=raw.price,
+                url=raw.url,
+                specs=HardwareSpecs(
+                    cpu="Hard Excluded Item",
+                    ram_gb=0,
+                    ssd_gb=0,
+                    gpu="None",
+                    screen="None",
+                    condition="Excluded (Blacklisted / Non-Workstation)",
+                ),
+                fair_market_value=0.0,
+                estimated_profit=0.0,
+                arbitrage_margin_pct=0.0,
+                deal_score=0.0,
+                summary=f"Hard Excluded: Listing matches negative filter blacklist.",
+                actionable_recommendation="DROP / EXCLUDED ITEM",
+                confidence_score=0.99,
+                seller=raw.seller,
+                location=raw.location,
+                created_utc=raw.created_utc,
+                is_high_yield=False,
+            )
 
         # 1. Try Gemini evaluation if valid API key is present
         if self.api_key and len(self.api_key) >= 15:
