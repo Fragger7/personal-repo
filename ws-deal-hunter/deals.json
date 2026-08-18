@@ -1,5 +1,34 @@
 [
   {
+    "id": "ebay_206405988913",
+    "source": "ebay",
+    "title": "Lenovo ThinkPad X1 Extreme Gen4 15\" 4K Touch Core i9 32GB RAM RTX 3080 1TB SSD",
+    "price": 2217.62,
+    "url": "https://www.ebay.com/itm/206405988913",
+    "specs": {
+      "cpu": "Intel Core i7 / AMD Ryzen 7",
+      "ram_gb": 32,
+      "ssd_gb": 1024,
+      "gpu": "Integrated Graphics",
+      "screen": "16\" 4K UHD+ (3840x2400) IPS 500nits",
+      "condition": "Used / Refurbished"
+    },
+    "fair_market_value": 836.0,
+    "estimated_profit": 0.0,
+    "arbitrage_margin_pct": 0.0,
+    "deal_score": 1.0,
+    "summary": "Intel Core i7 / AMD Ryzen 7 with 32GB RAM, 1024GB NVMe SSD, and Integrated Graphics.",
+    "actionable_recommendation": "AVOID / OVERPRICED",
+    "confidence_score": 0.92,
+    "seller": "eBay Seller",
+    "location": "US",
+    "created_utc": "2026-08-18T09:38:22.880440+00:00",
+    "evaluated_at": "2026-08-18T09:38:31.023627+00:00",
+    "alerted": false,
+    "is_high_yield": false,
+    "raw_payload": null
+  },
+  {
     "id": "ebay_287525020813",
     "source": "ebay",
     "title": "HP ZBook Power G9 15.6 FHD - Intel i7-12800H - 32GB RAM 512GB SSD RTX A1000 - 3",
