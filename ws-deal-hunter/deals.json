@@ -1,5 +1,34 @@
 [
   {
+    "id": "ebay_198579977378",
+    "source": "ebay",
+    "title": "HP ZBook Studio G8 | i7-11850H | 32GB RAM | NO DRIVE | NO OS | EC",
+    "price": 340.0,
+    "url": "https://www.ebay.com/itm/198579977378",
+    "specs": {
+      "cpu": "Intel Core i7 11th Gen Workstation",
+      "ram_gb": 32,
+      "ssd_gb": 512,
+      "gpu": "Integrated Graphics",
+      "screen": "15.6\" - 16\" Workstation Display",
+      "condition": "Used / Refurbished"
+    },
+    "fair_market_value": 681.0,
+    "estimated_profit": 341.0,
+    "arbitrage_margin_pct": 100.3,
+    "deal_score": 9.1,
+    "summary": "Intel Core i7 11th Gen Workstation with 32GB RAM, 512GB NVMe SSD, and Integrated Graphics.",
+    "actionable_recommendation": "🔥 STRONG ARBITRAGE BUY",
+    "confidence_score": 0.92,
+    "seller": "eBay Seller",
+    "location": "US",
+    "created_utc": "2026-08-18T16:37:31.290246+00:00",
+    "evaluated_at": "2026-08-18T16:37:45.145866+00:00",
+    "alerted": true,
+    "is_high_yield": true,
+    "raw_payload": null
+  },
+  {
     "id": "ebay_820016775101",
     "source": "ebay",
     "title": "16” HP ZBook Fury 16 G10 / i7-13700HX / RTX A1000 / No RAM / 512GB (310)",
