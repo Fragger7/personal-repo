@@ -135,6 +135,13 @@ C:\Development\Apps\WS Deal Hunter\
   3. Upgraded `SwappaCollector` to crawl active model directories (`/listings/macbook-pro-2023-16`, `/listings/razer-blade-16-2025`, `/listings/legion-pro-7i-gen-10-16`, etc.) directly.
   4. Installed a dual-layer `BLACKLIST_REGEX` across `collector.py` and `evaluator.py`, instantly dropping accessories, broken/parts-only units, security locks, and budget consumer laptops (Score 0.0) with zero AI token waste.
 
+### Decision 17: Pure Live-Only Ingestion Architecture (Zero Dummy Data Mandate)
+- **Problem**: Legacy fallback methods in collectors (`_get_fallback_listings()`) injected synthetic mock listings into `deals.json` whenever a network error or 0 results occurred.
+- **Decision & Solution**:
+  1. Completely deleted all `_get_fallback_listings()` and `_get_syndicated_fallback()` mock generators across all collectors in [`collector.py`](file:///C:/Development/Apps/WS%20Deal%20Hunter/collector.py).
+  2. All collectors now strictly return `[]` (empty list) on errors or 0 results.
+  3. Hard Rule established: `deals.json` must strictly contain 100% genuine live-scraped inventory.
+
 ---
 
 ## 📌 5. Project Backlog & Future Roadmap
@@ -176,7 +183,8 @@ npm run dev
 
 ## 🛡️ Guidelines for AI Agents Working on this Repo
 
-1. **Always Verify Edits with Tests**: Run `python test_system.py` after modifying any Python module.
-2. **Preserve Atomic File Writes**: Do not bypass `AtomicDealStorage._write_atomic()` in `storage.py` when writing to `deals.json`.
-3. **Dual Path Sync for GitHub Pushes**: When pushing to `Fragger7/personal-repo`, make sure updated files are synced in both the root and `ws-deal-hunter/` subfolder.
-4. **UTF-8 Compatibility**: Maintain `sys.stdout.reconfigure(encoding="utf-8", errors="replace")` on entrypoints to prevent Windows console encoding errors.
+1. **ZERO DUMMY DATA IN PRODUCTION (`deals.json`)**: Under NO circumstances should mock data, seed listings, or fallback mock generators be committed to `deals.json` or served in production. If a live scraper returns 0 items, it MUST return an empty list `[]`. Tests requiring fixtures must strictly use isolated test files (e.g. `test_pipeline.json`).
+2. **Always Verify Edits with Tests**: Run `python test_system.py` after modifying any Python module.
+3. **Preserve Atomic File Writes**: Do not bypass `AtomicDealStorage._write_atomic()` in `storage.py` when writing to `deals.json`.
+4. **Dual Path Sync for GitHub Pushes**: When pushing to `Fragger7/personal-repo`, make sure updated files are synced in both the root and `ws-deal-hunter/` subfolder.
+5. **UTF-8 Compatibility**: Maintain `sys.stdout.reconfigure(encoding="utf-8", errors="replace")` on entrypoints to prevent Windows console encoding errors.

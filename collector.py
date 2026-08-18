@@ -208,49 +208,8 @@ class EBayCollector:
         except Exception as e:
             print(f"[EBayCollector] Scrape failed: {e}")
 
-        # Fallback to realistic curated feed if network issue occurs
-        return self._get_syndicated_fallback()
-
-    def _get_syndicated_fallback(self) -> List[RawListing]:
-        """Realistic syndicated feeds using canonical live search URLs that always resolve."""
-        return [
-            RawListing(
-                id="ebay_precision_7680_ada",
-                source="ebay",
-                title="Dell Precision 7680 16\" Laptop Intel Core i9-13950HX 64GB RAM 1TB SSD RTX 4000 Ada 12GB - Excellent",
-                description="Dell Precision 7680 mobile workstation in excellent condition. 16-inch FHD+ 500 nits, i9-13950HX 24 cores, 64GB DDR5 ECC, NVIDIA RTX 4000 Ada 12GB. Ships with original 240W GaN charger.",
-                price=740.0,
-                url="https://www.ebay.com/sch/i.html?_nkw=Dell+Precision+7680+i9-13950HX+64GB&LH_BIN=1&_sop=12",
-                seller="tech_vault_resale",
-                location="TX, USA",
-                condition_raw="Certified Refurbished",
-                created_utc=datetime.now(timezone.utc).isoformat(),
-            ),
-            RawListing(
-                id="ebay_thinkpad_p1_g6_4080",
-                source="ebay",
-                title="Lenovo ThinkPad P1 Gen 6 Core i7-13800H 32GB RAM 1TB SSD RTX 4080 12GB 16\" OLED Touch Clean",
-                description="ThinkPad P1 Gen 6 creator workstation. Super clean condition, battery 98% health. Intel 13th gen i7, 32GB DDR5, 1TB Samsung 980 Pro NVMe, RTX 4080 Laptop GPU.",
-                price=710.0,
-                url="https://www.ebay.com/sch/i.html?_nkw=Lenovo+ThinkPad+P1+Gen+6+RTX+4080&LH_BIN=1&_sop=12",
-                seller="corporate_it_liquidators",
-                location="CA, USA",
-                condition_raw="Used - Like New",
-                created_utc=datetime.now(timezone.utc).isoformat(),
-            ),
-            RawListing(
-                id="ebay_zbook_fury_16_g10",
-                source="ebay",
-                title="HP ZBook Fury 16 G10 Mobile Workstation (i7-13700HX, 32GB DDR5, 512GB SSD, RTX A2000 Ada 8GB)",
-                description="HP ZBook Fury 16 G10, high-end aluminum chassis. Dual Thunderbolt 4 ports, ISV certified RTX A2000 Ada 8GB graphics. Ships fast with genuine charger.",
-                price=630.0,
-                url="https://www.ebay.com/sch/i.html?_nkw=HP+ZBook+Fury+16+G10+32GB&LH_BIN=1&_sop=12",
-                seller="midwest_pc_outlet",
-                location="IL, USA",
-                condition_raw="Used - Very Good",
-                created_utc=datetime.now(timezone.utc).isoformat(),
-            ),
-        ]
+        # Pure live data: return empty list if network error or zero items
+        return []
 
 
 class RedditCollector:
@@ -482,35 +441,6 @@ class RedditCollector:
         m = re.search(r"\[(USA?-[A-Z]{2}|CAN-[A-Z]{2}|UK)\]", title, re.IGNORECASE)
         return m.group(1).upper() if m else "US"
 
-    def _get_fallback_listings(self) -> List[RawListing]:
-        """Realistic curated fallback items with direct post URLs."""
-        return [
-            RawListing(
-                id="reddit_hws_zbook_power_g10",
-                source="reddit (r/hardwareswap)",
-                title="[USA-WA] [H] HP ZBook Power G10 15.6\" (Ryzen 9 Pro 7940HS, 64GB DDR5, 2TB SSD, RTX 4060 8GB) [W] PayPal $690 Shipped",
-                description="Up for sale is my HP ZBook Power G10. Zen 4 Ryzen 9 Pro 7940HS 8-core/16-thread CPU with Radeon 780M + Dedicated NVIDIA RTX 4060 8GB. 64GB DDR5 5600MHz RAM and 2TB PCIe 4.0 NVMe SSD. Asking $690 shipped via PayPal Goods & Services.",
-                price=690.0,
-                url="https://www.reddit.com/r/hardwareswap/comments/192k7z8/usawa_h_hp_zbook_power_g10_156_ryzen_9_pro_7940hs/",
-                seller="u/CloudArchitect_PNW",
-                location="USA-WA",
-                condition_raw="Like New (Includes Box)",
-                created_utc=datetime.now(timezone.utc).isoformat(),
-            ),
-            RawListing(
-                id="reddit_hws_precision_5570",
-                source="reddit (r/hardwareswap)",
-                title="[USA-IL] [H] Dell Precision 5570 Creator Laptop (i7-12800H, 32GB RAM, 1TB NVMe, RTX A2000 8GB, 4K Touch) [W] $580 PayPal",
-                description="Selling my Dell Precision 5570 (same premium chassis as XPS 15 9520). 4K UHD+ 3840x2400 Touch 500nits panel. Core i7-12800H, 32GB RAM, 1TB SSD, RTX A2000. $580 shipped.",
-                price=580.0,
-                url="https://www.reddit.com/r/hardwareswap/comments/18x9p2k/usail_h_dell_precision_5570_creator_laptop_i7/",
-                seller="u/MidwestCoder92",
-                location="USA-IL",
-                condition_raw="Good (Minor scuff on corner)",
-                created_utc=datetime.now(timezone.utc).isoformat(),
-            ),
-        ]
-
 
 class SwappaCollector:
     """
@@ -656,49 +586,8 @@ class SwappaCollector:
         except Exception as e:
             print(f"[SwappaCollector] Scraping failed: {e}")
 
-        # Fallback to realistic curated feed if network issue occurs
-        return self._get_fallback_listings()
-
-    def _get_fallback_listings(self) -> List[RawListing]:
-        """Realistic curated fallback items from Swappa feed with canonical URLs."""
-        return [
-            RawListing(
-                id="swappa_listing_lenovo_p15_g2",
-                source="swappa",
-                title="Lenovo ThinkPad P15 Gen 2 (Core i7-11850H, 64GB RAM, 1TB SSD, RTX A4000 16GB)",
-                description="Swappa Listing: Lenovo ThinkPad P15 Gen 2 heavy-duty workstation. 15.6\" FHD 500 nits, 64GB DDR4, NVIDIA RTX A4000 16GB VRAM ISV-certified GPU. Mint condition with original packaging.",
-                price=520.0,
-                url="https://swappa.com/listings/lenovo-thinkpad-p15-gen-2",
-                seller="ProHardwareDirect",
-                location="US",
-                condition_raw="Swappa Mint",
-                created_utc=datetime.now(timezone.utc).isoformat(),
-            ),
-            RawListing(
-                id="swappa_listing_macbook_pro_16_m2max",
-                source="swappa",
-                title="Apple MacBook Pro 16\" (2023 M2 Max 12CPU/38GPU, 32GB RAM, 1TB SSD) - Mint",
-                description="Swappa Listing: MacBook Pro 16-inch 2023 M2 Max. Liquid Retina XDR 120Hz display, 32GB Unified Memory, 1TB SSD. 94% battery health with original charger and box.",
-                price=1623.0,
-                url="https://swappa.com/listings/macbook-pro-2023-16",
-                seller="Swappa Verified Seller",
-                location="CO, USA",
-                condition_raw="Swappa Mint",
-                created_utc=datetime.now(timezone.utc).isoformat(),
-            ),
-            RawListing(
-                id="swappa_listing_macbook_pro_16_m1max",
-                source="swappa",
-                title="Apple MacBook Pro 16\" (2021 M1 Max 10CPU/32GPU, 64GB RAM, 2TB SSD) - Very Good",
-                description="Swappa Listing: MacBook Pro 16-inch 2021 M1 Max. 64GB Unified Memory, 2TB SSD, Space Gray. Fully functional and verified clean.",
-                price=1572.0,
-                url="https://swappa.com/listings/macbook-pro-2021-16",
-                seller="Swappa Verified Seller",
-                location="CA, USA",
-                condition_raw="Swappa Very Good",
-                created_utc=datetime.now(timezone.utc).isoformat(),
-            ),
-        ]
+        # Pure live data: return empty list if network error or zero items
+        return []
 
 
 class DellRefurbishedCollector:
@@ -800,35 +689,6 @@ class DellRefurbishedCollector:
 
         return []
 
-    def _get_fallback_listings(self) -> List[RawListing]:
-        """Realistic curated fallback items for Dell Refurbished."""
-        return [
-            RawListing(
-                id="dell_refurb_precision_5570_dfs",
-                source="dell_refurbished",
-                title="Dell Certified Refurbished: Precision 5570 (Core i7-12800H, 32GB RAM, 1TB NVMe, RTX A2000, 4K UHD+) (50% OFF Coupon Applied)",
-                description="Dell Financial Services Grade A Certified Refurbished Precision 5570. Core i7-12800H 14 cores, 32GB DDR5, 1TB NVMe Gen4 SSD, NVIDIA RTX A2000 8GB, 15.6\" 4K UHD+ 500 nits. 100-day direct Dell warranty.",
-                price=549.0,
-                url="https://www.dellrefurbished.com/laptops?model_family=266",
-                seller="Dell Financial Services",
-                location="TX, USA",
-                condition_raw="Grade A Certified Refurbished",
-                created_utc=datetime.now(timezone.utc).isoformat(),
-            ),
-            RawListing(
-                id="dell_refurb_precision_7680_dfs",
-                source="dell_refurbished",
-                title="Dell Certified Refurbished: Precision 7680 (Core i9-13950HX, 64GB DDR5, 1TB NVMe, RTX 4000 Ada 12GB) (50% OFF Coupon Applied)",
-                description="Dell Financial Services Grade A Refurbished Workstation. Core i9-13950HX 24 cores, 64GB DDR5, 1TB SSD, NVIDIA RTX 4000 Ada 12GB. Comes with Dell OEM GaN charger.",
-                price=799.0,
-                url="https://www.dellrefurbished.com/laptops?model_family=266",
-                seller="Dell Financial Services",
-                location="TX, USA",
-                condition_raw="Grade A Certified Refurbished",
-                created_utc=datetime.now(timezone.utc).isoformat(),
-            ),
-        ]
-
 
 class LenovoOutletCollector:
     """
@@ -883,35 +743,6 @@ class LenovoOutletCollector:
             print(f"[LenovoOutletCollector] Scrape error: {e}")
 
         return []
-
-    def _get_fallback_listings(self) -> List[RawListing]:
-        """Realistic curated fallback items from Lenovo Outlet."""
-        return [
-            RawListing(
-                id="lenovo_outlet_thinkpad_p1_g6",
-                source="lenovo_outlet",
-                title="Lenovo Outlet Certified: ThinkPad P1 Gen 6 (Core i7-13800H, 32GB DDR5, 1TB SSD, RTX 4080 12GB, 16\" OLED Touch)",
-                description="Lenovo Outlet Certified Refurbished ThinkPad P1 Gen 6 mobile creator workstation. Intel Core i7-13800H vPro, 32GB RAM, 1TB PCIe 4.0 NVMe, NVIDIA RTX 4080 12GB GPU. 1-year Lenovo depot warranty.",
-                price=740.0,
-                url="https://www.lenovo.com/us/outletus/en/laptops/",
-                seller="Lenovo Outlet Official",
-                location="NC, USA",
-                condition_raw="Lenovo Certified Refurbished",
-                created_utc=datetime.now(timezone.utc).isoformat(),
-            ),
-            RawListing(
-                id="lenovo_outlet_thinkpad_p16_g1",
-                source="lenovo_outlet",
-                title="Lenovo Outlet Certified: ThinkPad P16 Gen 1 (Core i9-12950HX, 64GB DDR5, 2TB SSD, RTX A4500 16GB, 4K UHD+)",
-                description="Lenovo Outlet Certified Heavy Workstation. Intel Core i9-12950HX 16 cores, 64GB ECC DDR5, 2TB NVMe, NVIDIA RTX A4500 16GB ISV GPU. Full 1-year factory warranty.",
-                price=820.0,
-                url="https://www.lenovo.com/us/outletus/en/laptops/",
-                seller="Lenovo Outlet Official",
-                location="NC, USA",
-                condition_raw="Lenovo Certified Refurbished",
-                created_utc=datetime.now(timezone.utc).isoformat(),
-            ),
-        ]
 
 
 class ShopGoodwillCollector:
@@ -971,23 +802,6 @@ class ShopGoodwillCollector:
 
         return []
 
-    def _get_fallback_listings(self) -> List[RawListing]:
-        """Realistic curated fallback liquidation auction items."""
-        return [
-            RawListing(
-                id="goodwill_auction_precision_7550",
-                source="goodwill",
-                title="Goodwill Estate Auction: Dell Precision 7550 (Core i7-10850H, 32GB RAM, 512GB SSD, RTX Quadro T2000 4GB) - Tested Boots",
-                description="ShopGoodwill Liquidation Lot. Dell Precision 7550 15.6-inch workstation. Tested to boot to BIOS, boots cleanly. Includes OEM AC adapter.",
-                price=245.0,
-                url="https://shopgoodwill.com/categories/listing?st=Dell+Precision&sg=&c=&s=&lp=0&hp=999999&sbn=&spo=false&snpo=false&socs=false&sd=false&sca=false&sa=0&ic=0&pt=false&fe=0&tz=-5",
-                seller="ShopGoodwill Liquidation",
-                location="CA, USA",
-                condition_raw="Used - Tested Working",
-                created_utc=datetime.now(timezone.utc).isoformat(),
-            ),
-        ]
-
 
 class BAndHCollector:
     """
@@ -1044,22 +858,6 @@ class BAndHCollector:
 
         return []
 
-    def _get_fallback_listings(self) -> List[RawListing]:
-        return [
-            RawListing(
-                id="bh_sample_mbp16_m3max",
-                source="bh_photo",
-                title="B&H Deal: Apple MacBook Pro 16\" (M3 Max 16-Core, 48GB RAM, 1TB SSD) - Space Black",
-                description="B&H Photo Deal: MacBook Pro 16-inch M3 Max 16-core CPU, 40-core GPU, 48GB Unified Memory, 1TB SSD.",
-                price=2499.0,
-                url="https://www.bhphotovideo.com",
-                seller="B&H Photo Video",
-                location="NY, USA",
-                condition_raw="Brand New In Box",
-                created_utc=datetime.now(timezone.utc).isoformat(),
-            )
-        ]
-
 
 class MicroCenterCollector:
     """
@@ -1114,22 +912,6 @@ class MicroCenterCollector:
             print(f"[MicroCenterCollector] Scrape error: {e}")
 
         return []
-
-    def _get_fallback_listings(self) -> List[RawListing]:
-        return [
-            RawListing(
-                id="mc_sample_swift_go_ai",
-                source="microcenter",
-                title="Micro Center Clearance: Acer Swift Go 16 AI (Ryzen AI 9 465, 32GB RAM, 1TB SSD)",
-                description="Micro Center Deal: 16-inch 120Hz IPS Touch, AMD Ryzen AI 9 465, 32GB LPDDR5X, 1TB NVMe Gen4.",
-                price=999.0,
-                url="https://www.microcenter.com",
-                seller="Micro Center",
-                location="OH, USA",
-                condition_raw="Open Box Certified",
-                created_utc=datetime.now(timezone.utc).isoformat(),
-            )
-        ]
 
 
 class HardwareCollectorHub:
