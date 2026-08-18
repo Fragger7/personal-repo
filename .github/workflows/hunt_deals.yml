@@ -30,7 +30,9 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r ws-deal-hunter/requirements.txt
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          if [ -f ws-deal-hunter/requirements.txt ]; then pip install -r ws-deal-hunter/requirements.txt; fi
+          pip install cloudscraper beautifulsoup4 requests curl_cffi
 
       - name: Run Autonomous Deal Hunter Cycle
         env:
@@ -43,15 +45,23 @@ jobs:
           EBAY_CLIENT_ID: ${{ secrets.EBAY_CLIENT_ID }}
           EBAY_CLIENT_SECRET: ${{ secrets.EBAY_CLIENT_SECRET }}
         run: |
-          cd ws-deal-hunter
-          python daemon.py --once
+          if [ -f daemon.py ]; then
+            python daemon.py --once
+          elif [ -f ws-deal-hunter/daemon.py ]; then
+            cd ws-deal-hunter && python daemon.py --once && cp deals.json ../deals.json || true
+          fi
 
       - name: Commit and Push Updated deals.json
         run: |
           git config --global user.name "DealHunter-Bot"
           git config --global user.email "dealhunter-bot@users.noreply.github.com"
           
-          git add ws-deal-hunter/deals.json
+          # Sync deals.json if modified
+          if [ -f ws-deal-hunter/deals.json ] && [ -f deals.json ]; then
+            cp deals.json ws-deal-hunter/deals.json || true
+          fi
+          
+          git add deals.json ws-deal-hunter/deals.json || true
           
           if git diff --staged --quiet; then
             echo "No new deals or changes to commit."
