@@ -276,8 +276,14 @@ export function App() {
       {/* Main Layout Container */}
       <main className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         
-        {/* KPI Metrics Dashboard */}
-        <KpiMetrics stats={stats} filteredCount={filteredDeals.length} />
+        {/* KPI Metrics Dashboard (Collapsible & Click-to-Filter) */}
+        <KpiMetrics
+          stats={stats}
+          filteredCount={filteredDeals.length}
+          filters={filters}
+          onUpdateFilters={setFilters}
+          onResetFilters={handleResetFilters}
+        />
 
         <div className="flex items-center justify-between mb-8 mt-4 pb-2 border-b border-[#222]">
           <h2 className="text-[11px] font-bold uppercase tracking-widest text-[#666] auto-glitch">

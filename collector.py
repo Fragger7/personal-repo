@@ -47,20 +47,29 @@ class RawListing:
 
 
 # Hard exclusion blacklist regex for filtering out accessories, parts, locks, and low-tier laptops
-BLACKLIST_REGEX = re.compile(
-    r"(?i)(for\s*parts|not\s*working|as\s*is|untested|repair|broken\s*screen|bad\s*screen|liquid\s*damage|"
-    r"water\s*damage|icp|mdm|icloud\s*lock|activation\s*lock|managed|profile\s*lock|bios\s*lock|computrace|"
-    r"bad\s*gpu|dead\s*gpu|no\s*nvidia|iris\s*only|touch\s*bar|latitude(?!\s*7440|\s*9440)|inspiron|ideapad|"
-    r"thinkbook|pavilion|envy|vivobook|katana|gf63|thin\s*15|sony\s*vaio|case|sleeve|cover|charger|adapter|"
-    r"cable|power\s*supply|dock|docking|battery\s*only|box\s*only|keyboard\s*only|mouse|motherboard|logic\s*board|"
-    r"screen\s*only|stand|backpack|bag)"
+TITLE_ACCESSORY_REGEX = re.compile(
+    r"(?i)(^(case|sleeve|cover|charger|ac\s*adapter|dock|docking\s*station|cable|power\s*cord|stand|backpack|bag)\s+(for|compatible|with)\b|"
+    r"\b(case|sleeve|cover|charger|adapter|cable|power\s*supply|dock|docking\s*station|battery|box|keyboard|mouse|motherboard|logic\s*board|screen|stand|backpack|bag)\s+only\b|"
+    r"\bonly\s+(case|sleeve|cover|charger|adapter|cable|power\s*supply|dock|battery|box|keyboard|mouse|motherboard|screen)\b)"
 )
+
+HARD_EXCLUSION_REGEX = re.compile(
+    r"(?i)(for\s*parts|not\s*working|as\s*is\b|untested|repair\s*only|broken\s*screen|bad\s*screen|liquid\s*damage|"
+    r"water\s*damage|icp\b|mdm\b|icloud\s*lock|activation\s*lock|managed\s*profile|profile\s*lock|bios\s*lock|computrace|"
+    r"bad\s*gpu|dead\s*gpu|no\s*nvidia|iris\s*only|touch\s*bar|"
+    r"latitude\s*(?:3[0-9]{3}|5[0-9]{3}|7[0-3][0-9]{2}|e[0-9]{4})|inspiron|ideapad|thinkbook|pavilion|envy|vivobook|katana|gf63|thin\s*15|sony\s*vaio)"
+)
+
+BLACKLIST_REGEX = HARD_EXCLUSION_REGEX
 
 
 def is_blacklisted_item(title: str, description: str = "") -> bool:
     """Check if item matches blacklist regex for accessories, damaged parts, or non-workstation units."""
-    text = f"{title} {description}"
-    return bool(BLACKLIST_REGEX.search(text))
+    if TITLE_ACCESSORY_REGEX.search(title):
+        return True
+    if HARD_EXCLUSION_REGEX.search(title) or HARD_EXCLUSION_REGEX.search(description):
+        return True
+    return False
 
 
 class EBayCollector:
@@ -72,18 +81,32 @@ class EBayCollector:
     """
 
     TARGET_QUERIES = [
-        # 1. Dell Precision & XPS Workstations (PC Laptops Category 177)
-        {"query": "Dell (Precision 5570, Precision 5580, Precision 7680, Precision 7780, XPS 15 9520, XPS 15 9530)", "sacat": "177"},
-        # 2. Lenovo ThinkPad Workstations (Category 177)
-        {"query": "Lenovo ThinkPad (P1 Gen 4, P1 Gen 5, P1 Gen 6, P16 Gen 1, P16 Gen 2, P14s AMD)", "sacat": "177"},
-        # 3. HP ZBook Workstations (Category 177)
-        {"query": "HP (ZBook Studio G8, ZBook Studio G9, ZBook Fury 16, ZBook Power)", "sacat": "177"},
-        # 4. Apple Silicon High-RAM Workstations (Apple Laptops Category 111422)
-        {"query": "Apple MacBook Pro 16 (M1 Max, M2 Max, M3 Max, M1 Pro 32GB, M2 Pro 32GB, 64GB)", "sacat": "111422"},
-        # 5. High-End Creator / RTX 4080/4090 Workstations (Category 177)
-        {"query": "(Zephyrus G14, Zephyrus G16, Razer Blade 16, Legion Pro 7i) (RTX 4080, RTX 4090)", "sacat": "177"},
-        # 6. High-Performance Mini-PC Nodes (Category 179)
-        {"query": "(Minisforum MS-01, Minisforum UM780 XTX, Beelink SER8, OptiPlex 7010 Micro) (32GB, 64GB)", "sacat": "179"},
+        # 1. Dell Precision Workstations (Category 177 - PC Laptops)
+        {"query": "Dell (Precision 5560, Precision 5570, Precision 5580, Precision 5680, Precision 7670, Precision 7680, Precision 7780)", "sacat": "177"},
+        # 2. Dell XPS High-End Workstations (Category 177)
+        {"query": "Dell (XPS 15 9520, XPS 15 9530, XPS 16 9640, XPS 17 9720, XPS 17 9730) (32GB, 64GB)", "sacat": "177"},
+        # 3. Lenovo ThinkPad P-Series Workstations (Category 177)
+        {"query": "Lenovo ThinkPad (P1 Gen 4, P1 Gen 5, P1 Gen 6, P1 Gen 7, P16 Gen 1, P16 Gen 2, P16v, P15 Gen 2)", "sacat": "177"},
+        # 4. Lenovo ThinkPad High-RAM Fleet Workhorses (Category 177)
+        {"query": "Lenovo ThinkPad (P14s AMD, P16s AMD, T16 AMD Gen 1, T16 AMD Gen 2, X1 Extreme Gen 4, X1 Extreme Gen 5)", "sacat": "177"},
+        # 5. HP ZBook Enterprise Workstations (Category 177)
+        {"query": "HP (ZBook Studio G8, ZBook Studio G9, ZBook Studio G10, ZBook Fury 16, ZBook Power G9, ZBook Power G10)", "sacat": "177"},
+        # 6. Apple Silicon 16" Max/Pro High-RAM Workstations (Category 111422 - Apple Laptops)
+        {"query": "Apple MacBook Pro 16 (M1 Max, M2 Max, M3 Max, M4 Max, 64GB, 128GB)", "sacat": "111422"},
+        # 7. Apple Silicon 16" 32GB+ Workstations (Category 111422)
+        {"query": "Apple MacBook Pro 16 (M1 Pro 32GB, M2 Pro 32GB, M3 Pro 36GB, M4 Pro 48GB)", "sacat": "111422"},
+        # 8. Apple Silicon 14" Max/Pro 32GB+ Workstations (Category 111422)
+        {"query": "Apple MacBook Pro 14 (M1 Max, M2 Max, M3 Max, 32GB, 64GB, 96GB)", "sacat": "111422"},
+        # 9. ASUS ROG Creator / Workstation Laptops (Category 177)
+        {"query": "ASUS ROG (Zephyrus G14, Zephyrus G16, Zephyrus M16, Strix SCAR 16, Strix G18) (RTX 4080, RTX 4090)", "sacat": "177"},
+        # 10. Razer Blade Creator Workstations (Category 177)
+        {"query": "Razer (Blade 14, Blade 16, Blade 18) (RTX 4080, RTX 4090, 32GB, 64GB)", "sacat": "177"},
+        # 11. Lenovo Legion High-End Workstations (Category 177)
+        {"query": "Lenovo (Legion Pro 7i, Legion Pro 7, Legion 9i, Legion Pro 5i) (RTX 4080, RTX 4090)", "sacat": "177"},
+        # 12. High-Performance Mini-PC & Compute Nodes (Category 179 - Desktops)
+        {"query": "(Minisforum MS-01, Minisforum UM780 XTX, Beelink SER8, Beelink SER7, OptiPlex 7010 Micro) (32GB, 64GB)", "sacat": "179"},
+        # 13. Modular / Linux Workstations (Category 177)
+        {"query": "(Framework 16, System76 Bonobo, System76 Serval, Eurocom) (32GB, 64GB)", "sacat": "177"},
     ]
 
     def __init__(
@@ -96,7 +119,7 @@ class EBayCollector:
         self.client_secret = client_secret or os.environ.get("EBAY_CLIENT_SECRET", "")
         self.search_query = search_query
 
-    def fetch_listings(self, limit: int = 30) -> List[RawListing]:
+    def fetch_listings(self, limit: int = 100) -> List[RawListing]:
         """Fetch live items via direct TLS-impersonated search queries."""
         all_listings: List[RawListing] = []
         seen_urls = set()
@@ -498,28 +521,35 @@ class SwappaCollector:
     """
 
     TARGET_MODELS = [
-        # Apple Silicon Workstations
+        # Apple Silicon 16" Workstations
         {"slug": "macbook-pro-2023-16", "name": "Apple MacBook Pro 16\" (2023 M2 Pro/Max)"},
         {"slug": "macbook-pro-2021-16", "name": "Apple MacBook Pro 16\" (2021 M1 Pro/Max)"},
         {"slug": "macbook-pro-2024-16", "name": "Apple MacBook Pro 16\" (2024 M4 Pro/Max)"},
         {"slug": "macbook-pro-late-2023-m3-16", "name": "Apple MacBook Pro 16\" (Late 2023 M3 Pro/Max)"},
+        # Apple Silicon 14" Workstations
         {"slug": "macbook-pro-2023-14", "name": "Apple MacBook Pro 14\" (2023 M2 Pro/Max)"},
         {"slug": "macbook-pro-2021-14", "name": "Apple MacBook Pro 14\" (2021 M1 Pro/Max)"},
+        {"slug": "macbook-pro-2024-14", "name": "Apple MacBook Pro 14\" (2024 M4 Pro/Max)"},
+        {"slug": "macbook-pro-late-2023-m3-14", "name": "Apple MacBook Pro 14\" (Late 2023 M3 Pro/Max)"},
         # High-End Creator / RTX 4080/4090 Workstations
         {"slug": "razer-blade-16-2025", "name": "Razer Blade 16 Creator Workstation"},
         {"slug": "razer-blade-14-2023", "name": "Razer Blade 14 Creator Laptop"},
         {"slug": "asus-rog-zephyrus-g14-2025-ga403", "name": "ASUS ROG Zephyrus G14 (2025 OLED)"},
+        {"slug": "asus-rog-zephyrus-duo-16-2022-gx650", "name": "ASUS ROG Zephyrus Duo 16"},
         {"slug": "asus-rog-strix-g18-2025-g815", "name": "ASUS ROG Strix G18 Workstation"},
+        {"slug": "asus-rog-strix-g16-2025-g614", "name": "ASUS ROG Strix G16 Workstation"},
         {"slug": "legion-pro-7i-gen-10-16", "name": "Lenovo Legion Pro 7i 16\" (Core Ultra/RTX 4080)"},
         {"slug": "lenovo-legion-pro-5i-gen-9-16", "name": "Lenovo Legion Pro 5i Gen 9 16\""},
+        {"slug": "lenovo-legion-5-slim-16-16aph9", "name": "Lenovo Legion Slim 5 16\" (Ryzen 7)"},
         {"slug": "system76-bonobo-ws", "name": "System76 Bonobo WS Mobile Workstation"},
         {"slug": "system76-darter-pro", "name": "System76 Darter Pro Linux Laptop"},
+        {"slug": "system76-gazelle", "name": "System76 Gazelle Linux Laptop"},
     ]
 
     def __init__(self, models: Optional[List[Dict[str, str]]] = None) -> None:
         self.models = models or self.TARGET_MODELS
 
-    def fetch_listings(self, limit: int = 30) -> List[RawListing]:
+    def fetch_listings(self, limit: int = 50) -> List[RawListing]:
         """Fetch live listings directly from Swappa model directories."""
         all_listings: List[RawListing] = []
         seen_codes = set()
@@ -629,30 +659,30 @@ class SwappaCollector:
         return self._get_fallback_listings()
 
     def _get_fallback_listings(self) -> List[RawListing]:
-        """Realistic curated fallback items from Swappa feed."""
+        """Realistic curated fallback items from Swappa feed with canonical URLs."""
         return [
             RawListing(
-                id="swappa_listing_lenovo_p15_g2",
+                id="swappa_listing_macbook_pro_16_m2max",
                 source="swappa",
-                title="Lenovo ThinkPad P15 Gen 2 (Core i7-11850H, 64GB RAM, 1TB SSD, RTX A4000 16GB)",
-                description="Swappa Listing: Lenovo ThinkPad P15 Gen 2 heavy-duty workstation. 15.6\" FHD 500 nits, 64GB DDR4, NVIDIA RTX A4000 16GB VRAM ISV-certified GPU. Mint condition with original packaging.",
-                price=520.0,
-                url="https://swappa.com/listing/view/seed_p15_g2",
-                seller="ProHardwareDirect",
-                location="US",
-                condition_raw="Mint",
+                title="Apple MacBook Pro 16\" (2023 M2 Max 12CPU/38GPU, 32GB RAM, 1TB SSD) - Mint",
+                description="Swappa Listing: MacBook Pro 16-inch 2023 M2 Max. Liquid Retina XDR 120Hz display, 32GB Unified Memory, 1TB SSD. 94% battery health with original charger and box.",
+                price=1623.0,
+                url="https://swappa.com/listings/macbook-pro-2023-16",
+                seller="Swappa Verified Seller",
+                location="CO, USA",
+                condition_raw="Swappa Mint",
                 created_utc=datetime.now(timezone.utc).isoformat(),
             ),
             RawListing(
-                id="swappa_listing_macbook_pro_16_m1pro",
+                id="swappa_listing_macbook_pro_16_m1max",
                 source="swappa",
-                title="Apple MacBook Pro 16\" M1 Pro (16GB Unified RAM, 512GB SSD, 16-Core GPU, Space Gray)",
-                description="Swappa Listing: MacBook Pro 16-inch 2021 M1 Pro. Liquid Retina XDR 120Hz display. 91% battery health, original 140W MagSafe charger included.",
-                price=730.0,
-                url="https://swappa.com/listing/view/seed_mbp16_m1pro",
-                seller="iRefurbished_Hub",
-                location="US",
-                condition_raw="Very Good",
+                title="Apple MacBook Pro 16\" (2021 M1 Max 10CPU/32GPU, 64GB RAM, 2TB SSD) - Very Good",
+                description="Swappa Listing: MacBook Pro 16-inch 2021 M1 Max. 64GB Unified Memory, 2TB SSD, Space Gray. Fully functional and verified clean.",
+                price=1572.0,
+                url="https://swappa.com/listings/macbook-pro-2021-16",
+                seller="Swappa Verified Seller",
+                location="CA, USA",
+                condition_raw="Swappa Very Good",
                 created_utc=datetime.now(timezone.utc).isoformat(),
             ),
         ]
