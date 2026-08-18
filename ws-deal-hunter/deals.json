@@ -1,5 +1,34 @@
 [
   {
+    "id": "ebay_198579668043",
+    "source": "ebay",
+    "title": "Lenovo ThinkPad P15 Gen 2 15.6\"Laptop i7 11th 1TB SSD 32GB RAM Win 11 (RSH)",
+    "price": 699.95,
+    "url": "https://www.ebay.com/itm/198579668043",
+    "specs": {
+      "cpu": "Intel Core i7 / AMD Ryzen 7",
+      "ram_gb": 32,
+      "ssd_gb": 1024,
+      "gpu": "Integrated Graphics",
+      "screen": "15.6\" - 16\" Workstation Display",
+      "condition": "Used / Refurbished"
+    },
+    "fair_market_value": 756.0,
+    "estimated_profit": 56.05,
+    "arbitrage_margin_pct": 8.0,
+    "deal_score": 5.5,
+    "summary": "Intel Core i7 / AMD Ryzen 7 with 32GB RAM, 1024GB NVMe SSD, and Integrated Graphics.",
+    "actionable_recommendation": "FAIR VALUE",
+    "confidence_score": 0.92,
+    "seller": "eBay Seller",
+    "location": "US",
+    "created_utc": "2026-08-18T13:47:34.136269+00:00",
+    "evaluated_at": "2026-08-18T13:47:43.808213+00:00",
+    "alerted": false,
+    "is_high_yield": false,
+    "raw_payload": null
+  },
+  {
     "id": "ebay_188811351668",
     "source": "ebay",
     "title": "Dell Precision 5570, Intel Core i7-12800H 4.80GHz, 14 Core, 32GB, 1TB, A+ Grade",
