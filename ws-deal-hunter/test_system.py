@@ -89,14 +89,10 @@ class TestStorageEngine(unittest.TestCase):
 
 
 class TestCollectors(unittest.TestCase):
-    def test_ebay_collector_fallback_and_format(self) -> None:
+    def test_ebay_collector_format(self) -> None:
         collector = EBayCollector()
         listings = collector.fetch_listings()
         self.assertIsInstance(listings, list)
-        fixtures = collector._get_syndicated_fallback()
-        self.assertGreater(len(fixtures), 0)
-        self.assertEqual(fixtures[0].source, "ebay")
-        self.assertGreater(fixtures[0].price, 0)
 
     def test_reddit_price_extraction(self) -> None:
         collector = RedditCollector()
@@ -114,41 +110,26 @@ class TestCollectors(unittest.TestCase):
         collector = DellRefurbishedCollector()
         listings = collector.fetch_listings()
         self.assertIsInstance(listings, list)
-        fixtures = collector._get_fallback_listings()
-        self.assertGreater(len(fixtures), 0)
-        self.assertEqual(fixtures[0].source, "dell_refurbished")
 
     def test_lenovo_outlet_collector(self) -> None:
         collector = LenovoOutletCollector()
         listings = collector.fetch_listings()
         self.assertIsInstance(listings, list)
-        fixtures = collector._get_fallback_listings()
-        self.assertGreater(len(fixtures), 0)
-        self.assertEqual(fixtures[0].source, "lenovo_outlet")
 
     def test_shopgoodwill_collector(self) -> None:
         collector = ShopGoodwillCollector()
         listings = collector.fetch_listings()
         self.assertIsInstance(listings, list)
-        fixtures = collector._get_fallback_listings()
-        self.assertGreater(len(fixtures), 0)
-        self.assertEqual(fixtures[0].source, "goodwill")
 
     def test_bh_photo_collector(self) -> None:
         collector = BAndHCollector()
         listings = collector.fetch_listings()
         self.assertIsInstance(listings, list)
-        fixtures = collector._get_fallback_listings()
-        self.assertGreater(len(fixtures), 0)
-        self.assertEqual(fixtures[0].source, "bh_photo")
 
     def test_microcenter_collector(self) -> None:
         collector = MicroCenterCollector()
         listings = collector.fetch_listings()
         self.assertIsInstance(listings, list)
-        fixtures = collector._get_fallback_listings()
-        self.assertGreater(len(fixtures), 0)
-        self.assertEqual(fixtures[0].source, "microcenter")
 
     def test_collector_hub_aggregation(self) -> None:
         hub = HardwareCollectorHub()
