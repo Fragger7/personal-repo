@@ -293,6 +293,10 @@ class GeminiHardwareEvaluator:
         if any(w in text for w in structural_damage_keywords):
             return self._reject_dict("Hard Excluded: Listing contains physical, structural, or chassis damage.")
 
+        # B.2. No RAM / Barebones
+        if any(w in text for w in ["no ram", "without ram", "barebones", "missing ram", "no memory"]):
+            return self._reject_dict("Hard Excluded: Barebones / No RAM workstation.")
+
         # C. Blown-dGPU Failure Trap (Workstations listed with "Intel Iris Xe only" or dead dGPU)
         if any(w in text for w in ["iris xe only", "intel graphics only", "uhd graphics only", "dgpu not working", "gpu disabled", "gpu code 43", "no dedicated gpu"]):
             return self._reject_dict("Hard Excluded: Workstation dGPU failure / disabled discrete graphics.")
@@ -401,6 +405,8 @@ class GeminiHardwareEvaluator:
             tlc += 65.0
 
         # If a 16GB upgradable machine, calculate base value as 16GB (do not artificially inflate to 64GB)
+        if ram_gb <= 16 and is_upgradable_chassis:
+            tlc += 110.0
         # ==========================================
         # 3. FAIR MARKET VALUE (FMV) & GROUND TRUTH BENCHMARKS
         # ==========================================
