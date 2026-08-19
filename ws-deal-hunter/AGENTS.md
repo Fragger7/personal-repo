@@ -23,9 +23,11 @@
 
 ## 📊 2. Current System State & Verified Status
 
-- **Unit Test Suite Status**: **15 / 15 Tests Passing** (`python test_system.py`).
-- **Live Ingestion Verification**: Verified live collection of 29+ real-time listings per cycle.
-- **Production Deployment**: Live on Streamlit Cloud at **[https://wsdealhunter.streamlit.app/](https://wsdealhunter.streamlit.app/)**.
+- **Unit Test Suite Status**: **22 / 22 Tests Passing** (`python test_system.py`).
+- **Live Ingestion Verification**: Verified live collection of 200+ real-time listings per cycle.
+- **Production Deployments**:
+  - Live on Vercel (React Frontend): **[https://wsdealhunter.vercel.app/](https://wsdealhunter.vercel.app/)**
+  - Live on Streamlit Cloud (Python Engine): **[https://wsdealhunter.streamlit.app/](https://wsdealhunter.streamlit.app/)**
 - **Git Branch & Remote**: Tracked on `main` branch connected to `https://github.com/Fragger7/personal-repo.git`.
 
 ---
@@ -149,7 +151,34 @@ C:\Development\Apps\WS Deal Hunter\
   2. Hard-blacklisted Intel $\le$ 11th Gen (`i7-11850H`, `i9-11950H`, 10th/9th/8th Gen), Intel P/U-series (1260P, 1360P, 1355U), cut-down dies (13620H, 12650H), AMD Zen 2/3 (5000/6000), and structural defects (frame separation, cracked palmrests, broken hinge anchors).
   3. Codified the **Total Landed Cost (TLC)** formula with sales tax (8.25% online, 0% local) and mandatory refurbishment penalties (+$65 SSD $\le 256\text{GB}$, +$40 missing charger, +$65 dead battery, +$110 16GB dual SO-DIMM upgrade).
   4. Calibrated the 4-tier arbitrage curve against empirical ground truth FMV clearing prices, reserving **9.8–10.0 Unicorns** for $\ge 38\%$ margin + 64GB RAM + Tier 1 chassis.
-  5. Expanded unit tests to **21 / 21 unit tests passing** (`python test_system.py`).
+### Decision 20: Universal Hard Ban on $\le 16\text{GB}$ Memory
+- **Problem**: 16GB machines (even on upgradable chassis) generated low-margin noise.
+- **Decision & Solution**: Updated [`evaluator.py`](file:///C:/Development/Apps/WS%20Deal%20Hunter/evaluator.py) and [`AGENT_KNOWLEDGE_BASE.md`](file:///C:/Development/Apps/WS%20Deal%20Hunter/AGENT_KNOWLEDGE_BASE.md) to enforce a universal ban on all $\le 16\text{GB}$ RAM laptops (Score 0.0). Mandates $32\text{GB}+$ for all systems across PC workstations and Apple Silicon.
+
+### Decision 21: Hybrid AI-Escalation Engine (Strategy #1)
+- **Problem**: Calling Gemini Flash on hundreds of standard retail listings caused unnecessary token burn and risk of 429 rate limits.
+- **Decision & Solution**: Re-architected [`evaluator.py`](file:///C:/Development/Apps/WS%20Deal%20Hunter/evaluator.py) to run 100% of listings through deterministic heuristics first ($0$ tokens, $<1\text{ms}$). Only candidates scoring $\ge 8.0$ escalate to **Gemini 3.6 Flash** for deep unstructured description analysis and recommendation synthesis. Reduces token consumption by 95% while maintaining live quota tracking.
+
+### Decision 22: Telegram Dead-Man Failure Alerts & 6h Periodic Heartbeats
+- **Decision & Solution**: Replaced hourly spam with:
+  1. Instant mobile alerts on $\text{Score} \ge 9.0$ / high-conviction deals with live AI token tracking.
+  2. Automatic dead-man exception alerts (`send_error_alert`) if scrapers encounter rate limits or network failures.
+  3. Reassurance heartbeat pulse every 6 hours (configurable via `HEARTBEAT_INTERVAL_CYCLES`).
+
+### Decision 23: Direct 12-Digit Canonical eBay Item URLs & Curation Gate ($\text{Score} \ge 7.0$)
+- **Problem**: Query-string splitting caused eBay links to break, and `deals.json` accumulated 160+ non-deal retail laptops.
+- **Decision & Solution**:
+  1. Updated `EBayCollector` in [`collector.py`](file:///C:/Development/Apps/WS%20Deal%20Hunter/collector.py) to extract 12-digit Item IDs (`/itm/(\d{9,14})`), constructing canonical `https://www.ebay.com/itm/{item_id}` links.
+  2. Added a strict quality gate in [`daemon.py`](file:///C:/Development/Apps/WS%20Deal%20Hunter/daemon.py) dropping any listing with $\text{Deal Score} < 7.0$. Purged 163 non-deal retail rows from `deals.json`, keeping only vetted opportunities.
+
+### Decision 24: Mobile UX Redesign & Default List View on Vercel
+- **Problem**: The Header and full FilterBar were wrapped in `sticky top-0`, occupying 75% of mobile viewports and blocking the listings table.
+- **Decision & Solution**:
+  1. Removed `sticky top-0` from the filter wrapper and placed `FilterBar` in natural document flow.
+  2. Set `FilterBar` to collapsed by default (`isExpanded = false`) with a slim 36px search/trigger bar.
+  3. Set default view mode to table / list view (`viewMode: "table"`).
+  4. Compacted KPI metric widgets in [`KpiMetrics.tsx`](file:///C:/Development/Apps/WS%20Deal%20Hunter/src/components/KpiMetrics.tsx) and wired the live Vercel URL **[https://wsdealhunter.vercel.app/](https://wsdealhunter.vercel.app/)** across notifications.
+- **Test Coverage**: All **22 / 22 unit tests passing** (`python test_system.py`).
 
 ---
 
@@ -161,8 +190,8 @@ C:\Development\Apps\WS Deal Hunter\
    - Scaffold rolling exponential moving average calibration (`price_benchmarks.json`).
 2. **Scheduled Daily Executive Digest (Telegram / Pushover)**:
    - Automated 8:00 AM daily briefing of top 3 highest-ROI workstation arbitrage opportunities.
-3. **Fix Mobile UI Animations**:
-   - Debug CSS keyframe compatibility and z-index stacking on touch devices.
+3. **PWA / Offline Service Worker**:
+   - Add service worker caching for offline mobile browsing on Vercel.
 
 ---
 
