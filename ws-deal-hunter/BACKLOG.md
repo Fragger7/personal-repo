@@ -61,3 +61,11 @@ This document details the active prioritized backlog for **Workstation Deal Hunt
    - Send an optional 8:00 AM summary of top 3 overnight deals.
 2. **Discord Embed Card Integration**:
    - Activate rich Discord webhooks alongside Telegram.
+
+---
+
+## 🕷️ EPIC 5: Advanced Ingestion & Headless Browsing
+
+1. **Swappa Native Playwright Navigation (Active User Priority)**:
+   - **Problem**: Native Swappa RSS feeds (laptops.rss, macbooks.rss) return 404 Not Found.
+   - **Solution**: Replace broken RSS scraping with a highly capable Playwright/Selenium headless browser setup to navigate Swappa's frontend dynamically and extract listings. User is working on a superior Playwright solution from another project to integrate here.

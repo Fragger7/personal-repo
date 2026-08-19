@@ -24,6 +24,7 @@ if hasattr(sys.stderr, "reconfigure"):
 
 from collector import (
     BAndHCollector,
+    BestBuyOutletCollector,
     DellRefurbishedCollector,
     EBayCollector,
     HardwareCollectorHub,
@@ -123,6 +124,11 @@ class TestCollectors(unittest.TestCase):
 
     def test_bh_photo_collector(self) -> None:
         collector = BAndHCollector()
+        listings = collector.fetch_listings()
+        self.assertIsInstance(listings, list)
+
+    def test_bestbuy_outlet_collector(self) -> None:
+        collector = BestBuyOutletCollector()
         listings = collector.fetch_listings()
         self.assertIsInstance(listings, list)
 
