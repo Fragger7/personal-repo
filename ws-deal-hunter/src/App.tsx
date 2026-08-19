@@ -31,7 +31,7 @@ export function App() {
     search: "",
     onlyHighYield: false,
     sortBy: "newest",
-    viewMode: "grid",
+    viewMode: "table",
   });
 
   const showToast = (msg: string) => {

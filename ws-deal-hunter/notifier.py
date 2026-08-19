@@ -199,7 +199,7 @@ class TelegramNotifier:
     ) -> None:
         self.bot_token = bot_token if bot_token is not None else os.environ.get("TELEGRAM_BOT_TOKEN", "")
         self.chat_id = chat_id if chat_id is not None else os.environ.get("TELEGRAM_CHAT_ID", "")
-        self.vercel_url = vercel_url if vercel_url is not None else os.environ.get("VERCEL_DASHBOARD_URL", "")
+        self.vercel_url = vercel_url if vercel_url is not None else os.environ.get("VERCEL_DASHBOARD_URL", "https://wsdealhunter.vercel.app/")
         self.streamlit_url = streamlit_url or os.environ.get("STREAMLIT_DASHBOARD_URL", "https://wsdealhunter.streamlit.app/")
 
     def _format_dashboard_links(self) -> str:
