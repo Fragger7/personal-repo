@@ -297,28 +297,33 @@ class GeminiHardwareEvaluator:
         if any(w in text for w in ["iris xe only", "intel graphics only", "uhd graphics only", "dgpu not working", "gpu disabled", "gpu code 43", "no dedicated gpu"]):
             return self._reject_dict("Hard Excluded: Workstation dGPU failure / disabled discrete graphics.")
 
-        # D. Intel 11th-Gen & Older Silicon Blacklist (Tiger Lake, Ice Lake, Comet Lake)
-        # Drops i7-11850H, i9-11950H, 11800H, 11400H, and all 10th/9th/8th Gen
-        intel_old_gen = re.search(r'\b(i[3579]-11\d{3}|i[3579]-10\d{3}|i[3579]-[89]\d{3}|11850h|11950h|11800h|11400h|11980hk|10885h|10750h|9750h|8750h)\b', text)
+        # D. Intel 11th-Gen & Older Silicon Blacklist (Tiger Lake, Ice Lake, Comet Lake, Xeons)
+        # Drops i7-11850H, i9-11950H, 11800H, 11400H, Xeon W-11955M, and all 10th/9th/8th Gen
+        intel_old_gen = re.search(r'\b(i[3579]-11\d{3}|i[3579]-10\d{3}|i[3579]-[89]\d{3}|11850h|11950h|11800h|11400h|11980hk|10885h|10750h|9750h|8750h|11955m|w-11\d{3}|xeon.*11\d{3})\b', text)
         if intel_old_gen:
-            return self._reject_dict(f"Hard Excluded: Older Intel CPU ({intel_old_gen.group(0)}) rejected. Minimum 12th-Gen Intel required.")
+            return self._reject_dict(f"Hard Excluded: Older Intel/Xeon CPU ({intel_old_gen.group(0)}) rejected. Minimum 12th-Gen Intel required.")
 
-        # E. Intel P-Series & Low-Voltage U-Series Blacklist (15W-28W limits)
+        # E. Intel Core i5 & Low-Tier Silicon Blacklist (All i5s rejected for developer workstation tier)
+        intel_i5_match = re.search(r'\b(i5-\d{4,5}[a-z]*|core i5|intel i5)\b', text)
+        if intel_i5_match:
+            return self._reject_dict(f"Hard Excluded: Intel Core i5 processor ({intel_i5_match.group(0)}) lacks 14-core workstation baseline.")
+
+        # F. Intel P-Series & Low-Voltage U-Series Blacklist (15W-28W limits)
         intel_low_voltage = re.search(r'\b(1260p|1360p|1370p|1240p|1250p|1270p|1340p|1350p|1355u|1335u|1235u|1245u|1255u|1135g7|1165g7)\b', text)
-        if intel_low_voltage and not any(w in text for w in ["precision 5680", "precision 7680", "thinkpad p16"]):
+        if intel_low_voltage and not any(w in text for w in ["precision 7680", "thinkpad p16"]):
             return self._reject_dict(f"Hard Excluded: Low-voltage / thermal-limited CPU ({intel_low_voltage.group(0)}) rejected.")
 
-        # F. Cut-Down Intel H-Die Blacklist (Reduced E-Cores / Cache)
+        # G. Cut-Down Intel H-Die Blacklist (Reduced E-Cores / Cache)
         cutdown_intel = re.search(r'\b(i7-13620h|i7-12650h|i5-13500h|i5-12500h|i5-13420h|i5-12450h)\b', text)
         if cutdown_intel and not any(w in text for w in ["64gb", "2x32gb"]):
             return self._reject_dict(f"Hard Excluded: Cut-down Intel H-series die ({cutdown_intel.group(0)}) without verified 64GB RAM upgrade.")
 
-        # G. AMD Zen 2 / Zen 3 & Legacy Rebrand Blacklist (5000, 6000, 7020, 7030, 7035)
+        # H. AMD Zen 2 / Zen 3 & Legacy Rebrand Blacklist (5000, 6000, 7020, 7030, 7035)
         amd_old_gen = re.search(r'\b(ryzen [3579] 5\d{3}|ryzen [3579] 6\d{3}|ryzen [3579] 7[0-3]\d{2}|5800h|5900hx|6800h|6900hx)\b', text)
         if amd_old_gen:
             return self._reject_dict(f"Hard Excluded: Legacy AMD Zen 2/3 CPU ({amd_old_gen.group(0)}) rejected. Minimum Zen 4 (7840HS/8840HS) required.")
 
-        # H. Consumer & Budget Lines (Latitude 3000/5000, Inspiron, IdeaPad, Yoga, Pavilion, Envy, OmniBook)
+        # I. Consumer & Budget Lines (Latitude 3000/5000, Inspiron, IdeaPad, Yoga, Pavilion, Envy, OmniBook)
         if any(w in text for w in ["latitude 3", "latitude 5", "inspiron", "vostro", "ideapad", "yoga", "thinkbook", "flex 5", "chromebook", "pavilion", "envy", "omnibook", "stream 14", "victus"]):
             if not any(w in text for w in ["precision", "xps 15", "xps 17", "thinkpad p", "p1 gen", "p16", "x1 extreme", "zbook"]):
                 return self._reject_dict("Hard Excluded: Budget consumer / entry business chassis lacks workstation thermal envelope.")
@@ -369,7 +374,6 @@ class GeminiHardwareEvaluator:
         # ==========================================
         # 2. TOTAL LANDED COST (TLC) CALCULATION
         # ==========================================
-        # Tax: 0% on Reddit / Local meetups, 8.25% on eBay/Swappa/BestBuy/B&H
         tax_rate = 0.0 if listing.source in ["reddit", "local"] else 0.0825
         sticker_price = max(50.0, listing.price)
         tlc = round(sticker_price * (1.0 + tax_rate), 2)
@@ -396,11 +400,7 @@ class GeminiHardwareEvaluator:
         if any(w in text for w in ["no battery", "no batt", "dead battery", "service battery", "bad battery", "battery not working"]):
             tlc += 65.0
 
-        # Upgradable 16GB Chassis DDR5 RAM Upgrade Penalty (Upgrade to 64GB kit)
-        if ram_gb == 16 and is_upgradable_chassis:
-            tlc += 110.0  # Cost of Crucial/Corsair 64GB DDR5 SO-DIMM kit
-            ram_gb = 64   # Evaluate at upgraded 64GB spec level
-
+        # If a 16GB upgradable machine, calculate base value as 16GB (do not artificially inflate to 64GB)
         # ==========================================
         # 3. FAIR MARKET VALUE (FMV) & GROUND TRUTH BENCHMARKS
         # ==========================================
@@ -409,29 +409,29 @@ class GeminiHardwareEvaluator:
 
         # Ground Truth Matrix Matching
         if "xps 15 9530" in text or "xps 9530" in text:
-            fmv = 1150.0 if ram_gb >= 64 else 950.0
-            strike_ceiling = 850.0 if ram_gb >= 64 else 780.0
+            fmv = 1150.0 if ram_gb >= 64 else (950.0 if ram_gb >= 32 else 800.0)
+            strike_ceiling = 850.0 if ram_gb >= 64 else (780.0 if ram_gb >= 32 else 650.0)
         elif "xps 15 9520" in text or "xps 9520" in text:
-            fmv = 850.0 if ram_gb >= 64 else 750.0
-            strike_ceiling = 750.0 if ram_gb >= 64 else 675.0
+            fmv = 850.0 if ram_gb >= 64 else (750.0 if ram_gb >= 32 else 650.0)
+            strike_ceiling = 750.0 if ram_gb >= 64 else (675.0 if ram_gb >= 32 else 550.0)
         elif "precision 5680" in text:
-            fmv = 1450.0 if ram_gb >= 64 else 1250.0
-            strike_ceiling = 1050.0 if ram_gb >= 64 else 950.0
+            fmv = 1450.0 if ram_gb >= 64 else (1250.0 if ram_gb >= 32 else 950.0)
+            strike_ceiling = 1050.0 if ram_gb >= 64 else (950.0 if ram_gb >= 32 else 750.0)
         elif "precision 5570" in text:
-            fmv = 880.0 if ram_gb >= 64 else 780.0
-            strike_ceiling = 750.0 if ram_gb >= 64 else 680.0
+            fmv = 880.0 if ram_gb >= 64 else (780.0 if ram_gb >= 32 else 650.0)
+            strike_ceiling = 750.0 if ram_gb >= 64 else (680.0 if ram_gb >= 32 else 550.0)
         elif "thinkpad p1 gen 6" in text or "p1 gen 6" in text or "p16 gen 2" in text:
-            fmv = 1400.0 if ram_gb >= 64 else 1200.0
-            strike_ceiling = 1050.0 if ram_gb >= 64 else 950.0
+            fmv = 1400.0 if ram_gb >= 64 else (1200.0 if ram_gb >= 32 else 950.0)
+            strike_ceiling = 1050.0 if ram_gb >= 64 else (950.0 if ram_gb >= 32 else 750.0)
         elif "thinkpad p1 gen 5" in text or "p1 gen 5" in text or "x1 extreme g5" in text or "p16 gen 1" in text:
-            fmv = 920.0 if ram_gb >= 64 else 800.0
-            strike_ceiling = 800.0 if ram_gb >= 64 else 720.0
+            fmv = 920.0 if ram_gb >= 64 else (800.0 if ram_gb >= 32 else 650.0)
+            strike_ceiling = 800.0 if ram_gb >= 64 else (720.0 if ram_gb >= 32 else 550.0)
         elif "zbook studio g10" in text or "zbook fury g10" in text:
-            fmv = 1200.0 if ram_gb >= 64 else 1050.0
-            strike_ceiling = 950.0 if ram_gb >= 64 else 850.0
-        elif "zbook studio g9" in text or "zbook fury g9" in text:
-            fmv = 850.0 if ram_gb >= 64 else 750.0
-            strike_ceiling = 720.0 if ram_gb >= 64 else 650.0
+            fmv = 1200.0 if ram_gb >= 64 else (1050.0 if ram_gb >= 32 else 850.0)
+            strike_ceiling = 950.0 if ram_gb >= 64 else (850.0 if ram_gb >= 32 else 700.0)
+        elif "zbook studio g9" in text or "zbook fury g9" in text or "zbook power g9" in text:
+            fmv = 850.0 if ram_gb >= 64 else (750.0 if ram_gb >= 32 else 620.0)
+            strike_ceiling = 720.0 if ram_gb >= 64 else (650.0 if ram_gb >= 32 else 520.0)
         elif is_apple_silicon and ("m2 max" in text or "m3 max" in text or "m4 max" in text):
             fmv = 1750.0 if ram_gb >= 64 else 1550.0
             strike_ceiling = 1450.0 if ram_gb >= 64 else 1300.0
@@ -442,11 +442,11 @@ class GeminiHardwareEvaluator:
             fmv = 1250.0 if ram_gb >= 64 else 1050.0
             strike_ceiling = 1100.0 if ram_gb >= 64 else 900.0
         elif "zephyrus" in text or "legion pro" in text or "razer blade" in text:
-            fmv = 1100.0 if ram_gb >= 64 else 950.0
-            strike_ceiling = 900.0 if ram_gb >= 64 else 800.0
+            fmv = 1100.0 if ram_gb >= 64 else (950.0 if ram_gb >= 32 else 750.0)
+            strike_ceiling = 900.0 if ram_gb >= 64 else (800.0 if ram_gb >= 32 else 650.0)
         else:
             # General Whitelisted Silicon Fallback FMV
-            base_fmv = 850.0 if ram_gb >= 64 else 750.0
+            base_fmv = 850.0 if ram_gb >= 64 else (750.0 if ram_gb >= 32 else 600.0)
             if "rtx 4080" in text or "rtx 4090" in text or "rtx 5080" in text:
                 base_fmv += 450.0
             elif "rtx 4070" in text or "rtx 3500 ada" in text or "rtx 4000 ada" in text:
@@ -461,19 +461,19 @@ class GeminiHardwareEvaluator:
         margin_spread_pct = round(((fmv - tlc) / fmv) * 100.0, 1)
         profit = round(max(0.0, fmv - tlc), 2)
 
-        # Disqualify if TLC exceeds Strike Ceiling
+        # Disqualify if TLC exceeds Strike Ceiling or margin < 8%
         if tlc > strike_ceiling or margin_spread_pct < 8.0:
             deal_score = max(1.0, round(5.0 + (margin_spread_pct / 10.0), 1))
             recommendation = "PASS / NO ARBITRAGE (Exceeds Strike Ceiling)"
         elif margin_spread_pct >= 38.0 and ram_gb >= 64:
-            # 🦄 TRUE UNICORN DEAL (38%+ Margin, 64GB DDR5 / Unified, Tier 1 Chassis)
+            # 🦄 TRUE UNICORN DEAL (Strict: 38%+ Margin, True 64GB DDR5 / Unified, Tier 1 Chassis)
             deal_score = round(min(10.0, 9.8 + ((margin_spread_pct - 38.0) / 20.0)), 1)
             recommendation = "🦄 TRUE UNICORN DEAL (High Liquidity Equity)"
-        elif margin_spread_pct >= 25.0:
-            # 🎯 HIGH-CONVICTION STRIKE (25.0% - 37.9% Margin)
+        elif margin_spread_pct >= 25.0 and ram_gb >= 32:
+            # 🎯 HIGH-CONVICTION STRIKE (25.0% - 37.9% Margin + >=32GB RAM)
             deal_score = round(min(9.7, 9.0 + ((margin_spread_pct - 25.0) / 18.0)), 1)
             recommendation = "🎯 HIGH-CONVICTION STRIKE"
-        elif margin_spread_pct >= 15.0:
+        elif margin_spread_pct >= 15.0 and ram_gb >= 32:
             # ⚡ STRONG VALUE BUY (15.0% - 24.9% Margin)
             deal_score = round(min(8.9, 8.0 + ((margin_spread_pct - 15.0) / 10.0)), 1)
             recommendation = "⚡ STRONG VALUE BUY"
@@ -485,25 +485,57 @@ class GeminiHardwareEvaluator:
             deal_score = 5.0
             recommendation = "FAIR MARKET VALUE"
 
-        # CPU label
-        cpu_label = "Intel Core i7/i9 12th/13th-Gen H"
-        if is_apple_silicon:
-            cpu_label = "Apple Silicon M-Series Pro/Max"
+        # ==========================================
+        # 5. PRECISE SPEC EXTRACTION (CPU, GPU, Screen)
+        # ==========================================
+        # Exact CPU extraction
+        cpu_match = re.search(r'\b(i9-\d{4,5}[a-z]*|i7-\d{4,5}[a-z]*|ultra [79] \d{3}[a-z]*|ryzen [79] \d{4}[a-z]*|m[1-4] (?:max|pro|ultra))\b', text)
+        if cpu_match:
+            cpu_label = cpu_match.group(0).upper()
+        elif is_apple_silicon:
+            if "m3 max" in text or "m2 max" in text or "m1 max" in text or "m4 max" in text:
+                cpu_label = "Apple M-Series Max"
+            elif "m3 pro" in text or "m2 pro" in text or "m1 pro" in text or "m4 pro" in text:
+                cpu_label = "Apple M-Series Pro"
+            else:
+                cpu_label = "Apple Silicon"
         elif "ryzen" in text:
             cpu_label = "AMD Ryzen 7/9 Zen 4/5"
         elif "ultra" in text:
             cpu_label = "Intel Core Ultra AI Workstation"
+        else:
+            cpu_label = "Intel Core i7/i9 12th/13th-Gen H"
+
+        # Exact GPU extraction
+        gpu_match = re.search(r'\b(rtx [2345]000 ada|rtx a[12345]000|rtx a5500|rtx 40[6789]0|rtx 50[789]0|rtx 30[78]0 ti|radeon 890m|radeon 8050s)\b', text)
+        if gpu_match:
+            gpu_label = f"NVIDIA {gpu_match.group(0).upper()}"
+        elif is_apple_silicon:
+            gpu_label = "Apple Silicon Unified GPU"
+        else:
+            gpu_label = "NVIDIA RTX / Workstation GPU"
+
+        # Screen extraction
+        screen_label = '15.6" - 16" Workstation Display'
+        if "oled" in text or "3.5k" in text:
+            screen_label = '15.6" / 16" 3.5K OLED Display'
+        elif "4k" in text or "uhd" in text or "3840x" in text:
+            screen_label = '16" 4K UHD+ Display'
+        elif "qhd" in text or "2560x" in text or "wqxga" in text:
+            screen_label = '16" QHD+ 165Hz Display'
+        elif "liquid retina" in text or "xdr" in text:
+            screen_label = '16.2" Liquid Retina XDR 120Hz'
 
         return {
             "cpu": cpu_label,
             "ram_gb": ram_gb,
             "ssd_gb": ssd_gb,
-            "gpu": "NVIDIA RTX / Apple Silicon GPU",
-            "screen": '15.6" - 16" Workstation Display',
+            "gpu": gpu_label,
+            "screen": screen_label,
             "condition": listing.condition_raw,
             "fair_market_value": fmv,
             "deal_score": deal_score,
-            "summary": f"{cpu_label} | {ram_gb}GB RAM | {ssd_gb}GB SSD (TLC: ${tlc:.2f}, Margin: {margin_spread_pct}%).",
+            "summary": f"{cpu_label} | {ram_gb}GB RAM | {ssd_gb}GB SSD | {gpu_label} (TLC: ${tlc:.2f}, Margin: {margin_spread_pct}%).",
             "actionable_recommendation": recommendation,
             "confidence_score": 0.95,
         }
