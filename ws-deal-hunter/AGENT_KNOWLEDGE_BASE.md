@@ -1,126 +1,135 @@
-# 🧭 AGENT KNOWLEDGE BASE: WORKSTATION ARBITRAGE & INVENTORY SCOPING
+# SYSTEM DIRECTIVE: ARBITRAGE VALUATION & SCRAPER EVALUATION ENGINE (v3.0)
 
-## 1. EXECUTIVE CONTEXT & WORKFLOW GOALS
-This knowledge base establishes the hardware baseline, technical trade-offs, target configurations, and arbitrage heuristics for an automated workstation scraper.
-
-### User Workload & Hardware Bottlenecks
-- **Primary Workload:** High-throughput local agent orchestration (Claude Code CLI, OpenClaw, Antigravity CLI), local Model Context Protocol (MCP) daemons, Docker test containers, Python backend servers, and API routing via OpenRouter.
-- **Hardware Priorities:**
-  1. **System Memory (RAM):** 32GB to 64GB DDR4/DDR5 (or 32GB–64GB Unified Memory on Apple Silicon). Prevents OS paging during concurrent multi-agent executions and containerized builds.
-  2. **Single-Thread & Multi-Core Responsiveness:** Fast boost clocks for low-latency CLI execution and terminal responsiveness.
-  3. **Screen Quality & Ergonomics:** 15.6"–16.0" 16:10 matte anti-glare panels (or 3.5K OLED / Mini-LED) with comfortable, full-travel keyboards for dark-theme IDE sessions.
-  4. **GPU VRAM (Secondary):** Cloud APIs handle frontier LLM reasoning (Claude 3.5/3.7 Sonnet, Gemini Pro). Dedicated 16GB VRAM (e.g., RTX A5500) is only relevant if heavily discounted, but not required.
+**ROLE:** Core Context, Philosophy, Valuation Rules, and Domain Memory  
+**INTENDED AUDIENCE:** Automated Scraping, Parsing, and Evaluation Coding Agents  
+**PIPELINE TARGETS:** Swappa, eBay, Reddit (`/r/hardwareswap`, `/r/appleswap`, `/r/homelabsales`, `/r/LaptopDeals`), B&H Photo Used, Best Buy Outlet, Dell Financial Services Refurbished, Lenovo Outlet, Micro Center  
+**PURPOSE:** Guide agent logic to eliminate noise, enforce strict hardware baselines, compute true landed cost economics, and prioritize high-conviction secondary market targets.
 
 ---
 
-## 2. KEY HISTORICAL CASE STUDIES & LESSONS LEARNED
+## 1. Executive Vision & Core Philosophy
 
-### Case Study A: The 2016/2017 Intel MacBook Pro Front-End (Rejected Strategy)
-- **Concept Evaluated:** Using an old 2016–2017 Touch Bar MacBook Pro as a thin-client front-end to a headless home server.
-- **Why It Was Rejected:** 
-  - Butterfly keyboard switch failures / repeated keystrokes.
-  - End-of-life macOS support (stuck on Monterey/Ventura without unofficial patches).
-  - Degraded battery health tethering the user to the wall.
-  - Network latency and upload dependencies when working away from home Wi-Fi.
-- **Scraper Rule:** ❌ **Hard Exclude all Intel MacBook Pros (2016–2020)**.
+### The Mission
+The objective of this pipeline is **not** to aggregate every laptop for sale on the internet. The objective is to identify **mispriced, high-performance developer and workstation laptops** on secondary platforms that offer immediate utility for demanding engineering workflows (Docker, local LLM orchestration, parallel CLI agents) or significant cash arbitrage equity.
 
-### Case Study B: The $700 Dell XPS 15 9530 Swappa Listing (The Benchmark Unicorn)
-- **Listed Spec:** Dell XPS 15 9530 (2024 Build Date), Intel Core i7-13620H, 15.6" FHD+ Non-Touch (500-nit matte), Intel Arc A370M, Mint condition.
-- **Arbitrage Anomaly:** Title stated `32GB RAM` at $824, but body text verified: *"64GB via two matched Crucial 32GB DDR5-5600 SODIMMs (CT32G56C46S5.C16D)... upgraded from factory configuration."*
-- **Final Negotiated Price:** $700.00 (Seller accepted, but sniped due to an uncoordinated public price drop).
-- **True Market Clearing Value:** $1,050 – $1,150 (The 64GB DDR5 Crucial kit alone retails for $220–$280+).
-- **Scraper Rule:** 🎯 **Scan unstructured description text and image metadata for upgrades** where title tags underestimate memory.
-
-### Case Study C: The $1,300 ThinkPad P1 Gen 5 (16GB VRAM RTX A5500) Trade-off
-- **Spec:** i9-12900H, 64GB RAM, 2TB SSD, 16" 4K (3840x2400), NVIDIA RTX A5500 (16GB VRAM).
-- **Analysis:** Running 32B models locally on a 16GB laptop GPU suffers from context window degradation (KV cache overflow after ~16k tokens) and multi-step tool failure compared to cloud models.
-- **Scraper Rule:** Do not pivot primary budget to $1,300+ unless it represents an extreme halo discount. The sweet spot remains **$650 – $750 for 64GB Windows workstations** and **$950 – $1,200 for 32GB/64GB Apple Silicon**.
+### The Signal-to-Noise Principle
+A dashboard displaying 200+ listings a day is broken. When filters are too loose, "alert fatigue" sets in, forcing human operators to waste time triaging mediocre deals. 
+* **Target Volume:** Ingestion and evaluation logic must be strict enough to filter market noise down to **5 to 15 high-conviction targets per day**.
+* **The "Unicorn" Definition:** The term **Unicorn** must never be used casually. A true unicorn is a rare anomaly (e.g., an off-market or mispriced 64GB DDR5 current-gen workstation selling $\ge 38\%$ below fair market clearing prices). It should trigger once or twice a month, not twice an hour.
 
 ---
 
-## 3. TARGET INVENTORY TIERS & SEARCH VECTORS
+## 2. Evolution & Root-Cause Learnings: The Five Market Traps
 
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                             PRIMARY INVENTORY SCOPE                         │
-├─────────────────────────────────────────────────────────────────────────────┤
-│ TIER 1: Windows Workstations (Dell XPS/Precision, ThinkPad P1, HP ZBook)    │
-│ TIER 2: Apple Silicon 16" MacBook Pro (M1/M2/M3 Pro & Max, 32GB/64GB)      │
-│ TIER 3: Headless Mini-PC Nodes (Minisforum, Beelink, 1L Micro Desktops)     │
-│ TIER 4: Upward Spec Halo Spillovers & Pricing Errors (OLED / Max Chips)     │
-└─────────────────────────────────────────────────────────────────────────────┘
+Through empirical analysis of secondary market listings, several recurring traps generate high false-positive deal scores if an agent relies solely on seller titles and raw sticker prices. 
 
+The evaluation logic explicitly counters these five failure modes:
 
-### TIER 1: Windows Developer Workstations (Primary Target: $600 – $750)
-*Target Models & Hidden Enterprise Twins:*
-- **Dell Family:**
-  - Consumer Name: `Dell XPS 15 9520`, `Dell XPS 15 9530`, `Dell XPS 15 9510`
-  - Enterprise Twin: `Dell Precision 5560`, `Dell Precision 5570`, `Dell Precision 5580`, `Dell Precision 5680`
-  - Desired Specs: i7-11850H / i7-12700H / i7-13620H / i7-13700H | 32GB or 64GB DDR4/DDR5 | 1TB NVMe.
-- **Lenovo Family:**
-  - Consumer/Workstation: `ThinkPad P1 Gen 4`, `ThinkPad P1 Gen 5`, `ThinkPad P1 Gen 6`, `ThinkPad X1 Extreme Gen 4/5`
-  - Fleet Workhorses: `ThinkPad T16 Gen 1/2 (Ryzen 7 PRO 6850U / 7840U)`, `ThinkPad P16s`
-  - Desired Specs: 32GB or 64GB RAM | 16:10 display (1920x1200, 2560x1600, or 4K).
-- **HP Family:**
-  - Enterprise Creator: `HP ZBook Studio G8`, `HP ZBook Studio G9`, `HP ZBook Power G9`
-  - Desired Specs: i7 11th–13th Gen | 32GB/64GB RAM | Vapor chamber cooling.
+### Trap 1: The 11th-Gen "i9" Marketing Trap
+* **The Illusion:** Sellers list older 11th-Gen laptops (e.g., `i9-11950H`, `i7-11850H`) with "i9" or "64GB RAM" badges at $650–$750, making them look like powerhouse deals.
+* **The Reality:** 11th-Gen Tiger Lake is an older 10nm monolithic architecture strictly capped at **8 cores / 16 threads** running on legacy **DDR4** memory. 
+* **The Comparison:** Intel 12th/13th-Gen hybrid silicon (`i7-12700H`, `i7-13700H`, `i9-12900HK`) features **14 cores / 20 threads** on high-bandwidth **DDR5**. It delivers 40% to 50% higher multi-threaded throughput for compilation and agent tasks. An 11th-Gen laptop priced at $700 is overpriced; its realistic market value is under $500.
+* **Rule:** Hard-blacklist all Intel CPUs older than 12th-Gen (`i[3579]-11\d{3}` and below).
 
-### TIER 2: Apple Silicon Workstations (Target: $900 – $1,250)
-*Target Models:*
-- `MacBook Pro 16" (2021 M1 Pro / M1 Max)`
-- `MacBook Pro 16" (2023 M2 Pro / M2 Max)`
-- `MacBook Pro 16" (2023 M3 Pro / M3 Max)`
-- **Mandatory Spec:** Minimum **32GB or 64GB Unified Memory**. (Skip all 16GB configs).
+### Trap 2: The Liquidator "Parts Lot" Trap (Negative Equity)
+* **The Illusion:** Bulk enterprise liquidators list barebones machines for $389–$399 labeled *"NO BATT / NO SSD / NO O.S"*.
+* **The Reality:** These are not bargains. Once an operator buys a replacement OEM 86Wh battery ($55–$65), a 1TB NVMe SSD ($65), a genuine 130W USB-C charger ($35–$40), and pays state sales tax, the **Total Landed Cost balloons to $550–$600**—for an 11th-Gen machine that sells turnkey for $460 on eBay.
+* **Rule:** Never evaluate raw sticker prices. Calculate Total Landed Cost (TLC) including refurbishment penalties.
 
-### TIER 3: Headless Mini-PC / Compute Nodes (Target: $350 – $550)
-*Target Models:*
-- **High-Performance Mini-PCs:** `Minisforum UM780 XTX`, `Minisforum MS-01`, `Beelink SER7 / SER8` (Ryzen 7 7840HS / 8845HS or i9-13900H | 32GB–64GB DDR5).
-- **Enterprise 1L Micro PCs:** `Dell OptiPlex 7000/7010 Micro`, `Lenovo ThinkCentre M90q Gen 3/4`, `HP EliteDesk 800 G9 Mini` (i7-12700T/13700T | 32GB–64GB).
+### Trap 3: The "Good Condition" Structural Damage Disguise
+* **The Illusion:** A top-tier chassis (e.g., Dell XPS 15 9520) listed for $600 labeled condition *"Good"* by bulk resellers.
+* **The Reality:** Deep in the condition notes, text reads: *"Frame is separating from device... chip on left corner of palm rest... screen has keyboard imprints."* On the XPS carbon-fiber/aluminum chassis, a separating frame means dropped impact sheared the internal metal hinge screw anchors from the palm rest. Opening and closing the lid will eventually tear internal display and daughterboard cables. A full teardown repair costs $150+ in parts and labor.
+* **Rule:** Scan condition notes and descriptions for chassis deformation, hinge separation, and deep glass etching. Drop structurally compromised units immediately (Score 0.0).
 
-### TIER 4: Upward Spec Spillovers & Pricing Errors (Blowout Scenarios)
-- **Halo Chip Spillover:** M1 Max / M2 Max 16" with 64GB RAM listed at $\le \$1,200$ (seller pricing at 16GB M1 Pro base rates).
-- **Generational Leap:** XPS 9530 / Precision 5580 / P1 Gen 6 (13th Gen Intel / Ryzen 7000) listed $\le \$750$.
-- **Display Error:** 3.5K (3456x2160) OLED or 4K Touch XPS/Precision listed $\le \$700$.
+### Trap 4: The Blown-dGPU Failure Trap
+* **The Illusion:** Workstations or creator laptops (MSI Stealth/Creator GS66/Z16, Dell XPS 15) listed as *"Great working condition - Intel Iris Xe graphics only"*.
+* **The Reality:** These models were manufactured with dedicated NVIDIA graphics (RTX 3060/3070/4060/A2000). If the listing notes "Iris Xe only", the dedicated GPU has suffered thermal solder failure or VRM blowout. The seller has disabled the dead dGPU in Device Manager/BIOS.
+* **Rule:** If a workstation or gaming chassis known to have a dGPU is listed with only integrated graphics or mentions "dGPU not working / code 43", drop immediately (Score 0.0).
+
+### Trap 5: The Cut-Down CPU & Soldered RAM Trap
+* **The Illusion:** Thin-and-light laptops listed as "Intel Core i7 13th-Gen" or "AMD Ryzen 7" for $500.
+* **The Reality:** Manufacturers use deceiving model numbers. An `i7-13620H` or `i7-12650H` has half its E-cores and cache cut off compared to a full `i7-13700H` (14C/20T). U-series (`1355U`, `1235U`) and P-series (`1260P`, `1360P`) have 15W–28W limits that thermal-throttle instantly under local LLM inference. Worse, soldered 16GB RAM can never be upgraded.
+* **Rule:** Enforce full H/HX-series silicon and require $\ge 32\text{GB}$ RAM (or verified dual SO-DIMM upgradable slots).
 
 ---
 
-## 4. ANOMALY PATTERNS & ARBITRAGE DETECTION HEURISTICS
+## 3. Target Hardware Taxonomy & Silicon Gatekeeper
 
-When scraping unstructured posts (Reddit selftext, Swappa notes, eBay titles), look for:
-1. **Title vs. Body RAM Mismatch:** Title says standard `32GB`, but description mentions aftermarket `2x32GB Crucial / Corsair 64GB kit`.
-2. **Enterprise Rebranding Discount:** Precision 5570/5580 listed for $200 less than an identical XPS 9520/9530 due to lower search volume.
-3. **Component Floor Arbitrage:** Asking price of the complete laptop is near the market price of the standalone 64GB DDR5 SODIMM kit installed ($220–$280).
-4. **Urgent Dumps:** Reddit posts tagged `[USA-...] [H] ... [W] PayPal` with terms like *"Need gone today / moving / OBO"*.
-
----
-
-## 5. INGESTION CHANNELS & QUERY SYNTAX
-
-### 1. Reddit Ingestion (`r/hardwareswap`, `r/appleswap`, `r/homelabsales`)
-- Ingest new submissions via JSON endpoints (`/new.json?limit=25`).
-- Query filter patterns:
-  - `(XPS 15|9520|9530|Precision 5560|5570|5580|ThinkPad P1|T16|ZBook)`
-  - `(MacBook Pro 16|M1 Max|M2 Max|M1 Pro|M2 Pro).*(32GB|64GB)`
-  - `(UM780|SER7|SER8|MS-01|OptiPlex Micro).*(32GB|64GB)`
-
-### 2. eBay Browse API Queries
-- `Dell Precision (5570, 5580) (32GB, 64GB)`
-- `Dell XPS 15 (9520, 9530) (32GB, 64GB)`
-- `ThinkPad P1 (Gen 4, Gen 5) (32GB, 64GB)`
-- `MacBook Pro 16 (M1 Max, M2 Max, M1 Pro) (32GB, 64GB)`
-
-### 3. Swappa Category Feeds
-- RSS monitoring on `laptops/dell`, `laptops/lenovo`, and `laptops/macbooks`.
+### Target Machine Tiers
+* **Tier 1: Clean-Deck Creator & Enterprise Workstations**:
+  - Dell Precision 5570, 5680, 7670, 7680, 7770, 7780
+  - Dell XPS 15 (9520, 9530), XPS 17 (9720, 9730)
+  - Lenovo ThinkPad P1 (Gen 5, Gen 6), ThinkPad P16 (Gen 1, Gen 2), ThinkPad X1 Extreme (Gen 5)
+  - HP ZBook Studio (G9, G10), ZBook Fury (G9, G10), ZBook Power (G9, G10)
+* **Tier 2: Apple Silicon Unix Engines**:
+  - Apple MacBook Pro 14" & 16" (M1 Pro/Max, M2 Pro/Max, M3 Pro/Max, M4 Pro/Max) with $\ge 32\text{GB}$ Unified Memory
+* **Tier 3: Stealth Creator & High-TGP CUDA Engines**:
+  - ASUS ROG Zephyrus G14 (GA402/GA403 Zen 4/Zen 5), Zephyrus G16 (GU605 / GU604), Zephyrus M16 (GU604)
+  - Lenovo Legion Pro 7i (Gen 8/9/10), Legion Pro 5i
+  - Razer Blade 16 (2023–2025)
 
 ---
 
-## 6. ARBITRAGE SCORING MATRIX (0.0 to 10.0)
+### Silicon Gatekeeper Rules
 
-| Category / Configuration | Price Range | Deal Score | Verdict |
-| :--- | :--- | :--- | :--- |
-| **Windows: 13th Gen / Ryzen 7000 + 64GB DDR5 (Mint)** | $\le \$750$ | **9.9 / 10** | 🦄 **Unicorn (Immediate Alert)** |
-| **Mac: 16" M1 Max / M2 Max + 64GB Unified** | $\le \$1,150$ | **9.8 / 10** | 🦄 **Halo Pricing Error** |
-| **Windows: 12th/13th Gen + 32GB RAM (or 11th Gen 64GB)** | $\le \$680$ | **9.0 / 10** | 🔥 **High-Value Arbitrage** |
-| **Windows: 3.5K OLED / 4K + 32GB/64GB RAM** | $\le \$750$ | **9.5 / 10** | 🔥 **Premium Panel Arbitrage** |
-| **Mini-PC: Ryzen 7840HS / i9-13900H + 64GB DDR5** | $\le \$480$ | **9.2 / 10** | 🔥 **Top Compute Node Value** |
-| **Mac: 16" M1 Pro / M2 Pro + 32GB Unified** | $\le \$1,000$ | **9.0 / 10** | 🔥 **Solid Apple Silicon Buy** |
-| **Any Unit: Soldered $\le$16GB, Broken Hinge, Intel Mac** | Any | **0.0 / 10** | ❌ **Hard Drop / Reject** |
+| Status | Processors |
+| :--- | :--- |
+| **✅ Whitelist (Allowed)** | • **Intel 12th/13th-Gen H/HX**: `i7-12700H`, `i7-12800H`, `i9-12900H/HX`, `i7-13700H`, `i7-13800H`, `i9-13900H/HX` (14C/20T+)<br>• **Intel Core Ultra 7 / 9** (Series 1 & 2)<br>• **AMD Zen 4/5**: `Ryzen 7 7840HS`, `8840HS`, `Ryzen 9 7940HS`, `Ryzen AI 9 HX 370`<br>• **Apple Silicon**: `M1 Pro/Max`, `M2 Pro/Max`, `M3 Pro/Max`, `M4 Pro/Max` |
+| **❌ Hard Blacklist (Score 0.0)** | • **All Intel 11th-Gen & Older** (`i7-11850H`, `i9-11950H`, 10th, 9th, 8th Gen)<br>• **Intel P-Series & U-Series** (`1260P`, `1360P`, `1370P`, `1355U`, `1235U`)<br>• **Cut-down Intel H-Dies** (`i7-13620H`, `i7-12650H`, `i5-13500H`)<br>• **AMD Zen 2 / Zen 3 / Rebrands** (`5000`, `6000`, `7020`, `7030`, `7035`)<br>• **Base Apple Silicon** (Base M1/M2/M3 with 8-core / 8GB-16GB RAM) |
+
+---
+
+## 4. Valuation, Total Landed Cost (TLC), & Ground Truth Economics
+
+### The Total Landed Cost (TLC) Formula
+$$\text{TLC} = \text{Sticker Price} + \text{Shipping} + \text{Estimated Sales Tax} + \text{Mandatory Refurbishment Penalties}$$
+* **Tax Rate:** Apply **8.25%** for online storefronts (eBay, Swappa, Best Buy, B&H); apply **0%** for verified local cash/in-person transactions (Reddit local).
+* **Mandatory Penalties:**
+  * If SSD $\le 256\text{GB}$: Add **+$65.00** (cost of purchasing a 1TB Gen4 NVMe drive).
+  * If Missing OEM Charger: Add **+$40.00** (cost of a genuine 130W/140W USB-C brick).
+  * If Missing / Dead Battery: Add **+$65.00** (cost of an OEM 86Wh+ internal cell).
+  * If RAM == 16GB (on dual SO-DIMM upgradable chassis): Add **+$110.00** (cost of 64GB DDR5 SO-DIMM kit).
+  * If RAM $\le 16\text{GB}$ and soldered / non-upgradable: **Reject (Score 0.0)**.
+
+---
+
+### Fair Market Value (FMV) Ground Truth Table
+
+| Model / Generation | Architecture | Realistic 32GB FMV | Realistic 64GB FMV | 🎯 Instant Strike Ceiling (TLC) |
+| :--- | :--- | :--- | :--- | :--- |
+| **Dell XPS 15 9520** | Intel 12th-Gen (14C) | $750.00 | $850.00 | **$\le \$675.00$ (32GB) / $\le \$750.00$ (64GB)** |
+| **Dell XPS 15 9530** | Intel 13th-Gen (14C) | $950.00 | $1,150.00 | **$\le \$780.00$ (32GB) / $\le \$850.00$ (64GB)** |
+| **Dell Precision 5570** | Intel 12th-Gen (14C) | $780.00 | $880.00 | **$\le \$680.00$ (32GB) / $\le \$750.00$ (64GB)** |
+| **Dell Precision 5680** | Intel 13th-Gen (14C) | $1,250.00 | $1,450.00 | **$\le \$950.00$ (32GB) / $\le \$1,050.00$ (64GB)** |
+| **Lenovo ThinkPad P1 Gen 5** | Intel 12th-Gen (14C) | $800.00 | $920.00 | **$\le \$720.00$ (32GB) / $\le \$800.00$ (64GB)** |
+| **Lenovo ThinkPad P1 Gen 6** | Intel 13th-Gen (14C) | $1,200.00 | $1,400.00 | **$\le \$950.00$ (32GB) / $\le \$1,050.00$ (64GB)** |
+| **Lenovo ThinkPad X1 Extreme G5** | Intel 12th-Gen (14C) | $800.00 | $920.00 | **$\le \$720.00$ (32GB) / $\le \$780.00$ (64GB)** |
+| **HP ZBook Studio G9** | Intel 12th-Gen (14C) | $750.00 | $850.00 | **$\le \$650.00$ (32GB) / $\le \$720.00$ (64GB)** |
+| **HP ZBook Studio G10** | Intel 13th-Gen (14C) | $1,050.00 | $1,200.00 | **$\le \$850.00$ (32GB) / $\le \$950.00$ (64GB)** |
+| **Apple MacBook Pro 16" (2021 M1)**| M1 Pro / M1 Max | $1,050.00 | $1,250.00 | **$\le \$900.00$ (32GB) / $\le \$1,100.00$ (64GB)** |
+| **Apple MacBook Pro 16" (2023 M2)**| M2 Pro / M2 Max | $1,350.00 | $1,550.00 | **$\le \$1,150.00$ (32GB) / $\le \$1,350.00$ (64GB)** |
+| **ASUS Zephyrus M16 (GU604)** | Intel 13th-Gen + 4070 | $950.00 | $1,100.00 | **$\le \$800.00$ (32GB) / $\le \$900.00$ (64GB)** |
+
+---
+
+## 5. The Calibrated 4-Tier Arbitrage Scoring Framework
+
+$$\text{Margin Spread (\%)} = \frac{\text{FMV} - \text{Total Landed Cost}}{\text{FMV}} \times 100$$
+
+* **🦄 9.8 – 10.0 TRUE UNICORN DEAL**:
+  - Margin Spread $\ge 38.0\%$ below FMV
+  - Memory: 64GB DDR5 or 64GB Unified Memory
+  - Platform: Tier 1 Chassis (9530, 5680, P1 G6, M1/M2 Max)
+  - Condition: Mint / Very Good (Zero structural defects)
+* **🎯 9.0 – 9.7 HIGH-CONVICTION STRIKE**:
+  - Margin Spread: $25.0\% - 37.9\%$
+  - Memory: $\ge 32\text{GB}$ DDR5 / Unified
+  - Clean turnkey hardware below strict strike ceiling
+* **⚡ 8.0 – 8.9 STRONG VALUE BUY**:
+  - Margin Spread: $15.0\% - 24.9\%$
+  - Solid hardware specs, fair market discount
+* **🤝 7.0 – 7.9 OPPORTUNISTIC OFFER TARGET**:
+  - Margin Spread: $8.0\% - 14.9\%$
+  - Listed near market; viable for a lowball "Best Offer"
+* **❌ 0.0 – 6.9 PASS / NO ARBITRAGE (Do Not Alert Dashboard)**:
+  - Margin Spread $< 8.0\%$ OR TLC exceeds Strike Ceiling OR fails Silicon/Hardware gatekeeper.
