@@ -170,23 +170,24 @@ class EBayCollector:
                             if "Shop on eBay" in title or not link or "/itm/" not in link:
                                 continue
 
-                            clean_url = link.split("?")[0]
+                            item_id_match = re.search(r"/itm/([0-9]{9,14})", link)
+                            if item_id_match:
+                                item_id = item_id_match.group(1)
+                                clean_url = f"https://www.ebay.com/itm/{item_id}"
+                            elif "/itm/" in link:
+                                clean_url = link.split("?")[0]
+                                if clean_url.startswith("//"):
+                                    clean_url = "https:" + clean_url
+                                elif not clean_url.startswith("http"):
+                                    clean_url = f"https://www.ebay.com{clean_url}"
+                                item_id = f"ebay_{abs(hash(clean_url)) % 1000000}"
+                            else:
+                                clean_url = f"https://www.ebay.com/sch/i.html?_nkw={urllib.parse.quote(title)}&LH_BIN=1&_sop=10"
+                                item_id = f"ebay_{abs(hash(clean_url)) % 1000000}"
+
                             if clean_url in seen_urls:
                                 continue
                             seen_urls.add(clean_url)
-
-                            # Parse numeric price
-                            price_match = re.search(r"\$([0-9,]+(?:\.[0-9]{2})?)", price_str)
-                            if not price_match:
-                                continue
-                            price = float(price_match.group(1).replace(",", ""))
-
-                            # Pre-filter blacklist
-                            if is_blacklisted_item(title):
-                                continue
-
-                            item_id_match = re.search(r"/itm/([0-9]+)", clean_url)
-                            item_id = item_id_match.group(1) if item_id_match else f"ebay_{abs(hash(clean_url)) % 1000000}"
 
                             all_listings.append(
                                 RawListing(

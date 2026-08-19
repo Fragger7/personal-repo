@@ -134,9 +134,9 @@ class DealHunterDaemon:
                 self.log(f"Evaluating [{raw.source.upper()}] ${raw.price:.0f} - {raw.title[:60]}...")
                 deal = self.evaluator.evaluate_listing(raw)
                 
-                # Quality Gate: Only drop hard-excluded junk, parts, or accessories (Score 0.0)
-                if deal.deal_score <= 0.0 or "hard excluded" in deal.summary.lower():
-                    self.log(f"⏩ Dropped Excluded: {raw.title[:45]} (Score {deal.deal_score}/10 | {deal.actionable_recommendation})")
+                # Quality Gate: Only persist genuine deals (Score >= 7.0). Drop non-arbitrage retail clutter (< 7.0)
+                if deal.deal_score < 7.0 or "hard excluded" in deal.summary.lower():
+                    self.log(f"⏩ Dropped Non-Deal: {raw.title[:45]} (Score {deal.deal_score}/10 | {deal.actionable_recommendation})")
                     continue
 
                 evaluated_deals.append(deal)
@@ -184,11 +184,10 @@ class DealHunterDaemon:
                     summary_lines.append(f"• <b>${d.price:,.0f}</b> | {d.deal_score}/10 | {d.title[:45]}...")
                 digest_html = (
                     f"📥 <b>Sync Cycle #{current_cycle} Complete</b>\n"
-                    f"✨ Discovered <b>{len(evaluated_deals)} new listings</b> (Total Active: {total_active})\n\n"
+                    f"✨ Discovered <b>{len(evaluated_deals)} new deals</b> (Total Active: {total_active})\n\n"
                     + "\n".join(summary_lines)
                     + f"\n\n🤖 <b>AI Usage:</b> {usage['cycle_calls']} calls ({usage['total_tokens']:,} tokens) | ~{usage['estimated_daily_left']:,}/1,500 daily requests left\n\n"
-                    + f"🌐 <a href=\"{self.telegram_notifier.vercel_url}\"><b>[OPEN REACT DASHBOARD (VERCEL)]</b></a>\n"
-                    + f"📊 <a href=\"{self.telegram_notifier.streamlit_url}\"><b>[STREAMLIT BACKUP]</b></a>"
+                    + self.telegram_notifier._format_dashboard_links()
                 )
                 self.telegram_notifier.send_system_message("Inventory Updated", digest_html)
             elif current_cycle % self.heartbeat_interval_cycles == 0 or current_cycle == 1:
@@ -199,8 +198,7 @@ class DealHunterDaemon:
                     f"📊 <b>{total_active} active deals</b> monitored in store (0 unanalyzed items this interval).\n"
                     f"🤖 <b>AI Usage:</b> {usage['total_calls']} total calls ({usage['total_tokens']:,} tokens) | ~{usage['estimated_daily_left']:,}/1,500 requests left\n\n"
                     f"⚡ <i>Autonomous Scraper Online & Standing By (Heartbeat every {self.heartbeat_interval_cycles}h)</i>\n"
-                    f"🌐 <a href=\"{self.telegram_notifier.vercel_url}\"><b>[OPEN REACT DASHBOARD (VERCEL)]</b></a>\n"
-                    f"📊 <a href=\"{self.telegram_notifier.streamlit_url}\"><b>[STREAMLIT BACKUP]</b></a>"
+                    + self.telegram_notifier._format_dashboard_links()
                 )
                 self.telegram_notifier.send_system_message(f"Heartbeat ({self.heartbeat_interval_cycles}h)", heartbeat_html)
 
