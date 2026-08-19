@@ -23,6 +23,32 @@ from collector import RawListing
 from storage import DealRecord, HardwareSpecs
 
 
+def _load_dotenv_safely() -> None:
+    """Load .env file if available into os.environ."""
+    try:
+        from dotenv import load_dotenv
+        load_dotenv()
+    except Exception:
+        pass
+    env_path = os.path.join(os.path.dirname(__file__), ".env")
+    if os.path.exists(env_path):
+        try:
+            with open(env_path, "r", encoding="utf-8") as f:
+                for line in f:
+                    line = line.strip()
+                    if line and not line.startswith("#") and "=" in line:
+                        k, v = line.split("=", 1)
+                        k = k.strip()
+                        v = v.strip().strip('"').strip("'")
+                        if k and k not in os.environ:
+                            os.environ[k] = v
+        except Exception:
+            pass
+
+
+_load_dotenv_safely()
+
+
 SYSTEM_EVALUATION_PROMPT = """You are an elite quantitative hardware arbitrage valuation engine for high-performance developer workstations.
 Analyze the listing title, description, asking price, and source according to SYSTEM DIRECTIVE v3.0:
 
@@ -98,7 +124,7 @@ class GeminiHardwareEvaluator:
     def __init__(
         self,
         api_key: Optional[str] = None,
-        model_name: str = "gemini-2.5-flash",
+        model_name: str = "gemini-3.6-flash",
     ) -> None:
         self.api_key = api_key or os.environ.get("GEMINI_API_KEY", "")
         self.model_name = model_name
@@ -178,7 +204,7 @@ class GeminiHardwareEvaluator:
         # Method A: Use google-genai SDK if initialized
         if self._client:
             try:
-                response = self._client.models.generateContent(
+                response = self._client.models.generate_content(
                     model=self.model_name,
                     contents=prompt,
                     config={
@@ -191,7 +217,7 @@ class GeminiHardwareEvaluator:
                 self.usage_tracker.record_call(250, 120)
                 return self._parse_json_response(text)
             except Exception as e:
-                print(f"[GeminiEvaluator] SDK generateContent failed: {e}")
+                print(f"[GeminiEvaluator] SDK generate_content failed: {e}")
 
         # Method B: Direct REST API invocation
         return self._call_gemini_rest(prompt)
