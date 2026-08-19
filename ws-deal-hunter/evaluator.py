@@ -179,18 +179,33 @@ class GeminiHardwareEvaluator:
                 is_high_yield=False,
             )
 
-        # 1. Try Gemini evaluation if valid API key is present
+        # 1. First-Stage: Fast Deterministic Heuristic Evaluation (0ms, $0 tokens)
+        heuristic_data = self._heuristic_evaluate(raw)
+        deal = self._build_deal_record(raw, heuristic_data)
+
+        # 2. Quality Filter: If disqualified (Score 0.0) or low margin (<8.0), skip AI entirely
+        if deal.deal_score < 8.0:
+            return deal
+
+        # 3. Strategy #1 AI-Escalation Gate: Only invoke Gemini for high-potential candidates (Score >= 8.0)
         if self.api_key and len(self.api_key) >= 15:
             try:
                 ai_data = self._call_gemini(raw)
                 if ai_data:
-                    return self._build_deal_record(raw, ai_data)
+                    ai_deal = self._build_deal_record(raw, ai_data)
+                    # Blend AI second-opinion into recommendation & summary while preserving strict hardware constraints
+                    deal.summary = ai_deal.summary or deal.summary
+                    deal.actionable_recommendation = ai_deal.actionable_recommendation or deal.actionable_recommendation
+                    if ai_deal.deal_score > 0.0:
+                        # Refine score with AI validation
+                        deal.deal_score = max(deal.deal_score, ai_deal.deal_score)
+                        deal.fair_market_value = ai_deal.fair_market_value or deal.fair_market_value
+                        deal.estimated_profit = round(max(0.0, deal.fair_market_value - deal.price), 2)
+                        deal.arbitrage_margin_pct = round((deal.estimated_profit / deal.price) * 100.0, 1) if deal.price > 0 else 0.0
             except Exception as err:
-                print(f"[GeminiEvaluator] Gemini API error ({err}), falling back to heuristic engine.")
+                print(f"[GeminiEvaluator] AI Escalation error ({err}), keeping heuristic baseline.")
 
-        # 2. Resilient Rule-Based Heuristic Evaluator
-        heuristic_data = self._heuristic_evaluate(raw)
-        return self._build_deal_record(raw, heuristic_data)
+        return deal
 
     def _call_gemini(self, listing: RawListing) -> Optional[Dict[str, Any]]:
         """Call Gemini model with structured JSON response schema."""

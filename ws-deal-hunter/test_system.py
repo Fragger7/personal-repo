@@ -252,7 +252,7 @@ class TestNotifier(unittest.TestCase):
         self.assertTrue(res.success)
 
     def test_telegram_notifier_format(self) -> None:
-        tg = TelegramNotifier()
+        tg = TelegramNotifier(bot_token="", chat_id="")
         deal = DealRecord(
             id="tg_test_1",
             source="ebay",

@@ -197,13 +197,13 @@ class TelegramNotifier:
         vercel_url: Optional[str] = None,
         streamlit_url: Optional[str] = None,
     ) -> None:
-        self.bot_token = bot_token or os.environ.get("TELEGRAM_BOT_TOKEN", "")
-        self.chat_id = chat_id or os.environ.get("TELEGRAM_CHAT_ID", "")
+        self.bot_token = bot_token if bot_token is not None else os.environ.get("TELEGRAM_BOT_TOKEN", "")
+        self.chat_id = chat_id if chat_id is not None else os.environ.get("TELEGRAM_CHAT_ID", "")
         self.vercel_url = vercel_url or os.environ.get("VERCEL_DASHBOARD_URL", "https://ws-deal-hunter.vercel.app")
         self.streamlit_url = streamlit_url or os.environ.get("STREAMLIT_DASHBOARD_URL", "https://wsdealhunter.streamlit.app/")
 
-    def send_deal_alert(self, deal: DealRecord) -> NotificationResult:
-        """Send rich HTML formatted notification to Telegram with Vercel & direct buy links."""
+    def send_deal_alert(self, deal: DealRecord, usage_info: Optional[Dict[str, Any]] = None) -> NotificationResult:
+        """Send rich HTML formatted notification to Telegram with Vercel, direct buy links, and AI quota status."""
         if not self.bot_token or not self.chat_id:
             return NotificationResult(
                 success=False,
@@ -222,6 +222,12 @@ class TelegramNotifier:
         else:
             header_badge = f"🔥 <b>[{deal.deal_score:.1f}/10 VALUE BUY]</b>"
 
+        # AI Quota Footer Line
+        if usage_info:
+            ai_line = f"🤖 <b>AI Usage Today:</b> {usage_info['total_calls']} calls ({usage_info['total_tokens']:,} tokens) | ~{usage_info['estimated_daily_left']:,}/1,500 left\n\n"
+        else:
+            ai_line = ""
+
         # Format HTML message
         text = (
             f"{header_badge}\n\n"
@@ -236,7 +242,8 @@ class TelegramNotifier:
             f"• <b>Display:</b> {deal.specs.screen}\n\n"
             f"🎯 <b>Action:</b> {deal.actionable_recommendation}\n"
             f"📍 <b>Source:</b> {deal.source.upper()} ({deal.seller})\n\n"
-            f"👉 <a href=\"{deal.url}\"><b>[BUY NOW ON {deal.source.upper()} ↗]</b></a>\n"
+            + ai_line
+            + f"👉 <a href=\"{deal.url}\"><b>[BUY NOW ON {deal.source.upper()} ↗]</b></a>\n"
             f"🌐 <a href=\"{self.vercel_url}\"><b>[OPEN REACT DASHBOARD (VERCEL)]</b></a>\n"
             f"📊 <a href=\"{self.streamlit_url}\"><b>[STREAMLIT BACKUP]</b></a>"
         )

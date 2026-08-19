@@ -154,7 +154,8 @@ class DealHunterDaemon:
 
                     # Also send to Telegram if configured
                     if self.telegram_notifier.bot_token and self.telegram_notifier.chat_id:
-                        tg_res = self.telegram_notifier.send_deal_alert(deal)
+                        usage_stats = self.evaluator.usage_tracker.get_summary()
+                        tg_res = self.telegram_notifier.send_deal_alert(deal, usage_info=usage_stats)
                         if tg_res.success:
                             self.log(f"✈️ Telegram alert dispatched for deal: {deal.id}")
 
