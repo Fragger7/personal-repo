@@ -142,6 +142,15 @@ C:\Development\Apps\WS Deal Hunter\
   2. Built and registered `BestBuyOutletCollector` using `curl_cffi` to parse Apollo Client / GraphQL product states, extracting open-box prices, condition tiers (Fair, Satisfactory, Excellent, Certified), and direct `.p?skuId=` URLs.
   3. Expanded test suite to **18 / 18 unit tests passing** (`python test_system.py`).
 
+### Decision 19: v3.0 Arbitrage Valuation & Total Landed Cost (TLC) Engine
+- **Problem**: 11th-Gen "i9" listings and liquidator "parts lots" (missing SSD, charger, battery) generated inflated deal scores.
+- **Decision & Solution**:
+  1. Updated [`AGENT_KNOWLEDGE_BASE.md`](file:///C:/Development/Apps/WS%20Deal%20Hunter/AGENT_KNOWLEDGE_BASE.md) and [`evaluator.py`](file:///C:/Development/Apps/WS%20Deal%20Hunter/evaluator.py) with the v3.0 directive.
+  2. Hard-blacklisted Intel $\le$ 11th Gen (`i7-11850H`, `i9-11950H`, 10th/9th/8th Gen), Intel P/U-series (1260P, 1360P, 1355U), cut-down dies (13620H, 12650H), AMD Zen 2/3 (5000/6000), and structural defects (frame separation, cracked palmrests, broken hinge anchors).
+  3. Codified the **Total Landed Cost (TLC)** formula with sales tax (8.25% online, 0% local) and mandatory refurbishment penalties (+$65 SSD $\le 256\text{GB}$, +$40 missing charger, +$65 dead battery, +$110 16GB dual SO-DIMM upgrade).
+  4. Calibrated the 4-tier arbitrage curve against empirical ground truth FMV clearing prices, reserving **9.8–10.0 Unicorns** for $\ge 38\%$ margin + 64GB RAM + Tier 1 chassis.
+  5. Expanded unit tests to **21 / 21 unit tests passing** (`python test_system.py`).
+
 ---
 
 ## 📌 5. Project Backlog & Future Roadmap

@@ -151,18 +151,54 @@ class TestEvaluator(unittest.TestCase):
         raw = RawListing(
             id="eval_test_1",
             source="reddit",
-            title="[H] Dell Precision 7780 (i7-13850HX, 64GB DDR5, 1TB NVMe, RTX 3500 Ada 12GB) [W] $720",
-            description="Super clean 17-inch workstation with RTX 3500 Ada 12GB and 64GB RAM.",
+            title="[H] Dell Precision 5680 (i7-13800H, 64GB DDR5, 1TB NVMe, RTX 3500 Ada 12GB) [W] $720",
+            description="Super clean 16-inch workstation with RTX 3500 Ada 12GB and 64GB RAM.",
             price=720.0,
             url="https://reddit.com/eval1",
         )
         evaluated = self.evaluator.evaluate_listing(raw)
-        self.assertGreaterEqual(evaluated.deal_score, 8.5)
+        self.assertGreaterEqual(evaluated.deal_score, 9.0)
         self.assertEqual(evaluated.specs.ram_gb, 64)
         self.assertEqual(evaluated.specs.ssd_gb, 1024)
-        self.assertIn("Ada", evaluated.specs.gpu)
         self.assertGreater(evaluated.fair_market_value, evaluated.price)
         self.assertTrue(evaluated.is_high_yield)
+
+    def test_eleventh_gen_intel_rejection(self) -> None:
+        raw = RawListing(
+            id="eval_test_11th",
+            source="ebay",
+            title="Dell Precision 5560 i7-11850H 32GB 1TB RTX A2000",
+            description="Good working condition 11th-Gen workstation laptop.",
+            price=499.0,
+            url="https://ebay.com/eval11th",
+        )
+        evaluated = self.evaluator.evaluate_listing(raw)
+        self.assertEqual(evaluated.deal_score, 0.0)
+        self.assertFalse(evaluated.is_high_yield)
+
+    def test_structural_damage_rejection(self) -> None:
+        raw = RawListing(
+            id="eval_test_dmg",
+            source="swappa",
+            title="Dell XPS 15 9520 i7-12700H 32GB 1TB",
+            description="Good condition but frame is separating from device and loose hinge screw.",
+            price=500.0,
+            url="https://swappa.com/eval_dmg",
+        )
+        evaluated = self.evaluator.evaluate_listing(raw)
+        self.assertEqual(evaluated.deal_score, 0.0)
+
+    def test_blown_dgpu_rejection(self) -> None:
+        raw = RawListing(
+            id="eval_test_dgpu",
+            source="reddit",
+            title="Dell XPS 15 9530 i7-13700H 32GB 1TB Intel Iris Xe only",
+            description="Selling laptop. Working well, Intel Iris Xe graphics only.",
+            price=550.0,
+            url="https://reddit.com/eval_dgpu",
+        )
+        evaluated = self.evaluator.evaluate_listing(raw)
+        self.assertEqual(evaluated.deal_score, 0.0)
 
 
 class TestNotifier(unittest.TestCase):

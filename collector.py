@@ -56,8 +56,11 @@ TITLE_ACCESSORY_REGEX = re.compile(
 HARD_EXCLUSION_REGEX = re.compile(
     r"(?i)(for\s*parts|not\s*working|as\s*is\b|untested|repair\s*only|broken\s*screen|bad\s*screen|liquid\s*damage|"
     r"water\s*damage|icp\b|mdm\b|icloud\s*lock|activation\s*lock|managed\s*profile|profile\s*lock|bios\s*lock|computrace|"
-    r"bad\s*gpu|dead\s*gpu|no\s*nvidia|iris\s*only|touch\s*bar|"
-    r"latitude\s*(?:3[0-9]{3}|5[0-9]{3}|7[0-3][0-9]{2}|e[0-9]{4})|inspiron|ideapad|thinkbook|pavilion|envy|vivobook|katana|gf63|thin\s*15|sony\s*vaio)"
+    r"bad\s*gpu|dead\s*gpu|no\s*nvidia|iris\s*only|iris\s*xe\s*only|intel\s*graphics\s*only|uhd\s*graphics\s*only|touch\s*bar|"
+    r"frame\s*separating|frame\s*is\s*separating|hinge\s*separated|broken\s*hinge|loose\s*hinge|cracked\s*palmrest|keyboard\s*imprints|"
+    r"i[3579]-11\d{3}|i[3579]-10\d{3}|i[3579]-[89]\d{3}|11850h|11950h|11800h|11400h|11980hk|10885h|10750h|"
+    r"1260p|1360p|1370p|1240p|1250p|1340p|1350p|1355u|1335u|1235u|1245u|1255u|"
+    r"latitude\s*(?:3[0-9]{3}|5[0-9]{3}|7[0-3][0-9]{2}|e[0-9]{4})|inspiron|vostro|ideapad|thinkbook|flex\s*5|chromebook|pavilion|envy|omnibook|stream\s*14|victus|vivobook|katana|gf63|thin\s*15|sony\s*vaio)"
 )
 
 BLACKLIST_REGEX = HARD_EXCLUSION_REGEX
