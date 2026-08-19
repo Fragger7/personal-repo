@@ -1,5 +1,34 @@
 [
   {
+    "id": "ebay_287532896765",
+    "source": "ebay",
+    "title": "Dell XPS 17 9730 17\" i9-13900H 2.6GHz 64GB RAM 1TB SSD GeForce RTX 4070",
+    "price": 1699.99,
+    "url": "https://www.ebay.com/itm/287532896765",
+    "specs": {
+      "cpu": "I9-13900H",
+      "ram_gb": 64,
+      "ssd_gb": 1024,
+      "gpu": "NVIDIA RTX 4070",
+      "screen": "15.6\" - 16\" Workstation Display",
+      "condition": "Used / Refurbished"
+    },
+    "fair_market_value": 1100.0,
+    "estimated_profit": 0.0,
+    "arbitrage_margin_pct": 0.0,
+    "deal_score": 1.0,
+    "summary": "I9-13900H | 64GB RAM | 1024GB SSD | NVIDIA RTX 4070 (TLC: $1840.24, Margin: -67.3%).",
+    "actionable_recommendation": "PASS / NO ARBITRAGE (Exceeds Strike Ceiling)",
+    "confidence_score": 0.95,
+    "seller": "eBay Seller",
+    "location": "US",
+    "created_utc": "2026-08-19T04:14:46.666151+00:00",
+    "evaluated_at": "2026-08-19T04:15:03.140506+00:00",
+    "alerted": false,
+    "is_high_yield": false,
+    "raw_payload": null
+  },
+  {
     "id": "bestbuy_6673557",
     "source": "bestbuy",
     "title": "Best Buy Open Box: Lenovo Legion Pro 5I 16 3K Oled Gaming Laptop Intel Core Ultra 9 275Hx 2025 32Gb Ram Nvidia Geforce Rtx 5070Ti 1Tb Eclipse Black",
