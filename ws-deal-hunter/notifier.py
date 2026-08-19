@@ -46,8 +46,8 @@ class PushoverNotifier:
         self,
         user_key: Optional[str] = None,
         api_token: Optional[str] = None,
-        min_deal_score: float = 8.5,
-        max_price: float = 750.0,
+        min_deal_score: float = 9.0,
+        max_price: float = 850.0,
     ) -> None:
         self.user_key = user_key or os.environ.get("PUSHOVER_USER_KEY", "")
         self.api_token = api_token or os.environ.get("PUSHOVER_API_TOKEN", "")
@@ -194,12 +194,16 @@ class TelegramNotifier:
         self,
         bot_token: Optional[str] = None,
         chat_id: Optional[str] = None,
+        vercel_url: Optional[str] = None,
+        streamlit_url: Optional[str] = None,
     ) -> None:
         self.bot_token = bot_token or os.environ.get("TELEGRAM_BOT_TOKEN", "")
         self.chat_id = chat_id or os.environ.get("TELEGRAM_CHAT_ID", "")
+        self.vercel_url = vercel_url or os.environ.get("VERCEL_DASHBOARD_URL", "https://ws-deal-hunter.vercel.app")
+        self.streamlit_url = streamlit_url or os.environ.get("STREAMLIT_DASHBOARD_URL", "https://wsdealhunter.streamlit.app/")
 
     def send_deal_alert(self, deal: DealRecord) -> NotificationResult:
-        """Send rich HTML formatted notification to Telegram."""
+        """Send rich HTML formatted notification to Telegram with Vercel & direct buy links."""
         if not self.bot_token or not self.chat_id:
             return NotificationResult(
                 success=False,
@@ -210,13 +214,20 @@ class TelegramNotifier:
 
         api_url = f"https://api.telegram.org/bot{self.bot_token}/sendMessage"
 
+        # Distinct header badge based on score tier
+        if deal.deal_score >= 9.8:
+            header_badge = f"🦄 <b>[{deal.deal_score:.1f}/10 TRUE UNICORN DEAL]</b>"
+        elif deal.deal_score >= 9.0:
+            header_badge = f"🎯 <b>[{deal.deal_score:.1f}/10 HIGH-CONVICTION STRIKE]</b>"
+        else:
+            header_badge = f"🔥 <b>[{deal.deal_score:.1f}/10 VALUE BUY]</b>"
+
         # Format HTML message
         text = (
-            f"🔥 <b>[{deal.deal_score:.1f}/10 DEAL FOUND]</b>\n\n"
+            f"{header_badge}\n\n"
             f"💻 <b>{deal.title}</b>\n\n"
-            f"💰 <b>Asking Price:</b> ${deal.price:.2f}\n"
-            f"📈 <b>Est. Market Value:</b> ${deal.fair_market_value:.2f}\n"
-            f"💵 <b>Arbitrage Spread:</b> <b>+${deal.estimated_profit:.2f}</b> (+{deal.arbitrage_margin_pct:.0f}% ROI)\n\n"
+            f"💰 <b>Asking Price:</b> ${deal.price:,.2f}  <i>(Est. FMV: ${deal.fair_market_value:,.2f})</i>\n"
+            f"💵 <b>Arbitrage Spread:</b> <b>+${deal.estimated_profit:,.2f}</b> (+{deal.arbitrage_margin_pct:.0f}% ROI)\n\n"
             f"⚙️ <b>Hardware Specs:</b>\n"
             f"• <b>CPU:</b> {deal.specs.cpu}\n"
             f"• <b>RAM:</b> {deal.specs.ram_gb} GB\n"
@@ -225,7 +236,9 @@ class TelegramNotifier:
             f"• <b>Display:</b> {deal.specs.screen}\n\n"
             f"🎯 <b>Action:</b> {deal.actionable_recommendation}\n"
             f"📍 <b>Source:</b> {deal.source.upper()} ({deal.seller})\n\n"
-            f"👉 <a href=\"{deal.url}\"><b>[CLICK HERE TO VIEW / BUY LISTING]</b></a>"
+            f"👉 <a href=\"{deal.url}\"><b>[BUY NOW ON {deal.source.upper()} ↗]</b></a>\n"
+            f"🌐 <a href=\"{self.vercel_url}\"><b>[OPEN REACT DASHBOARD (VERCEL)]</b></a>\n"
+            f"📊 <a href=\"{self.streamlit_url}\"><b>[STREAMLIT BACKUP]</b></a>"
         )
 
         payload = {
@@ -257,6 +270,39 @@ class TelegramNotifier:
                 message=f"Telegram API error: {e}",
                 deal_id=deal.id,
             )
+
+    def send_error_alert(self, component: str, error_msg: str, cycle: int = 0) -> NotificationResult:
+        """Send urgent dead-man / error alert when a scraper or background task fails."""
+        if not self.bot_token or not self.chat_id:
+            return NotificationResult(success=False, status_code=400, message="Telegram unconfigured.", deal_id="error")
+
+        api_url = f"https://api.telegram.org/bot{self.bot_token}/sendMessage"
+        cycle_str = f" #{cycle}" if cycle > 0 else ""
+        text = (
+            f"🚨 <b>[DAEMON ERROR ALERT]</b>\n\n"
+            f"⚠️ <b>Scraper Failure Detected on Cycle{cycle_str}</b>\n"
+            f"• <b>Component:</b> <code>{component}</code>\n"
+            f"• <b>Error:</b> <code>{error_msg[:400]}</code>\n\n"
+            f"⚡ <i>Daemon attempting automatic self-healing on next interval.</i>\n"
+            f"🌐 <a href=\"{self.vercel_url}\"><b>[CHECK DASHBOARD]</b></a>"
+        )
+        payload = {
+            "chat_id": self.chat_id,
+            "text": text,
+            "parse_mode": "HTML",
+            "disable_web_page_preview": True,
+        }
+        try:
+            req = urllib.request.Request(
+                api_url,
+                data=json.dumps(payload).encode("utf-8"),
+                headers={"Content-Type": "application/json", "User-Agent": "WorkstationDealHunter/1.0"},
+                method="POST",
+            )
+            with urllib.request.urlopen(req, timeout=5.0) as res:
+                return NotificationResult(success=True, status_code=res.status, message="Delivered", deal_id="error")
+        except Exception as e:
+            return NotificationResult(success=False, status_code=500, message=str(e), deal_id="error")
 
     def send_system_message(self, title: str, body_html: str) -> NotificationResult:
         """Send a general system pulse digest or status update."""

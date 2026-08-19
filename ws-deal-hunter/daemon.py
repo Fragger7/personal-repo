@@ -11,6 +11,7 @@ Continuous background pipeline orchestrator:
 from __future__ import annotations
 
 import argparse
+import os
 import signal
 import subprocess
 import sys
@@ -54,16 +55,18 @@ class DealHunterDaemon:
     def __init__(
         self,
         poll_interval: int = 180,
-        min_deal_score: float = 8.5,
-        max_alert_price: float = 750.0,
+        min_deal_score: float = 9.0,
+        max_alert_price: float = 850.0,
         storage_path: str = "deals.json",
         auto_push: bool = False,
         discord_webhook: Optional[str] = None,
+        heartbeat_interval_cycles: int = 6,
     ) -> None:
         self.poll_interval = poll_interval
         self.min_deal_score = min_deal_score
         self.max_alert_price = max_alert_price
         self.auto_push = auto_push
+        self.heartbeat_interval_cycles = int(os.environ.get("HEARTBEAT_INTERVAL_CYCLES", heartbeat_interval_cycles))
         
         self.storage = AtomicDealStorage(filepath=storage_path)
         self.collector = HardwareCollectorHub()
@@ -93,7 +96,8 @@ class DealHunterDaemon:
     def run_cycle(self) -> Dict[str, Any]:
         """Execute a single end-to-end collection, evaluation, notification cycle."""
         cycle_start = time.time()
-        self.log("Starting hardware sync cycle across eBay, Reddit, and Swappa...")
+        current_cycle = self.status.cycle_count + 1
+        self.log(f"Starting hardware sync cycle #{current_cycle} across eBay, Reddit, and Swappa...")
         
         # 1. Collect
         try:
@@ -104,6 +108,9 @@ class DealHunterDaemon:
             err_msg = f"Collection failed: {e}"
             self.log(err_msg)
             self.status.last_error = err_msg
+            # Dispatch urgent deadman error alert to Telegram
+            if self.telegram_notifier.bot_token and self.telegram_notifier.chat_id:
+                self.telegram_notifier.send_error_alert("HardwareCollectorHub", str(e), current_cycle)
             return {"error": err_msg}
 
         # 2. Filter out already known listings
@@ -165,7 +172,7 @@ class DealHunterDaemon:
             upserted = self.storage.upsert_many(evaluated_deals)
             self.log(f"Atomically committed {upserted} evaluated deals to {self.storage.filepath.name}.")
 
-        # 6. Always-On Telegram Pulse Digest & Heartbeat (Dispatches every cycle)
+        # 6. Telegram Pulse Digest & Periodic Heartbeat (Every N hours/cycles or when new deals arrive)
         if self.telegram_notifier.bot_token and self.telegram_notifier.chat_id:
             total_active = len(self.storage.get_all())
             usage = self.evaluator.usage_tracker.get_summary()
@@ -175,23 +182,26 @@ class DealHunterDaemon:
                 for d in evaluated_deals[:5]:
                     summary_lines.append(f"• <b>${d.price:,.0f}</b> | {d.deal_score}/10 | {d.title[:45]}...")
                 digest_html = (
-                    f"📥 <b>Sync Cycle #{self.status.cycle_count + 1} Complete</b>\n"
+                    f"📥 <b>Sync Cycle #{current_cycle} Complete</b>\n"
                     f"✨ Discovered <b>{len(evaluated_deals)} new listings</b> (Total Active: {total_active})\n\n"
                     + "\n".join(summary_lines)
-                    + f"\n\n🤖 <b>AI Usage:</b> {usage['cycle_calls']} calls ({usage['total_tokens']:,} tokens) | ~{usage['estimated_daily_left']:,}/1,500 daily requests left\n"
-                    + f"\n👉 <a href=\"https://wsdealhunter.streamlit.app/\"><b>[OPEN WEB DASHBOARD]</b></a>"
+                    + f"\n\n🤖 <b>AI Usage:</b> {usage['cycle_calls']} calls ({usage['total_tokens']:,} tokens) | ~{usage['estimated_daily_left']:,}/1,500 daily requests left\n\n"
+                    + f"🌐 <a href=\"{self.telegram_notifier.vercel_url}\"><b>[OPEN REACT DASHBOARD (VERCEL)]</b></a>\n"
+                    + f"📊 <a href=\"{self.telegram_notifier.streamlit_url}\"><b>[STREAMLIT BACKUP]</b></a>"
                 )
                 self.telegram_notifier.send_system_message("Inventory Updated", digest_html)
-            else:
+            elif current_cycle % self.heartbeat_interval_cycles == 0 or current_cycle == 1:
+                # Periodic Heartbeat (Sprinkled every 3-6 hours instead of buzzing every hour)
                 heartbeat_html = (
-                    f"💓 <b>Sync Cycle #{self.status.cycle_count + 1} Heartbeat</b>\n"
+                    f"💓 <b>Autonomous Heartbeat (Cycle #{current_cycle})</b>\n"
                     f"🔍 Scanned <b>{len(raw_listings)} listings</b> across eBay, Reddit & Syndicated Feeds.\n"
-                    f"📊 <b>0 new unanalyzed items</b> this hour (<b>{total_active} active deals</b> monitored in store).\n"
-                    f"🤖 <b>AI Usage:</b> {usage['total_calls']} total calls ({usage['total_tokens']:,} tokens) | ~{usage['estimated_daily_left']:,}/1,500 daily free requests left\n\n"
-                    f"⚡ <i>Autonomous Scraper Online & Standing By</i>\n"
-                    f"👉 <a href=\"https://wsdealhunter.streamlit.app/\"><b>[OPEN WEB DASHBOARD]</b></a>"
+                    f"📊 <b>{total_active} active deals</b> monitored in store (0 unanalyzed items this interval).\n"
+                    f"🤖 <b>AI Usage:</b> {usage['total_calls']} total calls ({usage['total_tokens']:,} tokens) | ~{usage['estimated_daily_left']:,}/1,500 requests left\n\n"
+                    f"⚡ <i>Autonomous Scraper Online & Standing By (Heartbeat every {self.heartbeat_interval_cycles}h)</i>\n"
+                    f"🌐 <a href=\"{self.telegram_notifier.vercel_url}\"><b>[OPEN REACT DASHBOARD (VERCEL)]</b></a>\n"
+                    f"📊 <a href=\"{self.telegram_notifier.streamlit_url}\"><b>[STREAMLIT BACKUP]</b></a>"
                 )
-                self.telegram_notifier.send_system_message("Bot Heartbeat", heartbeat_html)
+                self.telegram_notifier.send_system_message(f"Heartbeat ({self.heartbeat_interval_cycles}h)", heartbeat_html)
 
         # 7. Optional auto-push to GitHub repo
         if self.auto_push and evaluated_deals:

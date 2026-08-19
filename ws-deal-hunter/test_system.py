@@ -37,7 +37,7 @@ from collector import (
 )
 from daemon import DealHunterDaemon
 from evaluator import GeminiHardwareEvaluator
-from notifier import PushoverNotifier
+from notifier import PushoverNotifier, TelegramNotifier
 from storage import AtomicDealStorage, DealRecord, HardwareSpecs
 
 
@@ -250,6 +250,22 @@ class TestNotifier(unittest.TestCase):
         )
         res = self.notifier.send_deal_alert(deal)
         self.assertTrue(res.success)
+
+    def test_telegram_notifier_format(self) -> None:
+        tg = TelegramNotifier()
+        deal = DealRecord(
+            id="tg_test_1",
+            source="ebay",
+            title="Dell Precision 5680",
+            price=799.0,
+            url="https://ebay.com/itm/123",
+            deal_score=9.5,
+            specs=HardwareSpecs(cpu="i7-13700H", ram_gb=32, ssd_gb=1024, gpu="RTX 2000 Ada"),
+        )
+        # Without credentials, it should return status 400 safely
+        res = tg.send_deal_alert(deal)
+        self.assertFalse(res.success)
+        self.assertEqual(res.status_code, 400)
 
 
 class TestDaemonPipeline(unittest.TestCase):
