@@ -805,56 +805,214 @@ class ShopGoodwillCollector:
 
 class BAndHCollector:
     """
-    B&H Photo Video Certified & Clearance Workstation Collector.
-    Scrapes Apple MacBook Pro M-Series (32GB/48GB/64GB/128GB), ThinkPad P-Series,
-    and HP ZBook workstation clearance streams.
+    B&H Photo Video Direct Used & Open-Box Workstation Collector (curl_cffi TLS Impersonation).
+    Directly queries B&H Used Department for Apple Silicon MacBook Pros, ThinkPad P-Series,
+    Dell Precision, and HP ZBook workstations. Extracts direct item URLs and condition ratings.
     """
 
-    def fetch_listings(self) -> List[RawListing]:
-        """Fetch live certified and clearance workstations from B&H Photo feeds."""
+    SEARCH_QUERIES = [
+        "used macbook pro 16",
+        "used macbook pro 14",
+        "used thinkpad p1",
+        "used thinkpad p16",
+        "used dell precision",
+        "used hp zbook",
+    ]
+
+    def fetch_listings(self, limit: int = 50) -> List[RawListing]:
+        """Fetch live used & open-box workstations directly from B&H Photo."""
+        listings: List[RawListing] = []
+        seen_links = set()
+
         try:
-            import cloudscraper
-            import html
+            from bs4 import BeautifulSoup
+            from curl_cffi import requests
 
-            scraper = cloudscraper.create_scraper(browser={"browser": "chrome", "platform": "windows", "desktop": True})
-            url = "https://slickdeals.net/newsearch.php?searchfirst=1&q=b%26h+photo+macbook+pro+workstation+thinkpad&hideexpired=1&sort=newest&rss=1"
-            res = scraper.get(url, timeout=4.0)
+            headers = {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+                "Accept-Language": "en-US,en;q=0.9",
+                "Referer": "https://www.bhphotovideo.com/",
+            }
 
-            if res.status_code == 200:
-                item_blocks = re.findall(r"<item>([\s\S]*?)</item>", res.text)
-                listings: List[RawListing] = []
-                for idx, block in enumerate(item_blocks[:8]):
-                    title_m = re.search(r"<title>(?:<!\[CDATA\[)?(.*?)(?:\]\]>)?</title>", block, re.DOTALL)
-                    link_m = re.search(r"<link>(.*?)</link>", block) or re.search(r"<guid[^>]*>(.*?)</guid>", block)
-                    desc_m = re.search(r"<description>(?:<!\[CDATA\[)?(.*?)(?:\]\]>)?</description>", block, re.DOTALL)
+            for query in self.SEARCH_QUERIES:
+                q_enc = urllib.parse.quote_plus(query)
+                url = f"https://www.bhphotovideo.com/c/search?q={q_enc}"
 
-                    title = html.unescape(title_m.group(1).strip()) if title_m else ""
-                    link = html.unescape(link_m.group(1).strip()) if link_m else "https://www.bhphotovideo.com"
-                    desc = html.unescape(desc_m.group(1).strip()) if desc_m else title
+                try:
+                    res = requests.get(url, impersonate="chrome120", headers=headers, timeout=8.0)
+                    if res.status_code != 200:
+                        continue
 
-                    price_match = re.search(r"\$\s*([0-9,]+(?:\.[0-9]{2})?)", f"{title} {desc}")
-                    price = float(price_match.group(1).replace(",", "")) if price_match else 0.0
+                    soup = BeautifulSoup(res.text, "html.parser")
+                    cards = soup.select("[data-selenium='miniProductPage'], [data-selenium='product-card']")
 
-                    if price >= 500 and any(kw in title.lower() for kw in ["macbook pro", "m1 pro", "m1 max", "m2 pro", "m2 max", "m3 pro", "m3 max", "m4 pro", "m4 max", "m5 pro", "m5 max", "thinkpad", "zbook", "precision", "48gb", "64gb", "32gb"]):
+                    for card in cards:
+                        text = card.get_text(" | ", strip=True)
+                        link_elem = card.find("a", href=re.compile(r"/c/product/"))
+                        if not link_elem:
+                            continue
+
+                        link = link_elem.get("href", "")
+                        if not link or link in seen_links:
+                            continue
+                        seen_links.add(link)
+
+                        if not link.startswith("http"):
+                            link = f"https://www.bhphotovideo.com{link}"
+
+                        # Price parsing
+                        p_match = re.search(r"\$\s*([0-9,]+(?:\.[0-9]{2})?)", text)
+                        if not p_match:
+                            continue
+                        price = float(p_match.group(1).replace(",", ""))
+
+                        if price < 300 or price > 6500:
+                            continue
+
+                        if is_blacklisted_item(text):
+                            continue
+
+                        # Extract Title
+                        title_elem = card.select_one("[data-selenium='miniProductPageName'], h3, a[data-selenium='miniProductPageProductNameLink']")
+                        raw_title = title_elem.get_text(strip=True) if title_elem else link_elem.get_text(strip=True)
+                        if not raw_title:
+                            raw_title = query.title()
+
+                        clean_title = f"B&H Used: {raw_title}"
+
+                        # Extract Condition
+                        condition = "Used - Inspected"
+                        if "Open Box" in text or "Open Box - Like New" in text:
+                            condition = "B&H Open Box - Like New"
+                        elif "Condition: | 10" in text or "Condition: 10" in text:
+                            condition = "B&H Condition 10 (Mint)"
+                        elif "Condition: | 9" in text or "Condition: 9" in text:
+                            condition = "B&H Condition 9 (Very Good)"
+                        elif "Condition: | 8" in text or "Condition: 8" in text:
+                            condition = "B&H Condition 8 (Good)"
+
+                        item_id = f"bh_photo_{abs(hash(link)) % 1000000}"
+
                         listings.append(
                             RawListing(
-                                id=f"bh_deal_{idx}_{abs(hash(title)) % 1000000}",
+                                id=item_id,
                                 source="bh_photo",
-                                title=f"B&H Deal: {title}",
-                                description=desc[:350],
+                                title=clean_title,
+                                description=f"B&H Photo Inspected Used Workstation. {text[:300]}",
                                 price=price,
                                 url=link,
                                 seller="B&H Photo Video",
                                 location="NY, USA",
-                                condition_raw="Factory Sealed / Certified Refurbished",
+                                condition_raw=condition,
                                 created_utc=datetime.now(timezone.utc).isoformat(),
                             )
                         )
-                if listings:
-                    print(f"[BAndHCollector] Ingested {len(listings)} live workstation deals from B&H Photo!")
-                    return listings
+                except Exception as err:
+                    print(f"[BAndHCollector] Query error for {query}: {err}")
+
+            if listings:
+                print(f"[BAndHCollector] Ingested {len(listings)} live direct used workstation deals from B&H Photo!")
+                return listings[:limit]
+
         except Exception as e:
-            print(f"[BAndHCollector] Scrape error: {e}")
+            print(f"[BAndHCollector] Scrape failed: {e}")
+
+        return []
+
+
+class BestBuyOutletCollector:
+    """
+    Best Buy Direct Open-Box & Clearance Workstation Collector (curl_cffi TLS Impersonation).
+    Directly extracts open-box inventory, specifications, and SKU-level discount pricing
+    for high-end creator and developer laptops (MacBook Pro, ROG Zephyrus, Legion Pro, Razer Blade).
+    """
+
+    TARGET_QUERIES = [
+        "macbook pro 16",
+        "macbook pro 14",
+        "gaming laptop rtx 4080",
+        "asus rog zephyrus g14",
+        "asus rog zephyrus g16",
+        "lenovo legion pro 7i",
+        "razer blade 16",
+    ]
+
+    def fetch_listings(self, limit: int = 50) -> List[RawListing]:
+        """Fetch live open-box workstation deals directly from Best Buy."""
+        listings: List[RawListing] = []
+        seen_skus = set()
+
+        try:
+            from bs4 import BeautifulSoup
+            from curl_cffi import requests
+
+            headers = {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+                "Accept-Language": "en-US,en;q=0.9",
+                "Referer": "https://www.bestbuy.com/",
+            }
+
+            for query in self.TARGET_QUERIES:
+                q_enc = urllib.parse.quote_plus(query)
+                url = f"https://www.bestbuy.com/site/searchpage.jsp?st={q_enc}"
+
+                try:
+                    res = requests.get(url, impersonate="chrome120", headers=headers, timeout=10.0)
+                    if res.status_code != 200:
+                        continue
+
+                    soup = BeautifulSoup(res.text, "html.parser")
+                    scripts = soup.find_all("script")
+
+                    for s in scripts:
+                        content = s.string or ""
+                        if "customerPrice" in content and "sku" in content:
+                            items = re.findall(
+                                r'product/([^/]+)/[^/]+/sku/(\d+)(?:/openbox\?condition=([^"]+))?"\}\],"price":\{[^}]*"customerPrice":([0-9.]+)',
+                                content
+                            )
+                            for slug, sku, ob_cond, price_str in items:
+                                if sku in seen_skus:
+                                    continue
+                                seen_skus.add(sku)
+
+                                price = float(price_str)
+                                if price < 400 or price > 5500:
+                                    continue
+
+                                raw_title = slug.replace("-", " ").title()
+                                if is_blacklisted_item(raw_title):
+                                    continue
+
+                                clean_title = f"Best Buy Open Box: {raw_title}"
+                                link = f"https://www.bestbuy.com/site/{slug}/{sku}.p?skuId={sku}"
+                                condition_str = f"Best Buy Open Box ({ob_cond.title()})" if ob_cond else "Best Buy Open Box / Certified"
+
+                                listings.append(
+                                    RawListing(
+                                        id=f"bestbuy_{sku}",
+                                        source="bestbuy",
+                                        title=clean_title,
+                                        description=f"Best Buy Verified Open-Box Hardware (SKU: {sku}). {raw_title}",
+                                        price=price,
+                                        url=link,
+                                        seller="Best Buy Outlet",
+                                        location="US",
+                                        condition_raw=condition_str,
+                                        created_utc=datetime.now(timezone.utc).isoformat(),
+                                    )
+                                )
+                except Exception as err:
+                    print(f"[BestBuyOutletCollector] Query error for {query}: {err}")
+
+            if listings:
+                print(f"[BestBuyOutletCollector] Ingested {len(listings)} live open-box workstation deals from Best Buy Outlet!")
+                return listings[:limit]
+
+        except Exception as e:
+            print(f"[BestBuyOutletCollector] Scrape failed: {e}")
 
         return []
 
@@ -917,7 +1075,7 @@ class MicroCenterCollector:
 class HardwareCollectorHub:
     """
     Master collector orchestrating eBay, Reddit, Swappa/Syndicated,
-    Dell Refurbished, Lenovo Outlet, B&H Photo, Micro Center, and ShopGoodwill in parallel.
+    Dell Refurbished, Lenovo Outlet, B&H Photo, Best Buy Outlet, Micro Center, and ShopGoodwill in parallel.
     Handles rate-limiting, deduplication, and aggregation.
     """
 
@@ -929,6 +1087,7 @@ class HardwareCollectorHub:
         dell_collector: Optional[DellRefurbishedCollector] = None,
         lenovo_collector: Optional[LenovoOutletCollector] = None,
         bh_collector: Optional[BAndHCollector] = None,
+        bestbuy_collector: Optional[BestBuyOutletCollector] = None,
         microcenter_collector: Optional[MicroCenterCollector] = None,
         goodwill_collector: Optional[ShopGoodwillCollector] = None,
     ) -> None:
@@ -938,6 +1097,7 @@ class HardwareCollectorHub:
         self.dell = dell_collector or DellRefurbishedCollector()
         self.lenovo = lenovo_collector or LenovoOutletCollector()
         self.bh = bh_collector or BAndHCollector()
+        self.bestbuy = bestbuy_collector or BestBuyOutletCollector()
         self.microcenter = microcenter_collector or MicroCenterCollector()
         self.goodwill = goodwill_collector or ShopGoodwillCollector()
 
@@ -951,6 +1111,7 @@ class HardwareCollectorHub:
             "dell_refurbished": self.dell.fetch_listings,
             "lenovo_outlet": self.lenovo.fetch_listings,
             "bh_photo": self.bh.fetch_listings,
+            "bestbuy": self.bestbuy.fetch_listings,
             "microcenter": self.microcenter.fetch_listings,
             "goodwill": self.goodwill.fetch_listings,
         }

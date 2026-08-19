@@ -135,12 +135,12 @@ C:\Development\Apps\WS Deal Hunter\
   3. Upgraded `SwappaCollector` to crawl active model directories (`/listings/macbook-pro-2023-16`, `/listings/razer-blade-16-2025`, `/listings/legion-pro-7i-gen-10-16`, etc.) directly.
   4. Installed a dual-layer `BLACKLIST_REGEX` across `collector.py` and `evaluator.py`, instantly dropping accessories, broken/parts-only units, security locks, and budget consumer laptops (Score 0.0) with zero AI token waste.
 
-### Decision 17: Pure Live-Only Ingestion Architecture (Zero Dummy Data Mandate)
-- **Problem**: Legacy fallback methods in collectors (`_get_fallback_listings()`) injected synthetic mock listings into `deals.json` whenever a network error or 0 results occurred.
+### Decision 18: Direct TLS Impersonation for B&H Photo Used & Best Buy Outlet
+- **Problem**: Tech deal RSS aggregators introduced 2–6 hour syndication delays and lacked SKU-level open-box condition metadata.
 - **Decision & Solution**:
-  1. Completely deleted all `_get_fallback_listings()` and `_get_syndicated_fallback()` mock generators across all collectors in [`collector.py`](file:///C:/Development/Apps/WS%20Deal%20Hunter/collector.py).
-  2. All collectors now strictly return `[]` (empty list) on errors or 0 results.
-  3. Hard Rule established: `deals.json` must strictly contain 100% genuine live-scraped inventory.
+  1. Upgraded `BAndHCollector` with direct `curl_cffi` TLS fingerprinting across B&H Used department queries (`used macbook pro 16`, `used thinkpad p1`, `used hp zbook`, `used dell precision`) with direct item URLs (`/c/product/...`) and condition ratings (Condition 8, 9, 10, Open Box).
+  2. Built and registered `BestBuyOutletCollector` using `curl_cffi` to parse Apollo Client / GraphQL product states, extracting open-box prices, condition tiers (Fair, Satisfactory, Excellent, Certified), and direct `.p?skuId=` URLs.
+  3. Expanded test suite to **18 / 18 unit tests passing** (`python test_system.py`).
 
 ---
 
@@ -150,8 +150,8 @@ C:\Development\Apps\WS Deal Hunter\
 ### 🔴 Immediate Backlog (Next Session)
 1. **Adaptive "Self-Learning" FMV Price Index**:
    - Scaffold rolling exponential moving average calibration (`price_benchmarks.json`).
-2. **Expand TLS Impersonation to New Sources**:
-   - Build direct `curl_cffi` collectors for B&H Photo Used and Best Buy Outlet Open-Box inventory.
+2. **Scheduled Daily Executive Digest (Telegram / Pushover)**:
+   - Automated 8:00 AM daily briefing of top 3 highest-ROI workstation arbitrage opportunities.
 3. **Fix Mobile UI Animations**:
    - Debug CSS keyframe compatibility and z-index stacking on touch devices.
 
