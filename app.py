@@ -186,18 +186,19 @@ def main() -> None:
 
     sources = st.sidebar.multiselect(
         "Data Sources",
-        options=["dell_refurbished", "lenovo_outlet", "bh_photo", "microcenter", "ebay", "reddit", "goodwill", "syndicated", "swappa"],
-        default=["dell_refurbished", "lenovo_outlet", "bh_photo", "microcenter", "ebay", "reddit", "goodwill", "syndicated", "swappa"],
+        options=["dell_refurbished", "lenovo_outlet", "bh_photo", "bestbuy", "microcenter", "ebay", "reddit", "goodwill", "syndicated", "swappa"],
+        default=["dell_refurbished", "lenovo_outlet", "bh_photo", "bestbuy", "microcenter", "ebay", "reddit", "goodwill", "syndicated", "swappa"],
         format_func=lambda s: {
             "dell_refurbished": "Dell Refurbished (DFS 50% Coupon)",
             "lenovo_outlet": "Lenovo Outlet (Certified ThinkPads)",
-            "bh_photo": "B&H Photo Video (Certified Workstations)",
+            "bh_photo": "B&H Photo Video (Direct Used / Open Box)",
+            "bestbuy": "Best Buy Outlet (Open Box / Certified)",
             "microcenter": "Micro Center (Open Box & Clearance)",
-            "ebay": "eBay Live Marketplace",
-            "reddit": "Reddit Hardware Hub (7 Subreddits)",
-            "goodwill": "ShopGoodwill (Estate Liquidation)",
-            "syndicated": "Syndicated Streams (Woot / Slickdeals)",
-            "swappa": "Swappa Market",
+            "ebay": "eBay Live Search",
+            "reddit": "Reddit HardwareSwap & LaptopDeals",
+            "goodwill": "ShopGoodwill Liquidations",
+            "swappa": "Swappa Verified Workstations",
+            "syndicated": "Syndicated Streams",
         }.get(s, s.upper()),
     )
 

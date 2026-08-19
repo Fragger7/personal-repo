@@ -11,13 +11,14 @@ interface FilterBarProps {
 const ALL_SOURCES = [
   { id: "ebay", label: "eBay", color: "hover:border-blue-500 hover:text-blue-400" },
   { id: "swappa", label: "Swappa", color: "hover:border-teal-500 hover:text-teal-400" },
+  { id: "bestbuy", label: "Best Buy", color: "hover:border-yellow-400 hover:text-yellow-300" },
+  { id: "bh_photo", label: "B&H Photo", color: "hover:border-green-500 hover:text-green-400" },
   { id: "reddit", label: "r/hws", color: "hover:border-orange-500 hover:text-orange-400" },
   { id: "dell_refurbished", label: "Dell DFS", color: "hover:border-blue-400 hover:text-blue-300" },
-  { id: "bh_photo", label: "B&H Photo", color: "hover:border-green-500 hover:text-green-400" },
   { id: "microcenter", label: "Micro Center", color: "hover:border-rose-500 hover:text-rose-400" },
   { id: "lenovo_outlet", label: "Lenovo", color: "hover:border-red-500 hover:text-red-400" },
   { id: "goodwill", label: "Goodwill", color: "hover:border-indigo-500 hover:text-indigo-400" },
-  { id: "syndicated", label: "Syndicated RSS", color: "hover:border-yellow-500 hover:text-yellow-400" },
+  { id: "syndicated", label: "Syndicated RSS", color: "hover:border-cyan-500 hover:text-cyan-400" },
 ];
 
 export const FilterBar: React.FC<FilterBarProps> = ({ filters, onChange, onReset }) => {

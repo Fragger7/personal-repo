@@ -27,7 +27,7 @@ export function App() {
   const [filters, setFilters] = useState<FilterState>({
     minScore: 0.0,
     maxPrice: 2500,
-    sources: ["ebay", "reddit", "swappa", "syndicated", "dell_refurbished", "microcenter", "bh_photo", "goodwill", "lenovo_outlet"],
+    sources: ["ebay", "reddit", "swappa", "bestbuy", "bh_photo", "dell_refurbished", "microcenter", "goodwill", "lenovo_outlet", "syndicated"],
     search: "",
     onlyHighYield: false,
     sortBy: "newest",
