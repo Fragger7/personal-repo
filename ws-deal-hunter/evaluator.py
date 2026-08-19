@@ -359,10 +359,7 @@ class GeminiHardwareEvaluator:
         elif any(w in text for w in ["8gb", "8 gb"]):
             ram_gb = 8
 
-        # Hard Exclude <= 16GB Apple Silicon & Soldered Non-Upgradable Units
         is_apple_silicon = any(m in text for m in ["m1", "m2", "m3", "m4", "m5", "apple silicon"])
-        if is_apple_silicon and ram_gb <= 16:
-            return self._reject_dict(f"Hard Excluded: Apple Silicon with {ram_gb}GB Unified RAM is insufficient for multi-agent container workloads.")
 
         # Check for Dual SO-DIMM Upgradable PC Workstation chassis
         is_upgradable_chassis = any(w in text for w in [
@@ -372,8 +369,9 @@ class GeminiHardwareEvaluator:
             "zbook studio g9", "zbook studio g10", "zbook fury", "zbook power"
         ])
 
-        if ram_gb < 32 and not is_upgradable_chassis and not is_apple_silicon:
-            return self._reject_dict(f"Hard Excluded: {ram_gb}GB RAM on non-upgradable or consumer chassis. Minimum 32GB required.")
+        # Universal Hard Ban: Any system <= 16GB is outruled (upgradable or not)
+        if ram_gb <= 16:
+            return self._reject_dict(f"Hard Excluded: {ram_gb}GB RAM is insufficient for modern AI/Developer workloads. Minimum 32GB required.")
 
         # ==========================================
         # 2. TOTAL LANDED COST (TLC) CALCULATION

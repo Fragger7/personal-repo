@@ -1,5 +1,34 @@
 [
   {
+    "id": "bestbuy_6673558",
+    "source": "bestbuy",
+    "title": "Best Buy Open Box: Lenovo Legion Pro 7 16 3K Oled 240Hz Gaming Laptop Ryzen 9 9955Hx3D 2025 32Gb Memory Nvidia Geforce Rtx 5080 1Tb Ssd Eclipse Black",
+    "price": 4399.99,
+    "url": "https://www.bestbuy.com/site/lenovo-legion-pro-7-16-3k-oled-240hz-gaming-laptop-ryzen-9-9955hx3d-2025-32gb-memory-nvidia-geforce-rtx-5080-1tb-ssd-eclipse-black/6673558.p?skuId=6673558",
+    "specs": {
+      "cpu": "AMD Ryzen 7/9 Zen 4/5",
+      "ram_gb": 32,
+      "ssd_gb": 1024,
+      "gpu": "NVIDIA RTX 5080",
+      "screen": "15.6\" / 16\" 3.5K OLED Display",
+      "condition": "Best Buy Open Box (Fair)"
+    },
+    "fair_market_value": 950.0,
+    "estimated_profit": 0.0,
+    "arbitrage_margin_pct": 0.0,
+    "deal_score": 1.0,
+    "summary": "AMD Ryzen 7/9 Zen 4/5 | 32GB RAM | 1024GB SSD | NVIDIA RTX 5080 (TLC: $4762.99, Margin: -401.4%).",
+    "actionable_recommendation": "PASS / NO ARBITRAGE (Exceeds Strike Ceiling)",
+    "confidence_score": 0.95,
+    "seller": "Best Buy Outlet",
+    "location": "US",
+    "created_utc": "2026-08-19T04:16:53.468434+00:00",
+    "evaluated_at": "2026-08-19T04:16:57.822745+00:00",
+    "alerted": false,
+    "is_high_yield": false,
+    "raw_payload": null
+  },
+  {
     "id": "ebay_287532896765",
     "source": "ebay",
     "title": "Dell XPS 17 9730 17\" i9-13900H 2.6GHz 64GB RAM 1TB SSD GeForce RTX 4070",

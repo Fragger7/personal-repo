@@ -88,8 +88,7 @@ $$\text{TLC} = \text{Sticker Price} + \text{Shipping} + \text{Estimated Sales Ta
   * If SSD $\le 256\text{GB}$: Add **+$65.00** (cost of purchasing a 1TB Gen4 NVMe drive).
   * If Missing OEM Charger: Add **+$40.00** (cost of a genuine 130W/140W USB-C brick).
   * If Missing / Dead Battery: Add **+$65.00** (cost of an OEM 86Wh+ internal cell).
-  * If RAM == 16GB (on dual SO-DIMM upgradable chassis): Add **+$110.00** (cost of 64GB DDR5 SO-DIMM kit).
-  * If RAM $\le 16\text{GB}$ and soldered / non-upgradable: **Reject (Score 0.0)**.
+  * If RAM $\le 16\text{GB}$: **Reject (Score 0.0)**. Universal ban. No 16GB machines permitted.
 
 ---
 
