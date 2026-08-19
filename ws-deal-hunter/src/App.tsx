@@ -250,33 +250,22 @@ export function App() {
       <div className="fixed inset-0 pointer-events-none opacity-[0.03] z-0" style={{ backgroundImage: 'linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)', backgroundSize: '50px 50px' }} />
       <div className="crt-scanline fixed" />
 
-      {/* Top Header */}
-      <div className="relative z-20 border-b border-[#222] bg-[#0a0a0abf] backdrop-blur-md sticky top-0">
-        <Header
-          onSync={handleSyncEndpoints}
-          isSyncing={isSyncing}
-          onOpenEvaluate={() => setIsEvaluateOpen(true)}
-          onOpenCode={() => setIsCodeOpen(true)}
-          onOpenNotify={() => setIsNotifyOpen(true)}
-          onGitPush={handleGitPush}
-          isPushingGit={isPushingGit}
-          totalDeals={deals.length}
-        />
-        
-        {/* Horizontal Ribbon Filter Bar */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <FilterBar
-            filters={filters}
-            onChange={setFilters}
-            onReset={handleResetFilters}
-          />
-        </div>
-      </div>
+      {/* Top Header (Clean and slim, no giant sticky wrapper) */}
+      <Header
+        onSync={handleSyncEndpoints}
+        isSyncing={isSyncing}
+        onOpenEvaluate={() => setIsEvaluateOpen(true)}
+        onOpenCode={() => setIsCodeOpen(true)}
+        onOpenNotify={() => setIsNotifyOpen(true)}
+        onGitPush={handleGitPush}
+        isPushingGit={isPushingGit}
+        totalDeals={deals.length}
+      />
 
       {/* Main Layout Container */}
-      <main className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="relative z-10 max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-3 sm:py-6">
         
-        {/* KPI Metrics Dashboard (Collapsible & Click-to-Filter) */}
+        {/* KPI Metrics Dashboard (Compact & Collapsible) */}
         <KpiMetrics
           stats={stats}
           filteredCount={filteredDeals.length}
@@ -285,12 +274,20 @@ export function App() {
           onResetFilters={handleResetFilters}
         />
 
-        <div className="flex items-center justify-between mb-8 mt-4 pb-2 border-b border-[#222]">
-          <h2 className="text-[11px] font-bold uppercase tracking-widest text-[#666] auto-glitch">
-            <span className="text-emerald-500 tech-text">{filteredDeals.length}</span> Active Opportunities
+        {/* Filter Bar (In natural document flow, never covering listings) */}
+        <FilterBar
+          filters={filters}
+          onChange={setFilters}
+          onReset={handleResetFilters}
+        />
+
+        <div className="flex items-center justify-between mb-4 mt-2 pb-2 border-b border-[#222]">
+          <h2 className="text-[11px] font-bold uppercase tracking-widest text-[#666]">
+            <span className="text-emerald-400 tech-text">{filteredDeals.length}</span> Active Vetted Deals
           </h2>
-          <div className="flex gap-2">
-            <span className="inline-block w-2 h-2 bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)] animate-pulse" />
+          <div className="flex items-center gap-2 text-[10px] text-[#888] font-mono">
+            <span className="inline-block w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)] animate-pulse" />
+            <span className="uppercase tracking-wider">Live</span>
           </div>
         </div>
 

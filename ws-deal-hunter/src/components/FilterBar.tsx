@@ -22,7 +22,7 @@ const ALL_SOURCES = [
 ];
 
 export const FilterBar: React.FC<FilterBarProps> = ({ filters, onChange, onReset }) => {
-  const [isExpanded, setIsExpanded] = useState(true);
+  const [isExpanded, setIsExpanded] = useState(false);
 
   const toggleSource = (src: string) => {
     const next = filters.sources.includes(src)
