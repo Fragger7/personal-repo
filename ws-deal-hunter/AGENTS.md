@@ -208,6 +208,9 @@ C:\Development\Apps\WS Deal Hunter\
 
 ### Decision 31: Targeted Enterprise Liquidator Whitelisting & Custom Caveat Engine
 - **Decision & Solution**: Integrated a top-10 enterprise ITAD liquidator whitelist into [`collector.py`](file:///C:/Development/Apps/WS%20Deal%20Hunter/collector.py) (`wisetekca`, `epc-texas`, `epc-global`, `human-i-t`, `smartresale`, `greenteksolutionsllc`, `joysystems`, `planitroi`, `techdiscounts_online`, `blairtechnologygroup`) paired with custom quantitative caveat handlers in [`evaluator.py`](file:///C:/Development/Apps/WS%20Deal%20Hunter/evaluator.py) (EPC battery/SSD penalty checks, Smart Resale Grade C/D auto-rejection, GreenTek 20% Best Offer notation, and `🛡️ [Enterprise ITAD]` UI trust badges).
+
+### Decision 32: Multi-Page Deep Pagination & Controlled Cloud Budget Engine
+- **Decision & Solution**: Upgraded `EBayCollector.fetch_listings()` with a controlled multi-page pagination loop (`_pgn=1..3`, default `max_pages=3`) with early page-exhaustion termination. Triples search net across all 14 workstation queries while guaranteeing single-cycle runtime remains under 45 seconds (preserving 100% of GitHub Actions $0 free-tier compute allowance).
 - **Test Coverage**: All **27 / 27 unit tests passing** (`python test_system.py`).
 
 ---

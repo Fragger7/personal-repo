@@ -138,8 +138,8 @@ class EBayCollector:
         self.client_secret = client_secret or os.environ.get("EBAY_CLIENT_SECRET", "")
         self.search_query = search_query
 
-    def fetch_listings(self, limit: int = 100) -> List[RawListing]:
-        """Fetch live items via direct TLS-impersonated search queries."""
+    def fetch_listings(self, limit: int = 350, max_pages: int = 3) -> List[RawListing]:
+        """Fetch live items via direct TLS-impersonated search queries across multiple catalog pages."""
         all_listings: List[RawListing] = []
         seen_urls = set()
 
@@ -151,97 +151,105 @@ class EBayCollector:
                 q = target["query"]
                 sacat = target.get("sacat", "177")
                 
-                # Category-isolated, Buy-It-Now, Good-to-New condition, newly listed, $300-$2500 price floor
-                url = (
-                    f"https://www.ebay.com/sch/{sacat}/i.html?"
-                    f"_nkw={urllib.parse.quote(q)}&LH_BIN=1&LH_ItemCondition=1000|1500|2000|2500|3000"
-                    f"&_sop=10&_udlo=300&_udhi=2500"
-                )
+                for page in range(1, max_pages + 1):
+                    # Category-isolated, Buy-It-Now, Good-to-New condition, newly listed, multi-page deep sweep
+                    url = (
+                        f"https://www.ebay.com/sch/{sacat}/i.html?"
+                        f"_nkw={urllib.parse.quote(q)}&LH_BIN=1&LH_ItemCondition=1000|1500|2000|2500|3000"
+                        f"&_sop=10&_udlo=300&_udhi=2500&_pgn={page}"
+                    )
 
-                headers = {
-                    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-                    "Accept-Language": "en-US,en;q=0.9",
-                    "Referer": "https://www.ebay.com/",
-                }
+                    headers = {
+                        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+                        "Accept-Language": "en-US,en;q=0.9",
+                        "Referer": "https://www.ebay.com/",
+                    }
 
-                try:
-                    res = requests.get(url, impersonate="chrome99_android", headers=headers, timeout=5.0)
-                    if res.status_code == 200:
-                        soup = BeautifulSoup(res.text, "html.parser")
-                        items = soup.select(".s-item, .s-card, li.s-item")
-                        
-                        for item in items:
-                            title_elem = item.select_one(".s-item__title, .s-card__title, h3")
-                            price_elem = item.select_one(".s-item__price, .s-card__price")
-                            link_elem = item.select_one(".s-item__link, a.s-card__link, a[href*='/itm/']")
-
-                            if not title_elem or not price_elem:
-                                continue
-
-                            title = title_elem.get_text(strip=True)
-                            price_str = price_elem.get_text(strip=True)
-                            link = link_elem.get("href", "") if link_elem else ""
-
-                            if "Shop on eBay" in title or not link or "/itm/" not in link:
-                                continue
-
-                            item_id_match = re.search(r"/itm/([0-9]{9,14})", link)
-                            if item_id_match:
-                                item_id = item_id_match.group(1)
-                                clean_url = f"https://www.ebay.com/itm/{item_id}"
-                            elif "/itm/" in link:
-                                clean_url = link.split("?")[0]
-                                if clean_url.startswith("//"):
-                                    clean_url = "https:" + clean_url
-                                elif not clean_url.startswith("http"):
-                                    clean_url = f"https://www.ebay.com{clean_url}"
-                                item_id = f"ebay_{abs(hash(clean_url)) % 1000000}"
-                            else:
-                                clean_url = f"https://www.ebay.com/sch/i.html?_nkw={urllib.parse.quote(title)}&LH_BIN=1&_sop=10"
-                                item_id = f"ebay_{abs(hash(clean_url)) % 1000000}"
-
-                            if clean_url in seen_urls:
-                                continue
-                            seen_urls.add(clean_url)
-
-                            # Parse numeric price
-                            price_match = re.search(r"\$([0-9,]+(?:\.[0-9]{2})?)", price_str)
-                            if not price_match:
-                                continue
-                            price = float(price_match.group(1).replace(",", ""))
-
-                            # Pre-filter blacklist
-                            if is_blacklisted_item(title):
-                                continue
-
-                            # Extract Seller handle and match against Targeted ITAD Sellers
-                            seller_elem = item.select_one(".s-item__seller-info-text, .s-item__user, [data-testid='seller-info'], .s-item__seller-info")
-                            seller_raw = seller_elem.get_text(strip=True) if seller_elem else "eBay Seller"
+                    try:
+                        res = requests.get(url, impersonate="chrome99_android", headers=headers, timeout=5.0)
+                        if res.status_code == 200:
+                            soup = BeautifulSoup(res.text, "html.parser")
+                            items = soup.select(".s-item, .s-card, li.s-item")
+                            page_items_count = 0
                             
-                            matched_seller = None
-                            for handle, name in self.TARGETED_ENTERPRISE_SELLERS.items():
-                                if handle in seller_raw.lower() or name.lower() in seller_raw.lower() or handle in title.lower() or name.lower() in title.lower():
-                                    matched_seller = f"{name} ({handle})"
-                                    break
-                            
-                            seller_name = matched_seller if matched_seller else seller_raw
+                            for item in items:
+                                title_elem = item.select_one(".s-item__title, .s-card__title, h3")
+                                price_elem = item.select_one(".s-item__price, .s-card__price")
+                                link_elem = item.select_one(".s-item__link, a.s-card__link, a[href*='/itm/']")
 
-                            all_listings.append(
-                                RawListing(
-                                    id=f"ebay_{item_id}",
-                                    source="ebay",
-                                    title=title,
-                                    description=f"eBay Buy-It-Now Listing: {title}. Seller: {seller_name}",
-                                    price=price,
-                                    url=clean_url,
-                                    seller=seller_name,
-                                    location="US",
-                                    condition_raw="Used / Refurbished",
-                                    created_utc=datetime.now(timezone.utc).isoformat(),
+                                if not title_elem or not price_elem:
+                                    continue
+
+                                title = title_elem.get_text(strip=True)
+                                price_str = price_elem.get_text(strip=True)
+                                link = link_elem.get("href", "") if link_elem else ""
+
+                                if "Shop on eBay" in title or not link or "/itm/" not in link:
+                                    continue
+
+                                item_id_match = re.search(r"/itm/([0-9]{9,14})", link)
+                                if item_id_match:
+                                    item_id = item_id_match.group(1)
+                                    clean_url = f"https://www.ebay.com/itm/{item_id}"
+                                elif "/itm/" in link:
+                                    clean_url = link.split("?")[0]
+                                    if clean_url.startswith("//"):
+                                        clean_url = "https:" + clean_url
+                                    elif not clean_url.startswith("http"):
+                                        clean_url = f"https://www.ebay.com{clean_url}"
+                                    item_id = f"ebay_{abs(hash(clean_url)) % 1000000}"
+                                else:
+                                    clean_url = f"https://www.ebay.com/sch/i.html?_nkw={urllib.parse.quote(title)}&LH_BIN=1&_sop=10"
+                                    item_id = f"ebay_{abs(hash(clean_url)) % 1000000}"
+
+                                if clean_url in seen_urls:
+                                    continue
+                                seen_urls.add(clean_url)
+
+                                # Parse numeric price
+                                price_match = re.search(r"\$([0-9,]+(?:\.[0-9]{2})?)", price_str)
+                                if not price_match:
+                                    continue
+                                price = float(price_match.group(1).replace(",", ""))
+
+                                # Pre-filter blacklist
+                                if is_blacklisted_item(title):
+                                    continue
+
+                                # Extract Seller handle and match against Targeted ITAD Sellers
+                                seller_elem = item.select_one(".s-item__seller-info-text, .s-item__user, [data-testid='seller-info'], .s-item__seller-info")
+                                seller_raw = seller_elem.get_text(strip=True) if seller_elem else "eBay Seller"
+                                
+                                matched_seller = None
+                                for handle, name in self.TARGETED_ENTERPRISE_SELLERS.items():
+                                    if handle in seller_raw.lower() or name.lower() in seller_raw.lower() or handle in title.lower() or name.lower() in title.lower():
+                                        matched_seller = f"{name} ({handle})"
+                                        break
+                                
+                                seller_name = matched_seller if matched_seller else seller_raw
+
+                                all_listings.append(
+                                    RawListing(
+                                        id=f"ebay_{item_id}",
+                                        source="ebay",
+                                        title=title,
+                                        description=f"eBay Buy-It-Now Listing: {title}. Seller: {seller_name}",
+                                        price=price,
+                                        url=clean_url,
+                                        seller=seller_name,
+                                        location="US",
+                                        condition_raw="Used / Refurbished",
+                                        created_utc=datetime.now(timezone.utc).isoformat(),
+                                    )
                                 )
-                            )
-                except Exception as err:
-                    print(f"[EBayCollector] Sub-query error for {q[:30]}: {err}")
+                                page_items_count += 1
+
+                            # If page had 0 valid new items, advance to next query
+                            if page_items_count == 0:
+                                break
+                    except Exception as err:
+                        print(f"[EBayCollector] Sub-query error for {q[:30]} (page {page}): {err}")
+                        break
 
             if all_listings:
                 print(f"[EBayCollector] Successfully fetched {len(all_listings)} live targeted workstation listings from eBay!")
