@@ -200,6 +200,33 @@ class TestEvaluator(unittest.TestCase):
         evaluated = self.evaluator.evaluate_listing(raw)
         self.assertEqual(evaluated.deal_score, 0.0)
 
+    def test_screen_damage_and_cracked_rejection(self) -> None:
+        """Verify that cracked screens in title, subtitle, or condition notes are hard-rejected (Score 0.0)."""
+        # Case A: Pristine title, but cracked screen in notes
+        raw_cracked_notes = RawListing(
+            id="eval_test_cracked_notes",
+            source="ebay",
+            title="Apple MacBook Pro 16\" M1 Pro 32GB RAM 1TB SSD A2485 Gray (2021)",
+            description="eBay Buy-It-Now Listing: Apple MacBook Pro 16. Notes: Cracked screen on bottom right. Condition: Used. Seller: eBay Seller",
+            price=700.0,
+            url="https://ebay.com/itm/267756837307",
+        )
+        evaluated = self.evaluator.evaluate_listing(raw_cracked_notes)
+        self.assertEqual(evaluated.deal_score, 0.0)
+        self.assertFalse(evaluated.is_high_yield)
+
+        # Case B: Hairline crack in title
+        raw_hairline = RawListing(
+            id="eval_test_hairline",
+            source="reddit",
+            title="[H] ThinkPad P1 Gen 5 32GB 1TB hairline crack on display [W] $600",
+            description="Works well, small hairline crack.",
+            price=600.0,
+            url="https://reddit.com/eval_hairline",
+        )
+        evaluated_hairline = self.evaluator.evaluate_listing(raw_hairline)
+        self.assertEqual(evaluated_hairline.deal_score, 0.0)
+
     def test_blown_dgpu_rejection(self) -> None:
         raw = RawListing(
             id="eval_test_dgpu",

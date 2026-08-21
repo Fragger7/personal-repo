@@ -411,9 +411,13 @@ class GeminiHardwareEvaluator:
         if any(w in text for w in ["macbook", "mac book"]) and any(w in text for w in ["intel", "i7", "i9", "touch bar", "touchbar", "2016", "2017", "2018", "2019", "2020"]) and not any(m in text for m in ["m1", "m2", "m3", "m4", "m5"]):
             return self._reject_dict("Hard Excluded: Legacy Intel MacBook Pro (2016-2020) rejected per Knowledge Base.")
 
-        # B. Damaged / Defective / Structural Defects (Hinges, Separating Frame, Cracked Palmrest)
+        # B. Damaged / Defective / Structural Defects (Hinges, Separating Frame, Cracked Screen/Glass/Palmrest)
         structural_damage_keywords = [
-            "for parts", "parts only", "broken screen", "cracked screen", "no power", "bad logic board",
+            "for parts", "parts only", "broken screen", "cracked screen", "crack on screen", "crack in screen",
+            "cracked display", "cracked glass", "cracked panel", "cracked lcd", "hairline crack", "screen defect",
+            "screen issue", "screen line", "lines on screen", "lines in screen", "screen blemish", "dead pixel", "dead pixels",
+            "delamination", "staingate", "ghosting", "backlight bleed", "flickering screen", "flicker screen",
+            "display issue", "damaged screen", "no power", "bad logic board",
             "broken hinge", "loose hinge", "hinge separated", "hinge screw", "frame separating", "frame is separating",
             "cracked palm rest", "cracked palmrest", "keyboard imprints", "deep screen marks", "bent corner", "dropped impact"
         ]

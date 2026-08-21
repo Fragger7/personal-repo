@@ -55,6 +55,8 @@ TITLE_ACCESSORY_REGEX = re.compile(
 
 HARD_EXCLUSION_REGEX = re.compile(
     r"(?i)(for\s*parts|not\s*working|as\s*is\b|untested|repair\s*only|broken\s*screen|bad\s*screen|liquid\s*damage|"
+    r"cracked\s*(?:screen|display|glass|panel|lcd)|crack\s*(?:on|in)\s*(?:screen|display|glass)|hairline\s*crack|"
+    r"screen\s*(?:defect|issue|blemish|burn|line)|lines?\s*(?:on|in)\s*(?:screen|display)|dead\s*pixels?|delaminat\w+|staingate|backlight\s*bleed|"
     r"water\s*damage|icp\b|mdm\b|icloud\s*lock|activation\s*lock|managed\s*profile|profile\s*lock|bios\s*lock|computrace|"
     r"bad\s*gpu|dead\s*gpu|no\s*nvidia|iris\s*only|iris\s*xe\s*only|intel\s*graphics\s*only|uhd\s*graphics\s*only|touch\s*bar|"
     r"frame\s*separating|frame\s*is\s*separating|hinge\s*separated|broken\s*hinge|loose\s*hinge|cracked\s*palmrest|keyboard\s*imprints|"
@@ -212,9 +214,11 @@ class EBayCollector:
                                     continue
                                 price = float(price_match.group(1).replace(",", ""))
 
-                                # Pre-filter blacklist
-                                if is_blacklisted_item(title):
-                                    continue
+                                # Extract Subtitle, Seller Notes, and Condition description from DOM
+                                sub_elem = item.select_one(".s-item__subtitle, .s-card__subtitle, .s-item__seller-notes, .s-item__condition-description, .s-item__dynamic-wrapper, .SECONDARY_INFO, .s-item__desc")
+                                cond_elem = item.select_one(".s-item__condition, .s-card__condition, span.s-item__condition-text")
+                                sub_text = sub_elem.get_text(strip=True) if sub_elem else ""
+                                cond_text = cond_elem.get_text(strip=True) if cond_elem else "Used / Refurbished"
 
                                 # Extract Seller handle and match against Targeted ITAD Sellers
                                 seller_elem = item.select_one(".s-item__seller-info-text, .s-item__user, [data-testid='seller-info'], .s-item__seller-info")
@@ -227,18 +231,23 @@ class EBayCollector:
                                         break
                                 
                                 seller_name = matched_seller if matched_seller else seller_raw
+                                full_desc = f"eBay Buy-It-Now Listing: {title}. Notes: {sub_text}. Condition: {cond_text}. Seller: {seller_name}"
+
+                                # Pre-filter blacklist using title AND full description text
+                                if is_blacklisted_item(title, full_desc):
+                                    continue
 
                                 all_listings.append(
                                     RawListing(
                                         id=f"ebay_{item_id}",
                                         source="ebay",
                                         title=title,
-                                        description=f"eBay Buy-It-Now Listing: {title}. Seller: {seller_name}",
+                                        description=full_desc,
                                         price=price,
                                         url=clean_url,
                                         seller=seller_name,
                                         location="US",
-                                        condition_raw="Used / Refurbished",
+                                        condition_raw=cond_text,
                                         created_utc=datetime.now(timezone.utc).isoformat(),
                                     )
                                 )

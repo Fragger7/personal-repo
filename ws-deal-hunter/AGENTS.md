@@ -211,7 +211,14 @@ C:\Development\Apps\WS Deal Hunter\
 
 ### Decision 32: Multi-Page Deep Pagination & Controlled Cloud Budget Engine
 - **Decision & Solution**: Upgraded `EBayCollector.fetch_listings()` with a controlled multi-page pagination loop (`_pgn=1..3`, default `max_pages=3`) with early page-exhaustion termination. Triples search net across all 14 workstation queries while guaranteeing single-cycle runtime remains under 45 seconds (preserving 100% of GitHub Actions $0 free-tier compute allowance).
-- **Test Coverage**: All **27 / 27 unit tests passing** (`python test_system.py`).
+
+### Decision 33: Multi-Layer Screen & Chassis Defect Ingestion Gatekeeper
+- **Problem**: Listing `267756837307` (MacBook Pro 16 M1 Pro) had a pristine title but disclosed a cracked screen in the eBay subtitle / condition notes, which previously escaped because `EBayCollector` only extracted the title element into `description`.
+- **Decision & Solution**:
+  1. Enhanced `EBayCollector` to extract all search card DOM notes (`.s-item__subtitle`, `.s-item__seller-notes`, `.s-item__condition-description`, `.SECONDARY_INFO`) and combine them into `RawListing.description`.
+  2. Expanded `HARD_EXCLUSION_REGEX` and `structural_damage_keywords` in `evaluator.py` to cover cracked screens/displays/glass, hairline cracks, dead pixels, screen defects, display lines, delamination, and staingate.
+  3. Hard-purged defective listing `267756837307` from `deals.json`.
+- **Test Coverage**: All **28 / 28 unit tests passing** (`python test_system.py`).
 
 ---
 
