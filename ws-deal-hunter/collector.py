@@ -649,14 +649,33 @@ class DellRefurbishedCollector:
     def __init__(self) -> None:
         self.last_request_time = 0.0
 
+    def _fetch_active_coupon(self, scraper: Any) -> Tuple[str, float]:
+        """Fetch active promotional sitewide coupon code and discount percentage from DFS."""
+        try:
+            res = scraper.get("https://www.dellrefurbished.com/coupons", timeout=5.0)
+            if res.status_code == 200:
+                code_m = re.search(r"Coupon\s*Code\s*[:=\s]*([A-Z0-9]{4,15})", res.text, re.I)
+                pct_m = re.search(r"([0-9]{2})%\s*off", res.text, re.I)
+                code = code_m.group(1).upper() if code_m else "DFS-PROMO"
+                pct = float(pct_m.group(1)) if pct_m else 0.0
+                return code, pct
+        except Exception:
+            pass
+        return "", 0.0
+
     def fetch_listings(self) -> List[RawListing]:
-        """Fetch and parse live certified refurbished Precision & XPS workstations from Dell Refurbished."""
+        """Fetch and parse live certified refurbished Precision & XPS workstations from Dell Refurbished with auto-coupon deduction."""
         try:
             import cloudscraper
             from bs4 import BeautifulSoup
 
             scraper = cloudscraper.create_scraper(browser={"browser": "chrome", "platform": "windows", "desktop": True})
             listings: List[RawListing] = []
+
+            # 1. Fetch active sitewide coupon
+            coupon_code, discount_pct = self._fetch_active_coupon(scraper)
+            if discount_pct > 0:
+                print(f"[DellRefurbishedCollector] Active promo detected: Code '{coupon_code}' ({discount_pct:.0f}% Off)")
 
             for target_url in self.TARGET_URLS:
                 try:
@@ -667,7 +686,7 @@ class DellRefurbishedCollector:
                     soup = BeautifulSoup(res.text, "html.parser")
                     items = soup.find_all("div", class_="thumb-grid")
 
-                    for idx, item in enumerate(items[:15]):
+                    for idx, item in enumerate(items[:20]):
                         title_elem = item.find(["h3", "h4", "a", "span"], class_=re.compile(r"title|name|header", re.I)) or item.find("a")
                         title = title_elem.get_text(" ", strip=True) if title_elem else item.get_text(" ", strip=True)[:50]
                         link = title_elem.get("href", "") if title_elem and title_elem.name == "a" else ""
@@ -687,15 +706,21 @@ class DellRefurbishedCollector:
                         # Extract Sale / List price
                         sale_match = re.search(r"SALE\s*\$\s*([0-9,]+(?:\.[0-9]{2})?)", full_text)
                         list_match = re.search(r"\$\s*([0-9,]+(?:\.[0-9]{2})?)", full_text)
-                        price = float(sale_match.group(1).replace(",", "")) if sale_match else (float(list_match.group(1).replace(",", "")) if list_match else 0.0)
+                        list_price = float(sale_match.group(1).replace(",", "")) if sale_match else (float(list_match.group(1).replace(",", "")) if list_match else 0.0)
 
-                        if price < 250:
+                        if list_price < 250:
                             continue
 
-                        # Extract coupon discount if present (e.g. 50% off)
-                        discount_match = re.search(r"([0-9]{2})%\s*off", full_text, re.I)
-                        discount_pct = float(discount_match.group(1)) if discount_match else 0.0
-                        coupon_tag = f" ({int(discount_pct)}% OFF Coupon Applied)" if discount_pct > 0 else ""
+                        # Apply coupon discount if available
+                        item_disc_m = re.search(r"([0-9]{2})%\s*off", full_text, re.I)
+                        eff_pct = float(item_disc_m.group(1)) if item_disc_m else discount_pct
+                        
+                        if eff_pct > 0:
+                            net_price = round(list_price * (1.0 - eff_pct / 100.0), 2)
+                            coupon_tag = f" [Coupon {coupon_code}: -{int(eff_pct)}% applied]"
+                        else:
+                            net_price = list_price
+                            coupon_tag = ""
 
                         # Extract specs from card text
                         cpu_match = re.search(r"CPU\s*1x\s*([^\n\r\|]+?)(?=\s*Memory|\s*Hard Drive|\s*Display|\s*Graphics|\s*\$|$)", full_text, re.I)
@@ -705,7 +730,7 @@ class DellRefurbishedCollector:
                         mem_str = f"{mem_match.group(1)}GB RAM" if mem_match else ""
                         spec_summary = f"{cpu_str}, {mem_str}".strip(", ")
 
-                        clean_title = f"Dell Certified Refurbished: {title} ({spec_summary}){coupon_tag}"
+                        clean_title = f"Dell DFS Refurbished: {title} ({spec_summary}){coupon_tag}"
                         item_id = f"dell_refurb_{abs(hash(link or title)) % 1000000}"
 
                         listings.append(
@@ -713,8 +738,8 @@ class DellRefurbishedCollector:
                                 id=item_id,
                                 source="dell_refurbished",
                                 title=clean_title,
-                                description=f"Dell Financial Services Certified Refurbished Workstation. {full_text[:300]}",
-                                price=price,
+                                description=f"Dell Financial Services Certified Refurbished. List: ${list_price:.2f}, Net: ${net_price:.2f}. Coupon: {coupon_code}. {full_text[:300]}",
+                                price=net_price,
                                 url=link or "https://www.dellrefurbished.com/laptops?model_family=266",
                                 seller="Dell Financial Services (DFS)",
                                 location="TX, USA",

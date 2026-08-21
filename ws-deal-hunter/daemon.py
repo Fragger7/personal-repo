@@ -123,15 +123,21 @@ class DealHunterDaemon:
         if reaped_count > 0:
             existing_deals = self.storage.get_all()
 
-        known_ids = {d.id for d in existing_deals}
-        known_urls = {d.url for d in existing_deals if d.url and d.url != "#"}
+        existing_id_map = {d.id: d for d in existing_deals}
+        existing_url_map = {d.url: d for d in existing_deals if d.url and d.url != "#"}
 
         new_listings: List[RawListing] = []
         for raw in raw_listings:
-            if raw.id not in known_ids and (not raw.url or raw.url not in known_urls):
+            prev_deal = existing_id_map.get(raw.id) or (existing_url_map.get(raw.url) if raw.url else None)
+            if prev_deal is None:
+                new_listings.append(raw)
+            elif raw.price > 0 and (prev_deal.price - raw.price) >= 50.0:
+                # Active Price Drop detected on tracked listing!
+                price_cut = prev_deal.price - raw.price
+                self.log(f"⚡ PRICE DROP DETECTED: {raw.title[:45]} dropped from ${prev_deal.price:.0f} to ${raw.price:.0f} (-${price_cut:.0f})")
                 new_listings.append(raw)
 
-        self.log(f"Found {len(new_listings)} new unanalyzed candidate hardware listings.")
+        self.log(f"Found {len(new_listings)} new or price-dropped candidate hardware listings.")
 
         evaluated_deals: List[DealRecord] = []
         alerts_in_cycle = 0
