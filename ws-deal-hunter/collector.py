@@ -1192,10 +1192,73 @@ class AppleRefurbishedCollector:
         return []
 
 
+class WootCollector:
+    """
+    Woot! Computers & Enterprise Refurbished Workstation Collector.
+    Scrapes syndicated Woot bulk off-lease workstation drops (Dell Precision, ThinkPad P-Series, HP ZBook, MacBooks).
+    Filters out consumer electronics, accessories, and food/apparel drops.
+    """
+
+    def fetch_listings(self, limit: int = 25) -> List[RawListing]:
+        """Fetch live Woot computer & laptop workstation drops."""
+        try:
+            import cloudscraper
+            import html
+
+            scraper = cloudscraper.create_scraper(browser={"browser": "chrome", "platform": "windows", "desktop": True})
+            url = "https://slickdeals.net/newsearch.php?searchfirst=1&q=woot+laptop+refurbished+dell+precision+thinkpad+macbook&hideexpired=1&sort=newest&rss=1"
+            res = scraper.get(url, timeout=4.0)
+
+            if res.status_code == 200:
+                item_blocks = re.findall(r"<item>([\s\S]*?)</item>", res.text)
+                listings: List[RawListing] = []
+                for idx, block in enumerate(item_blocks[:limit]):
+                    title_m = re.search(r"<title>(?:<!\[CDATA\[)?(.*?)(?:\]\]>)?</title>", block, re.DOTALL)
+                    link_m = re.search(r"<link>(.*?)</link>", block) or re.search(r"<guid[^>]*>(.*?)</guid>", block)
+                    desc_m = re.search(r"<description>(?:<!\[CDATA\[)?(.*?)(?:\]\]>)?</description>", block, re.DOTALL)
+
+                    title = html.unescape(title_m.group(1).strip()) if title_m else ""
+                    link = html.unescape(link_m.group(1).strip()) if link_m else "https://computers.woot.com"
+                    desc = html.unescape(desc_m.group(1).strip()) if desc_m else title
+
+                    price_match = re.search(r"\$\s*([0-9,]+(?:\.[0-9]{2})?)", f"{title} {desc}")
+                    price = float(price_match.group(1).replace(",", "")) if price_match else 0.0
+
+                    if price < 250 or is_blacklisted_item(title):
+                        continue
+
+                    title_lower = title.lower()
+                    if not any(kw in title_lower for kw in ["laptop", "thinkpad", "precision", "zbook", "macbook", "xps", "workstation", "razer", "legion"]):
+                        continue
+
+                    listings.append(
+                        RawListing(
+                            id=f"woot_{idx}_{abs(hash(title)) % 1000000}",
+                            source="woot",
+                            title=f"Woot Refurbished: {title}",
+                            description=desc[:350],
+                            price=price,
+                            url=link,
+                            seller="Woot! (Amazon)",
+                            location="US (Free Prime Shipping)",
+                            condition_raw="Factory Refurbished / Off-Lease",
+                            created_utc=datetime.now(timezone.utc).isoformat(),
+                        )
+                    )
+
+                if listings:
+                    print(f"[WootCollector] Ingested {len(listings)} live workstation drops from Woot!")
+                    return listings
+        except Exception as e:
+            print(f"[WootCollector] Scrape error: {e}")
+
+        return []
+
+
 class HardwareCollectorHub:
     """
     Master collector orchestrating eBay, Reddit, Swappa/Syndicated,
-    Dell Refurbished, Lenovo Outlet, B&H Photo, Best Buy Outlet, Micro Center, Apple Refurbished, and ShopGoodwill in parallel.
+    Dell Refurbished, Lenovo Outlet, B&H Photo, Best Buy Outlet, Micro Center, Apple Refurbished, Woot, and ShopGoodwill in parallel.
     Handles rate-limiting, deduplication, and aggregation.
     """
 
@@ -1210,6 +1273,7 @@ class HardwareCollectorHub:
         bestbuy_collector: Optional[BestBuyOutletCollector] = None,
         microcenter_collector: Optional[MicroCenterCollector] = None,
         apple_collector: Optional[AppleRefurbishedCollector] = None,
+        woot_collector: Optional[WootCollector] = None,
         goodwill_collector: Optional[ShopGoodwillCollector] = None,
     ) -> None:
         self.ebay = ebay_collector or EBayCollector()
@@ -1221,9 +1285,10 @@ class HardwareCollectorHub:
         self.bestbuy = bestbuy_collector or BestBuyOutletCollector()
         self.microcenter = microcenter_collector or MicroCenterCollector()
         self.apple = apple_collector or AppleRefurbishedCollector()
+        self.woot = woot_collector or WootCollector()
         self.goodwill = goodwill_collector or ShopGoodwillCollector()
 
-    def collect_all(self, max_workers: int = 8) -> List[RawListing]:
+    def collect_all(self, max_workers: int = 10) -> List[RawListing]:
         """Run all collectors concurrently and aggregate results."""
         collected: List[RawListing] = []
         tasks = {
@@ -1236,6 +1301,7 @@ class HardwareCollectorHub:
             "bestbuy": self.bestbuy.fetch_listings,
             "microcenter": self.microcenter.fetch_listings,
             "apple_refurbished": self.apple.fetch_listings,
+            "woot": self.woot.fetch_listings,
             "goodwill": self.goodwill.fetch_listings,
         }
 

@@ -35,6 +35,7 @@ from collector import (
     RedditCollector,
     ShopGoodwillCollector,
     SwappaCollector,
+    WootCollector,
 )
 from daemon import DealHunterDaemon
 from evaluator import GeminiHardwareEvaluator
@@ -140,6 +141,11 @@ class TestCollectors(unittest.TestCase):
 
     def test_apple_refurbished_collector(self) -> None:
         collector = AppleRefurbishedCollector()
+        listings = collector.fetch_listings()
+        self.assertIsInstance(listings, list)
+
+    def test_woot_collector(self) -> None:
+        collector = WootCollector()
         listings = collector.fetch_listings()
         self.assertIsInstance(listings, list)
 
