@@ -202,6 +202,20 @@ export function App() {
     showToast(`Evaluated: ${newDeal.title.slice(0, 30)}... (Score: ${newDeal.deal_score}/10)`);
   };
 
+  const handleDeleteDeal = async (dealId: string) => {
+    setDeals((prev) => prev.filter((d) => d.id !== dealId));
+    showToast("🗑️ Listing dismissed & removed from dashboard");
+    try {
+      if (!import.meta.env.PROD) {
+        await fetch(`/api/deals/${encodeURIComponent(dealId)}`, {
+          method: "DELETE",
+        });
+      }
+    } catch (err) {
+      console.warn("Could not delete from backend:", err);
+    }
+  };
+
   const handleResetFilters = () => {
     setFilters({
       minScore: 0.0,
@@ -322,6 +336,7 @@ export function App() {
                 key={deal.id}
                 deal={deal}
                 onSendPush={handleSendPush}
+                onDeleteDeal={handleDeleteDeal}
               />
             ))}
           </div>
@@ -329,6 +344,7 @@ export function App() {
           <DealTable
             deals={filteredDeals}
             onSendPush={handleSendPush}
+            onDeleteDeal={handleDeleteDeal}
           />
         )}
       </main>

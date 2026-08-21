@@ -61,11 +61,13 @@ class DealHunterDaemon:
         auto_push: bool = False,
         discord_webhook: Optional[str] = None,
         heartbeat_interval_cycles: int = 6,
+        once: bool = False,
     ) -> None:
         self.poll_interval = poll_interval
         self.min_deal_score = min_deal_score
         self.max_alert_price = max_alert_price
         self.auto_push = auto_push
+        self.once = once
         self.heartbeat_interval_cycles = int(os.environ.get("HEARTBEAT_INTERVAL_CYCLES", heartbeat_interval_cycles))
         
         self.storage = AtomicDealStorage(filepath=storage_path)
@@ -113,8 +115,14 @@ class DealHunterDaemon:
                 self.telegram_notifier.send_error_alert("HardwareCollectorHub", str(e), current_cycle)
             return {"error": err_msg}
 
-        # 2. Filter out already known listings
+        # 2. Filter out already known listings & reap dead/sold deals
         existing_deals = self.storage.get_all()
+        
+        # Liveness & Expiry Reaper: Automatically purge sold/ended/404 deals
+        reaped_count = self.reap_dead_and_sold_deals(existing_deals)
+        if reaped_count > 0:
+            existing_deals = self.storage.get_all()
+
         known_ids = {d.id for d in existing_deals}
         known_urls = {d.url for d in existing_deals if d.url and d.url != "#"}
 
@@ -230,6 +238,84 @@ class DealHunterDaemon:
             "duration_seconds": elapsed,
         }
 
+    def reap_dead_and_sold_deals(self, current_deals: List[DealRecord]) -> int:
+        """
+        Probe status of stored listings and automatically purge any sold, 404, or ended items.
+        """
+        if not current_deals:
+            return 0
+
+        from concurrent.futures import ThreadPoolExecutor
+        import cloudscraper
+
+        dead_ids: List[str] = []
+        scraper = cloudscraper.create_scraper(browser={"browser": "chrome", "platform": "windows", "desktop": True})
+
+        def check_deal_liveness(deal: DealRecord) -> Optional[str]:
+            if not deal.url or deal.url == "#":
+                return None
+            try:
+                # Fast probe with 3.5s timeout
+                res = scraper.get(deal.url, timeout=3.5, allow_redirects=True)
+                
+                # Check HTTP Status: 404/410 means listing was deleted
+                if res.status_code in [404, 410]:
+                    return deal.id
+
+                text = res.text.lower()
+
+                # Reddit liveness: check for [sold], [closed], linkflair-closed, or removed text
+                if "reddit.com" in deal.url:
+                    if (
+                        "linkflair-closed" in text
+                        or "linkflair-sold" in text
+                        or "[sold]" in text
+                        or "[closed]" in text
+                        or "this post was removed" in text
+                        or "this post has been removed" in text
+                    ):
+                        return deal.id
+
+                # Swappa liveness: check if listing is closed/sold
+                elif "swappa.com" in deal.url:
+                    if "listing closed" in text or "this listing has been sold" in text or "listing not found" in text:
+                        return deal.id
+
+                # B&H / Best Buy liveness: check if out of stock
+                elif "bhphotovideo.com" in deal.url:
+                    if "no longer available" in text or "item unavailable" in text:
+                        return deal.id
+                elif "bestbuy.com" in deal.url:
+                    if "sold out" in text or "this item is currently unavailable" in text:
+                        return deal.id
+
+                # eBay liveness: check for ended notification if page returns 200
+                elif "ebay.com" in deal.url and res.status_code == 200:
+                    if (
+                        "this listing was ended by the seller" in text
+                        or "this listing has ended" in text
+                        or "out of stock" in text
+                        or "we couldn't find this page" in text
+                    ):
+                        return deal.id
+
+            except Exception:
+                # On timeout or network error, retain deal safely
+                pass
+            return None
+
+        with ThreadPoolExecutor(max_workers=6) as executor:
+            results = executor.map(check_deal_liveness, current_deals)
+            for res_id in results:
+                if res_id:
+                    dead_ids.append(res_id)
+
+        if dead_ids:
+            purged = self.storage.delete_many(dead_ids)
+            self.log(f"🗑️ Reaped {purged} dead/sold listings from deals.json: {dead_ids}")
+            return purged
+        return 0
+
     def start(self) -> None:
         """Start daemon loop in background thread."""
         if self._running:
@@ -284,6 +370,7 @@ def main() -> None:
         storage_path=args.storage,
         auto_push=args.auto_push,
         discord_webhook=args.discord_webhook or None,
+        once=args.once,
     )
 
     if args.once:

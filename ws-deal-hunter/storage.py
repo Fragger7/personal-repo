@@ -266,6 +266,20 @@ class AtomicDealStorage:
                 return True
             return False
 
+    def delete_many(self, deal_ids: List[str]) -> int:
+        """Delete multiple deals by ID in a single atomic write."""
+        if not deal_ids:
+            return 0
+        id_set = set(deal_ids)
+        with self._lock:
+            records = self._read_raw()
+            initial_len = len(records)
+            records = [r for r in records if r.get("id") not in id_set]
+            deleted_count = initial_len - len(records)
+            if deleted_count > 0:
+                self._write_atomic(records)
+            return deleted_count
+
     def filter_deals(
         self,
         min_score: float = 0.0,

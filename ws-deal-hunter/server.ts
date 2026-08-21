@@ -95,6 +95,26 @@ app.get("/api/deals", (req: Request, res: Response) => {
   }
 });
 
+// 2.5 Delete single deal by ID or URL
+app.delete("/api/deals/:id", (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const deals = readDeals();
+    const filtered = deals.filter((d: any) => d.id !== id && d.url !== id);
+    const deletedCount = deals.length - filtered.length;
+    if (deletedCount > 0) {
+      writeDealsAtomic(filtered);
+    }
+    res.json({
+      success: true,
+      deletedCount,
+      remaining: filtered.length,
+    });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 // 3. Stats summary
 app.get("/api/stats", (_req: Request, res: Response) => {
   try {

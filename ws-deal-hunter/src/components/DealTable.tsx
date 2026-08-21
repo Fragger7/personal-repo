@@ -1,13 +1,14 @@
 import React from "react";
-import { ExternalLink, Bell, ArrowUpRight } from "lucide-react";
+import { ExternalLink, Bell, Trash2 } from "lucide-react";
 import { DealRecord } from "../types";
 
 interface DealTableProps {
   deals: DealRecord[];
   onSendPush: (deal: DealRecord) => Promise<void>;
+  onDeleteDeal?: (dealId: string) => void;
 }
 
-export const DealTable: React.FC<DealTableProps> = ({ deals, onSendPush }) => {
+export const DealTable: React.FC<DealTableProps> = ({ deals, onSendPush, onDeleteDeal }) => {
   return (
     <div className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden shadow-sm">
       <div className="overflow-x-auto">
@@ -88,7 +89,7 @@ export const DealTable: React.FC<DealTableProps> = ({ deals, onSendPush }) => {
                     </span>
                   </td>
 
-                  {/* Links & Push */}
+                  {/* Links, Push & Delete */}
                   <td className="px-4 py-3 text-center whitespace-nowrap">
                     <div className="flex items-center justify-center gap-1.5">
                       <a
@@ -107,6 +108,15 @@ export const DealTable: React.FC<DealTableProps> = ({ deals, onSendPush }) => {
                       >
                         <Bell className="h-3.5 w-3.5 text-amber-400" />
                       </button>
+                      {onDeleteDeal && (
+                        <button
+                          onClick={() => onDeleteDeal(deal.id)}
+                          className="p-1.5 rounded-md bg-rose-950/40 hover:bg-rose-900/80 text-rose-400 hover:text-rose-200 border border-rose-900/50 transition"
+                          title="Delete / Dismiss deal from list"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>

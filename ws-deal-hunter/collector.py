@@ -358,6 +358,11 @@ class RedditCollector:
                 else:
                     url_full = f"https://www.reddit.com/r/{subreddit}/comments/{post_id}/"
 
+                # Check for closed/sold flair class on entry
+                classes = " ".join(entry.get("class", []))
+                if "linkflair-closed" in classes or "linkflair-sold" in classes:
+                    continue
+
                 # Filter: P2P vs Deal Aggregator Subreddits
                 if is_p2p:
                     if not any(tag in title for tag in ["[H]", "[h]", "[FS]", "[fs]", "[Selling]", "[Trade]"]):
@@ -395,17 +400,41 @@ class RedditCollector:
                 if not is_spec_match:
                     continue
 
-                # Extract price
+                # Extract price from title first
+                post_body = ""
                 price = self._extract_price(title, "")
+
+                # If price not in title or if RAM specs need body verification, inspect post body
+                if (price <= 0 or not has_ram) and permalink:
+                    try:
+                        post_res = scraper.get(f"https://old.reddit.com{permalink}", timeout=3.0)
+                        if post_res.status_code == 200:
+                            post_soup = BeautifulSoup(post_res.text, "html.parser")
+                            md_el = post_soup.select_one(".entry .usertext-body .md")
+                            if md_el:
+                                post_body = md_el.get_text(separator=" ", strip=True)
+                                if price <= 0:
+                                    price = self._extract_price(title, post_body)
+                                if not has_ram:
+                                    has_ram = any(re.search(pat, post_body, re.I) for pat in self.RAM_PATTERNS)
+                                if not has_cpu:
+                                    has_cpu = any(re.search(pat, post_body, re.I) for pat in self.CPU_PATTERNS)
+                    except Exception:
+                        pass
+
                 if price <= 0 or price < 80:
                     continue
+
+                description = f"Live r/{subreddit} hardware post by u/{author}"
+                if post_body:
+                    description += f": {post_body[:300]}"
 
                 listings.append(
                     RawListing(
                         id=f"reddit_{post_id}",
                         source=f"reddit (r/{subreddit})",
                         title=title,
-                        description=f"Live r/{subreddit} hardware post by u/{author}",
+                        description=description,
                         price=price,
                         url=url_full,
                         seller=f"u/{author}",
