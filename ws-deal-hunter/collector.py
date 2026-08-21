@@ -497,27 +497,60 @@ class RedditCollector:
         return []
 
     def _extract_price(self, title: str, text: str) -> float:
-        """Extract asking price from title or selftext using multi-stage regex."""
-        # 1. Look for asking pattern in title: [W] ... $XXX or asking $XXX
-        title_matches = re.findall(r"\$\s*([0-9]{2,5}(?:\.[0-9]{2})?)", title)
-        if title_matches:
+        """Extract asking price from title or selftext using multi-stage smart regex."""
+        # 1. Look for explicit current purchase price: "Now: $XXX", "Price: $XXX", "For: $XXX", "at $XXX"
+        current_price_match = re.search(r"(?i)\b(?:now|price|for|pay|current\s*price|at|was\s*\$[0-9,]+(?:\.[0-9]{2})?,\s*now)\s*[:=\-]?\s*\$\s*([0-9,]+(?:\.[0-9]{2})?)", title)
+        if current_price_match:
             try:
-                return float(title_matches[-1])
+                p = float(current_price_match.group(1).replace(",", ""))
+                if 80 <= p <= 6000:
+                    return p
             except ValueError:
                 pass
 
-        # 2. Look for PayPal / Shipped / Asking price patterns in body
+        # 2. Look for [W] $XXX in hardware swap / appleswap titles
+        w_match = re.search(r"(?i)\[w\]\s*(?:paypal\s*|cash\s*|local\s*)?\$?\s*([0-9,]+(?:\.[0-9]{2})?)", title)
+        if w_match:
+            try:
+                p = float(w_match.group(1).replace(",", ""))
+                if 80 <= p <= 6000:
+                    return p
+            except ValueError:
+                pass
+
+        # 3. Match all price mentions in title, ignoring any number immediately followed by "off", "discount", "save", "savings"
+        title_prices = []
+        for m in re.finditer(r"\$\s*([0-9,]+(?:\.[0-9]{2})?)(\s*(?:off|discount|save|savings|rebate|drop|cut))?", title, re.I):
+            val_str = m.group(1).replace(",", "")
+            is_discount = bool(m.group(2))
+            if not is_discount:
+                try:
+                    val = float(val_str)
+                    if 80 <= val <= 6000:
+                        title_prices.append(val)
+                except ValueError:
+                    pass
+
+        if title_prices:
+            return title_prices[0]
+
+        # 4. Look for PayPal / Shipped / Asking price patterns in post body
         body_patterns = [
-            r"(?:asking|price|shipped|selling for|paypal|looking for)\s*[:=\-]?\s*\$\s*([0-9]{2,5})",
-            r"\$\s*([0-9]{2,5})\s*(?:shipped|paypal|local|obo|firm)",
-            r"\$\s*([0-9]{2,5})",
+            r"(?i)(?:now|price|pay|at|asking|price|shipped|selling for|paypal|looking for)\s*[:=\-]?\s*\$\s*([0-9,]+(?:\.[0-9]{2})?)",
+            r"(?i)\$\s*([0-9,]+(?:\.[0-9]{2})?)\s*(?:shipped|paypal|local|obo|firm)",
+            r"\$\s*([0-9,]+(?:\.[0-9]{2})?)",
         ]
         for pat in body_patterns:
-            matches = re.findall(pat, text, re.IGNORECASE)
-            if matches:
+            matches = re.finditer(pat, text)
+            for match in matches:
+                val_str = match.group(1).replace(",", "")
+                # Check if followed by "off" in text
+                snippet_after = text[match.end():match.end() + 15].lower()
+                if any(w in snippet_after for w in ["off", "discount", "save", "rebate"]):
+                    continue
                 try:
-                    p = float(matches[0])
-                    if 100 <= p <= 4000:
+                    p = float(val_str)
+                    if 80 <= p <= 6000:
                         return p
                 except ValueError:
                     pass

@@ -299,11 +299,19 @@ class DealHunterDaemon:
 
                 # eBay liveness: check for ended notification if page returns 200
                 elif "ebay.com" in deal.url and res.status_code == 200:
+                    from bs4 import BeautifulSoup
+                    soup = BeautifulSoup(res.text, "html.parser")
+                    page_title = soup.title.text.lower() if soup.title else ""
+                    has_buy_btn = bool(soup.select("a[href*='bin'], button[id*='bin'], button[id*='atc'], .vi-btn, .x-bin-action, .x-atc-action"))
+                    
                     if (
-                        "this listing was ended by the seller" in text
+                        "error page" in page_title
+                        or "this listing was ended" in text
                         or "this listing has ended" in text
+                        or "the seller ended this listing" in text
                         or "out of stock" in text
                         or "we couldn't find this page" in text
+                        or ("popular categories" in text and not has_buy_btn)
                     ):
                         return deal.id
 

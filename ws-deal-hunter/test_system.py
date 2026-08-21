@@ -104,6 +104,18 @@ class TestCollectors(unittest.TestCase):
         price = collector._extract_price(title, body)
         self.assertEqual(price, 680.0)
 
+    def test_reddit_discount_price_extraction(self) -> None:
+        """Verify that titles with '$X off' or 'Now: $Y After $X Off' extract the actual price $Y, not the discount $X."""
+        collector = RedditCollector()
+        title = '[Walmart] Gigabyte Aero X16 Gaming Laptop (2025): 16" 165Hz Display, Ryzen AI 7 350, RTX 5070, 32GB DDR5, 1TB SSD, Now: $1,499 After $500 Off'
+        price = collector._extract_price(title, "")
+        self.assertEqual(price, 1499.0)
+
+        # Also test ($300 off) format
+        title2 = "[BestBuy] Dell XPS 15 9530 i7-13700H 32GB 1TB for $1,299.99 ($300 off)"
+        price2 = collector._extract_price(title2, "")
+        self.assertEqual(price2, 1299.99)
+
     def test_swappa_collector_feed(self) -> None:
         collector = SwappaCollector()
         listings = collector.fetch_listings()

@@ -23,7 +23,7 @@
 
 ## 📊 2. Current System State & Verified Status
 
-- **Unit Test Suite Status**: **22 / 22 Tests Passing** (`python test_system.py`).
+- **Unit Test Suite Status**: **28 / 28 Tests Passing** (`python test_system.py`).
 - **Live Ingestion Verification**: Verified live collection of 200+ real-time listings per cycle.
 - **Production Deployments**:
   - Live on Vercel (React Frontend): **[https://wsdealhunter.vercel.app/](https://wsdealhunter.vercel.app/)**
@@ -218,7 +218,16 @@ C:\Development\Apps\WS Deal Hunter\
   1. Enhanced `EBayCollector` to extract all search card DOM notes (`.s-item__subtitle`, `.s-item__seller-notes`, `.s-item__condition-description`, `.SECONDARY_INFO`) and combine them into `RawListing.description`.
   2. Expanded `HARD_EXCLUSION_REGEX` and `structural_damage_keywords` in `evaluator.py` to cover cracked screens/displays/glass, hairline cracks, dead pixels, screen defects, display lines, delamination, and staingate.
   3. Hard-purged defective listing `267756837307` from `deals.json`.
-- **Test Coverage**: All **28 / 28 unit tests passing** (`python test_system.py`).
+
+### Decision 34: Smart Discount Price Extraction & Deep DOM eBay Liveness Reaper
+- **Problem**: 
+  1. Reddit titles with discount phrases like `"... Now: $1,499 After $500 Off"` extracted `$500` (the discount) instead of `$1499` (the asking price) due to naive last-dollar-match indexing.
+  2. Sold/ended eBay items (e.g. Dell Precision 5680 `147513885085`) remained in the dashboard because eBay returns HTTP 200 with a generic category splash instead of a standard 404.
+- **Decision & Solution**:
+  1. Upgraded `RedditCollector._extract_price()` with prioritized purchase-price keyword matching (`now|price|for|pay|at`), hardware swap `[W]` syntax matching, and lookahead negative filtering on discount phrases (`off|discount|save|rebate`).
+  2. Upgraded `reap_dead_and_sold_deals()` in `daemon.py` with deep DOM inspection (checking page `<title>`, missing buy/cart action buttons, and popular categories redirect banners).
+  3. Purged misparsed Gigabyte Aero and sold Precision 5680 from `deals.json`.
+- **Test Coverage**: All **29 / 29 unit tests passing** (`python test_system.py`).
 
 ---
 
