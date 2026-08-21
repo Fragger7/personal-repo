@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "last_updated": "2026-08-21T06:13:16.782145+00:00",
+  "last_updated": "2026-08-21T07:21:28.867672+00:00",
   "alpha_decay": 0.1,
   "benchmarks": {
     "dell_xps_15_9530": {
@@ -19,10 +19,10 @@
     },
     "dell_precision_5680": {
       "base_fmv_32gb": 1250.0,
-      "base_fmv_64gb": 1447.0,
+      "base_fmv_64gb": 1437.71,
       "strike_ceiling_32gb": 950.0,
-      "strike_ceiling_64gb": 1186.54,
-      "sample_count": 9
+      "strike_ceiling_64gb": 1178.92,
+      "sample_count": 13
     },
     "dell_precision_5570": {
       "base_fmv_32gb": 780.0,
