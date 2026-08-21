@@ -343,6 +343,10 @@ def main() -> None:
                                 st.toast(f"Pushover alert dispatched for {deal.id}!")
                             else:
                                 st.error(res.message)
+                        if st.button("🗑️ Dismiss Deal", key=f"btn_del_{deal.id}", use_container_width=True):
+                            storage.delete_deal(deal.id)
+                            st.toast("Deal removed from dashboard!")
+                            st.rerun()
 
                     st.caption(f"**AI Valuation Summary:** {deal.summary} | *{deal.actionable_recommendation}*")
                     st.markdown("---")

@@ -243,4 +243,5 @@ npm run dev
 2. **Always Verify Edits with Tests**: Run `python test_system.py` after modifying any Python module.
 3. **Preserve Atomic File Writes**: Do not bypass `AtomicDealStorage._write_atomic()` in `storage.py` when writing to `deals.json`.
 4. **Dual Path Sync for GitHub Pushes**: When pushing to `Fragger7/personal-repo`, make sure updated files are synced in both the root and `ws-deal-hunter/` subfolder.
-5. **UTF-8 Compatibility**: Maintain `sys.stdout.reconfigure(encoding="utf-8", errors="replace")` on entrypoints to prevent Windows console encoding errors.
+5. **React & Python/Streamlit Dashboard Parity**: Whenever UI features, layout enhancements, filtering options, metric cards, action buttons (such as delete/dismiss), or visual behaviors are added or modified in the React application (`src/`), bring identical functional and UX parity to the Python Streamlit application (`app.py`), and vice-versa, wherever possible.
+6. **UTF-8 Compatibility**: Maintain `sys.stdout.reconfigure(encoding="utf-8", errors="replace")` on entrypoints to prevent Windows console encoding errors.
