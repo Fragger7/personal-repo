@@ -1,5 +1,34 @@
 [
   {
+    "id": "ebay_168596362602",
+    "source": "ebay",
+    "title": "HP Zbook Power G9 15.6\" FHD Intel i7-12800H 32GB DDR5 512GB SSD RTX A1000 W11P",
+    "price": 593.99,
+    "url": "https://www.ebay.com/itm/168596362602",
+    "specs": {
+      "cpu": "I7-12800H",
+      "ram_gb": 32,
+      "ssd_gb": 512,
+      "gpu": "NVIDIA RTX A1000",
+      "screen": "15.6\" - 16\" Workstation Display",
+      "condition": "Used / Refurbished"
+    },
+    "fair_market_value": 750.0,
+    "estimated_profit": 156.01,
+    "arbitrage_margin_pct": 26.3,
+    "deal_score": 7.9,
+    "summary": "I7-12800H | 32GB RAM | 512GB SSD | NVIDIA RTX A1000 (TLC: $642.99, Margin: 14.3%).",
+    "actionable_recommendation": "🤝 OPPORTUNISTIC OFFER TARGET",
+    "confidence_score": 0.95,
+    "seller": "eBay Seller",
+    "location": "US",
+    "created_utc": "2026-08-21T14:40:28.185414+00:00",
+    "evaluated_at": "2026-08-21T14:40:36.586012+00:00",
+    "alerted": false,
+    "is_high_yield": false,
+    "raw_payload": null
+  },
+  {
     "id": "ebay_820025424108",
     "source": "ebay",
     "title": "Apple MacBook Pro 16\" (512GB SSD, M1 Pro, 32GB)  - Space Gray - Z14V0016ELL/A",
