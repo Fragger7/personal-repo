@@ -196,7 +196,16 @@ C:\Development\Apps\WS Deal Hunter\
 ### Decision 27: Streamlit Cloud Dual-Path Root Sync & Universal Module Resolution
 - **Problem**: Streamlit Cloud runs against repository root on `https://github.com/Fragger7/personal-repo`, which previously lacked root-level `app.py`, `requirements.txt`, and modules.
 - **Decision & Solution**: Added dynamic `sys.path` and multi-location `deals.json` resolution in [`app.py`](file:///C:/Development/Apps/WS%20Deal%20Hunter/app.py), and synchronized all runtime files across both root and `ws-deal-hunter/` subfolder. Verified live at **[https://wsdealhunter.streamlit.app/](https://wsdealhunter.streamlit.app/)** (Status 200).
-- **Test Coverage**: All **23 / 23 unit tests passing** (`python test_system.py`).
+
+### Decision 28: Adaptive Self-Learning FMV Price Index (`price_benchmarks.json`)
+- **Decision & Solution**: Built `DynamicPriceBenchmarkIndex` in [`evaluator.py`](file:///C:/Development/Apps/WS%20Deal%20Hunter/evaluator.py) backed by [`price_benchmarks.json`](file:///C:/Development/Apps/WS%20Deal%20Hunter/price_benchmarks.json). Applies an Exponential Moving Average (EMA, $\alpha=0.10$) to calibrate component and chassis baselines dynamically as hardware depreciates over time ($0 AI token cost).
+
+### Decision 29: Scheduled 12:00 PM CST Executive Deal Briefing
+- **Decision & Solution**: Built `send_executive_briefing` in [`notifier.py`](file:///C:/Development/Apps/WS%20Deal%20Hunter/notifier.py) and added `--briefing` to [`daemon.py`](file:///C:/Development/Apps/WS%20Deal%20Hunter/daemon.py). Automatically sends a curated Telegram briefing of the Top 3 highest-margin workstation opportunities at 12:00 PM CST / 18:00 UTC.
+
+### Decision 30: PWA (Progressive Web App) & Offline Service Worker for React/Vercel
+- **Decision & Solution**: Added Web App Manifest (`public/manifest.json`), Service Worker (`public/sw.js`), theme color headers, and standalone mobile app icons (`public/icon-192.svg`, `public/icon-512.svg`). Enables "Add to Home Screen" mobile app experience with sub-second boot and offline caching on Vercel.
+- **Test Coverage**: All **25 / 25 unit tests passing** (`python test_system.py`).
 
 ---
 

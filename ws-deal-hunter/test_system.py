@@ -212,10 +212,34 @@ class TestEvaluator(unittest.TestCase):
         evaluated = self.evaluator.evaluate_listing(raw)
         self.assertEqual(evaluated.deal_score, 0.0)
 
+    def test_dynamic_price_benchmark_index(self) -> None:
+        from evaluator import DynamicPriceBenchmarkIndex
+        index = DynamicPriceBenchmarkIndex()
+        fmv, strike = index.get_benchmark("dell_precision_5680", 64)
+        self.assertGreaterEqual(fmv, 1400.0)
+        self.assertGreaterEqual(strike, 1000.0)
+
+        # Test EMA update
+        prev_sample = index.benchmarks.get("dell_precision_5680", {}).get("sample_count", 0)
+        index.update_ema_clearing_price("dell_precision_5680", 64, 1420.0)
+        new_sample = index.benchmarks.get("dell_precision_5680", {}).get("sample_count", 0)
+        self.assertEqual(new_sample, prev_sample + 1)
+
 
 class TestNotifier(unittest.TestCase):
     def setUp(self) -> None:
         self.notifier = PushoverNotifier(min_deal_score=8.5, max_price=750.0)
+
+    def test_send_executive_briefing(self) -> None:
+        from notifier import TelegramNotifier
+        tg = TelegramNotifier(bot_token="", chat_id="")
+        sample_deals = [
+            DealRecord(id="brief_1", source="ebay", title="Precision 5680", price=800.0, url="https://ebay.com/1", deal_score=9.3, estimated_profit=450.0, fair_market_value=1250.0),
+            DealRecord(id="brief_2", source="reddit", title="MacBook Pro 16", price=699.99, url="https://reddit.com/2", deal_score=9.4, estimated_profit=350.0, fair_market_value=1050.0),
+        ]
+        res = tg.send_executive_briefing(sample_deals)
+        # In test mode without token, it safely returns 400 without crashing
+        self.assertEqual(res.deal_id, "briefing")
 
     def test_should_alert_criteria(self) -> None:
         high_yield_deal = DealRecord(

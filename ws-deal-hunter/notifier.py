@@ -314,24 +314,48 @@ class TelegramNotifier:
                 headers={"Content-Type": "application/json", "User-Agent": "WorkstationDealHunter/1.0"},
                 method="POST",
             )
-            with urllib.request.urlopen(req, timeout=5.0) as res:
-                return NotificationResult(success=True, status_code=res.status, message="Delivered", deal_id="error")
         except Exception as e:
             return NotificationResult(success=False, status_code=500, message=str(e), deal_id="error")
 
-    def send_system_message(self, title: str, body_html: str) -> NotificationResult:
-        """Send a general system pulse digest or status update."""
+    def send_executive_briefing(self, top_deals: List[DealRecord]) -> NotificationResult:
+        """Send the scheduled 12:00 PM CST executive briefing of top workstation deals."""
         if not self.bot_token or not self.chat_id:
-            return NotificationResult(success=False, status_code=400, message="Telegram unconfigured.", deal_id="system")
+            return NotificationResult(success=False, status_code=400, message="Telegram unconfigured.", deal_id="briefing")
+
+        if not top_deals:
+            return NotificationResult(success=True, status_code=200, message="No active deals to brief.", deal_id="briefing")
 
         api_url = f"https://api.telegram.org/bot{self.bot_token}/sendMessage"
-        text = f"📊 <b>[{title}]</b>\n\n{body_html}"
+        
+        deal_blocks = []
+        rank_emojis = ["🥇", "🥈", "🥉"]
+        for idx, deal in enumerate(top_deals[:3]):
+            rank = rank_emojis[idx] if idx < len(rank_emojis) else f"#{idx+1}"
+            tier_badge = "🦄 UNICORN" if deal.deal_score >= 9.5 else ("🎯 HIGH-CONVICTION" if deal.deal_score >= 9.0 else "🔥 VALUE BUY")
+            deal_blocks.append(
+                f"{rank} <b>[{deal.deal_score:.1f}/10 {tier_badge}]</b>\n"
+                f"💻 <b>{deal.title}</b>\n"
+                f"• <b>Asking:</b> ${deal.price:,.2f} <i>(Est. FMV: ${deal.fair_market_value:,.2f})</i>\n"
+                f"• <b>Arbitrage Spread:</b> <b>+${deal.estimated_profit:,.2f}</b> (+{deal.arbitrage_margin_pct:.0f}% ROI)\n"
+                f"• <b>Specs:</b> {deal.specs.cpu} | {deal.specs.ram_gb}GB RAM | {deal.specs.ssd_gb}GB SSD | {deal.specs.gpu}\n"
+                f"👉 <a href=\"{deal.url}\"><b>[BUY NOW ON {deal.source.upper()} ↗]</b></a>"
+            )
+
+        text = (
+            f"☀️ <b>[12:00 PM CST EXECUTIVE DEAL BRIEFING]</b>\n"
+            f"💼 <i>Top Workstation Arbitrage Opportunities Active Today:</i>\n\n"
+            + "\n\n".join(deal_blocks)
+            + "\n\n"
+            + self._format_dashboard_links()
+        )
+
         payload = {
             "chat_id": self.chat_id,
             "text": text,
             "parse_mode": "HTML",
-            "disable_web_page_preview": True,
+            "disable_web_page_preview": False,
         }
+
         try:
             req = urllib.request.Request(
                 api_url,
@@ -340,9 +364,9 @@ class TelegramNotifier:
                 method="POST",
             )
             with urllib.request.urlopen(req, timeout=5.0) as res:
-                return NotificationResult(success=True, status_code=res.status, message="Delivered", deal_id="system")
+                return NotificationResult(success=True, status_code=res.status, message="Executive briefing delivered.", deal_id="briefing")
         except Exception as e:
-            return NotificationResult(success=False, status_code=500, message=str(e), deal_id="system")
+            return NotificationResult(success=False, status_code=500, message=f"Briefing delivery error: {e}", deal_id="briefing")
 
 
 class DiscordNotifier:

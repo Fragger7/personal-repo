@@ -17,6 +17,7 @@ import time
 import urllib.error
 import urllib.request
 from dataclasses import dataclass
+from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, Union
 
 from collector import RawListing
@@ -115,6 +116,89 @@ class GeminiUsageTracker:
         }
 
 
+class DynamicPriceBenchmarkIndex:
+    """
+    Adaptive Self-Learning Fair Market Value (FMV) Price Index.
+    Loads baseline benchmarks from price_benchmarks.json and dynamically updates
+    rolling Exponential Moving Averages (EMA) with decay alpha=0.10 when verified clearing prices are observed.
+    """
+
+    def __init__(self, filepath: Optional[Union[str, Any]] = None) -> None:
+        from pathlib import Path
+        if filepath is None:
+            base_dir = Path(__file__).resolve().parent
+            possible = [base_dir / "price_benchmarks.json", Path("price_benchmarks.json")]
+            self.filepath = next((p for p in possible if p.exists()), base_dir / "price_benchmarks.json")
+        else:
+            self.filepath = Path(filepath)
+
+        self.alpha_decay = 0.10
+        self.benchmarks: Dict[str, Dict[str, float]] = {}
+        self.component_adders: Dict[str, float] = {
+            "rtx_4080_4090_ada": 450.0,
+            "rtx_4070_3500_ada": 250.0,
+            "ssd_2tb_plus": 80.0,
+            "ssd_4tb_plus": 180.0,
+            "oled_4k_display": 120.0,
+        }
+        self.load_benchmarks()
+
+    def load_benchmarks(self) -> None:
+        """Load benchmark index from JSON file."""
+        if self.filepath.exists():
+            try:
+                with open(self.filepath, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                    self.alpha_decay = data.get("alpha_decay", 0.10)
+                    self.benchmarks = data.get("benchmarks", {})
+                    self.component_adders = data.get("component_adders", self.component_adders)
+            except Exception as err:
+                print(f"[PriceBenchmarkIndex] Error reading {self.filepath}: {err}")
+
+    def save_benchmarks(self) -> None:
+        """Persist calibrated benchmark index back to JSON file."""
+        try:
+            from datetime import timezone
+            payload = {
+                "version": "1.0.0",
+                "last_updated": datetime.now(timezone.utc).isoformat(),
+                "alpha_decay": self.alpha_decay,
+                "benchmarks": self.benchmarks,
+                "component_adders": self.component_adders,
+            }
+            with open(self.filepath, "w", encoding="utf-8") as f:
+                json.dump(payload, f, indent=2)
+        except Exception as err:
+            print(f"[PriceBenchmarkIndex] Error saving {self.filepath}: {err}")
+
+    def get_benchmark(self, model_key: str, ram_gb: int) -> Tuple[float, float]:
+        """Return (base_fmv, strike_ceiling) from benchmark index."""
+        entry = self.benchmarks.get(model_key)
+        if entry:
+            if ram_gb >= 64:
+                return entry.get("base_fmv_64gb", 1000.0), entry.get("strike_ceiling_64gb", 850.0)
+            elif ram_gb >= 32:
+                return entry.get("base_fmv_32gb", 800.0), entry.get("strike_ceiling_32gb", 700.0)
+            else:
+                return entry.get("base_fmv_32gb", 800.0) * 0.85, entry.get("strike_ceiling_32gb", 700.0) * 0.85
+        return 0.0, 0.0
+
+    def update_ema_clearing_price(self, model_key: str, ram_gb: int, observed_price: float) -> None:
+        """Update the rolling exponential moving average for a model."""
+        if model_key not in self.benchmarks or observed_price <= 100.0:
+            return
+        entry = self.benchmarks[model_key]
+        field_fmv = "base_fmv_64gb" if ram_gb >= 64 else "base_fmv_32gb"
+        field_strike = "strike_ceiling_64gb" if ram_gb >= 64 else "strike_ceiling_32gb"
+        
+        current_fmv = entry.get(field_fmv, observed_price)
+        new_fmv = round((1.0 - self.alpha_decay) * current_fmv + self.alpha_decay * observed_price, 2)
+        entry[field_fmv] = new_fmv
+        entry[field_strike] = round(new_fmv * 0.82, 2)
+        entry["sample_count"] = entry.get("sample_count", 0) + 1
+        self.save_benchmarks()
+
+
 class GeminiHardwareEvaluator:
     """
     AI valuation engine powered by Gemini 2.5 Flash / Gemini models.
@@ -125,10 +209,12 @@ class GeminiHardwareEvaluator:
         self,
         api_key: Optional[str] = None,
         model_name: str = "gemini-3.6-flash",
+        benchmark_index: Optional[DynamicPriceBenchmarkIndex] = None,
     ) -> None:
         self.api_key = api_key or os.environ.get("GEMINI_API_KEY", "")
         self.model_name = model_name
         self.usage_tracker = GeminiUsageTracker()
+        self.benchmark_index = benchmark_index or DynamicPriceBenchmarkIndex()
         self._client: Any = None
         self._init_client()
 
@@ -447,48 +533,36 @@ class GeminiHardwareEvaluator:
         if ram_gb <= 16 and is_upgradable_chassis:
             tlc += 110.0
         # ==========================================
-        # 3. FAIR MARKET VALUE (FMV) & GROUND TRUTH BENCHMARKS
+        # 3. FAIR MARKET VALUE (FMV) & DYNAMIC BENCHMARK INDEX
         # ==========================================
-        fmv = 0.0
-        strike_ceiling = 0.0
-
-        # Ground Truth Matrix Matching
+        model_key = None
         if "xps 15 9530" in text or "xps 9530" in text:
-            fmv = 1150.0 if ram_gb >= 64 else (950.0 if ram_gb >= 32 else 800.0)
-            strike_ceiling = 850.0 if ram_gb >= 64 else (780.0 if ram_gb >= 32 else 650.0)
+            model_key = "dell_xps_15_9530"
         elif "xps 15 9520" in text or "xps 9520" in text:
-            fmv = 850.0 if ram_gb >= 64 else (750.0 if ram_gb >= 32 else 650.0)
-            strike_ceiling = 750.0 if ram_gb >= 64 else (675.0 if ram_gb >= 32 else 550.0)
+            model_key = "dell_xps_15_9520"
         elif "precision 5680" in text:
-            fmv = 1450.0 if ram_gb >= 64 else (1250.0 if ram_gb >= 32 else 950.0)
-            strike_ceiling = 1050.0 if ram_gb >= 64 else (950.0 if ram_gb >= 32 else 750.0)
+            model_key = "dell_precision_5680"
         elif "precision 5570" in text:
-            fmv = 880.0 if ram_gb >= 64 else (780.0 if ram_gb >= 32 else 650.0)
-            strike_ceiling = 750.0 if ram_gb >= 64 else (680.0 if ram_gb >= 32 else 550.0)
+            model_key = "dell_precision_5570"
         elif "thinkpad p1 gen 6" in text or "p1 gen 6" in text or "p16 gen 2" in text:
-            fmv = 1400.0 if ram_gb >= 64 else (1200.0 if ram_gb >= 32 else 950.0)
-            strike_ceiling = 1050.0 if ram_gb >= 64 else (950.0 if ram_gb >= 32 else 750.0)
+            model_key = "thinkpad_p1_gen_6"
         elif "thinkpad p1 gen 5" in text or "p1 gen 5" in text or "x1 extreme g5" in text or "p16 gen 1" in text:
-            fmv = 920.0 if ram_gb >= 64 else (800.0 if ram_gb >= 32 else 650.0)
-            strike_ceiling = 800.0 if ram_gb >= 64 else (720.0 if ram_gb >= 32 else 550.0)
+            model_key = "thinkpad_p1_gen_5"
         elif "zbook studio g10" in text or "zbook fury g10" in text:
-            fmv = 1200.0 if ram_gb >= 64 else (1050.0 if ram_gb >= 32 else 850.0)
-            strike_ceiling = 950.0 if ram_gb >= 64 else (850.0 if ram_gb >= 32 else 700.0)
+            model_key = "hp_zbook_studio_g10"
         elif "zbook studio g9" in text or "zbook fury g9" in text or "zbook power g9" in text:
-            fmv = 850.0 if ram_gb >= 64 else (750.0 if ram_gb >= 32 else 620.0)
-            strike_ceiling = 720.0 if ram_gb >= 64 else (650.0 if ram_gb >= 32 else 520.0)
-        elif is_apple_silicon and ("m2 max" in text or "m3 max" in text or "m4 max" in text):
-            fmv = 1750.0 if ram_gb >= 64 else 1550.0
-            strike_ceiling = 1450.0 if ram_gb >= 64 else 1300.0
+            model_key = "hp_zbook_studio_g9"
+        elif is_apple_silicon and ("m3 max" in text or "m4 max" in text or "m2 max" in text):
+            model_key = "apple_mbp_16_m3_m4_max"
         elif is_apple_silicon and "m2 pro" in text:
-            fmv = 1550.0 if ram_gb >= 64 else 1350.0
-            strike_ceiling = 1350.0 if ram_gb >= 64 else 1150.0
+            model_key = "apple_mbp_16_m2_pro_max"
         elif is_apple_silicon and ("m1 max" in text or "m1 pro" in text):
-            fmv = 1250.0 if ram_gb >= 64 else 1050.0
-            strike_ceiling = 1100.0 if ram_gb >= 64 else 900.0
+            model_key = "apple_mbp_16_m1_pro_max"
         elif "zephyrus" in text or "legion pro" in text or "razer blade" in text:
-            fmv = 1100.0 if ram_gb >= 64 else (950.0 if ram_gb >= 32 else 750.0)
-            strike_ceiling = 900.0 if ram_gb >= 64 else (800.0 if ram_gb >= 32 else 650.0)
+            model_key = "asus_razer_legion_workstation"
+
+        if model_key:
+            fmv, strike_ceiling = self.benchmark_index.get_benchmark(model_key, ram_gb)
         else:
             # General Whitelisted Silicon Fallback FMV
             base_fmv = 850.0 if ram_gb >= 64 else (750.0 if ram_gb >= 32 else 600.0)
@@ -498,6 +572,12 @@ class GeminiHardwareEvaluator:
                 base_fmv += 250.0
             fmv = base_fmv
             strike_ceiling = fmv * 0.82
+
+        # Add component bonuses if high-end display or storage
+        if "oled" in text or "4k" in text:
+            fmv += self.benchmark_index.component_adders.get("oled_4k_display", 120.0)
+        if ssd_gb >= 2048:
+            fmv += self.benchmark_index.component_adders.get("ssd_2tb_plus", 80.0)
 
         # ==========================================
         # 4. CALIBRATED ARBITRAGE SCORING CURVE
