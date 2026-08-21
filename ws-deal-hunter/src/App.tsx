@@ -232,7 +232,7 @@ export function App() {
     setFilters({
       minScore: 0.0,
       maxPrice: 2500,
-      sources: ["ebay", "reddit", "swappa"],
+      sources: ["ebay", "reddit", "swappa", "bestbuy", "bh_photo", "dell_refurbished", "microcenter", "goodwill", "lenovo_outlet", "syndicated"],
       search: "",
       onlyHighYield: false,
       sortBy: "score",
