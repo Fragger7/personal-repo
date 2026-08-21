@@ -241,6 +241,12 @@ class TestNotifier(unittest.TestCase):
         # In test mode without token, it safely returns 400 without crashing
         self.assertEqual(res.deal_id, "briefing")
 
+    def test_send_dell_promo_alert(self) -> None:
+        from notifier import TelegramNotifier
+        tg = TelegramNotifier(bot_token="", chat_id="")
+        res = tg.send_dell_promo_alert("SAVE45NOW", 45.0)
+        self.assertEqual(res.deal_id, "dell_promo")
+
     def test_should_alert_criteria(self) -> None:
         high_yield_deal = DealRecord(
             id="deal_alert_1",

@@ -648,6 +648,7 @@ class DellRefurbishedCollector:
 
     def __init__(self) -> None:
         self.last_request_time = 0.0
+        self.last_detected_coupon: Tuple[str, float] = ("", 0.0)
 
     def _fetch_active_coupon(self, scraper: Any) -> Tuple[str, float]:
         """Dynamically fetch whatever active promotional sitewide coupon code and discount percentage DFS has live."""
@@ -678,6 +679,7 @@ class DellRefurbishedCollector:
 
             # 1. Fetch active sitewide coupon
             coupon_code, discount_pct = self._fetch_active_coupon(scraper)
+            self.last_detected_coupon = (coupon_code, discount_pct)
             if discount_pct > 0:
                 print(f"[DellRefurbishedCollector] Active promo detected: Code '{coupon_code}' ({discount_pct:.0f}% Off)")
 

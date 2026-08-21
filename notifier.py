@@ -368,6 +368,38 @@ class TelegramNotifier:
         except Exception as e:
             return NotificationResult(success=False, status_code=500, message=f"Briefing delivery error: {e}", deal_id="briefing")
 
+    def send_dell_promo_alert(self, coupon_code: str, discount_pct: float) -> NotificationResult:
+        """Send instant flash alert when Dell Financial Services launches a new sitewide coupon code."""
+        if not self.bot_token or not self.chat_id:
+            return NotificationResult(success=False, status_code=400, message="Telegram unconfigured.", deal_id="dell_promo")
+
+        api_url = f"https://api.telegram.org/bot{self.bot_token}/sendMessage"
+        text = (
+            f"🏷️ <b>[DELL REFURBISHED FLASH PROMO DETECTED]</b>\n\n"
+            f"💥 <b>Active Promo Code:</b> <code>{coupon_code}</code> (<b>{int(discount_pct)}% OFF</b>)\n"
+            f"🎯 <b>Eligible Hardware:</b> Dell Precision Mobile Workstations & XPS Laptops\n\n"
+            f"⚡ <i>All Dell DFS inventory prices and arbitrage valuations have been automatically discounted by {int(discount_pct)}% in your dashboard.</i>\n\n"
+            f"👉 <a href=\"https://www.dellrefurbished.com/laptops?model_family=266\"><b>[BROWSE PRECISION WORKSTATIONS ON DELL ↗]</b></a>\n\n"
+            + self._format_dashboard_links()
+        )
+        payload = {
+            "chat_id": self.chat_id,
+            "text": text,
+            "parse_mode": "HTML",
+            "disable_web_page_preview": False,
+        }
+        try:
+            req = urllib.request.Request(
+                api_url,
+                data=json.dumps(payload).encode("utf-8"),
+                headers={"Content-Type": "application/json", "User-Agent": "WorkstationDealHunter/1.0"},
+                method="POST",
+            )
+            with urllib.request.urlopen(req, timeout=5.0) as res:
+                return NotificationResult(success=True, status_code=res.status, message="Dell promo alert delivered.", deal_id="dell_promo")
+        except Exception as e:
+            return NotificationResult(success=False, status_code=500, message=f"Dell promo delivery error: {e}", deal_id="dell_promo")
+
 
 class DiscordNotifier:
     """
