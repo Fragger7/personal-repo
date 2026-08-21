@@ -189,6 +189,16 @@ class EBayCollector:
                                 continue
                             seen_urls.add(clean_url)
 
+                            # Parse numeric price
+                            price_match = re.search(r"\$([0-9,]+(?:\.[0-9]{2})?)", price_str)
+                            if not price_match:
+                                continue
+                            price = float(price_match.group(1).replace(",", ""))
+
+                            # Pre-filter blacklist
+                            if is_blacklisted_item(title):
+                                continue
+
                             all_listings.append(
                                 RawListing(
                                     id=f"ebay_{item_id}",

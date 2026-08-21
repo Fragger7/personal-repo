@@ -190,10 +190,13 @@ class DealHunterDaemon:
                     + self.telegram_notifier._format_dashboard_links()
                 )
                 self.telegram_notifier.send_system_message("Inventory Updated", digest_html)
-            elif current_cycle % self.heartbeat_interval_cycles == 0 or current_cycle == 1:
-                # Periodic Heartbeat (Sprinkled every 3-6 hours instead of buzzing every hour)
+            elif (
+                (not self.once and current_cycle % self.heartbeat_interval_cycles == 0)
+                or (self.once and datetime.now(timezone.utc).hour % self.heartbeat_interval_cycles == 0)
+            ):
+                # Periodic Heartbeat (Sprinkled every 6 hours instead of buzzing every hour)
                 heartbeat_html = (
-                    f"💓 <b>Autonomous Heartbeat (Cycle #{current_cycle})</b>\n"
+                    f"💓 <b>Autonomous Heartbeat (Every {self.heartbeat_interval_cycles}h)</b>\n"
                     f"🔍 Scanned <b>{len(raw_listings)} listings</b> across eBay, Reddit & Syndicated Feeds.\n"
                     f"📊 <b>{total_active} active deals</b> monitored in store (0 unanalyzed items this interval).\n"
                     f"🤖 <b>AI Usage:</b> {usage['total_calls']} total calls ({usage['total_tokens']:,} tokens) | ~{usage['estimated_daily_left']:,}/1,500 requests left\n\n"
