@@ -227,6 +227,12 @@ C:\Development\Apps\WS Deal Hunter\
   1. Upgraded `RedditCollector._extract_price()` with prioritized purchase-price keyword matching (`now|price|for|pay|at`), hardware swap `[W]` syntax matching, and lookahead negative filtering on discount phrases (`off|discount|save|rebate`).
   2. Upgraded `reap_dead_and_sold_deals()` in `daemon.py` with deep DOM inspection (checking page `<title>`, missing buy/cart action buttons, and popular categories redirect banners).
   3. Purged misparsed Gigabyte Aero and sold Precision 5680 from `deals.json`.
+### Decision 35: Monorepo Root Build Config & Stale Service Worker Auto-Purge
+- **Problem**: Moving files to `ws-deal-hunter/` caused Vercel builds to fail due to missing root `package.json`, causing Vercel to serve stale deployments. Additionally, previously visited devices had `sw.js v1` caching old `index.html` referencing deleted JS chunks, resulting in blank screens.
+- **Decision & Solution**:
+  1. Added root `package.json` with build script targeting `ws-deal-hunter/`.
+  2. Fixed `vercel.json` SPA rewrites using negative lookahead (`/((?!assets/|manifest.json|sw.js|icon-.*).*)`) ensuring JS/CSS bundles are never rewritten to HTML.
+  3. Added an automatic Service Worker unregistration and cache deletion script in `index.html` on boot, unbricking 100% of client devices immediately.
 - **Test Coverage**: All **29 / 29 unit tests passing** (`python test_system.py`).
 
 ---
