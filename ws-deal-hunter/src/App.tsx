@@ -43,20 +43,32 @@ export function App() {
 
   const fetchDeals = useCallback(async () => {
     try {
-      // In production (Vercel), fetch directly from the raw GitHub JSON
-      // In development (npm run dev), fetch from the local Express server
-      const url = import.meta.env.PROD 
-        ? "https://raw.githubusercontent.com/Fragger7/personal-repo/main/ws-deal-hunter/deals.json"
-        : "/api/deals";
+      // In production (Vercel), try static /deals.json on same origin first, then raw GitHub with cache-buster
+      const endpoints = import.meta.env.PROD
+        ? ["/deals.json", `https://raw.githubusercontent.com/Fragger7/personal-repo/main/ws-deal-hunter/deals.json?t=${Date.now()}`]
+        : ["/api/deals", "/deals.json"];
 
-      const res = await fetch(url);
-      const data = await res.json();
-      
-      // Handle both formats (raw array vs express object)
-      if (Array.isArray(data)) {
-        setDeals(data);
-      } else if (data.success && Array.isArray(data.deals)) {
-        setDeals(data.deals);
+      let fetchedData = null;
+      for (const endpoint of endpoints) {
+        try {
+          const res = await fetch(endpoint);
+          if (res.ok) {
+            const data = await res.json();
+            if (Array.isArray(data) && data.length > 0) {
+              fetchedData = data;
+              break;
+            } else if (data && data.success && Array.isArray(data.deals) && data.deals.length > 0) {
+              fetchedData = data.deals;
+              break;
+            }
+          }
+        } catch {
+          // continue to next fallback
+        }
+      }
+
+      if (Array.isArray(fetchedData)) {
+        setDeals(fetchedData);
       }
     } catch (err) {
       console.error("Failed to fetch deals:", err);
