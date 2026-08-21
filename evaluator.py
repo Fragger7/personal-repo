@@ -651,6 +651,33 @@ class GeminiHardwareEvaluator:
         elif "liquid retina" in text or "xdr" in text:
             screen_label = '16.2" Liquid Retina XDR 120Hz'
 
+        # ==========================================
+        # 6. TARGETED ENTERPRISE SELLER CAVEATS & BADGES
+        # ==========================================
+        seller_text = f"{(listing.seller or '')} {text}".lower()
+        is_enterprise_itad = any(s in seller_text for s in [
+            "wisetek", "wisetekca", "epc-texas", "epc-global", "epc texas", "epc global",
+            "human-i-t", "human i t", "smartresale", "smart resale", "greentek",
+            "joysystems", "joy systems", "planitroi", "techdiscounts", "tech discounts",
+            "blairtech", "blair technology"
+        ])
+
+        # Caveat 1: Smart Resale - Filter out Grade C / Grade D cosmetic units
+        if any(s in seller_text for s in ["smartresale", "smart resale"]):
+            if any(w in text for w in ["grade c", "grade d", "heavy scratch", "cracked", "dent"]):
+                return self._reject_dict("Hard Excluded: Smart Resale Grade C/D unit rejected per enterprise aesthetic baseline.")
+
+        # Caveat 2: GreenTek Solutions - Add Best Offer notation
+        if "greentek" in seller_text:
+            recommendation += " (💡 Note: GreenTek typically accepts Best Offers ~20% below list)"
+
+        # Caveat 3: Human-I-T - Verify OEM charger
+        if any(s in seller_text for s in ["human-i-t", "human i t"]):
+            if not any(w in text for w in ["includes charger", "oem charger", "power adapter", "with charger"]):
+                tlc += 40.0
+
+        itad_badge = " 🛡️ [Enterprise ITAD]" if is_enterprise_itad else ""
+
         return {
             "cpu": cpu_label,
             "ram_gb": ram_gb,
@@ -660,7 +687,7 @@ class GeminiHardwareEvaluator:
             "condition": listing.condition_raw,
             "fair_market_value": fmv,
             "deal_score": deal_score,
-            "summary": f"{cpu_label} | {ram_gb}GB RAM | {ssd_gb}GB SSD | {gpu_label} (TLC: ${tlc:.2f}, Margin: {margin_spread_pct}%).",
+            "summary": f"{cpu_label} | {ram_gb}GB RAM | {ssd_gb}GB SSD | {gpu_label}{itad_badge} (TLC: ${tlc:.2f}, Margin: {margin_spread_pct}%).",
             "actionable_recommendation": recommendation,
             "confidence_score": 0.95,
         }
@@ -698,6 +725,12 @@ class GeminiHardwareEvaluator:
         score = float(eval_dict.get("deal_score", 5.0))
         score = round(max(0.0, min(10.0, score)), 1)
 
+        final_summary = str(eval_dict.get("summary", ""))
+        seller_check = f"{(raw.seller or '')} {raw.title} {raw.description}".lower()
+        if any(s in seller_check for s in ["wisetek", "wisetekca", "epc-texas", "epc-global", "human-i-t", "smartresale", "greentek", "joysystems", "planitroi", "techdiscounts", "blairtech"]):
+            if "Enterprise ITAD" not in final_summary:
+                final_summary += " 🛡️ [Enterprise ITAD Refurbisher]"
+
         return DealRecord(
             id=raw.id,
             source=raw.source,
@@ -709,7 +742,7 @@ class GeminiHardwareEvaluator:
             estimated_profit=profit,
             arbitrage_margin_pct=margin,
             deal_score=score,
-            summary=str(eval_dict.get("summary", "")),
+            summary=final_summary,
             actionable_recommendation=str(eval_dict.get("actionable_recommendation", "")),
             confidence_score=float(eval_dict.get("confidence_score", 0.85)),
             seller=raw.seller,

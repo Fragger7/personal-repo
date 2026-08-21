@@ -212,6 +212,34 @@ class TestEvaluator(unittest.TestCase):
         evaluated = self.evaluator.evaluate_listing(raw)
         self.assertEqual(evaluated.deal_score, 0.0)
 
+    def test_targeted_seller_caveats_and_badges(self) -> None:
+        # Test 1: Smart Resale Grade C rejection
+        raw_sr_c = RawListing(
+            id="sr_1",
+            source="ebay",
+            title="Apple MacBook Pro 16 M1 Max 32GB 1TB Grade C heavy scratches",
+            description="Smart Resale listing with Grade C heavy scratches on bottom case.",
+            price=700.0,
+            url="https://ebay.com/sr1",
+            seller="Smart Resale (smartresale)",
+        )
+        eval_sr = self.evaluator.evaluate_listing(raw_sr_c)
+        self.assertEqual(eval_sr.deal_score, 0.0)
+
+        # Test 2: Wisetek ITAD Badge application
+        raw_wt = RawListing(
+            id="wt_1",
+            source="ebay",
+            title="Lenovo ThinkPad P1 Gen 6 16 inch 64GB 2TB",
+            description="Wisetek Market corporate off-lease laptop in excellent condition.",
+            price=610.0,
+            url="https://ebay.com/wt1",
+            seller="Wisetek Market (wisetekca)",
+        )
+        eval_wt = self.evaluator.evaluate_listing(raw_wt)
+        self.assertGreaterEqual(eval_wt.deal_score, 9.8)
+        self.assertIn("Enterprise ITAD", eval_wt.summary)
+
     def test_dynamic_price_benchmark_index(self) -> None:
         from evaluator import DynamicPriceBenchmarkIndex
         index = DynamicPriceBenchmarkIndex()

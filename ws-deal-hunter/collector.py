@@ -84,6 +84,19 @@ class EBayCollector:
     Zero API credentials required; bypasses DataDome / anti-bot firewalls directly.
     """
 
+    TARGETED_ENTERPRISE_SELLERS = {
+        "wisetekca": "Wisetek Market",
+        "epc-texas": "EPC-Texas",
+        "epc-global": "EPC Global",
+        "human-i-t": "Human-I-T",
+        "smartresale": "Smart Resale",
+        "greenteksolutionsllc": "GreenTek Solutions",
+        "joysystems": "Joy Systems",
+        "planitroi": "PlanITROI",
+        "techdiscounts_online": "Tech Discounts",
+        "blairtechnologygroup": "Blair Tech Group",
+    }
+
     TARGET_QUERIES = [
         # 1. Dell Precision Workstations (Category 177 - PC Laptops)
         {"query": "Dell (Precision 5560, Precision 5570, Precision 5580, Precision 5680, Precision 7670, Precision 7680, Precision 7780)", "sacat": "177"},
@@ -111,6 +124,8 @@ class EBayCollector:
         {"query": "(Minisforum MS-01, Minisforum UM780 XTX, Beelink SER8, Beelink SER7, OptiPlex 7010 Micro) (32GB, 64GB)", "sacat": "179"},
         # 13. Modular / Linux Workstations (Category 177)
         {"query": "(Framework 16, System76 Bonobo, System76 Serval, Eurocom) (32GB, 64GB)", "sacat": "177"},
+        # 14. Targeted Enterprise Liquidator Off-Lease Workstation Fleets (Category 177)
+        {"query": "off-lease (Precision 5570, Precision 5680, ThinkPad P1, ZBook Studio) (32GB, 64GB)", "sacat": "177"},
     ]
 
     def __init__(
@@ -199,15 +214,27 @@ class EBayCollector:
                             if is_blacklisted_item(title):
                                 continue
 
+                            # Extract Seller handle and match against Targeted ITAD Sellers
+                            seller_elem = item.select_one(".s-item__seller-info-text, .s-item__user, [data-testid='seller-info'], .s-item__seller-info")
+                            seller_raw = seller_elem.get_text(strip=True) if seller_elem else "eBay Seller"
+                            
+                            matched_seller = None
+                            for handle, name in self.TARGETED_ENTERPRISE_SELLERS.items():
+                                if handle in seller_raw.lower() or name.lower() in seller_raw.lower() or handle in title.lower() or name.lower() in title.lower():
+                                    matched_seller = f"{name} ({handle})"
+                                    break
+                            
+                            seller_name = matched_seller if matched_seller else seller_raw
+
                             all_listings.append(
                                 RawListing(
                                     id=f"ebay_{item_id}",
                                     source="ebay",
                                     title=title,
-                                    description=f"eBay Buy-It-Now Listing: {title}",
+                                    description=f"eBay Buy-It-Now Listing: {title}. Seller: {seller_name}",
                                     price=price,
                                     url=clean_url,
-                                    seller="eBay Seller",
+                                    seller=seller_name,
                                     location="US",
                                     condition_raw="Used / Refurbished",
                                     created_utc=datetime.now(timezone.utc).isoformat(),
