@@ -1,19 +1,7 @@
-// Workstation Deal Hunter - Offline PWA Service Worker
-const CACHE_NAME = 'ws-deal-hunter-v1';
-const ASSETS_TO_CACHE = [
-  '/',
-  '/index.html',
-  '/manifest.json',
-  '/icon-192.svg',
-  '/icon-512.svg'
-];
+// Workstation Deal Hunter - Offline PWA Service Worker v2
+const CACHE_NAME = 'ws-deal-hunter-v2';
 
 self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(ASSETS_TO_CACHE);
-    })
-  );
   self.skipWaiting();
 });
 
@@ -32,35 +20,12 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
+// Network-First for HTML/Navigation, Cache-First only for static icons
 self.addEventListener('fetch', (event) => {
-  // Pass through non-GET and chrome-extension requests
-  if (event.request.method !== 'GET' || event.request.url.startsWith('chrome-extension')) {
+  if (event.request.mode === 'navigate' || event.request.destination === 'document') {
+    event.respondWith(
+      fetch(event.request).catch(() => caches.match(event.request))
+    );
     return;
-  }
-
-  // Network-first strategy for API deals, Cache-first for static assets
-  if (event.request.url.includes('/api/')) {
-    event.respondWith(
-      fetch(event.request)
-        .then((response) => {
-          const resClone = response.clone();
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put(event.request, resClone);
-          });
-          return response;
-        })
-        .catch(() => caches.match(event.request))
-    );
-  } else {
-    event.respondWith(
-      caches.match(event.request).then((cached) => {
-        return (
-          cached ||
-          fetch(event.request).then((response) => {
-            return response;
-          })
-        );
-      })
-    );
   }
 });
