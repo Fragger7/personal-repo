@@ -1,0 +1,11 @@
+{
+  "buildCommand": "cd ws-deal-hunter && npm run build",
+  "outputDirectory": "ws-deal-hunter/dist",
+  "framework": "vite",
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}

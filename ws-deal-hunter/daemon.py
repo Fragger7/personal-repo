@@ -117,34 +117,6 @@ class DealHunterDaemon:
                 self.telegram_notifier.send_error_alert("HardwareCollectorHub", str(e), current_cycle)
             return {"error": err_msg}
 
-        # Check for newly published Dell Financial Services sitewide promo
-        try:
-            dell_code, dell_pct = self.collector.dell.last_detected_coupon
-            if dell_code and dell_pct >= 30.0:
-                benchmarks_path = Path("price_benchmarks.json")
-                if not benchmarks_path.exists():
-                    benchmarks_path = Path(__file__).resolve().parent / "price_benchmarks.json"
-                
-                stored_promo = ""
-                if benchmarks_path.exists():
-                    with open(benchmarks_path, "r", encoding="utf-8") as f:
-                        b_data = json.load(f)
-                        stored_promo = b_data.get("last_dell_coupon", "")
-
-                if dell_code != stored_promo:
-                    self.log(f"🏷️ NEW DELL DFS PROMO DETECTED: Code '{dell_code}' ({dell_pct:.0f}% Off) - Dispatching flash alert!")
-                    if self.telegram_notifier.bot_token and self.telegram_notifier.chat_id:
-                        self.telegram_notifier.send_dell_promo_alert(dell_code, dell_pct)
-                    
-                    if benchmarks_path.exists():
-                        with open(benchmarks_path, "r", encoding="utf-8") as f:
-                            b_data = json.load(f)
-                        b_data["last_dell_coupon"] = dell_code
-                        with open(benchmarks_path, "w", encoding="utf-8") as f:
-                            json.dump(b_data, f, indent=2)
-        except Exception as promo_err:
-            self.log(f"Dell promo check error: {promo_err}")
-
         # 2. Filter out already known listings & reap dead/sold deals
         existing_deals = self.storage.get_all()
         
