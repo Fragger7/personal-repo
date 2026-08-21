@@ -1,8 +1,0 @@
-{
-  "name": "personal-workspace",
-  "version": "1.0.0",
-  "private": true,
-  "scripts": {
-    "build": "cd ws-deal-hunter && npm run build"
-  }
-}
