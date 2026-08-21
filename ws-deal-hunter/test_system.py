@@ -23,6 +23,7 @@ if hasattr(sys.stderr, "reconfigure"):
     sys.stderr.reconfigure(encoding="utf-8", errors="replace")
 
 from collector import (
+    AppleRefurbishedCollector,
     BAndHCollector,
     BestBuyOutletCollector,
     DellRefurbishedCollector,
@@ -134,6 +135,11 @@ class TestCollectors(unittest.TestCase):
 
     def test_microcenter_collector(self) -> None:
         collector = MicroCenterCollector()
+        listings = collector.fetch_listings()
+        self.assertIsInstance(listings, list)
+
+    def test_apple_refurbished_collector(self) -> None:
+        collector = AppleRefurbishedCollector()
         listings = collector.fetch_listings()
         self.assertIsInstance(listings, list)
 

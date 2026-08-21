@@ -1116,10 +1116,86 @@ class MicroCenterCollector:
         return []
 
 
+class AppleRefurbishedCollector:
+    """
+    Apple Certified Refurbished Direct Store Collector.
+    Scrapes official Apple refurbished inventory (MacBook Pro, Mac Studio, Mac Pro).
+    All units include genuine Apple replacement parts, thorough cleaning, and 1-year AppleCare warranty.
+    """
+
+    def fetch_listings(self, limit: int = 50) -> List[RawListing]:
+        """Fetch live Apple Certified Refurbished workstation inventory."""
+        try:
+            import re
+            from bs4 import BeautifulSoup
+            from curl_cffi import requests
+
+            url = "https://www.apple.com/shop/refurbished/mac"
+            headers = {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+            }
+            res = requests.get(url, impersonate="chrome120", headers=headers, timeout=10.0)
+            if res.status_code != 200:
+                return []
+
+            soup = BeautifulSoup(res.text, "html.parser")
+            links = soup.find_all("a", href=lambda h: h and "/shop/product/" in h)
+
+            listings: List[RawListing] = []
+            seen_urls = set()
+
+            for a in links:
+                href = a.get("href", "")
+                clean_path = href.split("?")[0]
+                if clean_path in seen_urls:
+                    continue
+                seen_urls.add(clean_path)
+
+                title = a.get_text(strip=True)
+                if not title or not any(k in title.lower() for k in ["macbook pro", "mac studio", "mac pro"]):
+                    continue
+
+                card = a.find_parent("li") or a.find_parent("div")
+                text = card.get_text(" | ", strip=True) if card else title
+
+                p_m = re.search(r"\$([0-9,]+(?:\.[0-9]{2})?)", text)
+                price = float(p_m.group(1).replace(",", "")) if p_m else 0.0
+
+                if price < 400 or price > 5500:
+                    continue
+
+                full_url = f"https://www.apple.com{clean_path}"
+
+                listings.append(
+                    RawListing(
+                        id=f"apple_refurb_{abs(hash(clean_path)) % 1000000}",
+                        source="apple_refurbished",
+                        title=title,
+                        description=f"Apple Certified Refurbished with 1-Year AppleCare Warranty. {text[:250]}",
+                        price=price,
+                        url=full_url,
+                        seller="Apple Certified Refurbished Direct",
+                        location="US (Free 2-Day Shipping)",
+                        condition_raw="Apple Certified Refurbished",
+                        created_utc=datetime.now(timezone.utc).isoformat(),
+                    )
+                )
+
+            if listings:
+                print(f"[AppleRefurbishedCollector] Ingested {len(listings)} live official Apple Refurbished workstation deals!")
+                return listings[:limit]
+
+        except Exception as e:
+            print(f"[AppleRefurbishedCollector] Scrape error: {e}")
+
+        return []
+
+
 class HardwareCollectorHub:
     """
     Master collector orchestrating eBay, Reddit, Swappa/Syndicated,
-    Dell Refurbished, Lenovo Outlet, B&H Photo, Best Buy Outlet, Micro Center, and ShopGoodwill in parallel.
+    Dell Refurbished, Lenovo Outlet, B&H Photo, Best Buy Outlet, Micro Center, Apple Refurbished, and ShopGoodwill in parallel.
     Handles rate-limiting, deduplication, and aggregation.
     """
 
@@ -1133,6 +1209,7 @@ class HardwareCollectorHub:
         bh_collector: Optional[BAndHCollector] = None,
         bestbuy_collector: Optional[BestBuyOutletCollector] = None,
         microcenter_collector: Optional[MicroCenterCollector] = None,
+        apple_collector: Optional[AppleRefurbishedCollector] = None,
         goodwill_collector: Optional[ShopGoodwillCollector] = None,
     ) -> None:
         self.ebay = ebay_collector or EBayCollector()
@@ -1143,6 +1220,7 @@ class HardwareCollectorHub:
         self.bh = bh_collector or BAndHCollector()
         self.bestbuy = bestbuy_collector or BestBuyOutletCollector()
         self.microcenter = microcenter_collector or MicroCenterCollector()
+        self.apple = apple_collector or AppleRefurbishedCollector()
         self.goodwill = goodwill_collector or ShopGoodwillCollector()
 
     def collect_all(self, max_workers: int = 8) -> List[RawListing]:
@@ -1157,6 +1235,7 @@ class HardwareCollectorHub:
             "bh_photo": self.bh.fetch_listings,
             "bestbuy": self.bestbuy.fetch_listings,
             "microcenter": self.microcenter.fetch_listings,
+            "apple_refurbished": self.apple.fetch_listings,
             "goodwill": self.goodwill.fetch_listings,
         }
 
