@@ -650,14 +650,18 @@ class DellRefurbishedCollector:
         self.last_request_time = 0.0
 
     def _fetch_active_coupon(self, scraper: Any) -> Tuple[str, float]:
-        """Fetch active promotional sitewide coupon code and discount percentage from DFS."""
+        """Dynamically fetch whatever active promotional sitewide coupon code and discount percentage DFS has live."""
         try:
             res = scraper.get("https://www.dellrefurbished.com/coupons", timeout=5.0)
             if res.status_code == 200:
-                code_m = re.search(r"Coupon\s*Code\s*[:=\s]*([A-Z0-9]{4,15})", res.text, re.I)
-                pct_m = re.search(r"([0-9]{2})%\s*off", res.text, re.I)
-                code = code_m.group(1).upper() if code_m else "DFS-PROMO"
-                pct = float(pct_m.group(1)) if pct_m else 0.0
+                raw_codes = re.findall(r"coupon\s*code\s*[:=\s]*([a-zA-Z0-9_-]{3,20})", res.text, re.I)
+                valid_codes = [c.upper() for c in raw_codes if c.lower() not in ["s", "needed", "here", "apply", "none", "promo"]]
+                
+                raw_pcts = re.findall(r"([0-9]{2})%\s*off", res.text, re.I)
+                valid_pcts = [float(p) for p in raw_pcts if 15 <= float(p) <= 75]
+
+                code = valid_codes[0] if valid_codes else "DFS-PROMO"
+                pct = max(valid_pcts) if valid_pcts else 0.0
                 return code, pct
         except Exception:
             pass
