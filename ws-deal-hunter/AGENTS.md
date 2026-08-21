@@ -178,7 +178,25 @@ C:\Development\Apps\WS Deal Hunter\
   2. Set `FilterBar` to collapsed by default (`isExpanded = false`) with a slim 36px search/trigger bar.
   3. Set default view mode to table / list view (`viewMode: "table"`).
   4. Compacted KPI metric widgets in [`KpiMetrics.tsx`](file:///C:/Development/Apps/WS%20Deal%20Hunter/src/components/KpiMetrics.tsx) and wired the live Vercel URL **[https://wsdealhunter.vercel.app/](https://wsdealhunter.vercel.app/)** across notifications.
-- **Test Coverage**: All **22 / 22 unit tests passing** (`python test_system.py`).
+
+### Decision 25: Master 11-Collector Ecosystem (Apple Refurbished & Woot Ingestion)
+- **Decision & Solution**:
+  1. Built and registered `AppleRefurbishedCollector` to scrape live official Apple Store inventory with 1-year AppleCare warranty.
+  2. Built and registered `WootCollector` to ingest syndicated off-lease enterprise workstation drops.
+  3. Upgraded `RedditCollector` to inspect the full `.entry .usertext-body .md` Markdown body text and flair classes (`linkflair-closed`, `linkflair-sold`), unlocking asking prices and 64GB aftermarket upgrades from `[W] PayPal` posts.
+  4. Master `HardwareCollectorHub` now orchestrates **11 concurrent scrapers** aggregating 250+ live listings per sweep.
+
+### Decision 26: 100% Dynamic Dell Promo Engine, Liveness Reaper & UI Delete Action
+- **Decision & Solution**:
+  1. Enhanced `DellRefurbishedCollector` with dynamic regex promo extraction (`_fetch_active_coupon`) querying `/coupons` live on every cycle (e.g. `B2S40SALE` 40% Off), computing net out-of-pocket prices.
+  2. Built multi-threaded `reap_dead_and_sold_deals` in [`daemon.py`](file:///C:/Development/Apps/WS%20Deal%20Hunter/daemon.py) to automatically probe and purge 404, sold, or ended listings from `deals.json`.
+  3. Added manual Delete / Dismiss action button to both Table and Card views in the React dashboard with `DELETE /api/deals/:id`.
+  4. Added autonomous Price Slash detection (`prev_price - new_price >= $50`) in [`daemon.py`](file:///C:/Development/Apps/WS%20Deal%20Hunter/daemon.py).
+
+### Decision 27: Streamlit Cloud Dual-Path Root Sync & Universal Module Resolution
+- **Problem**: Streamlit Cloud runs against repository root on `https://github.com/Fragger7/personal-repo`, which previously lacked root-level `app.py`, `requirements.txt`, and modules.
+- **Decision & Solution**: Added dynamic `sys.path` and multi-location `deals.json` resolution in [`app.py`](file:///C:/Development/Apps/WS%20Deal%20Hunter/app.py), and synchronized all runtime files across both root and `ws-deal-hunter/` subfolder. Verified live at **[https://wsdealhunter.streamlit.app/](https://wsdealhunter.streamlit.app/)** (Status 200).
+- **Test Coverage**: All **23 / 23 unit tests passing** (`python test_system.py`).
 
 ---
 
