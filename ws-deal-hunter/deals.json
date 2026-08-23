@@ -462,34 +462,5 @@
     "alerted": false,
     "is_high_yield": false,
     "raw_payload": null
-  },
-  {
-    "id": "ebay_298452590287",
-    "source": "ebay",
-    "title": "Dell XPS 15 9520 Silver FHD+ 2.3 GHz i7-12700H 32GB 1TB SSD RTX 3050 Good",
-    "price": 599.99,
-    "url": "https://www.ebay.com/itm/298452590287",
-    "specs": {
-      "cpu": "I7-12700H",
-      "ram_gb": 32,
-      "ssd_gb": 1024,
-      "gpu": "NVIDIA RTX / Workstation GPU",
-      "screen": "15.6\" - 16\" Workstation Display",
-      "condition": "Used / Refurbished"
-    },
-    "fair_market_value": 750.0,
-    "estimated_profit": 150.01,
-    "arbitrage_margin_pct": 25.0,
-    "deal_score": 7.8,
-    "summary": "I7-12700H | 32GB RAM | 1024GB SSD | NVIDIA RTX / Workstation GPU (TLC: $649.49, Margin: 13.4%).",
-    "actionable_recommendation": "🤝 OPPORTUNISTIC OFFER TARGET",
-    "confidence_score": 0.95,
-    "seller": "eBay Seller",
-    "location": "US",
-    "created_utc": "2026-08-19T04:08:26.739410+00:00",
-    "evaluated_at": "2026-08-19T04:08:43.398772+00:00",
-    "alerted": false,
-    "is_high_yield": false,
-    "raw_payload": null
   }
 ]
