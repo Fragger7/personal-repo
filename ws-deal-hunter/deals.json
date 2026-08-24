@@ -1,5 +1,34 @@
 [
   {
+    "id": "ebay_206512859979",
+    "source": "ebay",
+    "title": "Dell Precision 5570 FHD+ I7-12700H 32GB 512 A1000 4GB NO OS/AC",
+    "price": 599.99,
+    "url": "https://www.ebay.com/itm/206512859979",
+    "specs": {
+      "cpu": "I7-12700H",
+      "ram_gb": 32,
+      "ssd_gb": 512,
+      "gpu": "NVIDIA RTX / Workstation GPU",
+      "screen": "15.6\" - 16\" Workstation Display",
+      "condition": "Used / Refurbished"
+    },
+    "fair_market_value": 750.0,
+    "estimated_profit": 150.01,
+    "arbitrage_margin_pct": 25.0,
+    "deal_score": 8.2,
+    "summary": "Valid 12th-Gen i7-12700H 32GB unit, but missing AC adapter adding a $40 penalty to the landed cost ($689.49 TLC). Leaves a thin 8.07% margin against the $750 FMV.",
+    "actionable_recommendation": "Submit offer at $500-$520 to absorb charger replacement cost and achieve a minimum 15% net margin target.",
+    "confidence_score": 0.95,
+    "seller": "eBay Seller",
+    "location": "US",
+    "created_utc": "2026-08-24T15:43:46.723163+00:00",
+    "evaluated_at": "2026-08-24T15:44:02.771049+00:00",
+    "alerted": false,
+    "is_high_yield": false,
+    "raw_payload": null
+  },
+  {
     "id": "ebay_366625787887",
     "source": "ebay",
     "title": "Dell Precision 5570 15.6\" FHD+ i7-12700H 2.3Ghz 32GB 1TB RTX A2000 W11P",
