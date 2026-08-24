@@ -1,5 +1,34 @@
 [
   {
+    "id": "ebay_800552783780",
+    "source": "ebay",
+    "title": "Apple MacBook Pro 14 inch A2442 M1 Pro 3.20GHz 32GB 512GB",
+    "price": 799.99,
+    "url": "https://www.ebay.com/itm/800552783780",
+    "specs": {
+      "cpu": "M1 PRO",
+      "ram_gb": 32,
+      "ssd_gb": 512,
+      "gpu": "Apple Silicon Unified GPU",
+      "screen": "15.6\" - 16\" Workstation Display",
+      "condition": "Used / Refurbished"
+    },
+    "fair_market_value": 950.0,
+    "estimated_profit": 150.01,
+    "arbitrage_margin_pct": 18.8,
+    "deal_score": 8.2,
+    "summary": "Whitelisted Apple M1 Pro configuration with 32GB unified memory. Total Landed Cost (TLC) comes to $865.99 after 8.25% sales tax, yielding a narrow ~8.8% profit margin against an estimated $950 Fair Market Value.",
+    "actionable_recommendation": "OPPORTUNISTIC OFFER TARGET: Submit a best offer of $720.00 to lower TLC to $779.40 and unlock a viable 18% arbitrage margin.",
+    "confidence_score": 0.95,
+    "seller": "eBay Seller",
+    "location": "US",
+    "created_utc": "2026-08-24T03:08:57.394028+00:00",
+    "evaluated_at": "2026-08-24T03:09:03.900284+00:00",
+    "alerted": false,
+    "is_high_yield": false,
+    "raw_payload": null
+  },
+  {
     "id": "ebay_227487205622",
     "source": "ebay",
     "title": "Apple 2021 MacBook Pro 16\" M1 PRO) 32GB RAM 512GB SSD A2485 Battery 89% Nice!!",
