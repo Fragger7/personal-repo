@@ -1,5 +1,34 @@
 [
   {
+    "id": "ebay_188836795885",
+    "source": "ebay",
+    "title": "Dell Precision 5560 Laptop Intel I7 2.5GHz, 64gb Ram, 1tb SSD",
+    "price": 600.0,
+    "url": "https://www.ebay.com/itm/188836795885",
+    "specs": {
+      "cpu": "Intel Core i7/i9 12th/13th-Gen H",
+      "ram_gb": 64,
+      "ssd_gb": 1024,
+      "gpu": "NVIDIA RTX / Workstation GPU",
+      "screen": "15.6\" - 16\" Workstation Display",
+      "condition": "Used / Refurbished"
+    },
+    "fair_market_value": 850.0,
+    "estimated_profit": 250.0,
+    "arbitrage_margin_pct": 41.7,
+    "deal_score": 8.9,
+    "summary": "HARD BLACKLIST TRIGGERED. The Dell Precision 5560 utilizes Intel 11th-Gen architecture (Tiger Lake i7-11800H/11850H), which fails the mandatory Silicon Gatekeeper standard requiring Intel 12th-Gen H/HX series or newer.",
+    "actionable_recommendation": "PASS - Do not buy. Legacy 11th-Gen hardware is strictly blacklisted under Directive v3.0.",
+    "confidence_score": 0.95,
+    "seller": "eBay Seller",
+    "location": "US",
+    "created_utc": "2026-08-25T13:55:23.643775+00:00",
+    "evaluated_at": "2026-08-25T13:55:39.808679+00:00",
+    "alerted": true,
+    "is_high_yield": true,
+    "raw_payload": null
+  },
+  {
     "id": "ebay_298613145183",
     "source": "ebay",
     "title": "Apple Macbook Pro 14\" M1 Pro 10-Core 32GB 512GB NEEDS REPAIR",
