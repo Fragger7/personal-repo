@@ -1,5 +1,34 @@
 [
   {
+    "id": "ebay_198582532450",
+    "source": "ebay",
+    "title": "Apple A2485 Macbook Pro 16\" Apple M1 Pro/32GB RAM/1TB SSD",
+    "price": 829.99,
+    "url": "https://www.ebay.com/itm/198582532450",
+    "specs": {
+      "cpu": "M1 PRO",
+      "ram_gb": 32,
+      "ssd_gb": 1024,
+      "gpu": "Apple Silicon Unified GPU",
+      "screen": "15.6\" - 16\" Workstation Display",
+      "condition": "Used / Refurbished"
+    },
+    "fair_market_value": 1050.0,
+    "estimated_profit": 220.01,
+    "arbitrage_margin_pct": 26.5,
+    "deal_score": 7.9,
+    "summary": "M1 PRO | 32GB RAM | 1024GB SSD | Apple Silicon Unified GPU (TLC: $898.46, Margin: 14.4%).",
+    "actionable_recommendation": "🤝 OPPORTUNISTIC OFFER TARGET",
+    "confidence_score": 0.95,
+    "seller": "eBay Seller",
+    "location": "US",
+    "created_utc": "2026-08-26T23:10:01.761324+00:00",
+    "evaluated_at": "2026-08-26T23:10:08.399156+00:00",
+    "alerted": false,
+    "is_high_yield": false,
+    "raw_payload": null
+  },
+  {
     "id": "ebay_158226131570",
     "source": "ebay",
     "title": "Dell Precision 5570 15.6 i7-12800H 1.80GHz 32GB 512GB SSD RTX A1000 W11P 1VT41T3",
