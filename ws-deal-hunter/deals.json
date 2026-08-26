@@ -551,35 +551,6 @@
     "raw_payload": null
   },
   {
-    "id": "ebay_298602273876",
-    "source": "ebay",
-    "title": "Apple Macbook Pro 14\" M2 Pro 10-Core 32GB 512GB READ DESC",
-    "price": 1054.99,
-    "url": "https://www.ebay.com/itm/298602273876",
-    "specs": {
-      "cpu": "M2 PRO",
-      "ram_gb": 32,
-      "ssd_gb": 512,
-      "gpu": "Apple Silicon Unified GPU",
-      "screen": "15.6\" - 16\" Workstation Display",
-      "condition": "Used / Refurbished"
-    },
-    "fair_market_value": 1250.0,
-    "estimated_profit": 195.01,
-    "arbitrage_margin_pct": 18.5,
-    "deal_score": 8.0,
-    "summary": "Apple MacBook Pro 14-inch (2023) featuring an M2 Pro (10-core CPU) and 32GB Unified Memory. The sticker price of $1,054.99 scales to a Total Landed Cost of $1,142.03 after 8.25% sales tax. Against a current FMV benchmark of $1,250, the net margin spread is 8.6%.",
-    "actionable_recommendation": "OPPORTUNISTIC OFFER TARGET: Margin spread is marginal at 8.6%. Thoroughly inspect the seller's 'READ DESC' notes for undisclosed cosmetic or functional defects. Offer $900-$920 to secure an actionable resale margin.",
-    "confidence_score": 0.95,
-    "seller": "eBay Seller",
-    "location": "US",
-    "created_utc": "2026-08-21T16:40:16.456124+00:00",
-    "evaluated_at": "2026-08-21T16:40:52.628879+00:00",
-    "alerted": false,
-    "is_high_yield": false,
-    "raw_payload": null
-  },
-  {
     "id": "ebay_298604944380",
     "source": "ebay",
     "title": "Apple Macbook Pro 14\" M1 Pro 10-Core 32GB 512GB NEEDS REPAIR",
