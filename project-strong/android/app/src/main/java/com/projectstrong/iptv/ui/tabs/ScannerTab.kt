@@ -77,7 +77,7 @@ fun ScannerTab(onNextTab: (() -> Unit)? = null) {
             val completedCount = AtomicInteger(0)
             val updateQueue = ConcurrentLinkedQueue<Pair<Int, ParsedCredential>>()
 
-            val workerCount = 16.coerceAtMost(total.coerceAtLeast(1))
+            val workerCount = com.projectstrong.iptv.data.SettingsManager.maxConcurrency.coerceAtMost(total.coerceAtLeast(1))
             val workers = List(workerCount) {
                 launch(Dispatchers.IO) {
                     while (DataStore.isScanning) {

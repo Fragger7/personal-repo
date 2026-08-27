@@ -44,6 +44,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         ToastManager.init(applicationContext)
         CommittedManager.init(applicationContext)
+        com.projectstrong.iptv.data.SettingsManager.init(applicationContext)
 
         // Setup reactive network callback to dynamically track VPN / WiFi / Cellular / Offline transitions
         connectivityManager = getSystemService(Context.CONNECTIVITY_SERVICE) as? ConnectivityManager
@@ -138,7 +139,8 @@ fun MainDashboard() {
         "Scanner", 
         if (xtreamNodesCount > 0) "Xtream ($xtreamNodesCount)" else "Xtream", 
         if (stalkerNodesCount > 0) "Stalker ($stalkerNodesCount)" else "Stalker", 
-        if (committedCount > 0) "Committed ($committedCount)" else "Committed"
+        if (committedCount > 0) "Committed ($committedCount)" else "Committed",
+        "⚙️ Settings"
     )
 
     if (showConnectionDialog) {
@@ -280,6 +282,7 @@ fun MainDashboard() {
                 2 -> com.projectstrong.iptv.ui.tabs.XtreamTab(onNextTab = { selectedTab = 3 })
                 3 -> com.projectstrong.iptv.ui.tabs.StalkerTab(onNextTab = { selectedTab = 4 })
                 4 -> com.projectstrong.iptv.ui.tabs.CommittedTab()
+                5 -> com.projectstrong.iptv.ui.tabs.SettingsTab()
             }
         }
     }

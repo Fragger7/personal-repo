@@ -24,12 +24,19 @@ sealed class VerificationResult {
 }
 
 object IPTVClient {
-    private val client = OkHttpClient.Builder()
+    private val baseClient = OkHttpClient.Builder()
         .connectionPool(ConnectionPool(30, 5, TimeUnit.MINUTES))
-        .connectTimeout(6, TimeUnit.SECONDS)
-        .readTimeout(6, TimeUnit.SECONDS)
         .retryOnConnectionFailure(false)
         .build()
+
+    private fun getClient(): OkHttpClient {
+        val timeout = com.projectstrong.iptv.data.SettingsManager.httpTimeoutSeconds.toLong()
+        return baseClient.newBuilder()
+            .connectTimeout(timeout, TimeUnit.SECONDS)
+            .readTimeout(timeout, TimeUnit.SECONDS)
+            .writeTimeout(timeout, TimeUnit.SECONDS)
+            .build()
+    }
 
     suspend fun verifyXtream(baseUrl: String, user: String, pass: String): VerificationResult = withContext(Dispatchers.IO) {
         try {
@@ -41,12 +48,12 @@ object IPTVClient {
                 .header("User-Agent", "IPTVSmartersPro")
                 .build()
 
-            var response = client.newCall(request).execute()
+            var response = getClient().newCall(request).execute()
             if (response.code == 404) {
                 response.close()
                 url = "${baseUrl.trimEnd('/')}/server/load.php?type=stb&action=handshake&type=itv"
                 request = request.newBuilder().url(url).build()
-                response = client.newCall(request).execute()
+                response = getClient().newCall(request).execute()
             }
             val code = response.code
             val body = response.body?.string() ?: ""
@@ -105,12 +112,12 @@ object IPTVClient {
                 .header("Cookie", "mac=$encodedMac; stb_lang=en; timezone=Europe/Kiev;")
                 .build()
 
-            var response = client.newCall(request).execute()
+            var response = getClient().newCall(request).execute()
             if (response.code == 404) {
                 response.close()
                 url = "${baseUrl.trimEnd('/')}/server/load.php?type=stb&action=handshake&type=itv"
                 request = request.newBuilder().url(url).build()
-                response = client.newCall(request).execute()
+                response = getClient().newCall(request).execute()
             }
             val code = response.code
             val body = response.body?.string() ?: ""
@@ -142,7 +149,7 @@ object IPTVClient {
             val encodedPass = URLEncoder.encode(pass, "UTF-8")
             val url = "${baseUrl.trimEnd('/')}/player_api.php?username=$encodedUser&password=$encodedPass&action=get_live_categories"
             val request = Request.Builder().url(url).header("User-Agent", "IPTVSmartersPro").build()
-            client.newCall(request).execute().use { response ->
+            getClient().newCall(request).execute().use { response ->
                 if (response.code == 200) {
                     val body = response.body
                     if (body != null) {
@@ -196,7 +203,7 @@ object IPTVClient {
             val encodedPass = URLEncoder.encode(pass, "UTF-8")
             val url = "${baseUrl.trimEnd('/')}/player_api.php?username=$encodedUser&password=$encodedPass&action=get_live_streams"
             val request = Request.Builder().url(url).header("User-Agent", "IPTVSmartersPro").build()
-            val response = client.newCall(request).execute()
+            val response = getClient().newCall(request).execute()
             if (response.code == 200) {
                 val body = response.body?.string() ?: ""
                 val allStreams = org.json.JSONArray(body)
@@ -224,7 +231,7 @@ object IPTVClient {
             val encodedPass = URLEncoder.encode(pass, "UTF-8")
             val url = "${baseUrl.trimEnd('/')}/player_api.php?username=$encodedUser&password=$encodedPass&action=get_vod_streams"
             val request = Request.Builder().url(url).header("User-Agent", "IPTVSmartersPro").build()
-            val response = client.newCall(request).execute()
+            val response = getClient().newCall(request).execute()
             if (response.code == 200) {
                 val body = response.body?.string() ?: ""
                 return@withContext org.json.JSONArray(body)
@@ -239,7 +246,7 @@ object IPTVClient {
         var count = 0
         try {
             val request = Request.Builder().url(url).header("User-Agent", "IPTVSmartersPro").build()
-            client.newCall(request).execute().use { response ->
+            getClient().newCall(request).execute().use { response ->
                 if (response.code == 200) {
                     val body = response.body
                     if (body != null) {
@@ -276,13 +283,13 @@ object IPTVClient {
         return getStreamCount(url)
     }
 
-        suspend fun getAllLiveStreams(baseUrl: String, user: String, pass: String): org.json.JSONArray? = withContext(Dispatchers.IO) {
+    suspend fun getAllLiveStreams(baseUrl: String, user: String, pass: String): org.json.JSONArray? = withContext(Dispatchers.IO) {
         try {
             val encodedUser = URLEncoder.encode(user, "UTF-8")
             val encodedPass = URLEncoder.encode(pass, "UTF-8")
             val url = "${baseUrl.trimEnd('/')}/player_api.php?username=$encodedUser&password=$encodedPass&action=get_live_streams"
             val request = Request.Builder().url(url).header("User-Agent", "IPTVSmartersPro").build()
-            client.newCall(request).execute().use { response ->
+            getClient().newCall(request).execute().use { response ->
                 if (response.code == 200) {
                     val body = response.body
                     if (body != null) {
