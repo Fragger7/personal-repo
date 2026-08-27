@@ -335,42 +335,43 @@ fun StalkerDetailScreen(node: ParsedCredential, onBack: () -> Unit) {
             border = androidx.compose.foundation.BorderStroke(1.dp, AppSurfaceBorder),
             modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)
         ) {
-            Column(modifier = Modifier.padding(20.dp)) {
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Column(modifier = Modifier.weight(1f).padding(end = 8.dp)) {
-                        Text("HOST PORTAL", color = AppTextSecondary, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
-                        Spacer(modifier = Modifier.height(2.dp))
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(node.baseUrl, color = AppTextPrimary, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold)
-                            IconButton(onClick = { 
-                                clipboardManager.setText(AnnotatedString(node.baseUrl))
-                                ToastManager.success("Copied Host Portal URL to clipboard!")
-                            }, modifier = Modifier.size(28.dp).padding(start = 6.dp)) {
-                                Icon(Icons.Default.ContentCopy, contentDescription = "Copy", tint = AppTextSecondary, modifier = Modifier.size(16.dp))
-                            }
-                        }
-                    }
+            Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text("Portal Credentials", color = AppTextPrimary, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                     StatusBadge(node.status, 120.dp)
                 }
-                Spacer(modifier = Modifier.height(16.dp))
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text("MAC ADDRESS", color = AppTextSecondary, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
-                        Spacer(modifier = Modifier.height(2.dp))
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(node.mac, color = AppTextPrimary, style = MaterialTheme.typography.bodyMedium)
-                            IconButton(onClick = { 
-                                clipboardManager.setText(AnnotatedString(node.mac))
-                                ToastManager.success("Copied MAC Address to clipboard!")
-                            }, modifier = Modifier.size(28.dp).padding(start = 6.dp)) {
-                                Icon(Icons.Default.ContentCopy, contentDescription = "Copy", tint = AppTextSecondary, modifier = Modifier.size(16.dp))
-                            }
-                        }
-                    }
+
+                CopyableCredentialField(
+                    label = "Host Portal URL",
+                    value = node.baseUrl,
+                    toastMessage = "Copied Host Portal URL to clipboard!",
+                    isMonospaceOrPrimary = true
+                )
+
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    CopyableCredentialField(
+                        label = "MAC Address",
+                        value = node.mac,
+                        toastMessage = "Copied MAC Address to clipboard!",
+                        modifier = Modifier.weight(1f)
+                    )
                     Column(modifier = Modifier.weight(1f)) {
                         Text("TIMEZONE", color = AppTextSecondary, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
-                        Spacer(modifier = Modifier.height(2.dp))
-                        Text(node.serverTimezone, color = AppTextPrimary, style = MaterialTheme.typography.bodyMedium)
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Surface(
+                            shape = RoundedCornerShape(8.dp),
+                            color = AppSurfaceVariant.copy(alpha = 0.6f),
+                            border = androidx.compose.foundation.BorderStroke(1.dp, AppSurfaceBorder.copy(alpha = 0.7f)),
+                            modifier = Modifier.fillMaxWidth().height(48.dp)
+                        ) {
+                            Box(contentAlignment = Alignment.CenterStart, modifier = Modifier.fillMaxSize().padding(horizontal = 10.dp)) {
+                                Text(node.serverTimezone.ifEmpty { "Default (UTC)" }, color = AppTextPrimary, style = MaterialTheme.typography.bodySmall)
+                            }
+                        }
                     }
                 }
             }

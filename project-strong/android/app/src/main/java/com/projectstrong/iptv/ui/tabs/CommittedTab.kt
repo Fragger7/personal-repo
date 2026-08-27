@@ -740,24 +740,13 @@ fun CommittedDetailScreen(record: CommittedRecord, onBack: () -> Unit, onDelete:
             border = androidx.compose.foundation.BorderStroke(1.dp, AppSurfaceBorder),
             modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)
         ) {
-            Column(modifier = Modifier.padding(20.dp)) {
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Column(modifier = Modifier.weight(1f).padding(end = 8.dp)) {
-                        Text("HOST URL", color = AppTextSecondary, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
-                        Spacer(modifier = Modifier.height(2.dp))
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(record.safeBaseUrl, color = AppTextPrimary, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold)
-                            IconButton(
-                                onClick = {
-                                    clipboardManager.setText(AnnotatedString(record.safeBaseUrl))
-                                    ToastManager.success("Host URL copied to clipboard!")
-                                },
-                                modifier = Modifier.size(28.dp).padding(start = 6.dp)
-                            ) {
-                                Icon(Icons.Default.ContentCopy, contentDescription = "Copy", tint = AppTextSecondary, modifier = Modifier.size(16.dp))
-                            }
-                        }
-                    }
+            Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text("Saved Credentials", color = AppTextPrimary, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                     Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
                         StatusBadge(record.safeStatus, 100.dp)
                         SyncBadge(record.isLocal, 90.dp)
@@ -776,81 +765,44 @@ fun CommittedDetailScreen(record: CommittedRecord, onBack: () -> Unit, onDelete:
                         }
                     }
                 }
-                Spacer(modifier = Modifier.height(14.dp))
 
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    if (record.safeType == "Xtream") {
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text("USERNAME", color = AppTextSecondary, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
-                            Spacer(modifier = Modifier.height(2.dp))
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text(record.safeUser, color = AppTextPrimary, style = MaterialTheme.typography.bodyMedium)
-                                IconButton(
-                                    onClick = {
-                                        clipboardManager.setText(AnnotatedString(record.safeUser))
-                                        ToastManager.success("Username copied to clipboard!")
-                                    },
-                                    modifier = Modifier.size(28.dp).padding(start = 6.dp)
-                                ) {
-                                    Icon(Icons.Default.ContentCopy, contentDescription = "Copy", tint = AppTextSecondary, modifier = Modifier.size(16.dp))
-                                }
-                            }
-                        }
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text("PASSWORD", color = AppTextSecondary, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
-                            Spacer(modifier = Modifier.height(2.dp))
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text(record.safePass, color = AppTextPrimary, style = MaterialTheme.typography.bodyMedium)
-                                IconButton(
-                                    onClick = {
-                                        clipboardManager.setText(AnnotatedString(record.safePass))
-                                        ToastManager.success("Password copied to clipboard!")
-                                    },
-                                    modifier = Modifier.size(28.dp).padding(start = 6.dp)
-                                ) {
-                                    Icon(Icons.Default.ContentCopy, contentDescription = "Copy", tint = AppTextSecondary, modifier = Modifier.size(16.dp))
-                                }
-                            }
-                        }
-                    } else {
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text("MAC ADDRESS", color = AppTextSecondary, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
-                            Spacer(modifier = Modifier.height(2.dp))
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text(record.safeMac, color = AppTextPrimary, style = MaterialTheme.typography.bodyMedium)
-                                IconButton(
-                                    onClick = {
-                                        clipboardManager.setText(AnnotatedString(record.safeMac))
-                                        ToastManager.success("MAC address copied to clipboard!")
-                                    },
-                                    modifier = Modifier.size(28.dp).padding(start = 6.dp)
-                                ) {
-                                    Icon(Icons.Default.ContentCopy, contentDescription = "Copy", tint = AppTextSecondary, modifier = Modifier.size(16.dp))
-                                }
-                            }
-                        }
+                CopyableCredentialField(
+                    label = "Server / Host URL",
+                    value = record.safeBaseUrl,
+                    toastMessage = "Host URL copied to clipboard!",
+                    isMonospaceOrPrimary = true
+                )
+
+                if (record.safeType == "Xtream") {
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        CopyableCredentialField(
+                            label = "Username",
+                            value = record.safeUser,
+                            toastMessage = "Username copied to clipboard!",
+                            modifier = Modifier.weight(1f)
+                        )
+                        CopyableCredentialField(
+                            label = "Password",
+                            value = record.safePass,
+                            toastMessage = "Password copied to clipboard!",
+                            modifier = Modifier.weight(1f)
+                        )
                     }
-                }
 
-                if (record.safeType == "Xtream" && record.safeUser.isNotEmpty()) {
-                    Spacer(modifier = Modifier.height(14.dp))
-                    Column(modifier = Modifier.fillMaxWidth()) {
-                        Text("M3U PLAYLIST URL", color = AppTextSecondary, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
-                        Spacer(modifier = Modifier.height(2.dp))
+                    if (record.safeUser.isNotEmpty()) {
                         val m3uUrl = "${record.safeBaseUrl.trimEnd('/')}/get.php?username=${record.safeUser}&password=${record.safePass}&type=m3u_plus&output=ts"
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(m3uUrl, color = AppTextPrimary, style = MaterialTheme.typography.bodyMedium, maxLines = 1, modifier = Modifier.weight(1f))
-                            IconButton(
-                                onClick = {
-                                    clipboardManager.setText(AnnotatedString(m3uUrl))
-                                    ToastManager.success("M3U Playlist link copied to clipboard!")
-                                },
-                                modifier = Modifier.size(28.dp).padding(start = 6.dp)
-                            ) {
-                                Icon(Icons.Default.ContentCopy, contentDescription = "Copy", tint = AppTextSecondary, modifier = Modifier.size(16.dp))
-                            }
-                        }
+                        CopyableCredentialField(
+                            label = "M3U Playlist URL",
+                            value = m3uUrl,
+                            toastMessage = "M3U Playlist link copied to clipboard!"
+                        )
                     }
+                } else {
+                    CopyableCredentialField(
+                        label = "MAC Address",
+                        value = record.safeMac,
+                        toastMessage = "MAC address copied to clipboard!"
+                    )
                 }
 
                 if (record.safeDateAdded.isNotEmpty()) {

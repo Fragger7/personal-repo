@@ -606,68 +606,45 @@ fun XtreamDetailScreen(node: ParsedCredential, onBack: () -> Unit) {
             border = androidx.compose.foundation.BorderStroke(1.dp, AppSurfaceBorder),
             modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)
         ) {
-            Column(modifier = Modifier.padding(20.dp)) {
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Column(modifier = Modifier.weight(1f).padding(end = 8.dp)) {
-                        Text("HOST URL", color = AppTextSecondary, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
-                        Spacer(modifier = Modifier.height(2.dp))
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(node.baseUrl, color = AppTextPrimary, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold)
-                            IconButton(onClick = { 
-                                clipboardManager.setText(AnnotatedString(node.baseUrl))
-                                ToastManager.success("Copied Host URL to clipboard!")
-                            }, modifier = Modifier.size(28.dp).padding(start = 6.dp)) {
-                                Icon(Icons.Default.ContentCopy, contentDescription = "Copy", tint = AppTextSecondary, modifier = Modifier.size(16.dp))
-                            }
-                        }
-                    }
+            Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text("Connection Credentials", color = AppTextPrimary, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                     StatusBadge(node.status, 120.dp)
                 }
-                Spacer(modifier = Modifier.height(14.dp))
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text("USERNAME", color = AppTextSecondary, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
-                        Spacer(modifier = Modifier.height(2.dp))
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(node.user, color = AppTextPrimary, style = MaterialTheme.typography.bodyMedium)
-                            IconButton(onClick = { 
-                                clipboardManager.setText(AnnotatedString(node.user))
-                                ToastManager.success("Copied Username to clipboard!")
-                            }, modifier = Modifier.size(28.dp).padding(start = 6.dp)) {
-                                Icon(Icons.Default.ContentCopy, contentDescription = "Copy", tint = AppTextSecondary, modifier = Modifier.size(16.dp))
-                            }
-                        }
-                    }
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text("PASSWORD", color = AppTextSecondary, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
-                        Spacer(modifier = Modifier.height(2.dp))
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(node.pass, color = AppTextPrimary, style = MaterialTheme.typography.bodyMedium)
-                            IconButton(onClick = { 
-                                clipboardManager.setText(AnnotatedString(node.pass))
-                                ToastManager.success("Copied Password to clipboard!")
-                            }, modifier = Modifier.size(28.dp).padding(start = 6.dp)) {
-                                Icon(Icons.Default.ContentCopy, contentDescription = "Copy", tint = AppTextSecondary, modifier = Modifier.size(16.dp))
-                            }
-                        }
-                    }
+
+                CopyableCredentialField(
+                    label = "Host URL",
+                    value = node.baseUrl,
+                    toastMessage = "Copied Host URL to clipboard!",
+                    isMonospaceOrPrimary = true
+                )
+
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    CopyableCredentialField(
+                        label = "Username",
+                        value = node.user,
+                        toastMessage = "Copied Username to clipboard!",
+                        modifier = Modifier.weight(1f)
+                    )
+                    CopyableCredentialField(
+                        label = "Password",
+                        value = node.pass,
+                        toastMessage = "Copied Password to clipboard!",
+                        modifier = Modifier.weight(1f)
+                    )
                 }
-                Spacer(modifier = Modifier.height(14.dp))
-                Column(modifier = Modifier.fillMaxWidth()) {
-                    Text("M3U PLAYLIST URL", color = AppTextSecondary, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
-                    Spacer(modifier = Modifier.height(2.dp))
-                    val m3uUrl = "${node.baseUrl.trimEnd('/')}/get.php?username=${node.user}&password=${node.pass}&type=m3u_plus&output=ts"
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(m3uUrl, color = AppTextPrimary, style = MaterialTheme.typography.bodyMedium, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
-                        IconButton(onClick = { 
-                            clipboardManager.setText(AnnotatedString(m3uUrl))
-                            ToastManager.success("Copied M3U Playlist URL to clipboard!")
-                        }, modifier = Modifier.size(28.dp).padding(start = 6.dp)) {
-                            Icon(Icons.Default.ContentCopy, contentDescription = "Copy", tint = AppTextSecondary, modifier = Modifier.size(16.dp))
-                        }
-                    }
-                }
-                Spacer(modifier = Modifier.height(14.dp))
+
+                val m3uUrl = "${node.baseUrl.trimEnd('/')}/get.php?username=${node.user}&password=${node.pass}&type=m3u_plus&output=ts"
+                CopyableCredentialField(
+                    label = "M3U Playlist URL",
+                    value = m3uUrl,
+                    toastMessage = "Copied M3U Playlist URL to clipboard!"
+                )
+
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text("EXPIRES", color = AppTextSecondary, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
