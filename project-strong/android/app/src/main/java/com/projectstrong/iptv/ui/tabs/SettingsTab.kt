@@ -22,7 +22,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.projectstrong.iptv.BuildConfig
 import com.projectstrong.iptv.data.CommittedManager
 import com.projectstrong.iptv.data.DataStore
 import com.projectstrong.iptv.data.SettingsManager
@@ -220,8 +219,17 @@ fun SettingsTab() {
                         color = AppPrimary.copy(alpha = 0.15f),
                         border = BorderStroke(1.dp, AppPrimary.copy(alpha = 0.3f))
                     ) {
+                        val (vName, vCode) = remember {
+                            try {
+                                val pInfo = context.packageManager.getPackageInfo(context.packageName, 0)
+                                val code = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) pInfo.longVersionCode else @Suppress("DEPRECATION") pInfo.versionCode.toLong()
+                                Pair(pInfo.versionName ?: "1.10", code.toString())
+                            } catch (e: Exception) {
+                                Pair("1.10", "1")
+                            }
+                        }
                         Text(
-                            text = "v${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})",
+                            text = "v$vName ($vCode)",
                             color = AppPrimary,
                             style = MaterialTheme.typography.labelSmall,
                             fontWeight = FontWeight.Bold,
