@@ -277,8 +277,12 @@ object CommittedManager {
         }
     }
 
-    fun pushToCloud(token: String): Boolean {
+    fun pushToCloud(token: String = DataStore.githubToken): Boolean {
         try {
+            val authToken = token.trim()
+            if (authToken.isEmpty()) {
+                return false
+            }
             // Guard: Cannot push empty
             if (records.isEmpty()) {
                 return false
@@ -289,7 +293,7 @@ object CommittedManager {
             val getConnection = getUrl.openConnection() as java.net.HttpURLConnection
             getConnection.requestMethod = "GET"
             getConnection.setRequestProperty("Accept", "application/vnd.github.v3+json")
-            getConnection.setRequestProperty("Authorization", "token $token")
+            getConnection.setRequestProperty("Authorization", "token $authToken")
             getConnection.connectTimeout = 6000
             getConnection.readTimeout = 6000
 

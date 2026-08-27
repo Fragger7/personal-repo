@@ -31,22 +31,42 @@ object SettingsManager {
 
     fun saveTimeout(seconds: Int) {
         httpTimeoutSeconds = seconds.coerceIn(3, 30)
-        prefs.edit().putInt(KEY_HTTP_TIMEOUT, httpTimeoutSeconds).apply()
+        if (::prefs.isInitialized) {
+            prefs.edit().putInt(KEY_HTTP_TIMEOUT, httpTimeoutSeconds).apply()
+        }
+    }
+
+    fun saveTimeoutSeconds(context: Context? = null, seconds: Int) {
+        saveTimeout(seconds)
     }
 
     fun saveConcurrency(count: Int) {
         maxConcurrency = count.coerceIn(2, 30)
-        prefs.edit().putInt(KEY_MAX_CONCURRENCY, maxConcurrency).apply()
+        if (::prefs.isInitialized) {
+            prefs.edit().putInt(KEY_MAX_CONCURRENCY, maxConcurrency).apply()
+        }
+    }
+
+    fun saveConcurrencyLimit(context: Context? = null, count: Int) {
+        saveConcurrency(count)
     }
 
     fun saveAutoRefresh(enabled: Boolean) {
         autoRefreshNetwork = enabled
-        prefs.edit().putBoolean(KEY_AUTO_REFRESH_NET, enabled).apply()
+        if (::prefs.isInitialized) {
+            prefs.edit().putBoolean(KEY_AUTO_REFRESH_NET, enabled).apply()
+        }
     }
 
     fun saveKeepScreenOn(enabled: Boolean) {
         keepScreenOnDuringScans = enabled
-        prefs.edit().putBoolean(KEY_KEEP_SCREEN_ON, enabled).apply()
+        if (::prefs.isInitialized) {
+            prefs.edit().putBoolean(KEY_KEEP_SCREEN_ON, enabled).apply()
+        }
+    }
+
+    fun saveGithubToken(context: Context? = null, token: String) {
+        CommittedManager.saveGithubToken(token)
     }
 
     fun purgeVolatileCache(): Int {

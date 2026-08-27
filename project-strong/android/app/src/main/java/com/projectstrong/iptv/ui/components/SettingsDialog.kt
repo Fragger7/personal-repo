@@ -4,7 +4,6 @@ import android.content.Context
 import android.os.Build
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -31,6 +30,7 @@ import com.projectstrong.iptv.data.SettingsManager
 import com.projectstrong.iptv.network.NetworkMonitor
 import com.projectstrong.iptv.ui.theme.*
 import kotlinx.coroutines.launch
+import java.util.Locale
 
 /**
  * Modern Full-Featured Settings & Configuration Modal Dialog
@@ -89,10 +89,9 @@ fun SettingsDialog(
                 Button(
                     onClick = {
                         val trimmed = tokenInput.trim()
-                        SettingsManager.saveGithubToken(context, trimmed)
-                        DataStore.githubToken = trimmed
+                        CommittedManager.saveGithubToken(trimmed)
                         showTokenDialog = false
-                        ToastManager.success("GitHub Token saved securely!")
+                        ToastManager.success(if (trimmed.isNotEmpty()) "GitHub Token saved securely!" else "GitHub Token cleared.")
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = AppPrimary)
                 ) {
@@ -128,12 +127,9 @@ fun SettingsDialog(
             confirmButton = {
                 Button(
                     onClick = {
-                        DataStore.scannedNodes.clear()
-                        DataStore.nodeCategories.clear()
-                        DataStore.nodeLiveStreams.clear()
-                        DataStore.nodeVodStreams.clear()
+                        val cleared = SettingsManager.purgeVolatileCache()
                         showPurgeConfirmDialog = false
-                        ToastManager.info("Local scan cache cleared.")
+                        ToastManager.info("Cleared $cleared cached scan records.")
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = AppError)
                 ) {
@@ -377,10 +373,10 @@ fun SettingsDialog(
                                     onClick = {
                                         scope.launch {
                                             isVerifyingToken = true
-                                            val count = CommittedManager.syncFromCloud()
+                                            val list = CommittedManager.syncFromCloud()
                                             isVerifyingToken = false
-                                            if (count >= 0) {
-                                                ToastManager.success("Vault synced ($count records total)")
+                                            if (list != null) {
+                                                ToastManager.success("Vault synced (${list.size} records total)")
                                             } else {
                                                 ToastManager.error("Sync failed. Check network or token.")
                                             }
@@ -404,7 +400,7 @@ fun SettingsDialog(
                                     onClick = {
                                         scope.launch {
                                             isVerifyingToken = true
-                                            val ok = CommittedManager.pushToCloud()
+                                            val ok = CommittedManager.pushToCloud(DataStore.githubToken)
                                             isVerifyingToken = false
                                             if (ok) {
                                                 ToastManager.success("Successfully pushed to GitHub repository!")
@@ -437,7 +433,7 @@ fun SettingsDialog(
                             modifier = Modifier.padding(16.dp),
                             verticalArrangement = Arrangement.spacedBy(14.dp)
                         ) {
-                            var concurrency by remember { mutableFloatStateOf(DataStore.concurrencyLimit.toFloat()) }
+                            var concurrency by remember { mutableFloatStateOf(SettingsManager.maxConcurrency.toFloat()) }
                             Column {
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
@@ -452,11 +448,10 @@ fun SettingsDialog(
                                     onValueChange = {
                                         concurrency = it
                                         val cInt = it.toInt()
-                                        DataStore.concurrencyLimit = cInt
-                                        SettingsManager.saveConcurrencyLimit(context, cInt)
+                                        SettingsManager.saveConcurrency(cInt)
                                     },
-                                    valueRange = 5f..35f,
-                                    steps = 6,
+                                    valueRange = 2f..30f,
+                                    steps = 13,
                                     colors = SliderDefaults.colors(
                                         thumbColor = AppPrimary,
                                         activeTrackColor = AppPrimary,
@@ -467,7 +462,7 @@ fun SettingsDialog(
 
                             Divider(color = AppSurfaceBorder.copy(alpha = 0.5f))
 
-                            var timeout by remember { mutableFloatStateOf(DataStore.requestTimeoutSeconds.toFloat()) }
+                            var timeout by remember { mutableFloatStateOf(SettingsManager.httpTimeoutSeconds.toFloat()) }
                             Column {
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
@@ -482,8 +477,7 @@ fun SettingsDialog(
                                     onValueChange = {
                                         timeout = it
                                         val tInt = it.toInt()
-                                        DataStore.requestTimeoutSeconds = tInt
-                                        SettingsManager.saveTimeoutSeconds(context, tInt)
+                                        SettingsManager.saveTimeout(tInt)
                                     },
                                     valueRange = 3f..20f,
                                     steps = 16,
@@ -562,7 +556,7 @@ fun SettingsDialog(
                             )
                             DiagnosticRow(
                                 label = "Device Hardware",
-                                value = "${Build.MANUFACTURER.capitalize()} ${Build.MODEL}"
+                                value = "${Build.MANUFACTURER.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }} ${Build.MODEL}"
                             )
                         }
                     }
