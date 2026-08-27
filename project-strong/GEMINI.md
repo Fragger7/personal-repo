@@ -508,15 +508,17 @@ Create a dedicated **⚙️ Settings & About** tab or modal inside the Android a
 * **Settings & Intelligence Hub**: Interactive settings modal equipped with detailed `SettingInfoCard` explanation badges on Concurrency, Timeout Latencies, Git Cloud Synchronization, Volatile Cache vs Git Vault, and Evasion Headers.
 
 ### 3. Next Milestone Candidates ("What's Next" Roadmap)
-1. **Integrated In-App IPTV Stream & Channel Player (Media3 / ExoPlayer)**:
-   - Floating Picture-in-Picture live preview inside the Channel & VOD Explorer drawer.
-   - Stream health diagnostics overlay (Resolution e.g. `1080p60`, Video Codec `H.264`/`HEVC`, Audio Codec `AAC`/`AC3`, Bitrate kbps).
-   - Instant "Stream Plays" / "Dead Stream" verification flag.
-2. **Provider Intelligence Engine (Android Port)**:
-   - Porting the regex brand fingerprinting and Telegram/Discord community link detectors into `ProviderIntelligence.kt`.
-3. **Base64 Tab Power Actions**:
-   - URL action cards, external M3U player launch intents, and direct 1-click pipeline to the Multi-Payload Scanner.
-4. **Dynamic Theme Engine (Multi-Palette Selection)**:
+1. **Integrated In-App IPTV Stream & Channel Player (Media3 / ExoPlayer - COMPLETED)**:
+   - Floating Picture-in-Picture & Modal stream inspector with ExoPlayer hardware-accelerated playback.
+   - Stream health diagnostics overlay (Resolution e.g. `1080p FHD`, Video Codec e.g. `H.264/HEVC`, Audio Codec e.g. `AAC/AC3`, Latency ms).
+   - Fast 1-tap quick stream tester inside the Full-Screen Channel & Catalog Explorer.
+2. **Performance Tuning & Memory Backlog (HIGH PRIORITY)**:
+   - Throttled coroutine chunking and memory-efficient recyclers on multi-thousand row payloads to ensure 60fps scrolling and eliminate any potential memory pressure.
+3. **Base64 Tab Power Actions & Automation Pipeline**:
+   - Automated Base64 chunk discovery with 1-click "Push to Scanner", URL action chips, and external M3U player launch intents.
+4. **Category & Watermark Provider Intelligence Engine (Android Port)**:
+   - Upgraded provider recognition using category name watermarks (e.g., Strong 8K, T-Rex, Dream 4K, Dino), dummy/separator banner streams, and Telegram/Discord community channel signatures.
+5. **Dynamic Theme Engine (Multi-Palette Selection)**:
    - Dynamic switching between *Cyber Amber & Deep Indigo (Sherlock Default)*, *Midnight Purple*, *Ocean Blue*, *Crimson Red*, and *System Monet*.
 
 ### 2. Regression Testing & Safe Deployment Mandates

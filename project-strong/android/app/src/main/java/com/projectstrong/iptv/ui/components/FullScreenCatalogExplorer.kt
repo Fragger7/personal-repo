@@ -58,6 +58,7 @@ fun FullScreenCatalogExplorer(
     var collapsedGroupIds by remember { mutableStateOf<Set<String>>(emptySet()) }
     var showCopiedToast by remember { mutableStateOf(false) }
     var toastText by remember { mutableStateOf("") }
+    var previewChannel by remember { mutableStateOf<ChannelItem?>(null) }
 
     // Fetch catalog data
     LaunchedEffect(baseUrl, user, pass) {
@@ -502,7 +503,28 @@ fun FullScreenCatalogExplorer(
                                                         }
                                                     }
 
-                                                    Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                                                    Row(
+                                                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                                        verticalAlignment = Alignment.CenterVertically
+                                                    ) {
+                                                        // Quick Test & Play Stream
+                                                        IconButton(
+                                                            onClick = {
+                                                                previewChannel = channel
+                                                            },
+                                                            modifier = Modifier
+                                                                .size(36.dp)
+                                                                .clip(CircleShape)
+                                                                .background(Color(0xFF0F766E).copy(alpha = 0.3f))
+                                                        ) {
+                                                            Icon(
+                                                                Icons.Default.PlayArrow,
+                                                                contentDescription = "Test Stream",
+                                                                tint = Color(0xFF34D399),
+                                                                modifier = Modifier.size(20.dp)
+                                                            )
+                                                        }
+
                                                         // Copy Channel Name
                                                         IconButton(
                                                             onClick = {
@@ -533,7 +555,7 @@ fun FullScreenCatalogExplorer(
                                                             Icon(
                                                                 Icons.Default.Link,
                                                                 contentDescription = "Copy Link",
-                                                                tint = Color(0xFF34D399),
+                                                                tint = Color(0xFF60A5FA),
                                                                 modifier = Modifier.size(18.dp)
                                                             )
                                                         }
@@ -617,5 +639,17 @@ fun FullScreenCatalogExplorer(
                 }
             }
         }
+    }
+
+    // Floating Live Stream & Codec Inspector Player
+    previewChannel?.let { channel ->
+        val catName = categoryNameMap[channel.categoryId] ?: "Live Channel"
+        StreamPreviewDialog(
+            streamUrl = channel.directUrl,
+            streamName = channel.name,
+            streamId = channel.streamId,
+            categoryName = catName,
+            onDismiss = { previewChannel = null }
+        )
     }
 }
