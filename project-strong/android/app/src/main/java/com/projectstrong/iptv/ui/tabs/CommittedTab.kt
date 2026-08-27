@@ -147,13 +147,13 @@ fun CommittedTab() {
                     )
                     if (localCount > 0) {
                         Text(
-                            "Includes $localCount newly added/modified local accounts that will be synced to the cloud.",
+                            "Includes $localCount newly added/modified local accounts that will be merged into the cloud dataset.",
                             color = AppWarning,
                             style = MaterialTheme.typography.bodySmall
                         )
                     }
                     Text(
-                        "Existing cloud records will be cleanly merged and updated.",
+                        "🛡️ Safe Sync: Existing remote accounts in the repository will be preserved and merged automatically (never overwritten).",
                         color = AppTextSecondary,
                         style = MaterialTheme.typography.bodySmall
                     )

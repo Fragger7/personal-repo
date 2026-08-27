@@ -88,6 +88,15 @@ class MainActivity : ComponentActivity() {
             NetworkMonitor.refreshNetworkState(applicationContext)
         }
 
+        // Auto-sync committed records from cloud in background to guarantee fresh state
+        DataStore.scanScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+            try {
+                CommittedManager.syncFromCloud()
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+
         setContent {
             AppTheme {
                 Surface(

@@ -284,7 +284,7 @@ object CommittedManager {
                 return false
             }
 
-            // 1. Get current SHA
+            // 1. Get current SHA and fetch remote content to merge before pushing (Never Overwrite)
             val getUrl = java.net.URL("https://api.github.com/repos/Fragger7/personal-repo/contents/project-strong/committed.json")
             val getConnection = getUrl.openConnection() as java.net.HttpURLConnection
             getConnection.requestMethod = "GET"
@@ -294,19 +294,60 @@ object CommittedManager {
             getConnection.readTimeout = 6000
 
             var sha = ""
+            val remoteRecords = mutableListOf<CommittedRecord>()
             if (getConnection.responseCode == 200) {
                 val jsonResponse = getConnection.inputStream.bufferedReader().use { it.readText() }
                 val jsonObj = org.json.JSONObject(jsonResponse)
                 sha = jsonObj.optString("sha", "")
+                val contentB64 = jsonObj.optString("content", "").replace("\n", "")
+                if (contentB64.isNotEmpty()) {
+                    try {
+                        val decodedBytes = android.util.Base64.decode(contentB64, android.util.Base64.DEFAULT)
+                        val remoteJson = String(decodedBytes, Charsets.UTF_8)
+                        val type = object : TypeToken<List<CommittedRecord>>() {}.type
+                        val list: List<CommittedRecord> = gson.fromJson(remoteJson, type)
+                        remoteRecords.addAll(list.map {
+                            it.copy(
+                                baseUrl = normalizeUrl(it.safeBaseUrl),
+                                user = it.safeUser.trim(),
+                                mac = it.safeMac.trim().uppercase()
+                            )
+                        })
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
+                }
             } else {
                 return false
             }
 
-            // 2. Format records cleanly for push (stripping isLocalOnly temporary flag for clean cloud JSON)
-            val cleanForCloud = records.map {
-                it.copy(isLocalOnly = null)
+            // 2. Safe Union Merge: Merge all remote records with current local records so no existing cloud accounts are lost
+            val mergedList = remoteRecords.toMutableList()
+            for (localRec in records) {
+                val localBase = normalizeUrl(localRec.safeBaseUrl)
+                val localUser = localRec.safeUser.trim()
+                val localMac = localRec.safeMac.trim().uppercase()
+
+                val matchIdx = mergedList.indexOfFirst { rem ->
+                    normalizeUrl(rem.safeBaseUrl).equals(localBase, ignoreCase = true) &&
+                    ((localRec.safeType == "Xtream" && rem.safeUser.trim() == localUser) ||
+                     (localRec.safeType == "Stalker" && rem.safeMac.trim().equals(localMac, ignoreCase = true)))
+                }
+
+                if (matchIdx != -1) {
+                    // Update metadata of matching remote record with local changes (preserving original dateAdded and notes if not overwritten)
+                    val existingRem = mergedList[matchIdx]
+                    mergedList[matchIdx] = localRec.copy(
+                        dateAdded = if (existingRem.safeDateAdded.isNotEmpty()) existingRem.safeDateAdded else localRec.safeDateAdded,
+                        notes = if (localRec.safeNotes.isNotEmpty()) localRec.safeNotes else existingRem.safeNotes,
+                        isLocalOnly = null
+                    )
+                } else {
+                    mergedList.add(0, localRec.copy(isLocalOnly = null))
+                }
             }
 
+            val cleanForCloud = mergedList.map { it.copy(isLocalOnly = null) }
             val jsonContent = gson.toJson(cleanForCloud)
             val encodedContent = android.util.Base64.encodeToString(jsonContent.toByteArray(Charsets.UTF_8), android.util.Base64.NO_WRAP)
 
@@ -320,7 +361,7 @@ object CommittedManager {
             putConnection.doOutput = true
 
             val payload = org.json.JSONObject().apply {
-                put("message", "Sync from Android App (${records.size} records)")
+                put("message", "Sync from Android App (${cleanForCloud.size} records)")
                 put("content", encodedContent)
                 put("sha", sha)
             }
@@ -332,8 +373,8 @@ object CommittedManager {
 
             val code = putConnection.responseCode
             if (code == 200 || code == 201) {
-                // Mark all records as synced
-                val syncedList = records.map { it.copy(isLocalOnly = false) }
+                // Update local records state to match the merged and synced result
+                val syncedList = cleanForCloud.map { it.copy(isLocalOnly = false) }
                 records.clear()
                 records.addAll(syncedList)
                 sortByDateAddedDescending()
