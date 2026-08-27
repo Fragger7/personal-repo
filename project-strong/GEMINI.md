@@ -367,9 +367,15 @@ Addressed significant UX complaints regarding the Android app's tabular data dis
 
 ### 📱 Android UI/UX & Forensic Diagnostics Polish (Completed)
 * **Sherlock Holmes Cyber-Detective App Icon**: Created a high-tech vector asset (`ic_launcher_foreground.xml`) incorporating the classic Sherlock Holmes Deerstalker hat silhouette (crown, ear flaps, and dual visors) paired with an illuminated neon magnifying glass highlighting IPTV signal waves, grip rings, and cyber-reticle corner accents.
+* **Playful Cartoon Sherlock Holmes Vector Icon Design**: Upgraded `ic_launcher_foreground.xml` and `ic_launcher_background.xml` to a vibrant cartoon aesthetic:
+  - **Deerstalker Hat**: Rounded houndstooth crown with stylish top ribbon and exaggerated dual-bill visors.
+  - **Calabash Detective Pipe & Streaming Vapor**: Polished briar/amber bowl with glowing ember blowing out playful, sculpted Wi-Fi / IPTV stream signal vapor clouds (`#38BDF8`, `#34D399`, `#67E8F9`).
+  - **Oversized Glossy Magnifying Glass**: Electric cyan rim magnifying a glowing retro-modern TV screen with live streaming play symbol (`▶`), live signal bars, and glass glare reflections.
+  - **Web Dashboard Live Previewer**: Integrated a multi-mask adaptive icon previewer (Squircle, Circle, Rounded Square, Teardrop) directly into the AI Studio web control panel.
 * **Instant Hardware VPN Detection & Network Shield**: Added zero-latency hardware VPN sensing via `NetworkCapabilities.TRANSPORT_VPN` inside `NetworkMonitor.kt` and `MainActivity.kt`. The app updates its top header state immediately to `🛡️ VPN Active` without waiting on external HTTP checks. Created an interactive `ConnectionStateDialog` providing a real-time network breakdown (IP, ISP, Organization, Country) and manual diagnostic refresh.
 * **Scanner Tab Metrics & Controls Separation**: Cleanly separated the action buttons ("Paste from Clipboard" and "Clear Payload") onto their own dedicated top row, and moved the Lines/Character count and Discovered Nodes badges to their own dedicated bottom status bar in `ScannerTab.kt`. Large counts (thousands of nodes) no longer crowd, wrap, or distort button alignments.
 * **Master Grid Action Iconography**: Replaced generic refresh icons with the Search Magnifying Glass (`Icons.Default.Search`) across the master grids to intuitively convey inspecting channels and VODs, while sizing action columns appropriately (`140.dp` for Xtream, `110.dp` for Stalker) for seamless horizontal viewing.
+
 
 ---
 

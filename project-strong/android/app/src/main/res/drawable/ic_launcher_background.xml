@@ -4,7 +4,19 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
+    <!-- Deep Midnight Slate Gradient Base -->
     <path
-        android:fillColor="#090D16"
+        android:fillColor="#070B14"
         android:pathData="M0,0h108v108h-108z" />
+
+    <!-- Ambient Subtle Radial Glow Rings -->
+    <path
+        android:strokeColor="#111C33"
+        android:strokeWidth="1.2"
+        android:pathData="M 54,16 A 38,38 0 1 0 54,92 A 38,38 0 1 0 54,16" />
+    <path
+        android:strokeColor="#0E172A"
+        android:strokeWidth="1.2"
+        android:pathData="M 54,24 A 30,30 0 1 0 54,84 A 30,30 0 1 0 54,24" />
 </vector>
+
