@@ -4,19 +4,23 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <!-- Deep Midnight Slate Gradient Base -->
+
+    <!-- Rich Emerald-Teal Background Vignette -->
     <path
-        android:fillColor="#070B14"
+        android:fillColor="#0D3B3A"
         android:pathData="M0,0h108v108h-108z" />
 
-    <!-- Ambient Subtle Radial Glow Rings -->
+    <!-- Radiant Inner Glow Ring -->
     <path
-        android:strokeColor="#111C33"
-        android:strokeWidth="1.2"
-        android:pathData="M 54,16 A 38,38 0 1 0 54,92 A 38,38 0 1 0 54,16" />
+        android:fillColor="#134E4A"
+        android:pathData="M 54,20 A 34,34 0 1 0 54,88 A 34,34 0 1 0 54,20" />
     <path
-        android:strokeColor="#0E172A"
-        android:strokeWidth="1.2"
-        android:pathData="M 54,24 A 30,30 0 1 0 54,84 A 30,30 0 1 0 54,24" />
-</vector>
+        android:fillColor="#0F766E"
+        android:pathData="M 54,28 A 26,26 0 1 0 54,80 A 26,26 0 1 0 54,28" />
 
+    <!-- Ambient Shadow Edge -->
+    <path
+        android:strokeColor="#042F2E"
+        android:strokeWidth="4"
+        android:pathData="M 54,8 A 46,46 0 1 0 54,100 A 46,46 0 1 0 54,8" />
+</vector>
