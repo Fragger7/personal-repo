@@ -81,9 +81,16 @@ fun Base64Tab(onNextTab: () -> Unit = {}) {
                     Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                         TextButton(
                             onClick = {
-                                clipboardManager.getText()?.text?.let {
-                                    input = it
-                                    ToastManager.info("Pasted text from clipboard")
+                                try {
+                                    val clipText = clipboardManager.getText()?.text
+                                    if (!clipText.isNullOrBlank()) {
+                                        input = clipText
+                                        ToastManager.info("Pasted text from clipboard")
+                                    } else {
+                                        ToastManager.warning("Clipboard is empty or contains non-text data")
+                                    }
+                                } catch (e: Throwable) {
+                                    ToastManager.error("Unable to access clipboard")
                                 }
                             },
                             contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp)
@@ -129,28 +136,43 @@ fun Base64Tab(onNextTab: () -> Unit = {}) {
                     text = "⚡ Decode Data",
                     onClick = {
                         try {
+                            if (input.isBlank()) {
+                                ToastManager.warning("Input is empty")
+                                return@PrimaryButton
+                            }
                             val pattern = java.util.regex.Pattern.compile("[A-Za-z0-9+/]{20,}={0,2}")
                             val matcher = pattern.matcher(input)
                             val results = mutableListOf<String>()
-                            while (matcher.find()) {
+                            var count = 0
+                            while (matcher.find() && count < 50) {
                                 val p = matcher.group()
                                 val pad = p.length % 4
                                 val padded = p + "=".repeat(if (pad > 0) 4 - pad else 0)
                                 try {
                                     val decodedBytes = Base64.decode(padded, Base64.DEFAULT)
-                                    results.add(String(decodedBytes, Charsets.UTF_8))
-                                } catch(e: Exception) {}
+                                    val decodedStr = String(decodedBytes, Charsets.UTF_8).trim()
+                                    if (decodedStr.isNotBlank() && !results.contains(decodedStr)) {
+                                        results.add(decodedStr)
+                                        count++
+                                    }
+                                } catch (e: Throwable) {}
                             }
                             if (results.isEmpty()) {
                                 val cleanInput = input.replace(Regex("\\s+"), "")
-                                val decodedBytes = Base64.decode(cleanInput, Base64.DEFAULT)
-                                output = String(decodedBytes, Charsets.UTF_8)
+                                if (cleanInput.isNotBlank()) {
+                                    val pad = cleanInput.length % 4
+                                    val padded = cleanInput + "=".repeat(if (pad > 0) 4 - pad else 0)
+                                    val decodedBytes = Base64.decode(padded, Base64.DEFAULT)
+                                    output = String(decodedBytes, Charsets.UTF_8)
+                                } else {
+                                    output = ""
+                                }
                             } else {
                                 output = results.joinToString("\n\n")
                             }
                             ToastManager.success("Base64 decoded successfully!")
-                        } catch (e: Exception) {
-                            output = "Error decoding: ${e.message}"
+                        } catch (e: Throwable) {
+                            output = "Error decoding: ${e.message ?: "Invalid Base64 payload"}"
                             ToastManager.error("Failed to decode Base64 data")
                         }
                     },

@@ -116,7 +116,7 @@ fun ToastHost(modifier: Modifier = Modifier) {
 
             Box(
                 modifier = Modifier
-                    .shadow(16.dp, RoundedCornerShape(16.dp), spotColor = iconTint)
+                    .shadow(8.dp, RoundedCornerShape(16.dp))
                     .clip(RoundedCornerShape(16.dp))
                     .background(bgColor)
                     .border(1.dp, borderColor, RoundedCornerShape(16.dp))

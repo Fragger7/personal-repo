@@ -48,6 +48,25 @@ fun ScannerTab(onNextTab: (() -> Unit)? = null) {
     val coroutineScope = rememberCoroutineScope()
     var scanJob by remember { mutableStateOf<Job?>(null) }
 
+    // Track metrics asynchronously off the main thread to prevent UI lockups
+    var discoveredCount by remember { mutableIntStateOf(0) }
+    var lineCount by remember { mutableIntStateOf(0) }
+    val charCount = DataStore.scannerInput.length
+
+    LaunchedEffect(DataStore.scannerInput) {
+        if (DataStore.scannerInput.isBlank()) {
+            discoveredCount = 0
+            lineCount = 0
+        } else {
+            kotlinx.coroutines.withContext(Dispatchers.Default) {
+                val lines = try { DataStore.scannerInput.lines().size } catch (e: Throwable) { 0 }
+                val count = try { Parser.parseCredentials(DataStore.scannerInput).size } catch (e: Throwable) { 0 }
+                lineCount = lines
+                discoveredCount = count
+            }
+        }
+    }
+
     // Query external IP info if empty
     LaunchedEffect(Unit) {
         if (DataStore.ipInfo.isEmpty()) {
@@ -272,9 +291,16 @@ fun ScannerTab(onNextTab: (() -> Unit)? = null) {
                             color = AppPrimary.copy(alpha = 0.15f),
                             border = androidx.compose.foundation.BorderStroke(1.dp, AppPrimary.copy(alpha = 0.4f)),
                             modifier = Modifier.clickable {
-                                clipboardManager.getText()?.text?.let {
-                                    DataStore.scannerInput = it
-                                    ToastManager.info("Pasted text from clipboard")
+                                try {
+                                    val clipText = clipboardManager.getText()?.text
+                                    if (!clipText.isNullOrBlank()) {
+                                        DataStore.scannerInput = clipText
+                                        ToastManager.info("Pasted text from clipboard")
+                                    } else {
+                                        ToastManager.warning("Clipboard is empty or contains non-text data")
+                                    }
+                                } catch (e: Throwable) {
+                                    ToastManager.error("Unable to access clipboard")
                                 }
                             }
                         ) {
@@ -323,10 +349,6 @@ fun ScannerTab(onNextTab: (() -> Unit)? = null) {
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    val lineCount = if (DataStore.scannerInput.isEmpty()) 0 else DataStore.scannerInput.lines().size
-                    val charCount = DataStore.scannerInput.length
-                    val discoveredCount = if (DataStore.scannerInput.isEmpty()) 0 else Parser.parseCredentials(DataStore.scannerInput).size
-
                     Surface(
                         shape = RoundedCornerShape(8.dp),
                         color = AppSurfaceVariant,
