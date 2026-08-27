@@ -81,7 +81,8 @@ fun FullScreenCatalogExplorer(
                             val name = stream.optString("name", "Unknown Stream")
                             val catId = stream.optString("category_id", "")
                             val icon = stream.optString("stream_icon", "")
-                            val direct = "$cleanBaseUrl/live/$user/$pass/$streamId.ts"
+                            val directSource = stream.optString("direct_source", "")
+                            val direct = if (directSource.isNotEmpty()) directSource else "$cleanBaseUrl/live/$user/$pass/$streamId.ts"
 
                             parsedChannels.add(ChannelItem(streamId, name, catId, icon, direct))
                             catCountMap[catId] = (catCountMap[catId] ?: 0) + 1

@@ -121,6 +121,20 @@ fun StreamPreviewDialog(
     var isUserScrubbing by remember { mutableStateOf(false) }
     var scrubPositionMs by remember { mutableFloatStateOf(0f) }
 
+    // Auto-Hide Controls State (Fades out after ~3s of inactivity, reappears on video tap)
+    var showControls by remember { mutableStateOf(true) }
+    var controlsInteractionTrigger by remember { mutableLongStateOf(System.currentTimeMillis()) }
+
+    // Auto-hide timer: Hides controls after 3 seconds of no interaction while video is playing
+    LaunchedEffect(showControls, controlsInteractionTrigger, isPlaying, playStatus) {
+        if (showControls && isPlaying && playStatus == StreamPlayStatus.PLAYING) {
+            delay(3000)
+            if (!isUserScrubbing) {
+                showControls = false
+            }
+        }
+    }
+
     val streamFormat = remember(streamUrl) {
         when {
             streamUrl.contains(".m3u8", ignoreCase = true) -> "HLS Multi-Bitrate (.m3u8)"
@@ -460,7 +474,16 @@ fun StreamPreviewDialog(
                         .then(
                             if (isFullScreen) Modifier.fillMaxSize() else Modifier.height(240.dp)
                         )
-                        .background(Color.Black),
+                        .background(Color.Black)
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null
+                        ) {
+                            showControls = !showControls
+                            if (showControls) {
+                                controlsInteractionTrigger = System.currentTimeMillis()
+                            }
+                        },
                     contentAlignment = Alignment.Center
                 ) {
                     AndroidView(
@@ -559,191 +582,217 @@ fun StreamPreviewDialog(
                         }
                     }
 
-                    // Top Floating Controls in Fullscreen
+                    // Top Floating Controls in Fullscreen (Auto-hides with smooth animation)
                     if (isFullScreen) {
-                        Row(
-                            modifier = Modifier
-                                .align(Alignment.TopCenter)
-                                .fillMaxWidth()
-                                .background(Color.Black.copy(alpha = 0.65f))
-                                .padding(horizontal = 16.dp, vertical = 10.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
+                        androidx.compose.animation.AnimatedVisibility(
+                            visible = showControls,
+                            enter = fadeIn() + slideInVertically { -it },
+                            exit = fadeOut() + slideOutVertically { -it },
+                            modifier = Modifier.align(Alignment.TopCenter)
                         ) {
                             Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .background(Color.Black.copy(alpha = 0.65f))
+                                    .padding(horizontal = 16.dp, vertical = 10.dp),
                                 verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                modifier = Modifier.weight(1f)
+                                horizontalArrangement = Arrangement.SpaceBetween
                             ) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(8.dp)
-                                        .clip(CircleShape)
-                                        .background(Color(0xFF34D399))
-                                )
-                                Text(
-                                    text = streamName,
-                                    color = Color.White,
-                                    fontWeight = FontWeight.Bold,
-                                    style = MaterialTheme.typography.titleSmall,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
-                                )
-                            }
-                            IconButton(
-                                onClick = { isFullScreen = false },
-                                modifier = Modifier.size(36.dp)
-                            ) {
-                                Icon(Icons.Default.FullscreenExit, contentDescription = "Exit Fullscreen", tint = Color.White)
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                    modifier = Modifier.weight(1f)
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(8.dp)
+                                            .clip(CircleShape)
+                                            .background(Color(0xFF34D399))
+                                    )
+                                    Text(
+                                        text = streamName,
+                                        color = Color.White,
+                                        fontWeight = FontWeight.Bold,
+                                        style = MaterialTheme.typography.titleSmall,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                }
+                                IconButton(
+                                    onClick = {
+                                        controlsInteractionTrigger = System.currentTimeMillis()
+                                        isFullScreen = false
+                                    },
+                                    modifier = Modifier.size(36.dp)
+                                ) {
+                                    Icon(Icons.Default.FullscreenExit, contentDescription = "Exit Fullscreen", tint = Color.White)
+                                }
                             }
                         }
                     }
 
-                    // Rich Bottom Player Action & Track Bar Bar
-                    Column(
-                        modifier = Modifier
-                            .align(Alignment.BottomCenter)
-                            .fillMaxWidth()
-                            .background(Color.Black.copy(alpha = 0.75f))
-                            .padding(horizontal = 10.dp, vertical = 6.dp)
+                    // Rich Bottom Player Action & Track Bar Bar (Auto-hides with smooth animation)
+                    androidx.compose.animation.AnimatedVisibility(
+                        visible = showControls,
+                        enter = fadeIn() + slideInVertically { it },
+                        exit = fadeOut() + slideOutVertically { it },
+                        modifier = Modifier.align(Alignment.BottomCenter)
                     ) {
-                        // Track / Scrub Bar for Catchup & VOD / Timeshift
-                        if (durationMs > 0 && !isLiveStream) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth().padding(horizontal = 6.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                Text(
-                                    text = formatTime(if (isUserScrubbing) scrubPositionMs.toLong() else currentPositionMs),
-                                    color = Color.White,
-                                    style = MaterialTheme.typography.labelSmall,
-                                    fontFamily = FontFamily.Monospace
-                                )
-                                Slider(
-                                    value = if (isUserScrubbing) scrubPositionMs else currentPositionMs.toFloat(),
-                                    onValueChange = {
-                                        isUserScrubbing = true
-                                        scrubPositionMs = it
-                                    },
-                                    onValueChangeFinished = {
-                                        exoPlayer.seekTo(scrubPositionMs.toLong())
-                                        isUserScrubbing = false
-                                    },
-                                    valueRange = 0f..durationMs.toFloat(),
-                                    modifier = Modifier.weight(1f),
-                                    colors = SliderDefaults.colors(
-                                        thumbColor = Color(0xFF38BDF8),
-                                        activeTrackColor = Color(0xFF38BDF8),
-                                        inactiveTrackColor = Color(0xFF334155)
-                                    )
-                                )
-                                Text(
-                                    text = formatTime(durationMs),
-                                    color = Color(0xFF94A3B8),
-                                    style = MaterialTheme.typography.labelSmall,
-                                    fontFamily = FontFamily.Monospace
-                                )
-                            }
-                        }
-
-                        // Labeled Controls Bar
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(Color.Black.copy(alpha = 0.75f))
+                                .padding(horizontal = 10.dp, vertical = 6.dp)
                         ) {
-                            // Left Actions: Play/Pause, Mute, Aspect, Sync
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(4.dp)
-                            ) {
-                                PlayerLabeledButton(
-                                    icon = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
-                                    label = if (isPlaying) "Pause" else "Play",
-                                    tint = if (isPlaying) Color.White else Color(0xFF34D399),
-                                    onClick = {
-                                        if (isPlaying) exoPlayer.pause() else exoPlayer.play()
-                                    }
-                                )
-
-                                PlayerLabeledButton(
-                                    icon = if (isMuted) Icons.Default.VolumeOff else Icons.Default.VolumeUp,
-                                    label = if (isMuted) "Unmute" else "Mute",
-                                    tint = if (isMuted) Color(0xFFF87171) else Color.White,
-                                    onClick = {
-                                        isMuted = !isMuted
-                                        exoPlayer.volume = if (isMuted) 0f else 1f
-                                    }
-                                )
-
-                                PlayerLabeledButton(
-                                    icon = Icons.Default.AspectRatio,
-                                    label = when (resizeMode) {
-                                        AspectRatioFrameLayout.RESIZE_MODE_FIT -> "Fit"
-                                        AspectRatioFrameLayout.RESIZE_MODE_FILL -> "Fill"
-                                        AspectRatioFrameLayout.RESIZE_MODE_ZOOM -> "Zoom"
-                                        else -> "Aspect"
-                                    },
-                                    tint = Color(0xFF38BDF8),
-                                    onClick = {
-                                        resizeMode = when (resizeMode) {
-                                            AspectRatioFrameLayout.RESIZE_MODE_FIT -> AspectRatioFrameLayout.RESIZE_MODE_FILL
-                                            AspectRatioFrameLayout.RESIZE_MODE_FILL -> AspectRatioFrameLayout.RESIZE_MODE_ZOOM
-                                            else -> AspectRatioFrameLayout.RESIZE_MODE_FIT
-                                        }
-                                    }
-                                )
-
-                                PlayerLabeledButton(
-                                    icon = Icons.Default.Sync,
-                                    label = "Sync",
-                                    tint = Color(0xFF34D399),
-                                    onClick = {
-                                        exoPlayer.seekToDefaultPosition()
-                                        exoPlayer.play()
-                                    }
-                                )
+                            // Track / Scrub Bar for Catchup & VOD / Timeshift
+                            if (durationMs > 0 && !isLiveStream) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth().padding(horizontal = 6.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    Text(
+                                        text = formatTime(if (isUserScrubbing) scrubPositionMs.toLong() else currentPositionMs),
+                                        color = Color.White,
+                                        style = MaterialTheme.typography.labelSmall,
+                                        fontFamily = FontFamily.Monospace
+                                    )
+                                    Slider(
+                                        value = if (isUserScrubbing) scrubPositionMs else currentPositionMs.toFloat(),
+                                        onValueChange = {
+                                            isUserScrubbing = true
+                                            scrubPositionMs = it
+                                            controlsInteractionTrigger = System.currentTimeMillis()
+                                        },
+                                        onValueChangeFinished = {
+                                            exoPlayer.seekTo(scrubPositionMs.toLong())
+                                            isUserScrubbing = false
+                                            controlsInteractionTrigger = System.currentTimeMillis()
+                                        },
+                                        valueRange = 0f..durationMs.toFloat(),
+                                        modifier = Modifier.weight(1f),
+                                        colors = SliderDefaults.colors(
+                                            thumbColor = Color(0xFF38BDF8),
+                                            activeTrackColor = Color(0xFF38BDF8),
+                                            inactiveTrackColor = Color(0xFF334155)
+                                        )
+                                    )
+                                    Text(
+                                        text = formatTime(durationMs),
+                                        color = Color(0xFF94A3B8),
+                                        style = MaterialTheme.typography.labelSmall,
+                                        fontFamily = FontFamily.Monospace
+                                    )
+                                }
                             }
 
-                            // Right Actions: Copy, External, Fullscreen
+                            // Labeled Controls Bar
                             Row(
+                                modifier = Modifier.fillMaxWidth(),
                                 verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                horizontalArrangement = Arrangement.SpaceBetween
                             ) {
-                                PlayerLabeledButton(
-                                    icon = Icons.Default.ContentCopy,
-                                    label = "Copy",
-                                    tint = Color(0xFF94A3B8),
-                                    onClick = {
-                                        clipboardManager.setText(AnnotatedString(streamUrl))
-                                        showCopiedToast = true
-                                    }
-                                )
-
-                                PlayerLabeledButton(
-                                    icon = Icons.Default.OpenInNew,
-                                    label = "VLC",
-                                    tint = Color(0xFF60A5FA),
-                                    onClick = {
-                                        try {
-                                            val intent = Intent(Intent.ACTION_VIEW).apply {
-                                                setDataAndType(Uri.parse(streamUrl), "video/*")
-                                                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                                            }
-                                            context.startActivity(Intent.createChooser(intent, "Play with External Player"))
-                                        } catch (e: Exception) {
-                                            // Ignore if no external player
+                                // Left Actions: Play/Pause, Mute, Aspect, Sync
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                ) {
+                                    PlayerLabeledButton(
+                                        icon = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
+                                        label = if (isPlaying) "Pause" else "Play",
+                                        tint = if (isPlaying) Color.White else Color(0xFF34D399),
+                                        onClick = {
+                                            controlsInteractionTrigger = System.currentTimeMillis()
+                                            if (isPlaying) exoPlayer.pause() else exoPlayer.play()
                                         }
-                                    }
-                                )
+                                    )
 
-                                PlayerLabeledButton(
-                                    icon = if (isFullScreen) Icons.Default.FullscreenExit else Icons.Default.Fullscreen,
-                                    label = if (isFullScreen) "Exit" else "Full",
-                                    tint = Color.White,
-                                    onClick = { isFullScreen = !isFullScreen }
-                                )
+                                    PlayerLabeledButton(
+                                        icon = if (isMuted) Icons.Default.VolumeOff else Icons.Default.VolumeUp,
+                                        label = if (isMuted) "Unmute" else "Mute",
+                                        tint = if (isMuted) Color(0xFFF87171) else Color.White,
+                                        onClick = {
+                                            controlsInteractionTrigger = System.currentTimeMillis()
+                                            isMuted = !isMuted
+                                            exoPlayer.volume = if (isMuted) 0f else 1f
+                                        }
+                                    )
+
+                                    PlayerLabeledButton(
+                                        icon = Icons.Default.AspectRatio,
+                                        label = when (resizeMode) {
+                                            AspectRatioFrameLayout.RESIZE_MODE_FIT -> "Fit"
+                                            AspectRatioFrameLayout.RESIZE_MODE_FILL -> "Fill"
+                                            AspectRatioFrameLayout.RESIZE_MODE_ZOOM -> "Zoom"
+                                            else -> "Aspect"
+                                        },
+                                        tint = Color(0xFF38BDF8),
+                                        onClick = {
+                                            controlsInteractionTrigger = System.currentTimeMillis()
+                                            resizeMode = when (resizeMode) {
+                                                AspectRatioFrameLayout.RESIZE_MODE_FIT -> AspectRatioFrameLayout.RESIZE_MODE_FILL
+                                                AspectRatioFrameLayout.RESIZE_MODE_FILL -> AspectRatioFrameLayout.RESIZE_MODE_ZOOM
+                                                else -> AspectRatioFrameLayout.RESIZE_MODE_FIT
+                                            }
+                                        }
+                                    )
+
+                                    PlayerLabeledButton(
+                                        icon = Icons.Default.Sync,
+                                        label = "Sync",
+                                        tint = Color(0xFF34D399),
+                                        onClick = {
+                                            controlsInteractionTrigger = System.currentTimeMillis()
+                                            exoPlayer.seekToDefaultPosition()
+                                            exoPlayer.play()
+                                        }
+                                    )
+                                }
+
+                                // Right Actions: Copy, External, Fullscreen
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                ) {
+                                    PlayerLabeledButton(
+                                        icon = Icons.Default.ContentCopy,
+                                        label = "Copy",
+                                        tint = Color(0xFF94A3B8),
+                                        onClick = {
+                                            controlsInteractionTrigger = System.currentTimeMillis()
+                                            clipboardManager.setText(AnnotatedString(streamUrl))
+                                            showCopiedToast = true
+                                        }
+                                    )
+
+                                    PlayerLabeledButton(
+                                        icon = Icons.Default.OpenInNew,
+                                        label = "VLC",
+                                        tint = Color(0xFF60A5FA),
+                                        onClick = {
+                                            controlsInteractionTrigger = System.currentTimeMillis()
+                                            try {
+                                                val intent = Intent(Intent.ACTION_VIEW).apply {
+                                                    setDataAndType(Uri.parse(streamUrl), "video/*")
+                                                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                                }
+                                                context.startActivity(Intent.createChooser(intent, "Play with External Player"))
+                                            } catch (e: Exception) {
+                                                // Ignore if no external player
+                                            }
+                                        }
+                                    )
+
+                                    PlayerLabeledButton(
+                                        icon = if (isFullScreen) Icons.Default.FullscreenExit else Icons.Default.Fullscreen,
+                                        label = if (isFullScreen) "Exit" else "Full",
+                                        tint = Color.White,
+                                        onClick = {
+                                            controlsInteractionTrigger = System.currentTimeMillis()
+                                            isFullScreen = !isFullScreen
+                                        }
+                                    )
+                                }
                             }
                         }
                     }

@@ -177,7 +177,9 @@ object IPTVClient {
             val m3uUrls = listOf(
                 "$normalizedUrl/get.php?username=$encodedUser&password=$encodedPass&type=m3u_plus&output=ts",
                 "$normalizedUrl/get.php?username=$encodedUser&password=$encodedPass&type=m3u_plus",
-                "$normalizedUrl/get.php?username=$encodedUser&password=$encodedPass"
+                "$normalizedUrl/get.php?username=$encodedUser&password=$encodedPass",
+                "$normalizedUrl/get.php?username=$encodedUser&password=$encodedPass&type=m3u&output=ts",
+                "$normalizedUrl/get.php?username=$encodedUser&password=$encodedPass&type=m3u_plus&output=m3u8"
             )
 
             for (m3uUrl in m3uUrls) {
@@ -454,96 +456,130 @@ object IPTVClient {
      * Memory-efficient stream parser for M3U playlists to extract unique Category groupings.
      */
     private fun fetchCategoriesFromM3U(baseUrl: String, encodedUser: String, encodedPass: String): JSONArray? {
-        val m3uUrl = "$baseUrl/get.php?username=$encodedUser&password=$encodedPass&type=m3u_plus"
-        val response = executeWithAdaptiveHeaders(getDeepQueryClient(), m3uUrl)
-        if (response.code != 200) {
-            response.close()
-            return null
-        }
+        val m3uUrls = listOf(
+            "$baseUrl/get.php?username=$encodedUser&password=$encodedPass&type=m3u_plus&output=ts",
+            "$baseUrl/get.php?username=$encodedUser&password=$encodedPass&type=m3u_plus",
+            "$baseUrl/get.php?username=$encodedUser&password=$encodedPass&type=m3u&output=ts",
+            "$baseUrl/get.php?username=$encodedUser&password=$encodedPass"
+        )
 
-        val body = response.body ?: return null
-        val reader = BufferedReader(InputStreamReader(body.byteStream(), "UTF-8"), 32768)
-        val categoriesSet = mutableSetOf<String>()
-        val result = JSONArray()
+        for (m3uUrl in m3uUrls) {
+            try {
+                val response = executeWithAdaptiveHeaders(getDeepQueryClient(), m3uUrl)
+                if (response.code == 200) {
+                    val body = response.body
+                    if (body != null) {
+                        val reader = BufferedReader(InputStreamReader(body.byteStream(), "UTF-8"), 32768)
+                        val categoriesSet = mutableSetOf<String>()
+                        val result = JSONArray()
 
-        val groupTitlePattern = Pattern.compile("(?i)group-title=\"([^\"]+)\"")
-        var line: String?
-        while (reader.readLine().also { line = it } != null) {
-            val currentLine = line ?: break
-            if (currentLine.startsWith("#EXTINF")) {
-                val matcher = groupTitlePattern.matcher(currentLine)
-                if (matcher.find()) {
-                    val group = matcher.group(1).trim()
-                    if (group.isNotEmpty() && categoriesSet.add(group)) {
-                        val catObj = JSONObject().apply {
-                            put("category_id", group)
-                            put("category_name", group)
+                        val groupTitlePattern = Pattern.compile("(?i)group-title=\"([^\"]+)\"")
+                        var line: String?
+                        var isM3u = false
+                        while (reader.readLine().also { line = it } != null) {
+                            val currentLine = line ?: break
+                            if (currentLine.startsWith("#EXTM3U") || currentLine.startsWith("#EXTINF")) {
+                                isM3u = true
+                            }
+                            if (currentLine.startsWith("#EXTINF")) {
+                                val matcher = groupTitlePattern.matcher(currentLine)
+                                if (matcher.find()) {
+                                    val group = matcher.group(1).trim()
+                                    if (group.isNotEmpty() && categoriesSet.add(group)) {
+                                        val catObj = JSONObject().apply {
+                                            put("category_id", group)
+                                            put("category_name", group)
+                                        }
+                                        result.put(catObj)
+                                    }
+                                }
+                            }
                         }
-                        result.put(catObj)
+                        reader.close()
+                        if (isM3u && result.length() > 0) {
+                            return result
+                        }
                     }
                 }
+                response.close()
+            } catch (e: Exception) {
+                // Try next M3U URL fallback
             }
         }
-        reader.close()
-        return if (result.length() > 0) result else null
+        return null
     }
 
     /**
      * Memory-efficient stream parser for M3U playlists to extract channel stream items.
      */
     private fun fetchStreamsFromM3U(baseUrl: String, encodedUser: String, encodedPass: String): JSONArray? {
-        val m3uUrl = "$baseUrl/get.php?username=$encodedUser&password=$encodedPass&type=m3u_plus"
-        val response = executeWithAdaptiveHeaders(getDeepQueryClient(), m3uUrl)
-        if (response.code != 200) {
-            response.close()
-            return null
-        }
+        val m3uUrls = listOf(
+            "$baseUrl/get.php?username=$encodedUser&password=$encodedPass&type=m3u_plus&output=ts",
+            "$baseUrl/get.php?username=$encodedUser&password=$encodedPass&type=m3u_plus",
+            "$baseUrl/get.php?username=$encodedUser&password=$encodedPass&type=m3u&output=ts",
+            "$baseUrl/get.php?username=$encodedUser&password=$encodedPass"
+        )
 
-        val body = response.body ?: return null
-        val reader = BufferedReader(InputStreamReader(body.byteStream(), "UTF-8"), 32768)
-        val result = JSONArray()
+        for (m3uUrl in m3uUrls) {
+            try {
+                val response = executeWithAdaptiveHeaders(getDeepQueryClient(), m3uUrl)
+                if (response.code == 200) {
+                    val body = response.body
+                    if (body != null) {
+                        val reader = BufferedReader(InputStreamReader(body.byteStream(), "UTF-8"), 32768)
+                        val result = JSONArray()
 
-        val groupTitlePattern = Pattern.compile("(?i)group-title=\"([^\"]+)\"")
-        val tvgLogoPattern = Pattern.compile("(?i)tvg-logo=\"([^\"]+)\"")
-        val tvgIdPattern = Pattern.compile("(?i)tvg-id=\"([^\"]+)\"")
+                        val groupTitlePattern = Pattern.compile("(?i)group-title=\"([^\"]+)\"")
+                        val tvgLogoPattern = Pattern.compile("(?i)tvg-logo=\"([^\"]+)\"")
+                        val tvgIdPattern = Pattern.compile("(?i)tvg-id=\"([^\"]+)\"")
 
-        var lastHeader: String? = null
-        var line: String?
-        var streamIdCounter = 1
+                        var lastHeader: String? = null
+                        var line: String?
+                        var streamIdCounter = 1
 
-        while (reader.readLine().also { line = it } != null) {
-            val currentLine = line?.trim() ?: break
-            if (currentLine.startsWith("#EXTINF")) {
-                lastHeader = currentLine
-            } else if (currentLine.isNotEmpty() && !currentLine.startsWith("#") && lastHeader != null) {
-                val header = lastHeader
-                lastHeader = null
+                        while (reader.readLine().also { line = it } != null) {
+                            val currentLine = line?.trim() ?: break
+                            if (currentLine.startsWith("#EXTINF")) {
+                                lastHeader = currentLine
+                            } else if (currentLine.isNotEmpty() && !currentLine.startsWith("#") && lastHeader != null) {
+                                val header = lastHeader
+                                lastHeader = null
 
-                val channelName = header.substringAfterLast(",").trim()
-                val groupMatcher = groupTitlePattern.matcher(header)
-                val groupName = if (groupMatcher.find()) groupMatcher.group(1).trim() else "Uncategorized"
+                                val channelName = header.substringAfterLast(",").trim()
+                                val groupMatcher = groupTitlePattern.matcher(header)
+                                val groupName = if (groupMatcher.find()) groupMatcher.group(1).trim() else "Uncategorized"
 
-                val logoMatcher = tvgLogoPattern.matcher(header)
-                val logoUrl = if (logoMatcher.find()) logoMatcher.group(1).trim() else ""
+                                val logoMatcher = tvgLogoPattern.matcher(header)
+                                val logoUrl = if (logoMatcher.find()) logoMatcher.group(1).trim() else ""
 
-                val idMatcher = tvgIdPattern.matcher(header)
-                val tvgId = if (idMatcher.find()) idMatcher.group(1).trim() else ""
+                                val idMatcher = tvgIdPattern.matcher(header)
+                                val tvgId = if (idMatcher.find()) idMatcher.group(1).trim() else ""
 
-                val streamObj = JSONObject().apply {
-                    put("num", streamIdCounter)
-                    put("name", channelName.ifEmpty { "Channel $streamIdCounter" })
-                    put("stream_id", streamIdCounter)
-                    put("stream_icon", logoUrl)
-                    put("epg_channel_id", tvgId)
-                    put("category_id", groupName)
-                    put("category_name", groupName)
-                    put("direct_source", currentLine)
+                                val streamObj = JSONObject().apply {
+                                    put("num", streamIdCounter)
+                                    put("name", channelName.ifEmpty { "Channel $streamIdCounter" })
+                                    put("stream_id", streamIdCounter)
+                                    put("stream_icon", logoUrl)
+                                    put("epg_channel_id", tvgId)
+                                    put("category_id", groupName)
+                                    put("category_name", groupName)
+                                    put("direct_source", currentLine)
+                                }
+                                result.put(streamObj)
+                                streamIdCounter++
+                            }
+                        }
+                        reader.close()
+                        if (result.length() > 0) {
+                            return result
+                        }
+                    }
                 }
-                result.put(streamObj)
-                streamIdCounter++
+                response.close()
+            } catch (e: Exception) {
+                // Try next M3U URL fallback
             }
         }
-        reader.close()
-        return if (result.length() > 0) result else null
+        return null
     }
 }
