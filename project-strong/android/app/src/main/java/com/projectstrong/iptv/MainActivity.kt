@@ -35,7 +35,6 @@ import com.projectstrong.iptv.data.CommittedManager
 import com.projectstrong.iptv.data.DataStore
 import com.projectstrong.iptv.network.NetworkMonitor
 import com.projectstrong.iptv.ui.components.ConnectionStateDialog
-import com.projectstrong.iptv.ui.components.HeroBanner
 import com.projectstrong.iptv.ui.components.SettingsDialog
 import com.projectstrong.iptv.ui.components.ToastHost
 import com.projectstrong.iptv.ui.components.ToastManager
@@ -282,29 +281,18 @@ fun MainDashboard() {
             }
         }
 
-        // Hero Banner Display
-        HeroBanner(
-            activeNodesCount = activeNodesCount,
-            committedCount = committedCount,
-            onOpenScanner = { selectedTab = 1 },
-            onOpenCommitted = { selectedTab = 4 },
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
-        )
-
-        Spacer(modifier = Modifier.height(10.dp))
-
-        // Distinct, High-Emphasis Tab Navigation Bar
+        // Distinct, High-Emphasis Classic Tab Navigation Bar (Elevated with active underline & badge styling)
         Surface(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp),
-            shape = RoundedCornerShape(16.dp),
+                .padding(horizontal = 12.dp),
+            shape = RoundedCornerShape(12.dp),
             color = AppSurface,
             border = BorderStroke(1.dp, AppSurfaceBorder)
         ) {
             ScrollableTabRow(
                 selectedTabIndex = selectedTab,
-                edgePadding = 6.dp,
+                edgePadding = 4.dp,
                 containerColor = Color.Transparent,
                 divider = {},
                 indicator = {}
@@ -314,30 +302,26 @@ fun MainDashboard() {
                     Tab(
                         selected = isSelected,
                         onClick = { selectedTab = index },
-                        modifier = Modifier.padding(horizontal = 3.dp, vertical = 6.dp)
+                        modifier = Modifier.padding(horizontal = 2.dp, vertical = 4.dp)
                     ) {
                         // High-contrast, tactile pill for unselected and selected tabs
                         Surface(
-                            shape = RoundedCornerShape(12.dp),
+                            shape = RoundedCornerShape(8.dp),
                             color = if (isSelected) {
                                 AppPrimary.copy(alpha = 0.22f)
                             } else {
-                                AppSurfaceVariant.copy(alpha = 0.8f)
+                                Color.Transparent
                             },
-                            border = BorderStroke(
-                                1.dp,
-                                if (isSelected) {
-                                    AppPrimary
-                                } else {
-                                    AppSurfaceBorder.copy(alpha = 0.7f)
-                                }
-                            ),
-                            shadowElevation = if (isSelected) 2.dp else 0.dp
+                            border = if (isSelected) {
+                                BorderStroke(1.dp, AppPrimary.copy(alpha = 0.6f))
+                            } else {
+                                null
+                            }
                         ) {
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.spacedBy(6.dp),
-                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 7.dp)
                             ) {
                                 Icon(
                                     imageVector = item.icon,
@@ -348,7 +332,7 @@ fun MainDashboard() {
                                 Text(
                                     text = item.title,
                                     fontWeight = if (isSelected) FontWeight.ExtraBold else FontWeight.SemiBold,
-                                    color = if (isSelected) Color(0xFF93C5FD) else AppTextPrimary,
+                                    color = if (isSelected) Color(0xFF93C5FD) else AppTextSecondary,
                                     style = MaterialTheme.typography.labelMedium
                                 )
                                 if (item.count > 0) {
