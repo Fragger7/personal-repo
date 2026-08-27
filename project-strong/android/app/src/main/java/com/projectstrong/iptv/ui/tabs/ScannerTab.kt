@@ -48,19 +48,25 @@ fun ScannerTab(onNextTab: (() -> Unit)? = null) {
     val coroutineScope = rememberCoroutineScope()
     var scanJob by remember { mutableStateOf<Job?>(null) }
 
-    // Track metrics asynchronously off the main thread to prevent UI lockups
+    // Use local Compose state for raw text input to prevent global singleton recomposition thrashing
+    var localInput by remember { mutableStateOf(DataStore.scannerInput) }
+
+    // Track metrics asynchronously off the main thread with debouncing to prevent UI lockups
     var discoveredCount by remember { mutableIntStateOf(0) }
     var lineCount by remember { mutableIntStateOf(0) }
-    val charCount = DataStore.scannerInput.length
+    val charCount = localInput.length
 
-    LaunchedEffect(DataStore.scannerInput) {
-        if (DataStore.scannerInput.isBlank()) {
+    // Synchronize localInput with DataStore on changes and compute metrics asynchronously off main thread
+    LaunchedEffect(localInput) {
+        DataStore.scannerInput = localInput
+        if (localInput.isBlank()) {
             discoveredCount = 0
             lineCount = 0
         } else {
+            delay(250) // Debounce rapid edits or large paste operations
             kotlinx.coroutines.withContext(Dispatchers.Default) {
-                val lines = try { DataStore.scannerInput.lines().size } catch (e: Throwable) { 0 }
-                val count = try { Parser.parseCredentials(DataStore.scannerInput).size } catch (e: Throwable) { 0 }
+                val lines = try { localInput.lines().size } catch (e: Throwable) { 0 }
+                val count = try { Parser.parseCredentials(localInput).size } catch (e: Throwable) { 0 }
                 lineCount = lines
                 discoveredCount = count
             }
@@ -294,6 +300,7 @@ fun ScannerTab(onNextTab: (() -> Unit)? = null) {
                                 try {
                                     val clipText = clipboardManager.getText()?.text
                                     if (!clipText.isNullOrBlank()) {
+                                        localInput = clipText
                                         DataStore.scannerInput = clipText
                                         ToastManager.info("Pasted text from clipboard")
                                     } else {
@@ -315,12 +322,13 @@ fun ScannerTab(onNextTab: (() -> Unit)? = null) {
                         }
 
                         // Clear Button (Interactive when input has text)
-                        if (DataStore.scannerInput.isNotEmpty()) {
+                        if (localInput.isNotEmpty()) {
                             Surface(
                                 shape = RoundedCornerShape(8.dp),
                                 color = AppError.copy(alpha = 0.15f),
                                 border = androidx.compose.foundation.BorderStroke(1.dp, AppError.copy(alpha = 0.4f)),
                                 modifier = Modifier.clickable {
+                                    localInput = ""
                                     DataStore.scannerInput = ""
                                     DataStore.scannedNodes.clear()
                                     DataStore.scanProgress = 0f
@@ -382,8 +390,8 @@ fun ScannerTab(onNextTab: (() -> Unit)? = null) {
                 Spacer(modifier = Modifier.height(10.dp))
 
                 OutlinedTextField(
-                    value = DataStore.scannerInput,
-                    onValueChange = { DataStore.scannerInput = it },
+                    value = localInput,
+                    onValueChange = { localInput = it },
                     placeholder = {
                         Text(
                             "Paste raw unstructured text, Xtream Codes combos (host user pass), M3U playlists, or Stalker MAC links here...",
