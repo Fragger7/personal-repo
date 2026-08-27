@@ -33,6 +33,7 @@ import com.projectstrong.iptv.network.Parser
 import com.projectstrong.iptv.network.VerificationResult
 import com.projectstrong.iptv.ui.components.*
 import com.projectstrong.iptv.ui.theme.*
+import com.projectstrong.iptv.utils.ClipboardHelper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -297,17 +298,13 @@ fun ScannerTab(onNextTab: (() -> Unit)? = null) {
                             color = AppPrimary.copy(alpha = 0.15f),
                             border = androidx.compose.foundation.BorderStroke(1.dp, AppPrimary.copy(alpha = 0.4f)),
                             modifier = Modifier.clickable {
-                                try {
-                                    val clipText = clipboardManager.getText()?.text
-                                    if (!clipText.isNullOrBlank()) {
-                                        localInput = clipText
-                                        DataStore.scannerInput = clipText
-                                        ToastManager.info("Pasted text from clipboard")
-                                    } else {
-                                        ToastManager.warning("Clipboard is empty or contains non-text data")
-                                    }
-                                } catch (e: Throwable) {
-                                    ToastManager.error("Unable to access clipboard")
+                                val clipText = ClipboardHelper.getSafeClipboardText(context, clipboardManager)
+                                if (!clipText.isNullOrBlank()) {
+                                    localInput = clipText
+                                    DataStore.scannerInput = clipText
+                                    ToastManager.info("Pasted text from clipboard")
+                                } else {
+                                    ToastManager.warning("Clipboard is empty or contains non-text data")
                                 }
                             }
                         ) {

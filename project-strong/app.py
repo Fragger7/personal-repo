@@ -745,8 +745,9 @@ if not check_password():
     st.stop()
 
 EVASION_HEADERS = {
-    "User-Agent": "IPTVSmartersPro",
+    "User-Agent": "IPTVSmartersPro/3.1.5.1 (Linux; Android 12; Build/SQ1D.220205.004)",
     "Accept": "*/*",
+    "Accept-Encoding": "gzip, deflate",
     "Connection": "keep-alive"
 }
 
@@ -1002,6 +1003,84 @@ async def evaluate_account(client, account):
     try:
         res = await client.get(target_url, timeout=6.0)
         
+        # Check if player_api.php was successful
+        if res.status_code == 200 and "Unauthorized" not in res.text:
+            try:
+                data = res.json()
+                user_info = data.get("user_info", {})
+                server_info = data.get("server_info", {})
+                
+                if user_info.get("auth") == 0 or user_info.get("status") == "Expired":
+                    logger.warning(f"Authentication failed or account expired for: {account['base_url']}")
+                    return {**account, "Status": "🟡 Expired / Invalid", "Expires": "N/A", "Days Left": 0, "Max Conn": 0, "Active Conn": 0, "Channels": "N/A", "VODs": "N/A", "Server Timezone": "N/A", "Server Time": "N/A", "fingerprint": extract_fingerprint(res, server_info, user_info)}
+                
+                if user_info:
+                    # Parse Valid Dynamic Attributes
+                    exp_timestamp = user_info.get("exp_date")
+                    formatted_date = "Unlimited"
+                    days_remaining = 9999
+                    
+                    if exp_timestamp and str(exp_timestamp).isdigit():
+                        ts = int(exp_timestamp)
+                        dt = datetime.fromtimestamp(ts)
+                        formatted_date = dt.strftime("%Y-%m-%d")
+                        days_remaining = (dt - datetime.now()).days
+
+                    logger.info(f"Connection active via JSON API. Host: {account['base_url']} | Max Conn: {user_info.get('max_connections')} | Exp: {formatted_date}")
+                    return {
+                        **account,
+                        "Status": "🟢 Active",
+                        "Expires": formatted_date,
+                        "Days Left": max(0, days_remaining),
+                        "Max Conn": user_info.get("max_connections", "0"),
+                        "Active Conn": user_info.get("active_cons", "0"),
+                        "Channels": "N/A",
+                        "VODs": "N/A",
+                        "Server Timezone": server_info.get("timezone", "Unknown"),
+                        "Server Time": server_info.get("time_now", "Unknown"),
+                        "fingerprint": extract_fingerprint(res, server_info, user_info)
+                    }
+            except Exception:
+                pass
+
+        # Fallback to /get.php verification if player_api.php returned 403, 404, or non-JSON
+        m3u_urls = [
+            f"{account['base_url']}/get.php?username={account['username']}&password={account['password']}&type=m3u_plus&output=ts",
+            f"{account['base_url']}/get.php?username={account['username']}&password={account['password']}&type=m3u_plus",
+            f"{account['base_url']}/get.php?username={account['username']}&password={account['password']}"
+        ]
+        for m3u_url in m3u_urls:
+            try:
+                m3u_res = await client.get(m3u_url, timeout=6.0)
+                if m3u_res.status_code == 200 and ("#EXTM3U" in m3u_res.text or "#EXTINF" in m3u_res.text):
+                    logger.info(f"Connection active via M3U (get.php). Host: {account['base_url']}")
+                    exp_date = "Unknown"
+                    days_left = 9999
+                    exp_m = re.search(r'(?i)exp_date="?(\d{10})"?', m3u_res.text)
+                    if exp_m:
+                        try:
+                            ts = int(exp_m.group(1))
+                            dt = datetime.fromtimestamp(ts)
+                            exp_date = dt.strftime("%Y-%m-%d")
+                            days_left = max(0, (dt - datetime.now()).days)
+                        except Exception:
+                            pass
+                    return {
+                        **account,
+                        "Status": "🟢 Active (M3U Verified)",
+                        "Expires": exp_date,
+                        "Days Left": days_left,
+                        "Max Conn": "1",
+                        "Active Conn": "0",
+                        "Channels": "N/A",
+                        "VODs": "N/A",
+                        "Server Timezone": m3u_res.headers.get("Server", "Unknown"),
+                        "Server Time": "Unknown",
+                        "fingerprint": extract_fingerprint(m3u_res)
+                    }
+            except Exception:
+                pass
+
         # Check HTTP Status Code first to handle firewall/cloud blockades explicitly
         if res.status_code == 403:
             logger.warning(f"Cloud Blocked (HTTP 403) for: {account['base_url']}")
@@ -1009,67 +1088,74 @@ async def evaluate_account(client, account):
         elif res.status_code == 521:
             logger.warning(f"Server dead (HTTP 521) for: {account['base_url']}")
             return {**account, "Status": "🔴 Offline (Server Dead)", "Expires": "N/A", "Days Left": 0, "Max Conn": 0, "Active Conn": 0, "Channels": "N/A", "VODs": "N/A", "Server Timezone": "N/A", "Server Time": "N/A", "fingerprint": extract_fingerprint(res)}
-        elif res.status_code != 200:
-            logger.warning(f"Unexpected status code {res.status_code} for: {account['base_url']}")
-            return {**account, "Status": "🛡️ Firewalled / Blocked", "Expires": "N/A", "Days Left": 0, "Max Conn": 0, "Active Conn": 0, "Channels": "N/A", "VODs": "N/A", "Server Timezone": "N/A", "Server Time": "N/A", "fingerprint": extract_fingerprint(res)}
-        
-        # Catch plain authorization rejections
-        if "Unauthorized" in res.text:
+        elif "Unauthorized" in res.text:
             logger.warning(f"Connection rejected (Unauthorized response body) for: {account['base_url']}")
             return {**account, "Status": "🟡 Expired / Invalid", "Expires": "N/A", "Days Left": 0, "Max Conn": 0, "Active Conn": 0, "Channels": "N/A", "VODs": "N/A", "Server Timezone": "N/A", "Server Time": "N/A", "fingerprint": extract_fingerprint(res)}
-            
-        data = res.json()
-        user_info = data.get("user_info", {})
-        server_info = data.get("server_info", {})
-        
-        if user_info.get("auth") == 0 or user_info.get("status") == "Expired":
-            logger.warning(f"Authentication failed or account expired for: {account['base_url']}")
-            return {**account, "Status": "🟡 Expired / Invalid", "Expires": "N/A", "Days Left": 0, "Max Conn": 0, "Active Conn": 0, "Channels": "N/A", "VODs": "N/A", "Server Timezone": "N/A", "Server Time": "N/A", "fingerprint": extract_fingerprint(res, server_info, user_info)}
-        
-        # Parse Valid Dynamic Attributes
-        exp_timestamp = user_info.get("exp_date")
-        formatted_date = "Unlimited"
-        days_remaining = 9999
-        
-        if exp_timestamp and exp_timestamp.isdigit():
-            ts = int(exp_timestamp)
-            dt = datetime.fromtimestamp(ts)
-            formatted_date = dt.strftime("%Y-%m-%d")
-            days_remaining = (dt - datetime.now()).days
-
-        logger.info(f"Connection active. Host: {account['base_url']} | Max Conn: {user_info.get('max_connections')} | Exp: {formatted_date}")
-        return {
-            **account,
-            "Status": "🟢 Active",
-            "Expires": formatted_date,
-            "Days Left": max(0, days_remaining),
-            "Max Conn": user_info.get("max_connections", "0"),
-            "Active Conn": user_info.get("active_cons", "0"),
-            "Channels": "N/A",
-            "VODs": "N/A",
-            "Server Timezone": server_info.get("timezone", "Unknown"),
-            "Server Time": server_info.get("time_now", "Unknown"),
-            "fingerprint": extract_fingerprint(res, server_info, user_info)
-        }
+        else:
+            return {**account, "Status": "🛡️ Firewalled / Blocked", "Expires": "N/A", "Days Left": 0, "Max Conn": 0, "Active Conn": 0, "Channels": "N/A", "VODs": "N/A", "Server Timezone": "N/A", "Server Time": "N/A", "fingerprint": extract_fingerprint(res)}
         
     except Exception as e:
         logger.error(f"Failed to connect to host {account['base_url']}: {str(e)}")
         return {**account, "Status": "🛡️ Firewalled / Blocked", "Expires": "N/A", "Days Left": 0, "Max Conn": 0, "Active Conn": 0, "Channels": "N/A", "VODs": "N/A", "Server Timezone": "N/A", "Server Time": "N/A", "fingerprint": extract_fingerprint()}
 
 async def fetch_lazy_details(base_url, user, password, action):
-    """Tier 2: On-Demand Lazy Loading details retrieval."""
+    """Tier 2: On-Demand Lazy Loading details retrieval with M3U fallback."""
     target_url = f"{base_url}/player_api.php?username={user}&password={password}&action={action}"
     logger.info(f"Lazy loading endpoint data for host {base_url} [Action: {action}]")
     try:
-        async with httpx.AsyncClient(headers=EVASION_HEADERS, verify=False) as client:
+        async with httpx.AsyncClient(headers=EVASION_HEADERS, verify=False, follow_redirects=True) as client:
             res = await client.get(target_url, timeout=8.0)
             if res.status_code == 200:
-                data = res.json()
-                logger.info(f"Lazy loading catalog fetch completed successfully. Type: {type(data)} | Elements: {len(data) if isinstance(data, list) else 1}")
-                return data
-            else:
-                logger.warning(f"Lazy loading query returned status {res.status_code} for host {base_url} [Action: {action}]")
-                return []
+                try:
+                    data = res.json()
+                    logger.info(f"Lazy loading catalog fetch completed successfully. Type: {type(data)} | Elements: {len(data) if isinstance(data, list) else 1}")
+                    return data
+                except Exception:
+                    pass
+            
+            # Fallback parse from /get.php
+            m3u_url = f"{base_url}/get.php?username={user}&password={password}&type=m3u_plus"
+            m3u_res = await client.get(m3u_url, timeout=12.0)
+            if m3u_res.status_code == 200 and ("#EXTM3U" in m3u_res.text or "#EXTINF" in m3u_res.text):
+                if action == "get_live_categories":
+                    groups = set()
+                    categories = []
+                    for match in re.finditer(r'(?i)group-title="([^"]+)"', m3u_res.text):
+                        grp = match.group(1).strip()
+                        if grp and grp not in groups:
+                            groups.add(grp)
+                            categories.append({"category_id": grp, "category_name": grp})
+                    return categories
+                elif action in ["get_live_streams", "get_vod_streams"]:
+                    streams = []
+                    lines = m3u_res.text.splitlines()
+                    last_hdr = None
+                    s_id = 1
+                    for line in lines:
+                        line_s = line.strip()
+                        if line_s.startswith("#EXTINF"):
+                            last_hdr = line_s
+                        elif line_s and not line_s.startsWith("#") and last_hdr:
+                            name = last_hdr.split(",")[-1].strip() or f"Channel {s_id}"
+                            grp_m = re.search(r'(?i)group-title="([^"]+)"', last_hdr)
+                            grp = grp_m.group(1).strip() if grp_m else "Uncategorized"
+                            logo_m = re.search(r'(?i)tvg-logo="([^"]+)"', last_hdr)
+                            logo = logo_m.group(1).strip() if logo_m else ""
+                            streams.append({
+                                "num": s_id,
+                                "name": name,
+                                "stream_id": s_id,
+                                "stream_icon": logo,
+                                "category_id": grp,
+                                "category_name": grp,
+                                "direct_source": line_s
+                            })
+                            s_id += 1
+                            last_hdr = None
+                    return streams
+
+            logger.warning(f"Lazy loading query returned status {res.status_code} for host {base_url} [Action: {action}]")
+            return []
     except Exception as e:
         logger.error(f"Lazy loading query failed for host {base_url} [Action: {action}]: {str(e)}")
         return []

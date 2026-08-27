@@ -25,6 +25,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.projectstrong.iptv.ui.components.*
 import com.projectstrong.iptv.ui.theme.*
+import com.projectstrong.iptv.utils.ClipboardHelper
 
 @Composable
 fun Base64Tab(onNextTab: () -> Unit = {}) {
@@ -81,16 +82,12 @@ fun Base64Tab(onNextTab: () -> Unit = {}) {
                     Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                         TextButton(
                             onClick = {
-                                try {
-                                    val clipText = clipboardManager.getText()?.text
-                                    if (!clipText.isNullOrBlank()) {
-                                        input = clipText
-                                        ToastManager.info("Pasted text from clipboard")
-                                    } else {
-                                        ToastManager.warning("Clipboard is empty or contains non-text data")
-                                    }
-                                } catch (e: Throwable) {
-                                    ToastManager.error("Unable to access clipboard")
+                                val clipText = ClipboardHelper.getSafeClipboardText(context, clipboardManager)
+                                if (!clipText.isNullOrBlank()) {
+                                    input = clipText
+                                    ToastManager.info("Pasted text from clipboard")
+                                } else {
+                                    ToastManager.warning("Clipboard is empty or contains non-text data")
                                 }
                             },
                             contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp)

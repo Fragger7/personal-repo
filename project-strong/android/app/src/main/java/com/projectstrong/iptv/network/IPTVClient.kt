@@ -5,9 +5,14 @@ import kotlinx.coroutines.withContext
 import okhttp3.ConnectionPool
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import okhttp3.Response
+import org.json.JSONArray
 import org.json.JSONObject
 import java.util.concurrent.TimeUnit
 import java.net.URLEncoder
+import java.io.BufferedReader
+import java.io.InputStreamReader
+import java.util.regex.Pattern
 
 sealed class VerificationResult {
     data class Success(
@@ -24,9 +29,19 @@ sealed class VerificationResult {
 }
 
 object IPTVClient {
+    private val USER_AGENTS = listOf(
+        "IPTVSmartersPro/3.1.5.1 (Linux; Android 12; Build/SQ1D.220205.004)",
+        "TiviMate/4.7.0 (Android TV; Linux 4.9.180)",
+        "VLC/3.0.18 LibVLC/3.0.18",
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+        "IPTVSmartersPro"
+    )
+
     private val baseClient = OkHttpClient.Builder()
         .connectionPool(ConnectionPool(30, 5, TimeUnit.MINUTES))
-        .retryOnConnectionFailure(false)
+        .retryOnConnectionFailure(true)
+        .followRedirects(true)
+        .followSslRedirects(true)
         .build()
 
     private fun getClient(): OkHttpClient {
@@ -47,62 +62,166 @@ object IPTVClient {
             .build()
     }
 
+    /**
+     * Normalizes base URL, stripping redundant standard ports (e.g. :80 on http, :443 on https).
+     */
+    private fun normalizeBaseUrl(rawUrl: String): String {
+        var clean = rawUrl.trim().trimEnd('/')
+        if (clean.startsWith("http://") && clean.endsWith(":80")) {
+            clean = clean.removeSuffix(":80")
+        } else if (clean.startsWith("https://") && clean.endsWith(":443")) {
+            clean = clean.removeSuffix(":443")
+        }
+        return clean
+    }
+
+    /**
+     * Executes an HTTP request with evasion headers and automatic user-agent fallback on 403 / 401 blocks.
+     */
+    private fun executeWithAdaptiveHeaders(
+        client: OkHttpClient, 
+        targetUrl: String, 
+        extraHeaders: Map<String, String> = emptyMap()
+    ): Response {
+        var lastResponse: Response? = null
+        for (userAgent in USER_AGENTS) {
+            val reqBuilder = Request.Builder()
+                .url(targetUrl)
+                .header("User-Agent", userAgent)
+                .header("Accept", "*/*")
+                .header("Accept-Encoding", "gzip, deflate")
+                .header("Connection", "keep-alive")
+
+            extraHeaders.forEach { (k, v) -> reqBuilder.header(k, v) }
+            val request = reqBuilder.build()
+
+            try {
+                val response = client.newCall(request).execute()
+                if (response.code in 200..299) {
+                    return response
+                }
+                // If 404, stopping immediately since path is wrong, not user-agent
+                if (response.code == 404) {
+                    return response
+                }
+                lastResponse?.close()
+                lastResponse = response
+            } catch (e: Throwable) {
+                // Try next user-agent on socket/reset error
+            }
+        }
+        return lastResponse ?: client.newCall(
+            Request.Builder().url(targetUrl).header("User-Agent", USER_AGENTS[0]).build()
+        ).execute()
+    }
+
     suspend fun verifyXtream(baseUrl: String, user: String, pass: String): VerificationResult = withContext(Dispatchers.IO) {
         try {
+            val normalizedUrl = normalizeBaseUrl(baseUrl)
             val encodedUser = URLEncoder.encode(user, "UTF-8")
             val encodedPass = URLEncoder.encode(pass, "UTF-8")
-            var url = "${baseUrl.trimEnd('/')}/player_api.php?username=$encodedUser&password=$encodedPass"
-            var request = Request.Builder()
-                .url(url)
-                .header("User-Agent", "IPTVSmartersPro")
-                .build()
-
-            var response = getClient().newCall(request).execute()
+            
+            // Tier 1A: Standard JSON player_api.php Handshake
+            var apiUrl = "$normalizedUrl/player_api.php?username=$encodedUser&password=$encodedPass"
+            var response = executeWithAdaptiveHeaders(getClient(), apiUrl)
+            
             if (response.code == 404) {
                 response.close()
-                url = "${baseUrl.trimEnd('/')}/server/load.php?type=stb&action=handshake&type=itv"
-                request = request.newBuilder().url(url).build()
-                response = getClient().newCall(request).execute()
+                // Stalker Fallback endpoint check
+                apiUrl = "$normalizedUrl/server/load.php?type=stb&action=handshake&type=itv"
+                response = executeWithAdaptiveHeaders(getClient(), apiUrl)
             }
+
             val code = response.code
             val body = response.body?.string() ?: ""
 
-            if (code == 200) {
-                if (body.contains("\"user_info\"")) {
-                    try {
-                        val json = JSONObject(body)
-                        val userInfo = json.optJSONObject("user_info")
-                        val serverInfo = json.optJSONObject("server_info")
-                        val active = userInfo?.optString("status", "") == "Active"
-                        val maxConns = userInfo?.optString("max_connections", "1")
-                        val activeConns = userInfo?.optString("active_cons", "0")
-                        var expDate = "N/A"
-                        var daysLeft = "N/A"
-                        val expTs = userInfo?.optString("exp_date", "")
-                        if (!expTs.isNullOrEmpty() && expTs != "null") {
-                            try {
-                                val ts = expTs.toLong() * 1000
-                                val sdf = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault())
-                                expDate = sdf.format(java.util.Date(ts))
-                                val diffMillis = ts - System.currentTimeMillis()
-                                val days = java.util.concurrent.TimeUnit.MILLISECONDS.toDays(diffMillis)
-                                daysLeft = if (days < 0) "0" else days.toString()
-                            } catch (e: Exception) { }
-                        }
-                        val sTz = serverInfo?.optString("timezone", "N/A")
-                        val sTime = serverInfo?.optString("time_now", "N/A")
-                        val statusStr = if (active) "Active" else "Expired/Inactive"
-                        return@withContext VerificationResult.Success(statusStr, "Verified", expDate, daysLeft, activeConns ?: "0", maxConns ?: "1", sTz ?: "N/A", sTime ?: "N/A")
-                    } catch (e: Exception) {
-                        return@withContext VerificationResult.Failed("Parse Error: Invalid JSON Format")
+            if (code == 200 && body.contains("\"user_info\"")) {
+                try {
+                    val json = JSONObject(body)
+                    val userInfo = json.optJSONObject("user_info")
+                    val serverInfo = json.optJSONObject("server_info")
+                    val auth = userInfo?.optInt("auth", 1) ?: 1
+                    val status = userInfo?.optString("status", "")
+                    
+                    if (auth == 0 || status.equals("Expired", ignoreCase = true) || status.equals("Disabled", ignoreCase = true)) {
+                        return@withContext VerificationResult.Failed("Expired / Inactive Account")
                     }
-                } else {
-                    return@withContext VerificationResult.Failed("Invalid Credentials / No User Info")
+
+                    val active = status.equals("Active", ignoreCase = true) || auth == 1
+                    val maxConns = userInfo?.optString("max_connections", "1")
+                    val activeConns = userInfo?.optString("active_cons", "0")
+                    var expDate = "Unlimited"
+                    var daysLeft = "9999"
+                    val expTs = userInfo?.optString("exp_date", "")
+                    
+                    if (!expTs.isNullOrEmpty() && expTs != "null") {
+                        try {
+                            val ts = expTs.toLong() * 1000
+                            val sdf = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault())
+                            expDate = sdf.format(java.util.Date(ts))
+                            val diffMillis = ts - System.currentTimeMillis()
+                            val days = java.util.concurrent.TimeUnit.MILLISECONDS.toDays(diffMillis)
+                            daysLeft = if (days < 0) "0" else days.toString()
+                        } catch (e: Exception) { }
+                    }
+                    val sTz = serverInfo?.optString("timezone", "N/A")
+                    val sTime = serverInfo?.optString("time_now", "N/A")
+                    val statusStr = if (active) "Active" else "Expired/Inactive"
+                    return@withContext VerificationResult.Success(statusStr, "Verified", expDate, daysLeft, activeConns ?: "0", maxConns ?: "1", sTz ?: "N/A", sTime ?: "N/A")
+                } catch (e: Exception) {
+                    // Fall through to M3U get.php verification
                 }
-            } else if (code == 403) {
+            }
+
+            // Tier 1B: Fallback to /get.php verification (when player_api.php is disabled or returns 403/HTML)
+            val m3uUrls = listOf(
+                "$normalizedUrl/get.php?username=$encodedUser&password=$encodedPass&type=m3u_plus&output=ts",
+                "$normalizedUrl/get.php?username=$encodedUser&password=$encodedPass&type=m3u_plus",
+                "$normalizedUrl/get.php?username=$encodedUser&password=$encodedPass"
+            )
+
+            for (m3uUrl in m3uUrls) {
+                try {
+                    val m3uResponse = executeWithAdaptiveHeaders(getClient(), m3uUrl)
+                    if (m3uResponse.code == 200) {
+                        val m3uBody = m3uResponse.body?.string() ?: ""
+                        if (m3uBody.startsWith("#EXTM3U") || m3uBody.contains("#EXTINF")) {
+                            var expDate = "Unknown"
+                            var daysLeft = "Unknown"
+                            // Search for embedded expiration attributes inside #EXTM3U
+                            val expMatch = Pattern.compile("(?i)exp_date=\"?([0-9]{10})\"?").matcher(m3uBody)
+                            if (expMatch.find()) {
+                                try {
+                                    val ts = expMatch.group(1).toLong() * 1000
+                                    val sdf = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault())
+                                    expDate = sdf.format(java.util.Date(ts))
+                                    val diffMillis = ts - System.currentTimeMillis()
+                                    val days = java.util.concurrent.TimeUnit.MILLISECONDS.toDays(diffMillis)
+                                    daysLeft = if (days < 0) "0" else days.toString()
+                                } catch (e: Exception) {}
+                            }
+                            return@withContext VerificationResult.Success(
+                                status = "Active",
+                                details = "M3U Verified (get.php)",
+                                expires = expDate,
+                                daysLeft = daysLeft,
+                                activeConn = "0",
+                                maxConn = "1"
+                            )
+                        }
+                    }
+                    m3uResponse.close()
+                } catch (e: Exception) {
+                    // Try next fallback URL
+                }
+            }
+
+            if (code == 403) {
                 return@withContext VerificationResult.Failed("Cloud Blocked (HTTP 403)")
             } else if (code == 521) {
                 return@withContext VerificationResult.Failed("Offline (Server Dead 521)")
+            } else if (code == 200 && body.contains("Unauthorized", ignoreCase = true)) {
+                return@withContext VerificationResult.Failed("Invalid Credentials / Unauthorized")
             } else {
                 return@withContext VerificationResult.Failed("Firewalled / Blocked (HTTP $code)")
             }
@@ -113,20 +232,20 @@ object IPTVClient {
 
     suspend fun verifyStalker(baseUrl: String, mac: String): VerificationResult = withContext(Dispatchers.IO) {
         try {
-            var url = "${baseUrl.trimEnd('/')}/c/server/load.php?type=stb&action=handshake&type=itv"
+            val normalizedUrl = normalizeBaseUrl(baseUrl)
             val encodedMac = URLEncoder.encode(mac, "UTF-8")
-            var request = Request.Builder()
-                .url(url)
-                .header("User-Agent", "Mozilla/5.0 (QtEmbedded; U; Linux; C) AppleWebKit/533.3 (KHTML, like Gecko) MAG200 stbapp ver: 2 rev: 250 Safari/533.3")
-                .header("Cookie", "mac=$encodedMac; stb_lang=en; timezone=Europe/Kiev;")
-                .build()
+            var url = "$normalizedUrl/c/server/load.php?type=stb&action=handshake&type=itv"
+            
+            val stalkerHeaders = mapOf(
+                "User-Agent" to "Mozilla/5.0 (QtEmbedded; U; Linux; C) AppleWebKit/533.3 (KHTML, like Gecko) MAG200 stbapp ver: 2 rev: 250 Safari/533.3",
+                "Cookie" to "mac=$encodedMac; stb_lang=en; timezone=Europe/Kiev;"
+            )
 
-            var response = getClient().newCall(request).execute()
+            var response = executeWithAdaptiveHeaders(getClient(), url, stalkerHeaders)
             if (response.code == 404) {
                 response.close()
-                url = "${baseUrl.trimEnd('/')}/server/load.php?type=stb&action=handshake&type=itv"
-                request = request.newBuilder().url(url).build()
-                response = getClient().newCall(request).execute()
+                url = "$normalizedUrl/server/load.php?type=stb&action=handshake&type=itv"
+                response = executeWithAdaptiveHeaders(getClient(), url, stalkerHeaders)
             }
             val code = response.code
             val body = response.body?.string() ?: ""
@@ -152,81 +271,67 @@ object IPTVClient {
         }
     }
 
-    suspend fun getLiveCategories(baseUrl: String, user: String, pass: String): org.json.JSONArray? = withContext(Dispatchers.IO) {
+    suspend fun getLiveCategories(baseUrl: String, user: String, pass: String): JSONArray? = withContext(Dispatchers.IO) {
+        val normalizedUrl = normalizeBaseUrl(baseUrl)
+        val encodedUser = URLEncoder.encode(user, "UTF-8")
+        val encodedPass = URLEncoder.encode(pass, "UTF-8")
+        
+        // Tier 1: Try JSON player_api.php get_live_categories
         try {
-            val encodedUser = URLEncoder.encode(user, "UTF-8")
-            val encodedPass = URLEncoder.encode(pass, "UTF-8")
-            val url = "${baseUrl.trimEnd('/')}/player_api.php?username=$encodedUser&password=$encodedPass&action=get_live_categories"
-            val request = Request.Builder().url(url).header("User-Agent", "IPTVSmartersPro").build()
-            getDeepQueryClient().newCall(request).execute().use { response ->
-                if (response.code == 200) {
-                    val body = response.body
-                    if (body != null) {
-                        val result = org.json.JSONArray()
-                        val reader = android.util.JsonReader(java.io.BufferedReader(java.io.InputStreamReader(body.byteStream(), "UTF-8"), 32768))
-                        if (reader.peek() == android.util.JsonToken.BEGIN_ARRAY) {
-                            reader.beginArray()
-                            while (reader.hasNext()) {
-                                if (reader.peek() == android.util.JsonToken.BEGIN_OBJECT) {
-                                    val obj = org.json.JSONObject()
-                                    reader.beginObject()
-                                    while (reader.hasNext()) {
-                                        val name = reader.nextName()
-                                        val token = reader.peek()
-                                        when (token) {
-                                            android.util.JsonToken.STRING -> obj.put(name, reader.nextString())
-                                            android.util.JsonToken.NUMBER -> {
-                                                try {
-                                                    obj.put(name, reader.nextInt())
-                                                } catch(e:Exception) {
-                                                    obj.put(name, reader.nextDouble())
-                                                }
+            val url = "$normalizedUrl/player_api.php?username=$encodedUser&password=$encodedPass&action=get_live_categories"
+            val response = executeWithAdaptiveHeaders(getDeepQueryClient(), url)
+            if (response.code == 200) {
+                val body = response.body
+                if (body != null) {
+                    val result = JSONArray()
+                    val reader = android.util.JsonReader(BufferedReader(InputStreamReader(body.byteStream(), "UTF-8"), 32768))
+                    if (reader.peek() == android.util.JsonToken.BEGIN_ARRAY) {
+                        reader.beginArray()
+                        while (reader.hasNext()) {
+                            if (reader.peek() == android.util.JsonToken.BEGIN_OBJECT) {
+                                val obj = JSONObject()
+                                reader.beginObject()
+                                while (reader.hasNext()) {
+                                    val name = reader.nextName()
+                                    val token = reader.peek()
+                                    when (token) {
+                                        android.util.JsonToken.STRING -> obj.put(name, reader.nextString())
+                                        android.util.JsonToken.NUMBER -> {
+                                            try {
+                                                obj.put(name, reader.nextInt())
+                                            } catch(e: Exception) {
+                                                obj.put(name, reader.nextDouble())
                                             }
-                                            android.util.JsonToken.BOOLEAN -> obj.put(name, reader.nextBoolean())
-                                            android.util.JsonToken.NULL -> { reader.nextNull(); obj.put(name, org.json.JSONObject.NULL) }
-                                            else -> reader.skipValue()
                                         }
+                                        android.util.JsonToken.BOOLEAN -> obj.put(name, reader.nextBoolean())
+                                        android.util.JsonToken.NULL -> { reader.nextNull(); obj.put(name, JSONObject.NULL) }
+                                        else -> reader.skipValue()
                                     }
-                                    reader.endObject()
-                                    result.put(obj)
-                                } else {
-                                    reader.skipValue()
                                 }
+                                reader.endObject()
+                                result.put(obj)
+                            } else {
+                                reader.skipValue()
                             }
-                            reader.endArray()
                         }
-                        reader.close()
+                        reader.endArray()
+                    }
+                    reader.close()
+                    if (result.length() > 0) {
                         return@withContext result
                     }
                 }
             }
+            response.close()
         } catch (e: Exception) {
-            e.printStackTrace()
+            // Fall through to M3U parsing
         }
-        return@withContext null
-    }
 
-    suspend fun getLiveStreams(baseUrl: String, user: String, pass: String, categoryId: String): org.json.JSONArray? = withContext(Dispatchers.IO) {
+        // Tier 2: Fallback parse categories directly from M3U playlist (get.php)
         try {
-            val encodedUser = URLEncoder.encode(user, "UTF-8")
-            val encodedPass = URLEncoder.encode(pass, "UTF-8")
-            val url = "${baseUrl.trimEnd('/')}/player_api.php?username=$encodedUser&password=$encodedPass&action=get_live_streams"
-            val request = Request.Builder().url(url).header("User-Agent", "IPTVSmartersPro").build()
-            val response = getDeepQueryClient().newCall(request).execute()
-            if (response.code == 200) {
-                val body = response.body?.string() ?: ""
-                val allStreams = org.json.JSONArray(body)
-                if (categoryId.isEmpty() || categoryId == "all") {
-                    return@withContext allStreams
-                }
-                val filtered = org.json.JSONArray()
-                for (i in 0 until allStreams.length()) {
-                    val stream = allStreams.optJSONObject(i)
-                    if (stream != null && stream.optString("category_id") == categoryId) {
-                        filtered.put(stream)
-                    }
-                }
-                return@withContext filtered
+            val m3uCategories = fetchCategoriesFromM3U(normalizedUrl, encodedUser, encodedPass)
+            if (m3uCategories != null && m3uCategories.length() > 0) {
+                return@withContext m3uCategories
             }
         } catch (e: Exception) {
             e.printStackTrace()
@@ -234,115 +339,211 @@ object IPTVClient {
         return@withContext null
     }
 
-    suspend fun getVodStreams(baseUrl: String, user: String, pass: String): org.json.JSONArray? = withContext(Dispatchers.IO) {
+    suspend fun getAllLiveStreams(baseUrl: String, user: String, pass: String): JSONArray? = withContext(Dispatchers.IO) {
+        val normalizedUrl = normalizeBaseUrl(baseUrl)
+        val encodedUser = URLEncoder.encode(user, "UTF-8")
+        val encodedPass = URLEncoder.encode(pass, "UTF-8")
+        
+        // Tier 1: Try JSON player_api.php get_live_streams
         try {
-            val encodedUser = URLEncoder.encode(user, "UTF-8")
-            val encodedPass = URLEncoder.encode(pass, "UTF-8")
-            val url = "${baseUrl.trimEnd('/')}/player_api.php?username=$encodedUser&password=$encodedPass&action=get_vod_streams"
-            val request = Request.Builder().url(url).header("User-Agent", "IPTVSmartersPro").build()
-            val response = getDeepQueryClient().newCall(request).execute()
+            val url = "$normalizedUrl/player_api.php?username=$encodedUser&password=$encodedPass&action=get_live_streams"
+            val response = executeWithAdaptiveHeaders(getDeepQueryClient(), url)
             if (response.code == 200) {
-                val body = response.body?.string() ?: ""
-                return@withContext org.json.JSONArray(body)
-            }
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
-        return@withContext null
-    }
-
-    suspend fun getStreamCount(url: String): Int = withContext(Dispatchers.IO) {
-        var count = 0
-        try {
-            val request = Request.Builder().url(url).header("User-Agent", "IPTVSmartersPro").build()
-            getDeepQueryClient().newCall(request).execute().use { response ->
-                if (response.code == 200) {
-                    val body = response.body
-                    if (body != null) {
-                        val reader = android.util.JsonReader(java.io.BufferedReader(java.io.InputStreamReader(body.byteStream(), "UTF-8"), 32768))
-                        if (reader.peek() == android.util.JsonToken.BEGIN_ARRAY) {
-                            reader.beginArray()
-                            while (reader.hasNext()) {
+                val body = response.body
+                if (body != null) {
+                    val result = JSONArray()
+                    val reader = android.util.JsonReader(BufferedReader(InputStreamReader(body.byteStream(), "UTF-8"), 32768))
+                    if (reader.peek() == android.util.JsonToken.BEGIN_ARRAY) {
+                        reader.beginArray()
+                        while (reader.hasNext()) {
+                            if (reader.peek() == android.util.JsonToken.BEGIN_OBJECT) {
+                                val obj = JSONObject()
+                                reader.beginObject()
+                                while (reader.hasNext()) {
+                                    val name = reader.nextName()
+                                    val token = reader.peek()
+                                    when (token) {
+                                        android.util.JsonToken.STRING -> obj.put(name, reader.nextString())
+                                        android.util.JsonToken.NUMBER -> {
+                                            try {
+                                                obj.put(name, reader.nextInt())
+                                            } catch(e: Exception) {
+                                                obj.put(name, reader.nextDouble())
+                                            }
+                                        }
+                                        android.util.JsonToken.BOOLEAN -> obj.put(name, reader.nextBoolean())
+                                        android.util.JsonToken.NULL -> { reader.nextNull(); obj.put(name, JSONObject.NULL) }
+                                        else -> reader.skipValue()
+                                    }
+                                }
+                                reader.endObject()
+                                result.put(obj)
+                            } else {
                                 reader.skipValue()
-                                count++
                             }
-                            reader.endArray()
                         }
-                        reader.close()
+                        reader.endArray()
+                    }
+                    reader.close()
+                    if (result.length() > 0) {
+                        return@withContext result
                     }
                 }
             }
+            response.close()
         } catch (e: Exception) {
-            // Ignore stream read errors
+            // Fall through to M3U
         }
-        return@withContext count
+
+        // Tier 2: Fallback parse streams directly from M3U playlist
+        try {
+            val m3uStreams = fetchStreamsFromM3U(normalizedUrl, encodedUser, encodedPass)
+            if (m3uStreams != null && m3uStreams.length() > 0) {
+                return@withContext m3uStreams
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+        return@withContext null
+    }
+
+    suspend fun getLiveStreams(baseUrl: String, user: String, pass: String, categoryId: String): JSONArray? = withContext(Dispatchers.IO) {
+        val allStreams = getAllLiveStreams(baseUrl, user, pass) ?: return@withContext null
+        if (categoryId.isEmpty() || categoryId == "all") {
+            return@withContext allStreams
+        }
+        val filtered = JSONArray()
+        for (i in 0 until allStreams.length()) {
+            val stream = allStreams.optJSONObject(i)
+            if (stream != null && stream.optString("category_id") == categoryId) {
+                filtered.put(stream)
+            }
+        }
+        return@withContext filtered
+    }
+
+    suspend fun getVodStreams(baseUrl: String, user: String, pass: String): JSONArray? = withContext(Dispatchers.IO) {
+        try {
+            val normalizedUrl = normalizeBaseUrl(baseUrl)
+            val encodedUser = URLEncoder.encode(user, "UTF-8")
+            val encodedPass = URLEncoder.encode(pass, "UTF-8")
+            val url = "$normalizedUrl/player_api.php?username=$encodedUser&password=$encodedPass&action=get_vod_streams"
+            val response = executeWithAdaptiveHeaders(getDeepQueryClient(), url)
+            if (response.code == 200) {
+                val body = response.body?.string() ?: ""
+                return@withContext JSONArray(body)
+            }
+            response.close()
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+        return@withContext null
     }
 
     suspend fun getLiveStreamCount(baseUrl: String, user: String, pass: String): Int {
-        val encodedUser = URLEncoder.encode(user, "UTF-8")
-        val encodedPass = URLEncoder.encode(pass, "UTF-8")
-        val url = "${baseUrl.trimEnd('/')}/player_api.php?username=$encodedUser&password=$encodedPass&action=get_live_streams"
-        return getStreamCount(url)
+        val streams = getAllLiveStreams(baseUrl, user, pass)
+        return streams?.length() ?: 0
     }
 
     suspend fun getVodStreamCount(baseUrl: String, user: String, pass: String): Int {
-        val encodedUser = URLEncoder.encode(user, "UTF-8")
-        val encodedPass = URLEncoder.encode(pass, "UTF-8")
-        val url = "${baseUrl.trimEnd('/')}/player_api.php?username=$encodedUser&password=$encodedPass&action=get_vod_streams"
-        return getStreamCount(url)
+        val vods = getVodStreams(baseUrl, user, pass)
+        return vods?.length() ?: 0
     }
 
-    suspend fun getAllLiveStreams(baseUrl: String, user: String, pass: String): org.json.JSONArray? = withContext(Dispatchers.IO) {
-        try {
-            val encodedUser = URLEncoder.encode(user, "UTF-8")
-            val encodedPass = URLEncoder.encode(pass, "UTF-8")
-            val url = "${baseUrl.trimEnd('/')}/player_api.php?username=$encodedUser&password=$encodedPass&action=get_live_streams"
-            val request = Request.Builder().url(url).header("User-Agent", "IPTVSmartersPro").build()
-            getDeepQueryClient().newCall(request).execute().use { response ->
-                if (response.code == 200) {
-                    val body = response.body
-                    if (body != null) {
-                        val result = org.json.JSONArray()
-                        val reader = android.util.JsonReader(java.io.BufferedReader(java.io.InputStreamReader(body.byteStream(), "UTF-8"), 32768))
-                        if (reader.peek() == android.util.JsonToken.BEGIN_ARRAY) {
-                            reader.beginArray()
-                            while (reader.hasNext()) {
-                                if (reader.peek() == android.util.JsonToken.BEGIN_OBJECT) {
-                                    val obj = org.json.JSONObject()
-                                    reader.beginObject()
-                                    while (reader.hasNext()) {
-                                        val name = reader.nextName()
-                                        val token = reader.peek()
-                                        when (token) {
-                                            android.util.JsonToken.STRING -> obj.put(name, reader.nextString())
-                                            android.util.JsonToken.NUMBER -> {
-                                                try {
-                                                    obj.put(name, reader.nextInt())
-                                                } catch(e:Exception) {
-                                                    obj.put(name, reader.nextDouble())
-                                                }
-                                            }
-                                            android.util.JsonToken.BOOLEAN -> obj.put(name, reader.nextBoolean())
-                                            android.util.JsonToken.NULL -> { reader.nextNull(); obj.put(name, org.json.JSONObject.NULL) }
-                                            else -> reader.skipValue()
-                                        }
-                                    }
-                                    reader.endObject()
-                                    result.put(obj)
-                                } else {
-                                    reader.skipValue()
-                                }
-                            }
-                            reader.endArray()
+    /**
+     * Memory-efficient stream parser for M3U playlists to extract unique Category groupings.
+     */
+    private fun fetchCategoriesFromM3U(baseUrl: String, encodedUser: String, encodedPass: String): JSONArray? {
+        val m3uUrl = "$baseUrl/get.php?username=$encodedUser&password=$encodedPass&type=m3u_plus"
+        val response = executeWithAdaptiveHeaders(getDeepQueryClient(), m3uUrl)
+        if (response.code != 200) {
+            response.close()
+            return null
+        }
+
+        val body = response.body ?: return null
+        val reader = BufferedReader(InputStreamReader(body.byteStream(), "UTF-8"), 32768)
+        val categoriesSet = mutableSetOf<String>()
+        val result = JSONArray()
+
+        val groupTitlePattern = Pattern.compile("(?i)group-title=\"([^\"]+)\"")
+        var line: String?
+        while (reader.readLine().also { line = it } != null) {
+            val currentLine = line ?: break
+            if (currentLine.startsWith("#EXTINF")) {
+                val matcher = groupTitlePattern.matcher(currentLine)
+                if (matcher.find()) {
+                    val group = matcher.group(1).trim()
+                    if (group.isNotEmpty() && categoriesSet.add(group)) {
+                        val catObj = JSONObject().apply {
+                            put("category_id", group)
+                            put("category_name", group)
                         }
-                        reader.close()
-                        return@withContext result
+                        result.put(catObj)
                     }
                 }
             }
-        } catch (e: Exception) {
-            e.printStackTrace()
         }
-        return@withContext null
+        reader.close()
+        return if (result.length() > 0) result else null
+    }
+
+    /**
+     * Memory-efficient stream parser for M3U playlists to extract channel stream items.
+     */
+    private fun fetchStreamsFromM3U(baseUrl: String, encodedUser: String, encodedPass: String): JSONArray? {
+        val m3uUrl = "$baseUrl/get.php?username=$encodedUser&password=$encodedPass&type=m3u_plus"
+        val response = executeWithAdaptiveHeaders(getDeepQueryClient(), m3uUrl)
+        if (response.code != 200) {
+            response.close()
+            return null
+        }
+
+        val body = response.body ?: return null
+        val reader = BufferedReader(InputStreamReader(body.byteStream(), "UTF-8"), 32768)
+        val result = JSONArray()
+
+        val groupTitlePattern = Pattern.compile("(?i)group-title=\"([^\"]+)\"")
+        val tvgLogoPattern = Pattern.compile("(?i)tvg-logo=\"([^\"]+)\"")
+        val tvgIdPattern = Pattern.compile("(?i)tvg-id=\"([^\"]+)\"")
+
+        var lastHeader: String? = null
+        var line: String?
+        var streamIdCounter = 1
+
+        while (reader.readLine().also { line = it } != null) {
+            val currentLine = line?.trim() ?: break
+            if (currentLine.startsWith("#EXTINF")) {
+                lastHeader = currentLine
+            } else if (currentLine.isNotEmpty() && !currentLine.startsWith("#") && lastHeader != null) {
+                val header = lastHeader
+                lastHeader = null
+
+                val channelName = header.substringAfterLast(",").trim()
+                val groupMatcher = groupTitlePattern.matcher(header)
+                val groupName = if (groupMatcher.find()) groupMatcher.group(1).trim() else "Uncategorized"
+
+                val logoMatcher = tvgLogoPattern.matcher(header)
+                val logoUrl = if (logoMatcher.find()) logoMatcher.group(1).trim() else ""
+
+                val idMatcher = tvgIdPattern.matcher(header)
+                val tvgId = if (idMatcher.find()) idMatcher.group(1).trim() else ""
+
+                val streamObj = JSONObject().apply {
+                    put("num", streamIdCounter)
+                    put("name", channelName.ifEmpty { "Channel $streamIdCounter" })
+                    put("stream_id", streamIdCounter)
+                    put("stream_icon", logoUrl)
+                    put("epg_channel_id", tvgId)
+                    put("category_id", groupName)
+                    put("category_name", groupName)
+                    put("direct_source", currentLine)
+                }
+                result.put(streamObj)
+                streamIdCounter++
+            }
+        }
+        reader.close()
+        return if (result.length() > 0) result else null
     }
 }
