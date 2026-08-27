@@ -175,17 +175,28 @@ Create a dedicated **⚙️ Settings & About** tab or modal inside the Android a
 
 ---
 
-### 4. Integrated In-App IPTV Stream & Channel Player (ExoPlayer / Media3)
+### 4. Integrated In-App IPTV Stream & Channel Player (ExoPlayer / Media3 - COMPLETED & VERIFIED)
 
-* **Feasibility Analysis**:
-  * **Verdict: Highly Recommended & Feasible.** Not too ambitious! Android has first-class media capabilities through `androidx.media3:media3-exoplayer` and `androidx.media3:media3-ui`.
-  * **Architecture**:
-    * Xtream Codes delivers direct MPEG-TS / HLS / MP4 stream URLs in the format: `http://{host}:{port}/live/{user}/{pass}/{stream_id}.ts` or `.m3u8`.
-    * By integrating a lightweight `ExoPlayer` overlay directly inside the `FullScreenCatalogExplorer` or `CommittedDetailScreen`, the user can tap any channel in the catalog and immediately see a live video preview in a sleek, floating picture-in-picture or sheet player.
-  * **Diagnostics & Stream Health Metrics**:
-    * Live playback status (Buffering, Playing, Error with exact HTTP/codec code).
-    * Stream technical stats: Resolution (e.g. `1080p60`, `4K`), Video Codec (`H.264`, `HEVC/H.265`), Audio Format (`AAC`, `AC3`), and Real-time Bitrate (kbps).
-    * Quick "Stream Works" / "Stream Dead" diagnostic flag to annotate the playlist node!
+* **Architecture & Implementation (`StreamPreviewDialog.kt`)**:
+  * **Media3 / ExoPlayer Engine**: Embedded hardware-accelerated playback pipeline utilizing custom OkHttp data source with evasion user-agent (`IPTVSmartersPro/1.1.1`), 500ms initial buffer handshake, software decoder fallback, and automated track selector.
+  * **Auto-Hiding Floating Controls**: Player controls automatically fade out and slide away after 3 seconds of inactivity during video playback. Tapping anywhere on the video screen restores them instantly with smooth animated transitions.
+  * **True Full-Screen Video**: One-tap full-screen toggle syncing with sensor landscape orientation (`ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE`), preserved across rotations via `android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|keyboardHidden"`.
+  * **Aspect Ratio Cycling**: Switch between *Fit*, *Fill*, and *Zoom* on the fly using `AspectRatioFrameLayout`.
+  * **Rich Control HUD**: Clear labeled buttons for Play/Pause, Mute/Unmute, Aspect Ratio, Live Re-Sync, Copy URL, and Open in External Player (VLC / MX Player).
+  * **Scrub & Catchup Slider**: Dynamic slider with time formatting (`mm:ss` / `hh:mm:ss`) for VOD, catchup, and non-live timeshift streams.
+  * **Forensic Diagnostics HUD**: Real-time telemetry monitoring Live Bitrate Throughput (kbps / Mbps), Buffer Cushion (seconds ahead), Video Resolution, Video Codec & FPS, Audio Encoding, and First-Frame Socket Latency.
+
+---
+
+### 5. Network & Handshake Forensics for Strict Xtream Providers (Ongoing Investigation)
+
+* **Behavior Analysis (e.g. `bestiptvgo.net`)**:
+  * Certain high-security or protected IPTV providers employ strict CDN firewalls (Cloudflare, DDoS-Guard, custom middleware) that reject or drop connections from unknown clients while passing commercial players (TiviMate, IPTV Smarters, XCIPTV) when operating behind a VPN.
+  * **Investigative Vectors & Future Exploration**:
+    * **TLS / SSL Cipher Suite & SNI Matching**: Android OkHttp default TLS ciphers vs native OpenSSL/BoringSSL handshakes in C++ players (VLC/libmpv/ijkplayer).
+    * **HTTP Request Headers & User-Agent Parity**: Exact header sequencing (`Accept: */*`, `Accept-Encoding: gzip, deflate`, `Connection: Keep-Alive`, `User-Agent: IPTVSmartersPro/3.1.5.1` or `okhttp/3.14.9`).
+    * **Redirect & Cookie Retention**: Ensuring HTTP 301/302/307 redirects across domains retain authentication parameters and session cookies.
+    * **Stream Output Extensions**: Comparing server responses for `.ts`, `.m3u8`, `/live/{u}/{p}/{id}`, and `/play/{u}/{p}/{id}` variants.
 
 ---
 
@@ -225,7 +236,7 @@ Create a dedicated **⚙️ Settings & About** tab or modal inside the Android a
      * **Virtual LazyList Pagination / Index Keys**: Ensure Compose `LazyColumn` uses stable compound keys (`key = { node.baseUrl + node.user }`) with lightweight view-model state mapping.
 
 ### ✅ Completed Milestones
-1. **Integrated In-App IPTV Stream & Channel Player (Media3 / ExoPlayer)**: Complete hardware-accelerated playback modal with full-screen rotation sync, labeled buttons, scrub timeline, and live bitrate/buffer telemetry.
+1. **Integrated In-App IPTV Stream & Channel Player (Media3 / ExoPlayer - VERIFIED & COMPLETED)**: Hardware-accelerated video playback modal with full-screen orientation lock, auto-hiding controls (3s inactivity timer / tap-to-show), labeled action buttons, scrub timeline slider, and live bitrate/buffer telemetry.
 2. **Settings & Intelligence Hub**: Complete preferences tab with real-time VPN hardware monitor, IP geolocation shield, concurrency/timeout sliders with instant auto-save, cache clearing, and GitHub PAT sync.
 3. **Responsive Multi-Orientation Detail Layouts**: Full vertical scrolling on all master-detail drawers (Committed, Xtream, Stalker, Scanner) and flexible channel title layouts in catalog explorer.
 4. **Sherlock Streams Visual Branding**: Adaptive launcher icons and vector brand emblems across the UI.
