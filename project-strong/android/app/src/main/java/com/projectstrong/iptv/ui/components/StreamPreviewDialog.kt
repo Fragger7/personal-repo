@@ -1,5 +1,6 @@
 package com.projectstrong.iptv.ui.components
 
+import android.content.Intent
 import android.net.Uri
 import android.view.ViewGroup
 import android.widget.FrameLayout
@@ -18,7 +19,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -27,16 +30,25 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.common.VideoSize
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.datasource.DefaultHttpDataSource
+import androidx.media3.datasource.okhttp.OkHttpDataSource
+import androidx.media3.exoplayer.DefaultLoadControl
+import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
+import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
+import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
+import okhttp3.OkHttpClient
+import java.util.concurrent.TimeUnit
 
 enum class StreamPlayStatus {
     IDLE,
@@ -56,6 +68,7 @@ fun StreamPreviewDialog(
     onDismiss: () -> Unit
 ) {
     val context = LocalContext.current
+    val clipboardManager = LocalClipboardManager.current
 
     var playStatus by remember { mutableStateOf(StreamPlayStatus.CONNECTING) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
@@ -65,22 +78,93 @@ fun StreamPreviewDialog(
     var isMuted by remember { mutableStateOf(false) }
     var isPlaying by remember { mutableStateOf(true) }
     var connectionLatencyMs by remember { mutableLongStateOf(0L) }
-    var streamFormat by remember { mutableStateOf(if (streamUrl.endsWith(".ts")) "MPEG-TS (.ts)" else if (streamUrl.endsWith(".m3u8")) "HLS (.m3u8)" else "Direct Video") }
+    var isFullScreen by remember { mutableStateOf(false) }
+    var resizeMode by remember { mutableIntStateOf(AspectRatioFrameLayout.RESIZE_MODE_FIT) }
+    
+    // Real-Time Telemetry States
+    var currentBitrateKbps by remember { mutableLongStateOf(0L) }
+    var bufferHealthSeconds by remember { mutableFloatStateOf(0f) }
+    var showCopiedToast by remember { mutableStateOf(false) }
 
+    val streamFormat = remember(streamUrl) {
+        when {
+            streamUrl.contains(".m3u8", ignoreCase = true) -> "HLS Multi-Bitrate (.m3u8)"
+            streamUrl.contains(".ts", ignoreCase = true) -> "MPEG-TS Live Stream (.ts)"
+            streamUrl.contains(".mp4", ignoreCase = true) -> "MPEG-4 Container (.mp4)"
+            streamUrl.contains(".mkv", ignoreCase = true) -> "Matroska Video (.mkv)"
+            else -> "IPTV Transport Stream"
+        }
+    }
+
+    // High-Efficiency OkHttp Client with Aggressive Buffer and Evasion Headers
     val exoPlayer = remember {
-        val httpDataSourceFactory = DefaultHttpDataSource.Factory()
+        val okHttpClient = OkHttpClient.Builder()
+            .connectTimeout(8, TimeUnit.SECONDS)
+            .readTimeout(15, TimeUnit.SECONDS)
+            .retryOnConnectionFailure(true)
+            .followRedirects(true)
+            .followSslRedirects(true)
+            .build()
+
+        val httpDataSourceFactory = OkHttpDataSource.Factory(okHttpClient)
             .setUserAgent("IPTVSmartersPro/1.1.1 (Linux; Android 12; Build/SQ1A.220105.002)")
-            .setConnectTimeoutMs(10000)
-            .setReadTimeoutMs(15000)
-            .setAllowCrossProtocolRedirects(true)
+
+        // Low-latency load control for ultra-responsive IPTV handshakes
+        val loadControl = DefaultLoadControl.Builder()
+            .setBufferDurationsMs(
+                1000,   // Min buffer before playback starts
+                15000,  // Max buffer duration
+                500,    // Buffer for playback start
+                1000    // Buffer for re-buffer
+            )
+            .setPrioritizeTimeOverSizeThresholds(true)
+            .build()
+
+        val trackSelector = DefaultTrackSelector(context).apply {
+            setParameters(buildUponParameters().setForceHighestSupportedBitrate(true))
+        }
+
+        val renderersFactory = DefaultRenderersFactory(context).apply {
+            setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER)
+            setEnableDecoderFallback(true)
+        }
 
         val mediaSourceFactory = DefaultMediaSourceFactory(httpDataSourceFactory)
 
-        ExoPlayer.Builder(context)
+        ExoPlayer.Builder(context, renderersFactory)
             .setMediaSourceFactory(mediaSourceFactory)
+            .setLoadControl(loadControl)
+            .setTrackSelector(trackSelector)
             .build().apply {
                 playWhenReady = true
+                videoScalingMode = C.VIDEO_SCALING_MODE_SCALE_TO_FIT
             }
+    }
+
+    // Real-Time Polling for Bitrate, Buffer, and Performance Metrics
+    LaunchedEffect(exoPlayer) {
+        while (isActive) {
+            delay(1000)
+            if (exoPlayer.playbackState == Player.STATE_READY) {
+                // Buffer Health
+                val bufferedPosition = exoPlayer.bufferedPosition
+                val currentPosition = exoPlayer.currentPosition
+                val bufferDuration = (bufferedPosition - currentPosition).coerceAtLeast(0)
+                bufferHealthSeconds = bufferDuration / 1000f
+
+                // Real-time track format bitrate estimation
+                val videoFormat = exoPlayer.videoFormat
+                if (videoFormat != null && videoFormat.bitrate > 0) {
+                    currentBitrateKbps = (videoFormat.bitrate / 1000).toLong()
+                } else if (exoPlayer.playbackParameters.speed > 0) {
+                    val w = exoPlayer.videoSize.width
+                    val h = exoPlayer.videoSize.height
+                    if (w > 0 && h > 0) {
+                        currentBitrateKbps = ((w * h * 30 * 0.07) / 1000).toLong()
+                    }
+                }
+            }
+        }
     }
 
     // Monitor Latency & Playback Events
@@ -102,9 +186,7 @@ fun StreamPreviewDialog(
                     Player.STATE_ENDED -> {
                         playStatus = StreamPlayStatus.IDLE
                     }
-                    Player.STATE_IDLE -> {
-                        // Keep current unless error
-                    }
+                    Player.STATE_IDLE -> {}
                 }
             }
 
@@ -142,6 +224,9 @@ fun StreamPreviewDialog(
                                 }
                                 val fps = if (format.frameRate > 0) " @ ${format.frameRate.toInt()}fps" else ""
                                 videoCodec = "$codecName$fps"
+                                if (format.bitrate > 0) {
+                                    currentBitrateKbps = (format.bitrate / 1000).toLong()
+                                }
                             }
                             if (format.sampleMimeType?.startsWith("audio") == true) {
                                 val mime = format.sampleMimeType ?: ""
@@ -195,122 +280,126 @@ fun StreamPreviewDialog(
                     .statusBarsPadding()
                     .navigationBarsPadding()
             ) {
-                // Header Bar
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(Color(0xFF0F172A))
-                        .padding(horizontal = 16.dp, vertical = 12.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
+                // Header Bar (Hidden during full-screen mode to give maximum view)
+                if (!isFullScreen) {
                     Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(Color(0xFF0F172A))
+                            .padding(horizontal = 16.dp, vertical = 10.dp),
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(10.dp),
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        IconButton(
-                            onClick = onDismiss,
-                            modifier = Modifier
-                                .size(36.dp)
-                                .clip(CircleShape)
-                                .background(Color(0xFF1E293B))
-                        ) {
-                            Icon(
-                                Icons.Default.Close,
-                                contentDescription = "Close Player",
-                                tint = Color.White,
-                                modifier = Modifier.size(20.dp)
-                            )
-                        }
-
-                        Column {
-                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                                Text(
-                                    text = "Stream Inspector",
-                                    color = Color(0xFF38BDF8),
-                                    style = MaterialTheme.typography.labelMedium,
-                                    fontWeight = FontWeight.Bold
-                                )
-                                if (categoryName.isNotEmpty()) {
-                                    Text(
-                                        text = "• $categoryName",
-                                        color = Color(0xFF94A3B8),
-                                        style = MaterialTheme.typography.labelSmall,
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis
-                                    )
-                                }
-                            }
-                            Text(
-                                text = streamName,
-                                color = Color.White,
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                        }
-                    }
-
-                    // Live Status Pill
-                    Surface(
-                        shape = RoundedCornerShape(12.dp),
-                        color = when (playStatus) {
-                            StreamPlayStatus.PLAYING -> Color(0xFF065F46)
-                            StreamPlayStatus.CONNECTING, StreamPlayStatus.BUFFERING -> Color(0xFF854D0E)
-                            StreamPlayStatus.ERROR -> Color(0xFF991B1B)
-                            StreamPlayStatus.IDLE -> Color(0xFF334155)
-                        },
-                        border = androidx.compose.foundation.BorderStroke(
-                            1.dp,
-                            when (playStatus) {
-                                StreamPlayStatus.PLAYING -> Color(0xFF10B981)
-                                StreamPlayStatus.CONNECTING, StreamPlayStatus.BUFFERING -> Color(0xFFF59E0B)
-                                StreamPlayStatus.ERROR -> Color(0xFFEF4444)
-                                StreamPlayStatus.IDLE -> Color(0xFF64748B)
-                            }
-                        )
+                        horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Row(
-                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                            modifier = Modifier.weight(1f)
                         ) {
-                            Box(
+                            IconButton(
+                                onClick = onDismiss,
                                 modifier = Modifier
-                                    .size(8.dp)
+                                    .size(36.dp)
                                     .clip(CircleShape)
-                                    .background(
-                                        when (playStatus) {
-                                            StreamPlayStatus.PLAYING -> Color(0xFF34D399)
-                                            StreamPlayStatus.CONNECTING, StreamPlayStatus.BUFFERING -> Color(0xFFFBBF24)
-                                            StreamPlayStatus.ERROR -> Color(0xFFF87171)
-                                            StreamPlayStatus.IDLE -> Color(0xFF94A3B8)
-                                        }
+                                    .background(Color(0xFF1E293B))
+                            ) {
+                                Icon(
+                                    Icons.Default.Close,
+                                    contentDescription = "Close Player",
+                                    tint = Color.White,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+
+                            Column {
+                                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                    Text(
+                                        text = "Stream Inspector",
+                                        color = Color(0xFF38BDF8),
+                                        style = MaterialTheme.typography.labelMedium,
+                                        fontWeight = FontWeight.Bold
                                     )
+                                    if (categoryName.isNotEmpty()) {
+                                        Text(
+                                            text = "• $categoryName",
+                                            color = Color(0xFF94A3B8),
+                                            style = MaterialTheme.typography.labelSmall,
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis
+                                        )
+                                    }
+                                }
+                                Text(
+                                    text = streamName,
+                                    color = Color.White,
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            }
+                        }
+
+                        // Live Status Pill
+                        Surface(
+                            shape = RoundedCornerShape(12.dp),
+                            color = when (playStatus) {
+                                StreamPlayStatus.PLAYING -> Color(0xFF065F46)
+                                StreamPlayStatus.CONNECTING, StreamPlayStatus.BUFFERING -> Color(0xFF854D0E)
+                                StreamPlayStatus.ERROR -> Color(0xFF991B1B)
+                                StreamPlayStatus.IDLE -> Color(0xFF334155)
+                            },
+                            border = androidx.compose.foundation.BorderStroke(
+                                1.dp,
+                                when (playStatus) {
+                                    StreamPlayStatus.PLAYING -> Color(0xFF10B981)
+                                    StreamPlayStatus.CONNECTING, StreamPlayStatus.BUFFERING -> Color(0xFFF59E0B)
+                                    StreamPlayStatus.ERROR -> Color(0xFFEF4444)
+                                    StreamPlayStatus.IDLE -> Color(0xFF64748B)
+                                }
                             )
-                            Text(
-                                text = when (playStatus) {
-                                    StreamPlayStatus.PLAYING -> "LIVE PLAYING"
-                                    StreamPlayStatus.CONNECTING -> "CONNECTING"
-                                    StreamPlayStatus.BUFFERING -> "BUFFERING"
-                                    StreamPlayStatus.ERROR -> "STREAM FAILED"
-                                    StreamPlayStatus.IDLE -> "PAUSED"
-                                },
-                                color = Color.White,
-                                style = MaterialTheme.typography.labelSmall,
-                                fontWeight = FontWeight.Bold
-                            )
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(8.dp)
+                                        .clip(CircleShape)
+                                        .background(
+                                            when (playStatus) {
+                                                StreamPlayStatus.PLAYING -> Color(0xFF34D399)
+                                                StreamPlayStatus.CONNECTING, StreamPlayStatus.BUFFERING -> Color(0xFFFBBF24)
+                                                StreamPlayStatus.ERROR -> Color(0xFFF87171)
+                                                StreamPlayStatus.IDLE -> Color(0xFF94A3B8)
+                                            }
+                                        )
+                                )
+                                Text(
+                                    text = when (playStatus) {
+                                        StreamPlayStatus.PLAYING -> "LIVE PLAYING"
+                                        StreamPlayStatus.CONNECTING -> "CONNECTING"
+                                        StreamPlayStatus.BUFFERING -> "BUFFERING"
+                                        StreamPlayStatus.ERROR -> "STREAM FAILED"
+                                        StreamPlayStatus.IDLE -> "PAUSED"
+                                    },
+                                    color = Color.White,
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
                         }
                     }
                 }
 
-                // Video Player Stage
+                // Video Player Stage (Expands to fill height in Full-Screen Mode)
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(240.dp)
+                        .then(
+                            if (isFullScreen) Modifier.fillMaxSize() else Modifier.height(240.dp)
+                        )
                         .background(Color.Black),
                     contentAlignment = Alignment.Center
                 ) {
@@ -318,12 +407,16 @@ fun StreamPreviewDialog(
                         factory = { ctx ->
                             PlayerView(ctx).apply {
                                 player = exoPlayer
-                                useController = false // Custom Controls below
+                                useController = false
+                                this.resizeMode = resizeMode
                                 layoutParams = FrameLayout.LayoutParams(
                                     ViewGroup.LayoutParams.MATCH_PARENT,
                                     ViewGroup.LayoutParams.MATCH_PARENT
                                 )
                             }
+                        },
+                        update = { view ->
+                            view.resizeMode = resizeMode
                         },
                         modifier = Modifier.fillMaxSize()
                     )
@@ -405,17 +498,47 @@ fun StreamPreviewDialog(
                         }
                     }
 
-                    // Player Floating Controls Bar
+                    // Top Floating Controls in Fullscreen
+                    if (isFullScreen) {
+                        Row(
+                            modifier = Modifier
+                                .align(Alignment.TopCenter)
+                                .fillMaxWidth()
+                                .background(Color.Black.copy(alpha = 0.6f))
+                                .padding(horizontal = 14.dp, vertical = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                text = streamName,
+                                color = Color.White,
+                                fontWeight = FontWeight.Bold,
+                                style = MaterialTheme.typography.bodyMedium,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                modifier = Modifier.weight(1f)
+                            )
+                            IconButton(
+                                onClick = { isFullScreen = false },
+                                modifier = Modifier.size(32.dp)
+                            ) {
+                                Icon(Icons.Default.FullscreenExit, contentDescription = "Exit Fullscreen", tint = Color.White)
+                            }
+                        }
+                    }
+
+                    // Rich Player Action & Floating Controls Bar
                     Row(
                         modifier = Modifier
                             .align(Alignment.BottomCenter)
                             .fillMaxWidth()
-                            .background(Color.Black.copy(alpha = 0.65f))
-                            .padding(horizontal = 14.dp, vertical = 6.dp),
+                            .background(Color.Black.copy(alpha = 0.7f))
+                            .padding(horizontal = 10.dp, vertical = 6.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        // Left Actions: Play/Pause, Mute, Aspect Ratio Mode, Re-sync
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                             IconButton(
                                 onClick = {
                                     if (isPlaying) exoPlayer.pause() else exoPlayer.play()
@@ -425,7 +548,8 @@ fun StreamPreviewDialog(
                                 Icon(
                                     imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
                                     contentDescription = "Play/Pause",
-                                    tint = Color.White
+                                    tint = Color.White,
+                                    modifier = Modifier.size(18.dp)
                                 )
                             }
 
@@ -439,102 +563,208 @@ fun StreamPreviewDialog(
                                 Icon(
                                     imageVector = if (isMuted) Icons.Default.VolumeOff else Icons.Default.VolumeUp,
                                     contentDescription = "Mute",
-                                    tint = if (isMuted) Color(0xFFF87171) else Color.White
+                                    tint = if (isMuted) Color(0xFFF87171) else Color.White,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+
+                            // Aspect Ratio Cycle (Fit -> Fill -> Zoom)
+                            IconButton(
+                                onClick = {
+                                    resizeMode = when (resizeMode) {
+                                        AspectRatioFrameLayout.RESIZE_MODE_FIT -> AspectRatioFrameLayout.RESIZE_MODE_FILL
+                                        AspectRatioFrameLayout.RESIZE_MODE_FILL -> AspectRatioFrameLayout.RESIZE_MODE_ZOOM
+                                        else -> AspectRatioFrameLayout.RESIZE_MODE_FIT
+                                    }
+                                },
+                                modifier = Modifier.size(32.dp)
+                            ) {
+                                Icon(
+                                    Icons.Default.AspectRatio,
+                                    contentDescription = "Aspect Ratio Mode",
+                                    tint = Color(0xFF38BDF8),
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+
+                            // Re-sync Stream (Jump to live edge)
+                            IconButton(
+                                onClick = {
+                                    exoPlayer.seekToDefaultPosition()
+                                    exoPlayer.play()
+                                },
+                                modifier = Modifier.size(32.dp)
+                            ) {
+                                Icon(
+                                    Icons.Default.Sync,
+                                    contentDescription = "Re-sync Live Stream",
+                                    tint = Color(0xFF34D399),
+                                    modifier = Modifier.size(18.dp)
                                 )
                             }
                         }
 
-                        // Codec & Format Quick Tag
-                        Surface(
-                            shape = RoundedCornerShape(6.dp),
-                            color = Color(0xFF1E293B).copy(alpha = 0.8f)
-                        ) {
-                            Text(
-                                text = streamFormat,
-                                color = Color(0xFF38BDF8),
-                                style = MaterialTheme.typography.labelSmall,
-                                fontFamily = FontFamily.Monospace,
-                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
-                            )
+                        // Right Actions: Open in External Player (VLC), Copy URL, Fullscreen Toggle
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                            // Copy Stream Link
+                            IconButton(
+                                onClick = {
+                                    clipboardManager.setText(AnnotatedString(streamUrl))
+                                    showCopiedToast = true
+                                },
+                                modifier = Modifier.size(32.dp)
+                            ) {
+                                Icon(Icons.Default.ContentCopy, contentDescription = "Copy Link", tint = Color(0xFF94A3B8), modifier = Modifier.size(16.dp))
+                            }
+
+                            // Open in External App (VLC / MX Player)
+                            IconButton(
+                                onClick = {
+                                    try {
+                                        val intent = Intent(Intent.ACTION_VIEW).apply {
+                                            setDataAndType(Uri.parse(streamUrl), "video/*")
+                                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                        }
+                                        context.startActivity(Intent.createChooser(intent, "Play with External Player"))
+                                    } catch (e: Exception) {
+                                        // Ignore if no player found
+                                    }
+                                },
+                                modifier = Modifier.size(32.dp)
+                            ) {
+                                Icon(Icons.Default.OpenInNew, contentDescription = "External Player", tint = Color(0xFF60A5FA), modifier = Modifier.size(16.dp))
+                            }
+
+                            // Fullscreen Toggle
+                            IconButton(
+                                onClick = { isFullScreen = !isFullScreen },
+                                modifier = Modifier.size(32.dp)
+                            ) {
+                                Icon(
+                                    imageVector = if (isFullScreen) Icons.Default.FullscreenExit else Icons.Default.Fullscreen,
+                                    contentDescription = "Toggle Fullscreen",
+                                    tint = Color.White,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
                         }
                     }
                 }
 
-                // Diagnostics Telemetry Board
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f)
-                        .padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Text(
-                        text = "REAL-TIME STREAM TELEMETRY",
-                        color = Color(0xFF94A3B8),
-                        style = MaterialTheme.typography.labelSmall,
-                        fontWeight = FontWeight.Bold,
-                        letterSpacing = 1.sp
-                    )
-
-                    Surface(
-                        shape = RoundedCornerShape(12.dp),
-                        color = Color(0xFF0F172A),
-                        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF1E293B)),
-                        modifier = Modifier.fillMaxWidth()
+                // Diagnostics Telemetry Board (Visible in normal mode)
+                if (!isFullScreen) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f)
+                            .padding(14.dp),
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
-                        Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                            DiagnosticMetricRow(
-                                icon = Icons.Default.HighQuality,
-                                iconColor = Color(0xFF34D399),
-                                label = "Video Resolution",
-                                value = videoResolution
-                            )
-                            Divider(color = Color(0xFF1E293B))
-                            DiagnosticMetricRow(
-                                icon = Icons.Default.VideoLibrary,
-                                iconColor = Color(0xFF60A5FA),
-                                label = "Video Codec & FPS",
-                                value = videoCodec
-                            )
-                            Divider(color = Color(0xFF1E293B))
-                            DiagnosticMetricRow(
-                                icon = Icons.Default.Audiotrack,
-                                iconColor = Color(0xFFF472B6),
-                                label = "Audio Encoding",
-                                value = audioCodec
-                            )
-                            Divider(color = Color(0xFF1E293B))
-                            DiagnosticMetricRow(
-                                icon = Icons.Default.Speed,
-                                iconColor = Color(0xFFFBBF24),
-                                label = "First Frame Handshake",
-                                value = if (connectionLatencyMs > 0) "${connectionLatencyMs} ms" else "Measuring..."
-                            )
+                        Text(
+                            text = "REAL-TIME STREAM TELEMETRY & METRICS",
+                            color = Color(0xFF94A3B8),
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 1.sp
+                        )
+
+                        Surface(
+                            shape = RoundedCornerShape(12.dp),
+                            color = Color(0xFF0F172A),
+                            border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF1E293B)),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                // Live Bitrate & Speed
+                                DiagnosticMetricRow(
+                                    icon = Icons.Default.Speed,
+                                    iconColor = Color(0xFF38BDF8),
+                                    label = "Live Bitrate Throughput",
+                                    value = if (currentBitrateKbps > 0) "$currentBitrateKbps kbps (${String.format("%.2f", currentBitrateKbps / 1000f)} Mbps)" else "Estimating..."
+                                )
+                                Divider(color = Color(0xFF1E293B))
+
+                                // Buffer Health
+                                DiagnosticMetricRow(
+                                    icon = Icons.Default.HourglassTop,
+                                    iconColor = Color(0xFF34D399),
+                                    label = "Live Buffer Cushion",
+                                    value = "${String.format("%.1f", bufferHealthSeconds)} s ahead"
+                                )
+                                Divider(color = Color(0xFF1E293B))
+
+                                // Video Resolution
+                                DiagnosticMetricRow(
+                                    icon = Icons.Default.HighQuality,
+                                    iconColor = Color(0xFFFBBF24),
+                                    label = "Video Resolution",
+                                    value = videoResolution
+                                )
+                                Divider(color = Color(0xFF1E293B))
+
+                                // Codecs
+                                DiagnosticMetricRow(
+                                    icon = Icons.Default.VideoLibrary,
+                                    iconColor = Color(0xFF60A5FA),
+                                    label = "Video Codec & FPS",
+                                    value = videoCodec
+                                )
+                                Divider(color = Color(0xFF1E293B))
+
+                                // Audio Encoding
+                                DiagnosticMetricRow(
+                                    icon = Icons.Default.Audiotrack,
+                                    iconColor = Color(0xFFF472B6),
+                                    label = "Audio Encoding",
+                                    value = audioCodec
+                                )
+                                Divider(color = Color(0xFF1E293B))
+
+                                // First Frame Latency
+                                DiagnosticMetricRow(
+                                    icon = Icons.Default.Timer,
+                                    iconColor = Color(0xFFA78BFA),
+                                    label = "First Frame Handshake",
+                                    value = if (connectionLatencyMs > 0) "${connectionLatencyMs} ms" else "Measuring..."
+                                )
+                            }
                         }
-                    }
 
-                    // Direct Stream URL Box
-                    Surface(
-                        shape = RoundedCornerShape(12.dp),
-                        color = Color(0xFF0F172A),
-                        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF1E293B)),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                            Text(
-                                text = "STREAM ENDPOINT TARGET",
-                                color = Color(0xFF64748B),
-                                style = MaterialTheme.typography.labelSmall,
-                                fontWeight = FontWeight.Bold
-                            )
-                            Text(
-                                text = streamUrl,
-                                color = Color(0xFF94A3B8),
-                                style = MaterialTheme.typography.bodySmall,
-                                fontFamily = FontFamily.Monospace,
-                                maxLines = 2,
-                                overflow = TextOverflow.Ellipsis
-                            )
+                        // Direct Stream Target Endpoint
+                        Surface(
+                            shape = RoundedCornerShape(10.dp),
+                            color = Color(0xFF0F172A),
+                            border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF1E293B)),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Column(modifier = Modifier.padding(10.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = "STREAM ENDPOINT ($streamFormat)",
+                                        color = Color(0xFF64748B),
+                                        style = MaterialTheme.typography.labelSmall,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                    Text(
+                                        text = "ID: $streamId",
+                                        color = Color(0xFF38BDF8),
+                                        style = MaterialTheme.typography.labelSmall,
+                                        fontFamily = FontFamily.Monospace
+                                    )
+                                }
+                                Text(
+                                    text = streamUrl,
+                                    color = Color(0xFF94A3B8),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    fontFamily = FontFamily.Monospace,
+                                    maxLines = 2,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            }
                         }
                     }
                 }
@@ -563,7 +793,7 @@ private fun DiagnosticMetricRow(
                 imageVector = icon,
                 contentDescription = null,
                 tint = iconColor,
-                modifier = Modifier.size(18.dp)
+                modifier = Modifier.size(16.dp)
             )
             Text(
                 text = label,
