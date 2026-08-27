@@ -5,22 +5,25 @@
     android:viewportWidth="108"
     android:viewportHeight="108">
 
-    <!-- Rich Emerald-Teal Background Vignette -->
+    <!-- Deep Teal Background -->
     <path
-        android:fillColor="#0D3B3A"
-        android:pathData="M0,0h108v108h-108z" />
+        android:fillColor="#0A3331"
+        android:pathData="M 0,0 L 108,0 L 108,108 L 0,108 Z" />
 
-    <!-- Radiant Inner Glow Ring -->
+    <!-- Radiant Ambient Emerald/Teal Glow Rings -->
     <path
-        android:fillColor="#134E4A"
-        android:pathData="M 54,20 A 34,34 0 1 0 54,88 A 34,34 0 1 0 54,20" />
+        android:fillColor="#0D4B47"
+        android:pathData="M 54,16 A 38,38 0 1 0 54,92 A 38,38 0 1 0 54,16" />
+    <path
+        android:fillColor="#115E59"
+        android:pathData="M 54,24 A 30,30 0 1 0 54,84 A 30,30 0 1 0 54,24" />
     <path
         android:fillColor="#0F766E"
-        android:pathData="M 54,28 A 26,26 0 1 0 54,80 A 26,26 0 1 0 54,28" />
+        android:pathData="M 54,32 A 22,22 0 1 0 54,76 A 22,22 0 1 0 54,32" />
 
-    <!-- Ambient Shadow Edge -->
+    <!-- Ambient Shadow Vignette -->
     <path
-        android:strokeColor="#042F2E"
-        android:strokeWidth="4"
-        android:pathData="M 54,8 A 46,46 0 1 0 54,100 A 46,46 0 1 0 54,8" />
+        android:strokeColor="#04201F"
+        android:strokeWidth="3.5"
+        android:pathData="M 54,6 A 48,48 0 1 0 54,102 A 48,48 0 1 0 54,6" />
 </vector>

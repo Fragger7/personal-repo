@@ -5,275 +5,182 @@
     android:viewportWidth="108"
     android:viewportHeight="108">
 
-    <!-- ==================== SHERLOCK'S FACE, CHEEK & JAW ==================== -->
-    <!-- Warm Tan/Peach Skin Base -->
+    <!-- ==================== TWEED DEERSTALKER HAT & TRENCH COAT ==================== -->
+    <!-- Detective Trench Coat Collar Bottom Left -->
+    <path
+        android:fillColor="#8C743A"
+        android:strokeColor="#2E1C0C"
+        android:strokeWidth="1.8"
+        android:strokeLineJoin="round"
+        android:pathData="M 22,86 L 30,76 L 38,85 L 29,95 Z" />
+
+    <!-- Sherlock Face/Jaw Warm Peach Silhouette -->
     <path
         android:fillColor="#F6C5A2"
-        android:strokeColor="#572C19"
-        android:strokeWidth="1.5"
+        android:strokeColor="#4A2511"
+        android:strokeWidth="1.8"
         android:strokeLineJoin="round"
-        android:pathData="M 32,50 C 32,46 36,44 42,44 C 48,44 54,44 60,46 C 68,48 76,54 76,64 C 76,76 68,88 56,92 C 46,95 38,90 34,82 C 30,74 30,60 32,50 Z" />
+        android:pathData="M 32,48 C 32,44 38,42 45,42 C 54,42 62,44 68,48 C 76,53 78,62 76,72 C 73,83 64,91 52,93 C 42,94 36,88 33,80 C 30,72 30,58 32,48 Z" />
 
-    <!-- Rosy Cheek Warmth Flush -->
+    <!-- Friendly Smile Line -->
     <path
-        android:fillColor="#EA9D7F"
-        android:pathData="M 38,72 A 7,5 0 1 0 38,82 A 7,5 0 1 0 38,72" />
-
-    <!-- Friendly Smile Line & Dimple -->
-    <path
-        android:strokeColor="#572C19"
+        android:strokeColor="#4A2511"
         android:strokeWidth="1.8"
         android:strokeLineCap="round"
-        android:pathData="M 44,78 C 50,82 58,80 62,75" />
-    <path
-        android:strokeColor="#572C19"
-        android:strokeWidth="1.4"
-        android:strokeLineCap="round"
-        android:pathData="M 62,74 C 64,74 65,76 64,78" />
+        android:pathData="M 42,78 C 47,82 54,81 58,76" />
 
-    <!-- Stylized Cute Bulbous Nose -->
+    <!-- Cute Stylized Nose -->
     <path
         android:fillColor="#EDA788"
-        android:strokeColor="#572C19"
+        android:strokeColor="#4A2511"
         android:strokeWidth="1.8"
         android:strokeLineCap="round"
         android:strokeLineJoin="round"
-        android:pathData="M 46,60 C 44,68 39,70 39,75 C 39,78 44,79 48,77 C 50,75 50,71 49,67" />
+        android:pathData="M 44,60 C 42,67 38,69 38,73 C 38,76 43,77 46,75 C 48,73 48,69 47,65" />
 
-    <!-- ==================== RIGHT EYE (UNMAGNIFIED, EXPRESSIVE) ==================== -->
-    <!-- Eye Sclera (White) -->
+    <!-- Unmagnified Right Eye & Brow -->
     <path
         android:fillColor="#FFFFFF"
-        android:strokeColor="#572C19"
-        android:strokeWidth="1.6"
-        android:pathData="M 31,58 C 31,52 38,50 44,52 C 48,54 50,60 48,66 C 46,70 38,71 34,68 C 32,66 31,62 31,58 Z" />
-
-    <!-- Dark Brown Iris & Pupil -->
+        android:strokeColor="#4A2511"
+        android:strokeWidth="1.5"
+        android:pathData="M 32,56 C 32,50 38,48 43,50 C 47,52 48,58 46,63 C 44,67 37,68 34,65 Z" />
     <path
         android:fillColor="#3D2013"
-        android:pathData="M 39,56 A 4.5,5 0 1 0 39,66 A 4.5,5 0 1 0 39,56" />
-
-    <!-- Cute Pupil Catchlight Glint (White Dot) -->
+        android:pathData="M 38,54 A 3.8,4.2 0 1 0 38,62.4 A 3.8,4.2 0 1 0 38,54" />
     <path
         android:fillColor="#FFFFFF"
-        android:pathData="M 38,58 A 1.4,1.4 0 1 0 38,60.8 A 1.4,1.4 0 1 0 38,58" />
-
-    <!-- Expressive Arched Eyebrow -->
+        android:pathData="M 37,56 A 1.2,1.2 0 1 0 37,58.4 A 1.2,1.2 0 1 0 37,56" />
     <path
-        android:strokeColor="#4A2616"
+        android:strokeColor="#3D2013"
         android:strokeWidth="2.4"
         android:strokeLineCap="round"
-        android:pathData="M 31,51 C 35,46 43,47 47,50" />
+        android:pathData="M 31,48 C 35,44 43,45 46,48" />
 
-    <!-- ==================== TWEED DEERSTALKER HAT ==================== -->
-    <!-- Classic Mustard/Olive Tweed Crown Base -->
+    <!-- Deerstalker Hat Crown (Classic Olive-Mustard Tweed) -->
     <path
-        android:fillColor="#A2884A"
-        android:strokeColor="#3D2711"
-        android:strokeWidth="2"
+        android:fillColor="#9E8343"
+        android:strokeColor="#2E1C0C"
+        android:strokeWidth="2.2"
         android:strokeLineJoin="round"
         android:pathData="M 28,45 C 28,24 82,22 84,45 Z" />
 
-    <!-- Hat Surface Tweed Speckles / Texture Dots -->
+    <!-- Hat Top Bow / Button Tie -->
     <path
-        android:fillColor="#765F28"
-        android:pathData="M 40,30 A 1,1 0 1 0 40,32 A 1,1 0 1 0 40,30" />
-    <path
-        android:fillColor="#765F28"
-        android:pathData="M 48,27 A 1.2,1.2 0 1 0 48,29.4 A 1.2,1.2 0 1 0 48,27" />
-    <path
-        android:fillColor="#765F28"
-        android:pathData="M 58,26 A 1,1 0 1 0 58,28 A 1,1 0 1 0 58,26" />
-    <path
-        android:fillColor="#765F28"
-        android:pathData="M 68,30 A 1.3,1.3 0 1 0 68,32.6 A 1.3,1.3 0 1 0 68,30" />
-    <path
-        android:fillColor="#765F28"
-        android:pathData="M 76,36 A 1,1 0 1 0 76,38 A 1,1 0 1 0 76,36" />
-    <path
-        android:fillColor="#765F28"
-        android:pathData="M 36,37 A 1.1,1.1 0 1 0 36,39.2 A 1.1,1.1 0 1 0 36,37" />
+        android:fillColor="#5A471C"
+        android:strokeColor="#2E1C0C"
+        android:strokeWidth="1.6"
+        android:pathData="M 54,23 A 3.2,2.8 0 1 0 54,28.6 A 3.2,2.8 0 1 0 54,23" />
 
-    <!-- Cute Stitched Cloth Patch on Left (Moss Green) -->
+    <!-- Hat Front Curved Visor / Brim -->
     <path
-        android:fillColor="#6B783E"
-        android:strokeColor="#3D2711"
-        android:strokeWidth="1.2"
-        android:pathData="M 38,32 L 46,31 L 45,39 L 37,38 Z" />
-    <!-- Patch Stitch Marks -->
-    <path
-        android:strokeColor="#2E1F11"
-        android:strokeWidth="1"
-        android:strokeLineCap="round"
-        android:pathData="M 37,30 L 39,33 M 45,29 L 46,33 M 47,38 L 44,40 M 36,37 L 39,39" />
-
-    <!-- Cute Stitched Patch on Right (Slate Blue/Grey) -->
-    <path
-        android:fillColor="#596A7A"
-        android:strokeColor="#3D2711"
-        android:strokeWidth="1.2"
-        android:pathData="M 70,32 L 78,33 L 76,41 L 69,39 Z" />
-    <!-- Patch Stitch Marks -->
-    <path
-        android:strokeColor="#2E1F11"
-        android:strokeWidth="1"
-        android:strokeLineCap="round"
-        android:pathData="M 69,31 L 71,34 M 78,31 L 78,35 M 78,40 L 75,42 M 68,38 L 71,40" />
-
-    <!-- Hat Earflap Center Tie Button / Bow on Top -->
-    <path
-        android:fillColor="#655225"
-        android:strokeColor="#3D2711"
-        android:strokeWidth="1.5"
-        android:pathData="M 54,23 A 3,2.5 0 1 0 54,28 A 3,2.5 0 1 0 54,23" />
-    <path
-        android:strokeColor="#3D2711"
-        android:strokeWidth="1.4"
-        android:strokeLineCap="round"
-        android:pathData="M 51,25 L 48,22 M 57,25 L 60,22" />
-
-    <!-- Front Curved Brim / Visor of Deerstalker -->
-    <path
-        android:fillColor="#8C743A"
-        android:strokeColor="#3D2711"
-        android:strokeWidth="2.2"
+        android:fillColor="#846C34"
+        android:strokeColor="#2E1C0C"
+        android:strokeWidth="2.4"
         android:strokeLineCap="round"
         android:strokeLineJoin="round"
-        android:pathData="M 23,48 C 30,42 40,43 56,44 C 70,45 84,42 91,48 C 84,52 70,50 56,49 C 40,48 29,51 23,48 Z" />
-
-    <!-- Detective Trench Coat Collar Bottom Left -->
-    <path
-        android:fillColor="#B59A5A"
-        android:strokeColor="#3D2711"
-        android:strokeWidth="1.8"
-        android:strokeLineJoin="round"
-        android:pathData="M 22,86 L 28,78 L 36,86 L 30,94 Z" />
+        android:pathData="M 23,48 C 30,42 42,43 56,44 C 70,45 82,42 89,48 C 82,52 70,50 56,49 C 40,48 29,51 23,48 Z" />
 
     <!-- ==================== THE GIANT MAGNIFYING GLASS ==================== -->
-    <!-- Vintage Wood/Brass Handle -->
-    <!-- Brass Ferrule Ring Joint -->
+    <!-- Brass Joint Ring -->
     <path
-        android:fillColor="#FBBF24"
+        android:fillColor="#F59E0B"
         android:strokeColor="#78350F"
-        android:strokeWidth="1.5"
-        android:pathData="M 77,75 L 81,72 L 85,76 L 81,80 Z" />
-    <!-- Polished Wooden Handle Core -->
+        android:strokeWidth="1.6"
+        android:pathData="M 76,73 L 80,70 L 84,74 L 80,78 Z" />
+
+    <!-- Polished Wooden Handle (High Contrast Warm Brown) -->
     <path
         android:fillColor="#78350F"
-        android:strokeColor="#3D1A04"
-        android:strokeWidth="2"
-        android:strokeLineCap="round"
-        android:pathData="M 83,78 L 96,91 C 98,93 98,96 95,98 C 93,100 90,99 88,97 L 76,84 Z" />
-    <!-- Handle Golden Highlight Glint -->
-    <path
-        android:strokeColor="#D97706"
-        android:strokeWidth="1.5"
-        android:strokeLineCap="round"
-        android:pathData="M 84,81 L 93,90" />
-
-    <!-- Outer Chrome/Silver Lens Bezel Shadow -->
-    <path
-        android:fillColor="#1E293B"
-        android:strokeColor="#0F172A"
-        android:strokeWidth="4"
-        android:pathData="M 64,62 A 20,20 0 1 0 64,102 A 20,20 0 1 0 64,62" />
-
-    <!-- Silver/Metal Polished Outer Bezel -->
-    <path
-        android:strokeColor="#CBD5E1"
-        android:strokeWidth="3.2"
-        android:pathData="M 64,63 A 18.5,18.5 0 1 0 64,100 A 18.5,18.5 0 1 0 64,63" />
-
-    <!-- Lens Glass Background (Cosmic Deep Indigo Holographic Cavity) -->
-    <path
-        android:fillColor="#0D1322"
-        android:pathData="M 64,65 A 16.5,16.5 0 1 0 64,98 A 16.5,16.5 0 1 0 64,65" />
-
-    <!-- ==================== MAGNIFIED EYE (INSIDE LENS) ==================== -->
-    <!-- Magnified Eye Sclera (White) -->
-    <path
-        android:fillColor="#F8FAFC"
-        android:pathData="M 52,78 C 52,70 62,68 70,70 C 76,73 78,80 75,87 C 71,91 60,92 55,88 C 53,85 52,82 52,78 Z" />
-
-    <!-- Large Wondering Green/Hazel Iris (Magnified) -->
-    <path
-        android:fillColor="#22C55E"
-        android:strokeColor="#15803D"
-        android:strokeWidth="1.2"
-        android:pathData="M 64,75 A 6.5,6.5 0 1 0 64,88 A 6.5,6.5 0 1 0 64,75" />
-
-    <!-- Big Dark Pupil with Wondering Reflection -->
-    <path
-        android:fillColor="#0B132B"
-        android:pathData="M 64,77.5 A 4,4 0 1 0 64,85.5 A 4,4 0 1 0 64,77.5" />
-
-    <!-- Pupil Catchlight Sparkles -->
-    <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M 62,79 A 1.6,1.6 0 1 0 62,82.2 A 1.6,1.6 0 1 0 62,79" />
-    <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M 66,83 A 0.8,0.8 0 1 0 66,84.6 A 0.8,0.8 0 1 0 66,83" />
-
-    <!-- ==================== HOLOGRAPHIC STREAM RAYS & PLAY BUTTON ==================== -->
-    <!-- Swirling Neon Magenta/Purple Stream Wave Arc -->
-    <path
-        android:strokeColor="#C084FC"
-        android:strokeWidth="1.8"
-        android:strokeLineCap="round"
-        android:pathData="M 50,75 C 52,68 62,66 73,69 C 78,71 80,78 78,85" />
-
-    <!-- Swirling Neon Cyan Stream Wave Arc -->
-    <path
-        android:strokeColor="#38BDF8"
+        android:strokeColor="#2E1103"
         android:strokeWidth="2.2"
         android:strokeLineCap="round"
-        android:pathData="M 49,82 C 49,91 58,97 68,96 C 76,95 81,88 80,80" />
-
-    <!-- Swirling Emerald Neon IPTV Stream Ring -->
+        android:strokeLineJoin="round"
+        android:pathData="M 82,76 L 96,90 C 98,92 98,96 95,98 C 93,100 89,99 87,97 L 75,83 Z" />
     <path
-        android:strokeColor="#34D399"
+        android:strokeColor="#D97706"
         android:strokeWidth="1.6"
         android:strokeLineCap="round"
-        android:pathData="M 54,71 C 60,67 70,68 76,73" />
+        android:pathData="M 83,79 L 92,88" />
 
-    <!-- Holographic Data Stream Sparkle Particles -->
+    <!-- Outer Chrome Lens Bezel Shadow Rim -->
     <path
-        android:fillColor="#F472B6"
-        android:pathData="M 76,71 A 1,1 0 1 0 76,73 A 1,1 0 1 0 76,71" />
-    <path
-        android:fillColor="#38BDF8"
-        android:pathData="M 51,89 A 1.2,1.2 0 1 0 51,91.4 A 1.2,1.2 0 1 0 51,89" />
-    <path
-        android:fillColor="#FBBF24"
-        android:pathData="M 77,88 A 1,1 0 1 0 77,90 A 1,1 0 1 0 77,88" />
+        android:fillColor="#0F172A"
+        android:strokeColor="#020617"
+        android:strokeWidth="4.2"
+        android:pathData="M 64,62 A 20.5,20.5 0 1 0 64,103 A 20.5,20.5 0 1 0 64,62" />
 
-    <!-- Centered Iridescent Glowing Hologram Play Button (▶) -->
-    <!-- Glowing Outer Glow Aura -->
+    <!-- Polished Metallic Bezel Ring -->
+    <path
+        android:strokeColor="#E2E8F0"
+        android:strokeWidth="3.2"
+        android:pathData="M 64,63 A 19,19 0 1 0 64,101 A 19,19 0 1 0 64,63" />
+
+    <!-- Dark Indigo Lens Cavity -->
+    <path
+        android:fillColor="#0A0F1D"
+        android:pathData="M 64,65 A 17,17 0 1 0 64,99 A 17,17 0 1 0 64,65" />
+
+    <!-- ==================== MAGNIFIED EYE (INSIDE LENS) ==================== -->
+    <!-- Large Wondering Magnified Eye Sclera -->
+    <path
+        android:fillColor="#F8FAFC"
+        android:pathData="M 52,78 C 52,69 62,67 71,69 C 77,72 79,80 76,87 C 72,92 60,93 55,89 C 53,86 52,82 52,78 Z" />
+
+    <!-- Vibrant Emerald-Green Iris (High Clarity) -->
     <path
         android:fillColor="#10B981"
-        android:pathData="M 58,74 L 72,81.5 L 58,89 Z" />
-    <!-- Bright Mint/Emerald Core Play Icon -->
+        android:strokeColor="#047857"
+        android:strokeWidth="1.4"
+        android:pathData="M 64,75 A 6.8,6.8 0 1 0 64,88.6 A 6.8,6.8 0 1 0 64,75" />
+
+    <!-- Deep Wondering Pupil -->
     <path
-        android:fillColor="#A7F3D0"
-        android:strokeColor="#059669"
-        android:strokeWidth="1.2"
-        android:strokeLineJoin="round"
-        android:pathData="M 59,75.5 L 70,81.5 L 59,87.5 Z" />
-    <!-- Hologram Core Highlight -->
+        android:fillColor="#022C22"
+        android:pathData="M 64,77.5 A 4.2,4.2 0 1 0 64,85.9 A 4.2,4.2 0 1 0 64,77.5" />
+
+    <!-- Catchlight Glints in Pupil -->
     <path
         android:fillColor="#FFFFFF"
-        android:pathData="M 60,77 L 66,80 L 60,83 Z" />
+        android:pathData="M 62,79 A 1.8,1.8 0 1 0 62,82.6 A 1.8,1.8 0 1 0 62,79" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M 66.5,83.5 A 0.9,0.9 0 1 0 66.5,85.3 A 0.9,0.9 0 1 0 66.5,83.5" />
 
-    <!-- Glass Surface Specular Reflection Curved Glare -->
+    <!-- ==================== NEON STREAM RAYS & PLAY ICON (▶) ==================== -->
+    <!-- Electric Cyan Data Stream Arc -->
+    <path
+        android:strokeColor="#38BDF8"
+        android:strokeWidth="2.4"
+        android:strokeLineCap="round"
+        android:pathData="M 49,82 C 49,92 59,98 69,97 C 77,96 82,88 81,80" />
+
+    <!-- Vibrant Purple Stream Ray -->
+    <path
+        android:strokeColor="#C084FC"
+        android:strokeWidth="2"
+        android:strokeLineCap="round"
+        android:pathData="M 50,74 C 53,67 63,65 74,68 C 79,70 81,77 79,84" />
+
+    <!-- Bright Mint Green Play Button ▶ (High Visibility Foreground Focus) -->
+    <!-- Emerald Outer Glow Triange -->
+    <path
+        android:fillColor="#059669"
+        android:pathData="M 57,73 L 73,81.5 L 57,90 Z" />
+    <!-- Bright Mint/White Center Triangle Core -->
+    <path
+        android:fillColor="#6EE7B7"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="1.2"
+        android:strokeLineJoin="round"
+        android:pathData="M 58,74.5 L 71.5,81.5 L 58,88.5 Z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M 59.5,76 L 66,80 L 59.5,84 Z" />
+
+    <!-- Glass Surface Highlight Reflection -->
     <path
         android:strokeColor="#FFFFFF"
-        android:strokeWidth="1.8"
+        android:strokeWidth="2"
         android:strokeLineCap="round"
-        android:pathData="M 52,70 C 56,66 65,65 72,67" />
-    <path
-        android:strokeColor="#94A3B8"
-        android:strokeWidth="1.2"
-        android:strokeLineCap="round"
-        android:pathData="M 50,74 C 52,71 55,69 58,68" />
+        android:pathData="M 52,69 C 56,65 65,64 72,66" />
 </vector>

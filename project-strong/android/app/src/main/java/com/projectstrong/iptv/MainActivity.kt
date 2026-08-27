@@ -8,6 +8,9 @@ import android.net.NetworkRequest
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -15,22 +18,25 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material.icons.filled.Security
-import androidx.compose.material.icons.filled.Wifi
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.projectstrong.iptv.data.CommittedManager
 import com.projectstrong.iptv.data.DataStore
 import com.projectstrong.iptv.network.NetworkMonitor
 import com.projectstrong.iptv.ui.components.ConnectionStateDialog
+import com.projectstrong.iptv.ui.components.HeroBanner
+import com.projectstrong.iptv.ui.components.SettingsDialog
 import com.projectstrong.iptv.ui.components.ToastHost
 import com.projectstrong.iptv.ui.components.ToastManager
 import com.projectstrong.iptv.ui.theme.*
@@ -83,7 +89,7 @@ class MainActivity : ComponentActivity() {
             // Fallback gracefully
         }
 
-        // Initial fetch
+        // Initial network fetch
         DataStore.scanScope.launch {
             NetworkMonitor.refreshNetworkState(applicationContext)
         }
@@ -134,80 +140,90 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+data class TabItem(
+    val title: String,
+    val count: Int = 0,
+    val icon: ImageVector
+)
+
 @Composable
 fun MainDashboard() {
     var selectedTab by remember { mutableIntStateOf(0) }
     var showConnectionDialog by remember { mutableStateOf(false) }
+    var showSettingsDialog by remember { mutableStateOf(false) }
     
     val xtreamNodesCount = DataStore.scannedNodes.count { it.type == "Xtream" }
     val stalkerNodesCount = DataStore.scannedNodes.count { it.type == "Stalker" }
+    val activeNodesCount = DataStore.scannedNodes.count { it.status.contains("Active", true) }
     val committedCount = CommittedManager.records.size
     
-    val tabs = listOf(
-        "Base64", 
-        "Scanner", 
-        if (xtreamNodesCount > 0) "Xtream ($xtreamNodesCount)" else "Xtream", 
-        if (stalkerNodesCount > 0) "Stalker ($stalkerNodesCount)" else "Stalker", 
-        if (committedCount > 0) "Committed ($committedCount)" else "Committed",
-        "⚙️ Settings"
+    val tabItems = listOf(
+        TabItem("Base64", 0, Icons.Default.Code),
+        TabItem("Scanner", 0, Icons.Default.Sensors),
+        TabItem("Xtream", xtreamNodesCount, Icons.Default.LiveTv),
+        TabItem("Stalker", stalkerNodesCount, Icons.Default.Dns),
+        TabItem("Committed", committedCount, Icons.Default.FolderSpecial)
     )
 
     if (showConnectionDialog) {
         ConnectionStateDialog(onDismiss = { showConnectionDialog = false })
     }
 
+    if (showSettingsDialog) {
+        SettingsDialog(onDismiss = { showSettingsDialog = false })
+    }
+
     Column(modifier = Modifier.fillMaxSize()) {
-        // App Top Bar with dynamic Connection State
+        // App Top Bar: App Branding + Connection State Pill + Dedicated Modern Settings Gear Icon
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 20.dp, vertical = 12.dp),
+                .padding(horizontal = 16.dp, vertical = 12.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text(
+                        text = "Sherlock Streams",
+                        color = AppTextPrimary,
+                        fontWeight = FontWeight.Black,
+                        style = MaterialTheme.typography.titleLarge
+                    )
+                }
                 Text(
-                    text = "Sherlock Streams",
-                    color = AppTextPrimary,
-                    fontWeight = FontWeight.ExtraBold,
-                    style = MaterialTheme.typography.titleLarge
-                )
-                Text(
-                    text = "IPTV Intelligence & Diagnostics",
+                    text = "IPTV Extraction & Diagnostics",
                     color = AppTextSecondary,
                     style = MaterialTheme.typography.bodySmall
                 )
             }
 
-            // Connection State Indicator Pill (Clickable for full diagnostics & manual VPN recheck)
-            Surface(
-                shape = RoundedCornerShape(12.dp),
-                color = when {
-                    DataStore.detectedIsp == "Offline" || DataStore.ipInfo.contains("DISCONNECTED") -> AppErrorContainer
-                    DataStore.isVpnActive -> AppPrimaryContainer
-                    DataStore.isCloudHosting -> AppWarningContainer
-                    else -> AppSurfaceVariant
-                },
-                border = BorderStroke(
-                    1.dp, 
-                    when {
-                        DataStore.detectedIsp == "Offline" || DataStore.ipInfo.contains("DISCONNECTED") -> AppError.copy(alpha = 0.5f)
-                        DataStore.isVpnActive -> Color(0xFF38BDF8).copy(alpha = 0.5f)
-                        DataStore.isCloudHosting -> AppWarning.copy(alpha = 0.5f)
-                        else -> AppSuccess.copy(alpha = 0.4f)
-                    }
-                ),
-                modifier = Modifier.clickable { showConnectionDialog = true }
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Column(modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)) {
-                    Text(
-                        text = "Connection State",
-                        color = AppTextMuted,
-                        style = MaterialTheme.typography.labelSmall,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                    Spacer(modifier = Modifier.height(2.dp))
+                // Connection State Indicator Pill (Clickable for full diagnostics & manual VPN recheck)
+                Surface(
+                    shape = RoundedCornerShape(12.dp),
+                    color = when {
+                        DataStore.detectedIsp == "Offline" || DataStore.ipInfo.contains("DISCONNECTED") -> AppErrorContainer
+                        DataStore.isVpnActive -> AppPrimaryContainer
+                        DataStore.isCloudHosting -> AppWarningContainer
+                        else -> AppSurfaceVariant
+                    },
+                    border = BorderStroke(
+                        1.dp, 
+                        when {
+                            DataStore.detectedIsp == "Offline" || DataStore.ipInfo.contains("DISCONNECTED") -> AppError.copy(alpha = 0.5f)
+                            DataStore.isVpnActive -> Color(0xFF38BDF8).copy(alpha = 0.5f)
+                            DataStore.isCloudHosting -> AppWarning.copy(alpha = 0.5f)
+                            else -> AppSuccess.copy(alpha = 0.4f)
+                        }
+                    ),
+                    modifier = Modifier.clickable { showConnectionDialog = true }
+                ) {
                     Row(
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
@@ -227,10 +243,10 @@ fun MainDashboard() {
                         Text(
                             text = when {
                                 DataStore.detectedIsp == "Offline" || DataStore.ipInfo.contains("DISCONNECTED") -> "Offline"
-                                DataStore.isVpnActive -> "🛡️ VPN Active"
-                                DataStore.isCheckingNetwork -> "Checking..."
-                                DataStore.isCloudHosting -> "⚠️ Cloud Hosting"
-                                else -> "Direct ISP"
+                                DataStore.isVpnActive -> "VPN"
+                                DataStore.isCheckingNetwork -> "..."
+                                DataStore.isCloudHosting -> "Cloud"
+                                else -> "ISP"
                             },
                             color = when {
                                 DataStore.detectedIsp == "Offline" || DataStore.ipInfo.contains("DISCONNECTED") -> Color(0xFFF87171)
@@ -243,43 +259,124 @@ fun MainDashboard() {
                         )
                     }
                 }
-            }
-        }
 
-        // Modern Tab Navigation
-        ScrollableTabRow(
-            selectedTabIndex = selectedTab,
-            edgePadding = 16.dp,
-            containerColor = Color.Transparent,
-            divider = {},
-            indicator = {}
-        ) {
-            tabs.forEachIndexed { index, title ->
-                val isSelected = selectedTab == index
-                Tab(
-                    selected = isSelected,
-                    onClick = { selectedTab = index },
-                    modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
+                // Dedicated Settings Gear UI Element (Modern IconButton with glowing badge)
+                Surface(
+                    shape = RoundedCornerShape(12.dp),
+                    color = AppSurfaceVariant,
+                    border = BorderStroke(1.dp, AppSurfaceBorder),
+                    modifier = Modifier
+                        .size(38.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .clickable { showSettingsDialog = true }
                 ) {
-                    Surface(
-                        shape = RoundedCornerShape(20.dp),
-                        color = if (isSelected) AppPrimary.copy(alpha = 0.18f) else Color.Transparent,
-                        border = if (isSelected) BorderStroke(1.dp, AppPrimary.copy(alpha = 0.4f)) else null
-                    ) {
-                        Text(
-                            text = title,
-                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                            color = if (isSelected) Color(0xFF60A5FA) else AppTextSecondary,
-                            style = MaterialTheme.typography.labelMedium,
-                            modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp)
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            Icons.Default.Settings,
+                            contentDescription = "App Settings",
+                            tint = AppTextPrimary,
+                            modifier = Modifier.size(18.dp)
                         )
                     }
                 }
             }
         }
+
+        // Hero Banner Display
+        HeroBanner(
+            activeNodesCount = activeNodesCount,
+            committedCount = committedCount,
+            onOpenScanner = { selectedTab = 1 },
+            onOpenCommitted = { selectedTab = 4 },
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
+        )
+
+        Spacer(modifier = Modifier.height(10.dp))
+
+        // Distinct, High-Emphasis Tab Navigation Bar
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp),
+            shape = RoundedCornerShape(16.dp),
+            color = AppSurface,
+            border = BorderStroke(1.dp, AppSurfaceBorder)
+        ) {
+            ScrollableTabRow(
+                selectedTabIndex = selectedTab,
+                edgePadding = 6.dp,
+                containerColor = Color.Transparent,
+                divider = {},
+                indicator = {}
+            ) {
+                tabItems.forEachIndexed { index, item ->
+                    val isSelected = selectedTab == index
+                    Tab(
+                        selected = isSelected,
+                        onClick = { selectedTab = index },
+                        modifier = Modifier.padding(horizontal = 3.dp, vertical = 6.dp)
+                    ) {
+                        // High-contrast, tactile pill for unselected and selected tabs
+                        Surface(
+                            shape = RoundedCornerShape(12.dp),
+                            color = if (isSelected) {
+                                AppPrimary.copy(alpha = 0.22f)
+                            } else {
+                                AppSurfaceVariant.copy(alpha = 0.8f)
+                            },
+                            border = BorderStroke(
+                                1.dp,
+                                if (isSelected) {
+                                    AppPrimary
+                                } else {
+                                    AppSurfaceBorder.copy(alpha = 0.7f)
+                                }
+                            ),
+                            shadowElevation = if (isSelected) 2.dp else 0.dp
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
+                            ) {
+                                Icon(
+                                    imageVector = item.icon,
+                                    contentDescription = null,
+                                    tint = if (isSelected) Color(0xFF60A5FA) else AppTextSecondary,
+                                    modifier = Modifier.size(15.dp)
+                                )
+                                Text(
+                                    text = item.title,
+                                    fontWeight = if (isSelected) FontWeight.ExtraBold else FontWeight.SemiBold,
+                                    color = if (isSelected) Color(0xFF93C5FD) else AppTextPrimary,
+                                    style = MaterialTheme.typography.labelMedium
+                                )
+                                if (item.count > 0) {
+                                    Surface(
+                                        shape = RoundedCornerShape(10.dp),
+                                        color = if (isSelected) AppPrimary else Color(0xFF26334D),
+                                        modifier = Modifier.padding(start = 2.dp)
+                                    ) {
+                                        Text(
+                                            text = "${item.count}",
+                                            color = Color.White,
+                                            fontWeight = FontWeight.Bold,
+                                            style = MaterialTheme.typography.labelSmall,
+                                            fontSize = 10.sp,
+                                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
         
-        Spacer(modifier = Modifier.height(4.dp))
+        Spacer(modifier = Modifier.height(8.dp))
         
+        // Tab Content Screen
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -291,9 +388,7 @@ fun MainDashboard() {
                 2 -> com.projectstrong.iptv.ui.tabs.XtreamTab(onNextTab = { selectedTab = 3 })
                 3 -> com.projectstrong.iptv.ui.tabs.StalkerTab(onNextTab = { selectedTab = 4 })
                 4 -> com.projectstrong.iptv.ui.tabs.CommittedTab()
-                5 -> com.projectstrong.iptv.ui.tabs.SettingsTab()
             }
         }
     }
 }
-
