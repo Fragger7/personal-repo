@@ -177,9 +177,12 @@ fun ScannerTab(onNextTab: (() -> Unit)? = null) {
         }
     }
 
+    val scannerScrollState = rememberScrollState()
+
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .verticalScroll(scannerScrollState)
             .padding(16.dp)
     ) {
         // IP Network Status Banner
@@ -228,9 +231,9 @@ fun ScannerTab(onNextTab: (() -> Unit)? = null) {
             shape = RoundedCornerShape(16.dp),
             color = AppSurface,
             border = androidx.compose.foundation.BorderStroke(1.dp, AppSurfaceBorder),
-            modifier = Modifier.fillMaxWidth().weight(1f)
+            modifier = Modifier.fillMaxWidth()
         ) {
-            Column(modifier = Modifier.padding(16.dp).fillMaxSize()) {
+            Column(modifier = Modifier.padding(16.dp).fillMaxWidth()) {
                 // Tier 1: Title & Description
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -373,9 +376,9 @@ fun ScannerTab(onNextTab: (() -> Unit)? = null) {
                         unfocusedContainerColor = AppSurfaceVariant
                     ),
                     shape = RoundedCornerShape(10.dp),
+                    minLines = 6,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .weight(1f)
                 )
             }
         }

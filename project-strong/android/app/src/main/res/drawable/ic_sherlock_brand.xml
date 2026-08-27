@@ -1,0 +1,174 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Background circle for banner badge -->
+    <path
+        android:pathData="M54,4 A50,50 0 1,0 54,104 A50,50 0 1,0 54,4 Z"
+        android:fillColor="#0D3B36"
+        android:strokeColor="#0F766E"
+        android:strokeWidth="2" />
+
+    <!-- Group positioned for Sherlock character -->
+    <group
+        android:translateX="0"
+        android:translateY="0">
+
+        <!-- 1. DETECTIVE COAT / SHOULDERS / COLLAR -->
+        <path
+            android:pathData="M24,96 L24,108 L84,108 L84,96 C84,86 76,82 66,80 L42,80 C32,82 24,86 24,96 Z"
+            android:fillColor="#8D6E63"
+            android:strokeColor="#3E2723"
+            android:strokeWidth="1.5" />
+        <path
+            android:pathData="M48,82 L54,108 L60,82 Z"
+            android:fillColor="#6D4C41" />
+        <path
+            android:pathData="M34,80 L44,92 L40,94 L30,83 Z"
+            android:fillColor="#A1887F"
+            android:strokeColor="#3E2723"
+            android:strokeWidth="1.2" />
+        <path
+            android:pathData="M74,80 L64,92 L68,94 L78,83 Z"
+            android:fillColor="#A1887F"
+            android:strokeColor="#3E2723"
+            android:strokeWidth="1.2" />
+        <path
+            android:pathData="M44,68 L44,82 L64,82 L64,68 Z"
+            android:fillColor="#FFCC80"
+            android:strokeColor="#E65100"
+            android:strokeWidth="0.8" />
+        <path
+            android:pathData="M44,68 C48,74 60,74 64,68 L64,72 C58,78 50,78 44,72 Z"
+            android:fillColor="#F57C00" />
+
+        <!-- 2. SHERLOCK FACE & EARS -->
+        <path
+            android:pathData="M30,50 C26,50 26,60 31,62 Z"
+            android:fillColor="#FFE0B2"
+            android:strokeColor="#5D4037"
+            android:strokeWidth="1.2" />
+        <path
+            android:pathData="M78,50 C82,50 82,60 77,62 Z"
+            android:fillColor="#FFE0B2"
+            android:strokeColor="#5D4037"
+            android:strokeWidth="1.2" />
+        <path
+            android:pathData="M31,44 C31,64 36,76 54,76 C72,76 77,64 77,44 Z"
+            android:fillColor="#FFE0B2"
+            android:strokeColor="#4E342E"
+            android:strokeWidth="1.5" />
+        <path
+            android:pathData="M35,60 C35,57 39,57 39,60 C39,63 35,63 35,60 Z"
+            android:fillColor="#FFAB91" />
+
+        <!-- 3. EYES & EXPRESSION -->
+        <path
+            android:pathData="M35,46 C35,40 46,40 46,46 C46,52 35,52 35,46 Z"
+            android:fillColor="#FFFFFF"
+            android:strokeColor="#3E2723"
+            android:strokeWidth="1.2" />
+        <path
+            android:pathData="M41,46 C41,43 45,43 45,46 C45,49 41,49 41,46 Z"
+            android:fillColor="#212121" />
+        <path
+            android:pathData="M43,44 C43,43 45,43 45,44 C45,45 43,45 43,44 Z"
+            android:fillColor="#FFFFFF" />
+        <path
+            android:pathData="M33,39 C36,35 45,36 47,40"
+            android:strokeColor="#3E2723"
+            android:strokeWidth="2"
+            android:strokeLineCap="round" />
+        <path
+            android:pathData="M52,47 C52,56 46,59 50,60 C53,60 55,58 55,54"
+            android:strokeColor="#4E342E"
+            android:strokeWidth="1.5"
+            android:strokeLineCap="round" />
+        <path
+            android:pathData="M46,67 C50,70 58,69 62,65"
+            android:strokeColor="#3E2723"
+            android:strokeWidth="1.6"
+            android:strokeLineCap="round" />
+
+        <!-- 4. SHERLOCK DEERSTALKER HAT -->
+        <path
+            android:pathData="M27,38 C27,18 40,12 54,12 C68,12 81,18 81,38 Z"
+            android:fillColor="#CDB07B"
+            android:strokeColor="#3E2723"
+            android:strokeWidth="1.5" />
+        <path
+            android:pathData="M54,12 L54,38 M40,15 L36,38 M68,15 L72,38 M30,26 C42,24 66,24 78,26 M32,32 C44,30 64,30 76,32"
+            android:strokeColor="#9C7844"
+            android:strokeWidth="0.8" />
+        <path
+            android:pathData="M64,18 L73,20 L71,28 L62,26 Z"
+            android:fillColor="#78909C"
+            android:strokeColor="#263238"
+            android:strokeWidth="0.8" />
+        <path
+            android:pathData="M63,17 L65,19 M70,18 L72,20 M73,23 L71,25 M68,28 L66,26 M61,23 L63,24"
+            android:strokeColor="#ECEFF1"
+            android:strokeWidth="0.6" />
+        <path
+            android:pathData="M23,38 C23,34 54,30 85,38 C88,43 80,45 54,43 C28,45 20,43 23,38 Z"
+            android:fillColor="#BFA06B"
+            android:strokeColor="#3E2723"
+            android:strokeWidth="1.5" />
+        <path
+            android:pathData="M48,12 C51,9 57,9 60,12 C57,14 51,14 48,12 Z"
+            android:fillColor="#4E342E" />
+
+        <!-- 5. STREAMING MAGNIFYING GLASS -->
+        <path
+            android:pathData="M84,78 L98,92 L93,97 L79,83 Z"
+            android:fillColor="#795548"
+            android:strokeColor="#271810"
+            android:strokeWidth="1.4" />
+        <path
+            android:pathData="M81,80 L86,85 L84,87 L79,82 Z"
+            android:fillColor="#D4AF37" />
+        <path
+            android:pathData="M69,54m-22,0a22,22 0 1,0 44,0a22,22 0 1,0 -44,0"
+            android:fillColor="#0D2B2A"
+            android:strokeColor="#D4AF37"
+            android:strokeWidth="2.8" />
+        <path
+            android:pathData="M69,54m-19,0a19,19 0 1,0 38,0a19,19 0 1,0 -38,0"
+            android:fillColor="#00BFA5" />
+        <path
+            android:pathData="M69,54m-16,0a16,16 0 1,0 32,0a16,16 0 1,0 -32,0"
+            android:strokeColor="#00E5FF"
+            android:strokeWidth="1.2"
+            android:strokeLineCap="round" />
+        <path
+            android:pathData="M69,54m-12,0a12,12 0 1,0 24,0a12,12 0 1,0 -24,0"
+            android:strokeColor="#E040FB"
+            android:strokeWidth="1"
+            android:strokeLineCap="round" />
+
+        <!-- SHERLOCK'S ENLARGED EYE BEHIND GLASS -->
+        <path
+            android:pathData="M61,54 C61,48 77,48 77,54 C77,60 61,60 61,54 Z"
+            android:fillColor="#E0F7FA" />
+        <path
+            android:pathData="M66,54 C66,50 72,50 72,54 C72,58 66,58 66,54 Z"
+            android:fillColor="#00695C" />
+        <path
+            android:pathData="M68,54 C68,52 70,52 70,54 C70,56 68,56 68,54 Z"
+            android:fillColor="#1DE9B6" />
+
+        <!-- 6. GLOWING NEON PLAY BUTTON IN CENTER OF LENS -->
+        <path
+            android:pathData="M65,46 L77,54 L65,62 Z"
+            android:fillColor="#00E676"
+            android:strokeColor="#FFFFFF"
+            android:strokeWidth="1.2" />
+        <path
+            android:pathData="M55,44 C58,38 72,36 80,41"
+            android:strokeColor="#FFFFFF"
+            android:strokeWidth="1.8"
+            android:strokeLineCap="round" />
+    </group>
+</vector>

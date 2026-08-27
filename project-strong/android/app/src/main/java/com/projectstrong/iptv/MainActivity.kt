@@ -193,11 +193,10 @@ fun MainDashboard() {
                     modifier = Modifier.size(38.dp)
                 ) {
                     Box(contentAlignment = Alignment.Center) {
-                        Icon(
-                            Icons.Default.TravelExplore,
-                            contentDescription = "Sherlock Logo",
-                            tint = Color(0xFF34D399),
-                            modifier = Modifier.size(22.dp)
+                        androidx.compose.foundation.Image(
+                            painter = androidx.compose.ui.res.painterResource(id = R.drawable.ic_sherlock_brand),
+                            contentDescription = "Sherlock Detective",
+                            modifier = Modifier.size(28.dp)
                         )
                     }
                 }

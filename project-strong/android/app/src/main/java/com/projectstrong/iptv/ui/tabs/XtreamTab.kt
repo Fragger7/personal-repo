@@ -553,6 +553,7 @@ fun XtreamDetailScreen(node: ParsedCredential, onBack: () -> Unit) {
     val clipboardManager = LocalClipboardManager.current
     var showCatalogExplorer by remember { mutableStateOf(false) }
     var showCommitDialog by remember { mutableStateOf(false) }
+    val detailScrollState = rememberScrollState()
 
     if (showCommitDialog) {
         CommitAccountDialog(
@@ -584,7 +585,12 @@ fun XtreamDetailScreen(node: ParsedCredential, onBack: () -> Unit) {
         )
     }
 
-    Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(detailScrollState)
+            .padding(16.dp)
+    ) {
         // Toolbar
         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(bottom = 16.dp)) {
             IconButton(onClick = onBack) {

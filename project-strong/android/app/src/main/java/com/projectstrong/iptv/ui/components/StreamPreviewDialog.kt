@@ -1,6 +1,10 @@
 package com.projectstrong.iptv.ui.components
 
+import android.app.Activity
+import android.content.Context
+import android.content.ContextWrapper
 import android.content.Intent
+import android.content.pm.ActivityInfo
 import android.net.Uri
 import android.view.ViewGroup
 import android.widget.FrameLayout
@@ -8,9 +12,13 @@ import androidx.annotation.OptIn
 import androidx.compose.animation.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -19,6 +27,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.AnnotatedString
@@ -36,7 +45,6 @@ import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.common.VideoSize
 import androidx.media3.common.util.UnstableApi
-import androidx.media3.datasource.DefaultHttpDataSource
 import androidx.media3.datasource.okhttp.OkHttpDataSource
 import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.DefaultRenderersFactory
@@ -56,6 +64,28 @@ enum class StreamPlayStatus {
     PLAYING,
     BUFFERING,
     ERROR
+}
+
+private fun Context.findActivity(): Activity? {
+    var currentContext = this
+    while (currentContext is ContextWrapper) {
+        if (currentContext is Activity) return currentContext
+        currentContext = currentContext.baseContext
+    }
+    return null
+}
+
+private fun formatTime(millis: Long): String {
+    if (millis <= 0) return "00:00"
+    val totalSeconds = millis / 1000
+    val seconds = totalSeconds % 60
+    val minutes = (totalSeconds / 60) % 60
+    val hours = totalSeconds / 3600
+    return if (hours > 0) {
+        String.format("%d:%02d:%02d", hours, minutes, seconds)
+    } else {
+        String.format("%02d:%02d", minutes, seconds)
+    }
 }
 
 @OptIn(UnstableApi::class)
@@ -80,11 +110,16 @@ fun StreamPreviewDialog(
     var connectionLatencyMs by remember { mutableLongStateOf(0L) }
     var isFullScreen by remember { mutableStateOf(false) }
     var resizeMode by remember { mutableIntStateOf(AspectRatioFrameLayout.RESIZE_MODE_FIT) }
-    
-    // Real-Time Telemetry States
+
+    // Real-Time Telemetry & Playback Position States
     var currentBitrateKbps by remember { mutableLongStateOf(0L) }
     var bufferHealthSeconds by remember { mutableFloatStateOf(0f) }
     var showCopiedToast by remember { mutableStateOf(false) }
+    var currentPositionMs by remember { mutableLongStateOf(0L) }
+    var durationMs by remember { mutableLongStateOf(0L) }
+    var isLiveStream by remember { mutableStateOf(true) }
+    var isUserScrubbing by remember { mutableStateOf(false) }
+    var scrubPositionMs by remember { mutableFloatStateOf(0f) }
 
     val streamFormat = remember(streamUrl) {
         when {
@@ -141,16 +176,42 @@ fun StreamPreviewDialog(
             }
     }
 
-    // Real-Time Polling for Bitrate, Buffer, and Performance Metrics
+    // Fullscreen Screen Orientation Sync
+    val activity = remember(context) { context.findActivity() }
+    DisposableEffect(isFullScreen) {
+        if (activity != null) {
+            if (isFullScreen) {
+                activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
+            } else {
+                activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+            }
+        }
+        onDispose {
+            activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+        }
+    }
+
+    // Real-Time Polling for Bitrate, Buffer, Duration, and Position
     LaunchedEffect(exoPlayer) {
         while (isActive) {
-            delay(1000)
+            delay(500)
             if (exoPlayer.playbackState == Player.STATE_READY) {
                 // Buffer Health
                 val bufferedPosition = exoPlayer.bufferedPosition
                 val currentPosition = exoPlayer.currentPosition
                 val bufferDuration = (bufferedPosition - currentPosition).coerceAtLeast(0)
                 bufferHealthSeconds = bufferDuration / 1000f
+
+                if (!isUserScrubbing) {
+                    currentPositionMs = currentPosition
+                }
+                val dur = exoPlayer.duration
+                if (dur > 0 && dur != C.TIME_UNSET) {
+                    durationMs = dur
+                    isLiveStream = exoPlayer.isCurrentMediaItemLive
+                } else {
+                    isLiveStream = true
+                }
 
                 // Real-time track format bitrate estimation
                 val videoFormat = exoPlayer.videoFormat
@@ -277,8 +338,7 @@ fun StreamPreviewDialog(
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .statusBarsPadding()
-                    .navigationBarsPadding()
+                    .then(if (!isFullScreen) Modifier.statusBarsPadding().navigationBarsPadding() else Modifier)
             ) {
                 // Header Bar (Hidden during full-screen mode to give maximum view)
                 if (!isFullScreen) {
@@ -393,7 +453,7 @@ fun StreamPreviewDialog(
                     }
                 }
 
-                // Video Player Stage (Expands to fill height in Full-Screen Mode)
+                // Video Player Stage (Expands to fill entire screen in Full-Screen Mode)
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -431,15 +491,15 @@ fun StreamPreviewDialog(
                         ) {
                             Column(
                                 horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.spacedBy(10.dp)
+                                verticalArrangement = Arrangement.spacedBy(12.dp)
                             ) {
                                 CircularProgressIndicator(
                                     color = Color(0xFF38BDF8),
-                                    modifier = Modifier.size(36.dp),
-                                    strokeWidth = 3.dp
+                                    strokeWidth = 3.dp,
+                                    modifier = Modifier.size(36.dp)
                                 )
                                 Text(
-                                    text = if (playStatus == StreamPlayStatus.CONNECTING) "Connecting to Stream Gateway..." else "Buffering Stream Packets...",
+                                    text = if (playStatus == StreamPlayStatus.CONNECTING) "Negotiating stream handshake..." else "Buffering video stream...",
                                     color = Color.White,
                                     style = MaterialTheme.typography.bodySmall,
                                     fontWeight = FontWeight.Medium
@@ -453,37 +513,38 @@ fun StreamPreviewDialog(
                         Box(
                             modifier = Modifier
                                 .fillMaxSize()
-                                .background(Color(0xFF0F172A).copy(alpha = 0.95f))
+                                .background(Color.Black.copy(alpha = 0.85f))
                                 .padding(16.dp),
                             contentAlignment = Alignment.Center
                         ) {
                             Column(
                                 horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                                verticalArrangement = Arrangement.spacedBy(10.dp)
                             ) {
                                 Icon(
                                     Icons.Default.ErrorOutline,
-                                    contentDescription = null,
+                                    contentDescription = "Error",
                                     tint = Color(0xFFF87171),
-                                    modifier = Modifier.size(40.dp)
+                                    modifier = Modifier.size(42.dp)
                                 )
                                 Text(
-                                    text = "Stream Diagnostic Failed",
-                                    color = Color(0xFFF87171),
-                                    style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.Bold
+                                    text = "Stream Playback Error",
+                                    color = Color.White,
+                                    fontWeight = FontWeight.Bold,
+                                    style = MaterialTheme.typography.titleMedium
                                 )
                                 Text(
-                                    text = errorMessage ?: "The provider server rejected the stream request or the transport stream is currently dead.",
+                                    text = errorMessage ?: "Unable to establish video pipe.",
                                     color = Color(0xFFCBD5E1),
                                     style = MaterialTheme.typography.bodySmall,
-                                    lineHeight = 16.sp
+                                    lineHeight = 16.sp,
+                                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
                                 )
                                 Spacer(modifier = Modifier.height(4.dp))
                                 Button(
                                     onClick = {
-                                        playStatus = StreamPlayStatus.CONNECTING
                                         errorMessage = null
+                                        playStatus = StreamPlayStatus.CONNECTING
                                         exoPlayer.prepare()
                                         exoPlayer.play()
                                     },
@@ -492,7 +553,7 @@ fun StreamPreviewDialog(
                                 ) {
                                     Icon(Icons.Default.Refresh, contentDescription = null, tint = Color.White, modifier = Modifier.size(16.dp))
                                     Spacer(modifier = Modifier.width(6.dp))
-                                    Text("Retry Connection", color = Color.White, style = MaterialTheme.typography.labelSmall)
+                                    Text("Retry Connection", color = Color.White, style = MaterialTheme.typography.labelMedium)
                                 }
                             }
                         }
@@ -504,147 +565,184 @@ fun StreamPreviewDialog(
                             modifier = Modifier
                                 .align(Alignment.TopCenter)
                                 .fillMaxWidth()
-                                .background(Color.Black.copy(alpha = 0.6f))
-                                .padding(horizontal = 14.dp, vertical = 8.dp),
+                                .background(Color.Black.copy(alpha = 0.65f))
+                                .padding(horizontal = 16.dp, vertical = 10.dp),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Text(
-                                text = streamName,
-                                color = Color.White,
-                                fontWeight = FontWeight.Bold,
-                                style = MaterialTheme.typography.bodyMedium,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
                                 modifier = Modifier.weight(1f)
-                            )
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(8.dp)
+                                        .clip(CircleShape)
+                                        .background(Color(0xFF34D399))
+                                )
+                                Text(
+                                    text = streamName,
+                                    color = Color.White,
+                                    fontWeight = FontWeight.Bold,
+                                    style = MaterialTheme.typography.titleSmall,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            }
                             IconButton(
                                 onClick = { isFullScreen = false },
-                                modifier = Modifier.size(32.dp)
+                                modifier = Modifier.size(36.dp)
                             ) {
                                 Icon(Icons.Default.FullscreenExit, contentDescription = "Exit Fullscreen", tint = Color.White)
                             }
                         }
                     }
 
-                    // Rich Player Action & Floating Controls Bar
-                    Row(
+                    // Rich Bottom Player Action & Track Bar Bar
+                    Column(
                         modifier = Modifier
                             .align(Alignment.BottomCenter)
                             .fillMaxWidth()
-                            .background(Color.Black.copy(alpha = 0.7f))
-                            .padding(horizontal = 10.dp, vertical = 6.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
+                            .background(Color.Black.copy(alpha = 0.75f))
+                            .padding(horizontal = 10.dp, vertical = 6.dp)
                     ) {
-                        // Left Actions: Play/Pause, Mute, Aspect Ratio Mode, Re-sync
-                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                            IconButton(
-                                onClick = {
-                                    if (isPlaying) exoPlayer.pause() else exoPlayer.play()
-                                },
-                                modifier = Modifier.size(32.dp)
+                        // Track / Scrub Bar for Catchup & VOD / Timeshift
+                        if (durationMs > 0 && !isLiveStream) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth().padding(horizontal = 6.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
-                                Icon(
-                                    imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
-                                    contentDescription = "Play/Pause",
-                                    tint = Color.White,
-                                    modifier = Modifier.size(18.dp)
+                                Text(
+                                    text = formatTime(if (isUserScrubbing) scrubPositionMs.toLong() else currentPositionMs),
+                                    color = Color.White,
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontFamily = FontFamily.Monospace
                                 )
-                            }
-
-                            IconButton(
-                                onClick = {
-                                    isMuted = !isMuted
-                                    exoPlayer.volume = if (isMuted) 0f else 1f
-                                },
-                                modifier = Modifier.size(32.dp)
-                            ) {
-                                Icon(
-                                    imageVector = if (isMuted) Icons.Default.VolumeOff else Icons.Default.VolumeUp,
-                                    contentDescription = "Mute",
-                                    tint = if (isMuted) Color(0xFFF87171) else Color.White,
-                                    modifier = Modifier.size(18.dp)
+                                Slider(
+                                    value = if (isUserScrubbing) scrubPositionMs else currentPositionMs.toFloat(),
+                                    onValueChange = {
+                                        isUserScrubbing = true
+                                        scrubPositionMs = it
+                                    },
+                                    onValueChangeFinished = {
+                                        exoPlayer.seekTo(scrubPositionMs.toLong())
+                                        isUserScrubbing = false
+                                    },
+                                    valueRange = 0f..durationMs.toFloat(),
+                                    modifier = Modifier.weight(1f),
+                                    colors = SliderDefaults.colors(
+                                        thumbColor = Color(0xFF38BDF8),
+                                        activeTrackColor = Color(0xFF38BDF8),
+                                        inactiveTrackColor = Color(0xFF334155)
+                                    )
                                 )
-                            }
-
-                            // Aspect Ratio Cycle (Fit -> Fill -> Zoom)
-                            IconButton(
-                                onClick = {
-                                    resizeMode = when (resizeMode) {
-                                        AspectRatioFrameLayout.RESIZE_MODE_FIT -> AspectRatioFrameLayout.RESIZE_MODE_FILL
-                                        AspectRatioFrameLayout.RESIZE_MODE_FILL -> AspectRatioFrameLayout.RESIZE_MODE_ZOOM
-                                        else -> AspectRatioFrameLayout.RESIZE_MODE_FIT
-                                    }
-                                },
-                                modifier = Modifier.size(32.dp)
-                            ) {
-                                Icon(
-                                    Icons.Default.AspectRatio,
-                                    contentDescription = "Aspect Ratio Mode",
-                                    tint = Color(0xFF38BDF8),
-                                    modifier = Modifier.size(18.dp)
-                                )
-                            }
-
-                            // Re-sync Stream (Jump to live edge)
-                            IconButton(
-                                onClick = {
-                                    exoPlayer.seekToDefaultPosition()
-                                    exoPlayer.play()
-                                },
-                                modifier = Modifier.size(32.dp)
-                            ) {
-                                Icon(
-                                    Icons.Default.Sync,
-                                    contentDescription = "Re-sync Live Stream",
-                                    tint = Color(0xFF34D399),
-                                    modifier = Modifier.size(18.dp)
+                                Text(
+                                    text = formatTime(durationMs),
+                                    color = Color(0xFF94A3B8),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontFamily = FontFamily.Monospace
                                 )
                             }
                         }
 
-                        // Right Actions: Open in External Player (VLC), Copy URL, Fullscreen Toggle
-                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                            // Copy Stream Link
-                            IconButton(
-                                onClick = {
-                                    clipboardManager.setText(AnnotatedString(streamUrl))
-                                    showCopiedToast = true
-                                },
-                                modifier = Modifier.size(32.dp)
+                        // Labeled Controls Bar
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            // Left Actions: Play/Pause, Mute, Aspect, Sync
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(4.dp)
                             ) {
-                                Icon(Icons.Default.ContentCopy, contentDescription = "Copy Link", tint = Color(0xFF94A3B8), modifier = Modifier.size(16.dp))
-                            }
-
-                            // Open in External App (VLC / MX Player)
-                            IconButton(
-                                onClick = {
-                                    try {
-                                        val intent = Intent(Intent.ACTION_VIEW).apply {
-                                            setDataAndType(Uri.parse(streamUrl), "video/*")
-                                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                                        }
-                                        context.startActivity(Intent.createChooser(intent, "Play with External Player"))
-                                    } catch (e: Exception) {
-                                        // Ignore if no player found
+                                PlayerLabeledButton(
+                                    icon = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
+                                    label = if (isPlaying) "Pause" else "Play",
+                                    tint = if (isPlaying) Color.White else Color(0xFF34D399),
+                                    onClick = {
+                                        if (isPlaying) exoPlayer.pause() else exoPlayer.play()
                                     }
-                                },
-                                modifier = Modifier.size(32.dp)
-                            ) {
-                                Icon(Icons.Default.OpenInNew, contentDescription = "External Player", tint = Color(0xFF60A5FA), modifier = Modifier.size(16.dp))
+                                )
+
+                                PlayerLabeledButton(
+                                    icon = if (isMuted) Icons.Default.VolumeOff else Icons.Default.VolumeUp,
+                                    label = if (isMuted) "Unmute" else "Mute",
+                                    tint = if (isMuted) Color(0xFFF87171) else Color.White,
+                                    onClick = {
+                                        isMuted = !isMuted
+                                        exoPlayer.volume = if (isMuted) 0f else 1f
+                                    }
+                                )
+
+                                PlayerLabeledButton(
+                                    icon = Icons.Default.AspectRatio,
+                                    label = when (resizeMode) {
+                                        AspectRatioFrameLayout.RESIZE_MODE_FIT -> "Fit"
+                                        AspectRatioFrameLayout.RESIZE_MODE_FILL -> "Fill"
+                                        AspectRatioFrameLayout.RESIZE_MODE_ZOOM -> "Zoom"
+                                        else -> "Aspect"
+                                    },
+                                    tint = Color(0xFF38BDF8),
+                                    onClick = {
+                                        resizeMode = when (resizeMode) {
+                                            AspectRatioFrameLayout.RESIZE_MODE_FIT -> AspectRatioFrameLayout.RESIZE_MODE_FILL
+                                            AspectRatioFrameLayout.RESIZE_MODE_FILL -> AspectRatioFrameLayout.RESIZE_MODE_ZOOM
+                                            else -> AspectRatioFrameLayout.RESIZE_MODE_FIT
+                                        }
+                                    }
+                                )
+
+                                PlayerLabeledButton(
+                                    icon = Icons.Default.Sync,
+                                    label = "Sync",
+                                    tint = Color(0xFF34D399),
+                                    onClick = {
+                                        exoPlayer.seekToDefaultPosition()
+                                        exoPlayer.play()
+                                    }
+                                )
                             }
 
-                            // Fullscreen Toggle
-                            IconButton(
-                                onClick = { isFullScreen = !isFullScreen },
-                                modifier = Modifier.size(32.dp)
+                            // Right Actions: Copy, External, Fullscreen
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(4.dp)
                             ) {
-                                Icon(
-                                    imageVector = if (isFullScreen) Icons.Default.FullscreenExit else Icons.Default.Fullscreen,
-                                    contentDescription = "Toggle Fullscreen",
+                                PlayerLabeledButton(
+                                    icon = Icons.Default.ContentCopy,
+                                    label = "Copy",
+                                    tint = Color(0xFF94A3B8),
+                                    onClick = {
+                                        clipboardManager.setText(AnnotatedString(streamUrl))
+                                        showCopiedToast = true
+                                    }
+                                )
+
+                                PlayerLabeledButton(
+                                    icon = Icons.Default.OpenInNew,
+                                    label = "VLC",
+                                    tint = Color(0xFF60A5FA),
+                                    onClick = {
+                                        try {
+                                            val intent = Intent(Intent.ACTION_VIEW).apply {
+                                                setDataAndType(Uri.parse(streamUrl), "video/*")
+                                                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                            }
+                                            context.startActivity(Intent.createChooser(intent, "Play with External Player"))
+                                        } catch (e: Exception) {
+                                            // Ignore if no external player
+                                        }
+                                    }
+                                )
+
+                                PlayerLabeledButton(
+                                    icon = if (isFullScreen) Icons.Default.FullscreenExit else Icons.Default.Fullscreen,
+                                    label = if (isFullScreen) "Exit" else "Full",
                                     tint = Color.White,
-                                    modifier = Modifier.size(20.dp)
+                                    onClick = { isFullScreen = !isFullScreen }
                                 )
                             }
                         }
@@ -653,10 +751,12 @@ fun StreamPreviewDialog(
 
                 // Diagnostics Telemetry Board (Visible in normal mode)
                 if (!isFullScreen) {
+                    val telemetryScroll = rememberScrollState()
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
                             .weight(1f)
+                            .verticalScroll(telemetryScroll)
                             .padding(14.dp),
                         verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
@@ -769,6 +869,39 @@ fun StreamPreviewDialog(
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun PlayerLabeledButton(
+    icon: ImageVector,
+    label: String,
+    tint: Color,
+    onClick: () -> Unit
+) {
+    Surface(
+        shape = RoundedCornerShape(6.dp),
+        color = Color(0xFF1E293B).copy(alpha = 0.6f),
+        modifier = Modifier.clickable(onClick = onClick)
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.padding(horizontal = 6.dp, vertical = 4.dp)
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = label,
+                tint = tint,
+                modifier = Modifier.size(16.dp)
+            )
+            Text(
+                text = label,
+                color = Color.White,
+                fontSize = 9.sp,
+                fontWeight = FontWeight.Medium,
+                maxLines = 1
+            )
         }
     }
 }

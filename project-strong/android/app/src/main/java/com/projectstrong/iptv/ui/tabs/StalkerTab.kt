@@ -297,6 +297,7 @@ fun StalkerMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCreden
 fun StalkerDetailScreen(node: ParsedCredential, onBack: () -> Unit) {
     val clipboardManager = LocalClipboardManager.current
     var showCommitDialog by remember { mutableStateOf(false) }
+    val detailScrollState = rememberScrollState()
 
     if (showCommitDialog) {
         CommitAccountDialog(
@@ -313,7 +314,12 @@ fun StalkerDetailScreen(node: ParsedCredential, onBack: () -> Unit) {
         )
     }
 
-    Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(detailScrollState)
+            .padding(16.dp)
+    ) {
         // Toolbar
         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(bottom = 16.dp)) {
             IconButton(onClick = onBack) {

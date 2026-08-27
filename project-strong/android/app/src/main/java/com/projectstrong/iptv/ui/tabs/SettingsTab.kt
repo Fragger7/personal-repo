@@ -190,11 +190,10 @@ fun SettingsTab() {
                             modifier = Modifier.size(48.dp)
                         ) {
                             Box(contentAlignment = Alignment.Center) {
-                                Icon(
-                                    Icons.Default.TravelExplore,
-                                    contentDescription = null,
-                                    tint = Color(0xFF34D399),
-                                    modifier = Modifier.size(28.dp)
+                                androidx.compose.foundation.Image(
+                                    painter = androidx.compose.ui.res.painterResource(id = com.projectstrong.iptv.R.drawable.ic_sherlock_brand),
+                                    contentDescription = "Sherlock Detective",
+                                    modifier = Modifier.size(36.dp)
                                 )
                             }
                         }
@@ -246,6 +245,33 @@ fun SettingsTab() {
                     style = MaterialTheme.typography.bodySmall,
                     lineHeight = 18.sp
                 )
+
+                // Instant Auto-Save Banner
+                Surface(
+                    shape = RoundedCornerShape(8.dp),
+                    color = AppSurfaceVariant.copy(alpha = 0.7f),
+                    border = BorderStroke(1.dp, Color(0xFF0F766E).copy(alpha = 0.4f)),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Icon(
+                            Icons.Default.Bolt,
+                            contentDescription = null,
+                            tint = Color(0xFF34D399),
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Text(
+                            text = "⚡ Instant Auto-Save: All preferences, concurrency, timeout, and theme changes take effect immediately across all tabs. No manual save required.",
+                            color = Color(0xFF94A3B8),
+                            style = MaterialTheme.typography.labelSmall,
+                            lineHeight = 14.sp
+                        )
+                    }
+                }
             }
         }
 

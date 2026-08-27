@@ -440,7 +440,9 @@ fun FullScreenCatalogExplorer(
                                                     horizontalArrangement = Arrangement.SpaceBetween
                                                 ) {
                                                     Row(
-                                                        modifier = Modifier.weight(1f),
+                                                        modifier = Modifier
+                                                            .weight(1f, fill = false)
+                                                            .padding(end = 8.dp),
                                                         verticalAlignment = Alignment.CenterVertically
                                                     ) {
                                                         Box(
@@ -458,7 +460,7 @@ fun FullScreenCatalogExplorer(
                                                             )
                                                         }
                                                         Spacer(modifier = Modifier.width(12.dp))
-                                                        Column {
+                                                        Column(modifier = Modifier.weight(1f, fill = false)) {
                                                             Text(
                                                                 text = channel.name,
                                                                 color = Color.White,

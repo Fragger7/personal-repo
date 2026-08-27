@@ -698,6 +698,7 @@ fun CommittedDetailScreen(record: CommittedRecord, onBack: () -> Unit, onDelete:
     val clipboardManager = LocalClipboardManager.current
     var currentNotes by remember(record) { mutableStateOf(record.safeNotes) }
     var showCatalogExplorer by remember { mutableStateOf(false) }
+    val detailScrollState = rememberScrollState()
 
     if (showCatalogExplorer && record.safeType == "Xtream") {
         FullScreenCatalogExplorer(
@@ -709,7 +710,12 @@ fun CommittedDetailScreen(record: CommittedRecord, onBack: () -> Unit, onDelete:
         )
     }
 
-    Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(detailScrollState)
+            .padding(16.dp)
+    ) {
         // Toolbar
         Row(
             modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
