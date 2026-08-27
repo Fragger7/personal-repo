@@ -181,20 +181,39 @@ fun MainDashboard() {
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Column {
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                // Mini Sherlock Emblem Brand Badge
+                Surface(
+                    shape = RoundedCornerShape(10.dp),
+                    color = Color(0xFF0D3B36),
+                    border = BorderStroke(1.dp, Color(0xFF0F766E)),
+                    modifier = Modifier.size(38.dp)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            Icons.Default.TravelExplore,
+                            contentDescription = "Sherlock Logo",
+                            tint = Color(0xFF34D399),
+                            modifier = Modifier.size(22.dp)
+                        )
+                    }
+                }
+                Column {
                     Text(
                         text = "Sherlock Streams",
                         color = AppTextPrimary,
                         fontWeight = FontWeight.Black,
                         style = MaterialTheme.typography.titleLarge
                     )
+                    Text(
+                        text = "The Digital Stream Detective",
+                        color = AppTextSecondary,
+                        style = MaterialTheme.typography.bodySmall
+                    )
                 }
-                Text(
-                    text = "IPTV Extraction & Diagnostics",
-                    color = AppTextSecondary,
-                    style = MaterialTheme.typography.bodySmall
-                )
             }
 
             Row(

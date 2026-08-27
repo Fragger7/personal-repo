@@ -324,6 +324,11 @@ fun SettingsDialog(
                             modifier = Modifier.padding(16.dp),
                             verticalArrangement = Arrangement.spacedBy(14.dp)
                         ) {
+                            SettingInfoCard(
+                                title = "Bidirectional Git Synchronization",
+                                description = "Synchronizes verified accounts across all devices via the GitHub REST API (committed.json). Pull merges remote updates; Push commits verified lines permanently."
+                            )
+
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -434,15 +439,19 @@ fun SettingsDialog(
                             verticalArrangement = Arrangement.spacedBy(14.dp)
                         ) {
                             var concurrency by remember { mutableFloatStateOf(SettingsManager.maxConcurrency.toFloat()) }
-                            Column {
+                            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     Text("Concurrent Handshake Threads", color = AppTextPrimary, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
                                     Text("${concurrency.toInt()} Threads", color = AppPrimary, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
                                 }
-                                Text("Higher limits scan faster but can stress network routers.", color = AppTextSecondary, style = MaterialTheme.typography.bodySmall)
+                                SettingInfoCard(
+                                    title = "Concurrency Impact",
+                                    description = "Higher threads (15-30) scan thousands of links much faster. Lower threads (4-8) reduce Wi-Fi router packet loss and avoid cellular carrier rate limits."
+                                )
                                 Slider(
                                     value = concurrency,
                                     onValueChange = {
@@ -463,15 +472,19 @@ fun SettingsDialog(
                             Divider(color = AppSurfaceBorder.copy(alpha = 0.5f))
 
                             var timeout by remember { mutableFloatStateOf(SettingsManager.httpTimeoutSeconds.toFloat()) }
-                            Column {
+                            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     Text("Handshake Timeout Limit", color = AppTextPrimary, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
                                     Text("${timeout.toInt()} Seconds", color = AppPrimary, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
                                 }
-                                Text("Adjust for slow or latency-heavy international servers.", color = AppTextSecondary, style = MaterialTheme.typography.bodySmall)
+                                SettingInfoCard(
+                                    title = "Timeout Latency Behavior",
+                                    description = "Maximum time to await server response. Increase for slow overseas portals; lower to 4-5s for lightning-fast skipping of offline nodes."
+                                )
                                 Slider(
                                     value = timeout,
                                     onValueChange = {
@@ -503,6 +516,11 @@ fun SettingsDialog(
                             modifier = Modifier.padding(16.dp),
                             verticalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
+                            SettingInfoCard(
+                                title = "Safe Cache Maintenance",
+                                description = "Clearing the active scan cache resets current session tables to free up RAM. Your permanently committed accounts in Git Vault are never touched."
+                            )
+
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -538,6 +556,11 @@ fun SettingsDialog(
                             modifier = Modifier.padding(16.dp),
                             verticalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
+                            SettingInfoCard(
+                                title = "Network Evasion & Shield",
+                                description = "The app bypasses Cloudflare & IPTV firewalls by spoofing standard Smarters Player client headers. Running on native Android ensures requests use residential IPs."
+                            )
+
                             DiagnosticRow(
                                 label = "Outbound Network IP",
                                 value = if (DataStore.detectedIp.isNotEmpty()) DataStore.detectedIp else "Detecting..."
@@ -605,3 +628,47 @@ private fun DiagnosticRow(label: String, value: String) {
         )
     }
 }
+
+@Composable
+private fun SettingInfoCard(
+    title: String,
+    description: String,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        shape = RoundedCornerShape(10.dp),
+        color = AppSurfaceVariant.copy(alpha = 0.5f),
+        border = BorderStroke(1.dp, AppSurfaceBorder.copy(alpha = 0.6f)),
+        modifier = modifier.fillMaxWidth()
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.Top,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Icon(
+                Icons.Default.Info,
+                contentDescription = null,
+                tint = Color(0xFF38BDF8),
+                modifier = Modifier
+                    .size(16.dp)
+                    .padding(top = 2.dp)
+            )
+            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text(
+                    text = title,
+                    color = AppTextPrimary,
+                    fontWeight = FontWeight.Bold,
+                    style = MaterialTheme.typography.labelMedium
+                )
+                Text(
+                    text = description,
+                    color = AppTextSecondary,
+                    style = MaterialTheme.typography.bodySmall,
+                    lineHeight = 16.sp
+                )
+            }
+        }
+    }
+}
+

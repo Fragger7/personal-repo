@@ -497,9 +497,27 @@ Create a dedicated **⚙️ Settings & About** tab or modal inside the Android a
 
 ## 🛡️ Ironclad Rule: Non-Negotiable Regression Protection & Stable Baseline
 
-### 1. Stable Production Baseline (v1.x Golden Snapshot)
-* **Status**: As of commit `5d1bf7c` (auto-build pipeline active), the Android native application possesses 100% verified, crash-free stability on massive 5,000+ line unstructured payloads, dynamic chunked streaming, responsive master-detail grids, native JsonReader stream parsing, zero OOM errors, and verified GitHub bidirectional synchronization.
-* **Golden Snapshot Tagging**: This baseline state must NEVER be degraded or regressed. Any new UI, player integration, or engine feature MUST build strictly additively on top of these verified foundations.
+### 1. Stable Production Baseline (v1.x Golden Snapshot - Verified Milestone)
+* **Status**: The Android native application possesses 100% verified, crash-free stability on massive 5,000+ line unstructured payloads, dynamic chunked streaming, responsive master-detail grids, native JsonReader stream parsing, zero OOM errors, verified GitHub bidirectional synchronization, Sherlock Holmes vector adaptive launcher, streamlined vertical viewport, mini brand top bar emblem, and comprehensive explanatory settings info badges.
+* **Golden Snapshot Tagging**: This baseline state (`v1.10+`) is the official reference build. All future additions must build strictly additively upon this golden foundation.
+
+### 2. Verified Milestones & Brand Architecture
+* **Brand Name**: Sherlock Streams ("The Digital Stream Detective")
+* **Adaptive Launcher Icon**: Custom vector mascot featuring tweed deerstalker hat with patched textures, expressive smirk, detective trench coat/collar, and neon glowing stream play magnifying glass.
+* **Top Bar Mini Emblem**: Compact emerald & cyan detective magnifying emblem alongside "Sherlock Streams" title without consuming extra vertical space.
+* **Settings & Intelligence Hub**: Interactive settings modal equipped with detailed `SettingInfoCard` explanation badges on Concurrency, Timeout Latencies, Git Cloud Synchronization, Volatile Cache vs Git Vault, and Evasion Headers.
+
+### 3. Next Milestone Candidates ("What's Next" Roadmap)
+1. **Integrated In-App IPTV Stream & Channel Player (Media3 / ExoPlayer)**:
+   - Floating Picture-in-Picture live preview inside the Channel & VOD Explorer drawer.
+   - Stream health diagnostics overlay (Resolution e.g. `1080p60`, Video Codec `H.264`/`HEVC`, Audio Codec `AAC`/`AC3`, Bitrate kbps).
+   - Instant "Stream Plays" / "Dead Stream" verification flag.
+2. **Provider Intelligence Engine (Android Port)**:
+   - Porting the regex brand fingerprinting and Telegram/Discord community link detectors into `ProviderIntelligence.kt`.
+3. **Base64 Tab Power Actions**:
+   - URL action cards, external M3U player launch intents, and direct 1-click pipeline to the Multi-Payload Scanner.
+4. **Dynamic Theme Engine (Multi-Palette Selection)**:
+   - Dynamic switching between *Cyber Amber & Deep Indigo (Sherlock Default)*, *Midnight Purple*, *Ocean Blue*, *Crimson Red*, and *System Monet*.
 
 ### 2. Regression Testing & Safe Deployment Mandates
 * **No Unsolicited Architecture Rewrites**: The core concurrent coroutine loop, OkHttp client setup, 500ms batched UI throttler, and JsonReader stream parsing logic in `IPTVClient.kt` and `ScannerTab.kt` MUST NOT be refactored or replaced without explicit regression testing.
