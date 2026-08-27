@@ -224,15 +224,27 @@ Create a dedicated **⚙️ Settings & About** tab or modal inside the Android a
      * **Coroutine Dispatcher Throttling**: Use `Dispatchers.IO.limitedParallelism(24..32)` and unified coroutine `Semaphore` limits to prevent thread starvation.
      * **Virtual LazyList Pagination / Index Keys**: Ensure Compose `LazyColumn` uses stable compound keys (`key = { node.baseUrl + node.user }`) with lightweight view-model state mapping.
 
-4. **Phase 4: Integrated In-App IPTV Stream & Diagnostics Player (Media3 / ExoPlayer)**
-   * **Floating Mini-Player**: Initiates as a sleek picture-in-picture floating mini-player inside the category/channel explorer with play/pause and live buffer progress.
-   * **Expand / Full-Screen Mode**: One-tap expand to a full-screen hardware-accelerated ExoPlayer interface.
-   * **Forensic Diagnostics HUD**: Overlay stream telemetry showing real-time Resolution (e.g. `1080p60`, `4K`), Video/Audio Codecs (`H.264/HEVC`, `AAC/AC3`), and Live Bitrate (kbps) to immediately confirm stream health.
+### ✅ Completed Milestones
+1. **Integrated In-App IPTV Stream & Channel Player (Media3 / ExoPlayer)**: Complete hardware-accelerated playback modal with full-screen rotation sync, labeled buttons, scrub timeline, and live bitrate/buffer telemetry.
+2. **Settings & Intelligence Hub**: Complete preferences tab with real-time VPN hardware monitor, IP geolocation shield, concurrency/timeout sliders with instant auto-save, cache clearing, and GitHub PAT sync.
+3. **Responsive Multi-Orientation Detail Layouts**: Full vertical scrolling on all master-detail drawers (Committed, Xtream, Stalker, Scanner) and flexible channel title layouts in catalog explorer.
+4. **Sherlock Streams Visual Branding**: Adaptive launcher icons and vector brand emblems across the UI.
+5. **Universal Toast Architecture & Git Cloud Persistence**: Reliable main-thread feedback and bidirectional GitHub synchronization with safety merge guards.
 
-5. **Phase 5: Settings & About Hub**
-   * **App & Build Metadata**: Sherlock Streams branding, dynamic version name/code from `BuildConfig`, target API, and developer credits.
-   * **Outbound IP & ISP Shield**: Real-time IP geolocation and cloud firewall warning detector.
-   * **GitHub Integration Controls**: Personal Access Token (PAT) manager, validation tester, and cache clearing utilities.
+### 🚀 Upcoming Active Backlog (Next Session Implementation Plan)
+1. **Ultra-Scale Performance Tuning & ANR Prevention (3,000+ Node Payloads)**:
+   * Implement chunked batch state emits to buffer background worker discovery updates and dispatch to UI state in 250ms intervals.
+   * Apply coroutine dispatcher throttling (`Dispatchers.IO.limitedParallelism(24..32)`) and unified semaphores to prevent thread starvation during massive combo imports.
+2. **Base64 Tab Power Actions & Ingestion Pipeline**:
+   * Add rich URL action preview chips and batch external browser/M3U launcher.
+   * Add 1-click "Send Decoded URLs to Scanner" direct pipeline button.
+3. **Provider Intelligence Engine (Android Port)**:
+   * Port regex brand-fingerprinting and community link detector (Telegram `t.me`, Discord, WhatsApp) into `ProviderIntelligence.kt`.
+   * Add automated dummy/separator channel banner detection.
+4. **Dynamic Theme Engine (Multi-Palette Switcher)**:
+   * Material 3 dynamic color scheme engine supporting *Cyber Sherlock Amber/Navy (Default)*, *Midnight Purple*, *Ocean Blue*, *Crimson Dark*, and *System Monet*.
+5. **Landscape Split-Pane Master-Detail Tablet/Foldable View**:
+   * Expand wide screens into side-by-side master list + live detail inspector pane.
 
 ---
 
@@ -248,21 +260,7 @@ Create a dedicated **⚙️ Settings & About** tab or modal inside the Android a
 * **Top Bar Mini Emblem**: Compact emerald & cyan detective magnifying emblem alongside "Sherlock Streams" title without consuming extra vertical space.
 * **Settings & Intelligence Hub**: Interactive settings modal equipped with detailed `SettingInfoCard` explanation badges on Concurrency, Timeout Latencies, Git Cloud Synchronization, Volatile Cache vs Git Vault, and Evasion Headers.
 
-### 3. Next Milestone Candidates ("What's Next" Roadmap)
-1. **Integrated In-App IPTV Stream & Channel Player (Media3 / ExoPlayer - COMPLETED)**:
-   - Floating Picture-in-Picture & Modal stream inspector with ExoPlayer hardware-accelerated playback.
-   - Stream health diagnostics overlay (Resolution e.g. `1080p FHD`, Video Codec e.g. `H.264/HEVC`, Audio Codec e.g. `AAC/AC3`, Latency ms).
-   - Fast 1-tap quick stream tester inside the Full-Screen Channel & Catalog Explorer.
-2. **Performance Tuning & Memory Backlog (HIGH PRIORITY)**:
-   - Throttled coroutine chunking and memory-efficient recyclers on multi-thousand row payloads to ensure 60fps scrolling and eliminate any potential memory pressure.
-3. **Base64 Tab Power Actions & Automation Pipeline**:
-   - Automated Base64 chunk discovery with 1-click "Push to Scanner", URL action chips, and external M3U player launch intents.
-4. **Category & Watermark Provider Intelligence Engine (Android Port)**:
-   - Upgraded provider recognition using category name watermarks (e.g., Strong 8K, T-Rex, Dream 4K, Dino), dummy/separator banner streams, and Telegram/Discord community channel signatures.
-5. **Dynamic Theme Engine (Multi-Palette Selection)**:
-   - Dynamic switching between *Cyber Amber & Deep Indigo (Sherlock Default)*, *Midnight Purple*, *Ocean Blue*, *Crimson Red*, and *System Monet*.
-
-### 2. Regression Testing & Safe Deployment Mandates
+### 3. Regression Testing & Safe Deployment Mandates
 * **No Unsolicited Architecture Rewrites**: The core concurrent coroutine loop, OkHttp client setup, 500ms batched UI throttler, and JsonReader stream parsing logic in `IPTVClient.kt` and `ScannerTab.kt` MUST NOT be refactored or replaced without explicit regression testing.
 * **Regression Testing Suite & Test Data**:
   * Prior to merging major features, run unit tests against realistic unstructured paste data (multi-line Xtream combos, Unicode character mappings like `ᴜꜱᴇʀ` / `ᴩᴀꜱꜱ`, Stalker MAC cookies, and broken/empty JSON object responses `{}` from non-standard servers).

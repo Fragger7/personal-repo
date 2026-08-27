@@ -392,9 +392,8 @@ Addressed significant UX complaints regarding the Android app's tabular data dis
 | **Master-Detail & Data Grid** | Streamlit dataframes with single-row selection, auto-scroll injection to deep-dive drawer. | Horizontal scrolling 16-column LazyColumn table with header sorting, sort indicators, and auto-scroll snapping to detail screen. | 🟢 **Parity Achieved** — Android Master-Detail flow is fluid. |
 | **Tier 2 Category & Channel Explorer** | Accordion views listing categories and stream counts. | FullScreenCatalogExplorer with grouped collapsible categories, search filtering, and 1-click stream URL copy. | 🟢 **Parity Achieved** — Android has superior categorized grouping. |
 | **Provider Intelligence Engine** | Automatic fingerprinting, Telegram/Discord/WhatsApp scraper, dummy channel detector, JSON sync. | Provider parsed from domain and server responses, displayed in grids. Advanced Telegram/pattern extraction not yet ported. | 🟡 **Gap to Close** — Port regex brand-fingerprinting and community link detector into Android's `ProviderIntelligence.kt`. |
-| **Dynamic Multi-Theming** | 4 CSS visual themes (Midnight Purple, Ocean Blue, Crimson Dark, Clean Light). | Fixed Dark theme (Indigo/Slate). | 🟡 **Gap to Close** — Implement dynamic ThemeEngine in Android with Material 3 dynamic color palettes and theme switcher. |
-| **Cloud Persistence & Git Sync** | Server-side REST Git pushes with automated comparison. | Full GitHub REST API sync with SHA verification, empty-push guards, toast feedback, and local/cloud badge tracking. | 🟢 **Parity Achieved**. |
-| **In-App Stream Playback** | None (Requires external player). | None (Currently copy URL to clipboard). | 🚀 **New Frontier** — Integrate native ExoPlayer/Media3 player directly into Android catalog explorer for 1-click stream verification. |
+| **Settings & Intelligence Hub** | Basic sidebar configuration and session state toggles. | Full-featured Settings & Intelligence Tab with real-time hardware VPN sensor, outbound IP geolocation shield, dynamic timeout/concurrency sliders with instant auto-save, cache clearing, and GitHub PAT cloud sync. | 🟢 **Android Exclusive Feature Completed**. |
+| **In-App Stream Playback & Telemetry** | None (Requires external player). | Full hardware-accelerated Media3 ExoPlayer with true full-screen, landscape sensor sync, scrub slider for non-live items, real-time bitrate (kbps/Mbps), buffer health cushion (seconds ahead), video/audio codecs, and VLC external player intent. | 🟢 **Android Exclusive Feature Completed**. |
 
 ---
 
@@ -434,17 +433,15 @@ Create a dedicated **⚙️ Settings & About** tab or modal inside the Android a
 
 ---
 
-### 4. Integrated In-App IPTV Stream & Channel Player (ExoPlayer / Media3)
+### 4. Integrated In-App IPTV Stream & Channel Player (ExoPlayer / Media3 - COMPLETED)
 
-* **Feasibility Analysis**:
-  * **Verdict: Highly Recommended & Feasible.** Not too ambitious! Android has first-class media capabilities through `androidx.media3:media3-exoplayer` and `androidx.media3:media3-ui`.
-  * **Architecture**:
-    * Xtream Codes delivers direct MPEG-TS / HLS / MP4 stream URLs in the format: `http://{host}:{port}/live/{user}/{pass}/{stream_id}.ts` or `.m3u8`.
-    * By integrating a lightweight `ExoPlayer` overlay directly inside the `FullScreenCatalogExplorer` or `CommittedDetailScreen`, the user can tap any channel in the catalog and immediately see a live video preview in a sleek, floating picture-in-picture or sheet player.
-  * **Diagnostics & Stream Health Metrics**:
-    * Live playback status (Buffering, Playing, Error with exact HTTP/codec code).
-    * Stream technical stats: Resolution (e.g. `1080p60`, `4K`), Video Codec (`H.264`, `HEVC/H.265`), Audio Format (`AAC`, `AC3`), and Real-time Bitrate (kbps).
-    * Quick "Stream Works" / "Stream Dead" diagnostic flag to annotate the playlist node!
+* **Architecture & Implementation (`StreamPreviewDialog.kt`)**:
+  * **Media3 / ExoPlayer Engine**: Embedded hardware-accelerated playback pipeline utilizing custom OkHttp data source with evasion user-agent (`IPTVSmartersPro/1.1.1`), 500ms initial buffer handshake, software decoder fallback, and automated track selector.
+  * **True Full-Screen Video**: One-tap full-screen toggle syncing with sensor landscape orientation (`ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE`), preserved across rotations via `android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|keyboardHidden"`.
+  * **Aspect Ratio Cycling**: Switch between *Fit*, *Fill*, and *Zoom* on the fly using `AspectRatioFrameLayout`.
+  * **Rich Control HUD**: Clear labeled buttons for Play/Pause, Mute/Unmute, Aspect Ratio, Live Re-Sync, Copy URL, and Open in External Player (VLC / MX Player).
+  * **Scrub & Catchup Slider**: Dynamic slider with time formatting (`mm:ss` / `hh:mm:ss`) for VOD, catchup, and non-live timeshift streams.
+  * **Forensic Diagnostics HUD**: Real-time telemetry monitoring Live Bitrate Throughput (kbps / Mbps), Buffer Cushion (seconds ahead), Video Resolution, Video Codec & FPS, Audio Encoding, and First-Frame Socket Latency.
 
 ---
 
@@ -453,6 +450,7 @@ Create a dedicated **⚙️ Settings & About** tab or modal inside the Android a
 * **Name Inspiration**: An homage to the legendary detective Sherlock Holmes, renowned for astute observation, deductive forensic analysis, and uncovering concealed details. In this application, the engine forensically examines, fingerprints, verifies, and catalogs every minute detail of complex, unstructured IPTV stream nodes and portals.
 * **Visual Identity & Icon Metaphor Concept**:
   * **Icon**: A sleek, modern glowing neon magnifying glass intersecting an active digital audio/video waveform/pulse stream, set against a dark obsidian cyber-backdrop.
+  * **Vector Brand Asset (`ic_sherlock_brand.xml`)**: Custom Sherlock silhouette with patched deerstalker hat, neon magnifying lens, and glowing stream signal, integrated into the Top App Bar and Settings Hub banner.
   * **Color Palette (Creative Deduction Palette)**: 
     * Primary: *Cyber Amber / Golden Brass* (`#F59E0B` / `#D97706`) + *Detective Navy / Deep Indigo* (`#0F172A` / `#1E1E2E`)
     * Accents: *Electric Cyan Stream Pulse* (`#06B6D4` / `#38BDF8`) for live telemetry & active connections
@@ -460,38 +458,29 @@ Create a dedicated **⚙️ Settings & About** tab or modal inside the Android a
 
 ---
 
-## 🎯 Finalized Master Implementation Order
+## 🎯 Finalized Master Implementation Order & Backlog
 
-1. **Phase 1: Feature & Parity Gap Closures**
-   * **Base64 Tab Upgrade**: Add rich URL action preview cards, batch external browser/M3U launch, and a direct 1-click "Send to Scanner" pipeline button.
-   * **Provider Intelligence Engine (Android Port)**: Port the Python app's regex brand-fingerprinting, community link detector (Telegram `t.me`, Discord, WhatsApp), and separator/dummy channel identification into Android's `ProviderIntelligence.kt`.
-   * **Dynamic Theme Engine**: Material 3 theme switcher with multi-palette selection (Cyber Sherlock Gold/Navy, Midnight Purple, Ocean Blue, Crimson Dark, and Dynamic Monet).
+### ✅ Completed Milestones
+1. **Integrated In-App IPTV Stream & Channel Player (Media3 / ExoPlayer)**: Complete hardware-accelerated playback modal with full-screen rotation sync, labeled buttons, scrub timeline, and live bitrate/buffer telemetry.
+2. **Settings & Intelligence Hub**: Complete preferences tab with real-time VPN hardware monitor, IP geolocation shield, concurrency/timeout sliders with instant auto-save, cache clearing, and GitHub PAT sync.
+3. **Responsive Multi-Orientation Detail Layouts**: Full vertical scrolling on all master-detail drawers (Committed, Xtream, Stalker, Scanner) and flexible channel title layouts in catalog explorer.
+4. **Sherlock Streams Visual Branding**: Adaptive launcher icons and vector brand emblems across the UI.
+5. **Universal Toast Architecture & Git Cloud Persistence**: Reliable main-thread feedback and bidirectional GitHub synchronization with safety merge guards.
 
-2. **Phase 2: Production-Level UI/UX Overhaul**
-   * **Vector Icon & App Assets**: Create official Android 13+ adaptive vector icons with themed monochrome variant, splash branding, and ambient glassmorphic header glow.
-   * **Playful Cartoon Sherlock Holmes Icon Experiment**: Design an alternative playful, expressive cartoon Sherlock Holmes caricature wearing the Deerstalker hat, a pipe blowing out Wi-Fi/streaming clouds, and an oversized magnifying glass reflecting a glowing TV screen.
-   * **Mathematical Typography & Layout Polish**: Refine typography hierarchy across all tabs (banning oversized headers), implement 44dp min touch targets, and ensure clean vertical separation for all action bars.
-   * **Micro-Interactions**: Fluid tab switching animations, skeleton loaders, and pulsing live diagnostic indicators.
-
-3. **Phase 3: Ultra-Scale Performance Tuning (3,000+ Node Payloads & ANR Prevention)**
-   * **Root Cause & Diagnosis**: Large unstructured payloads (3,000+ connections) can trigger Android ANR ("Application Not Responding / Wait or Close") prompts due to:
-     1. High-frequency Compose state recompositions saturating the UI/Render thread.
-     2. Frequent large-array memory copies (`+ item` or full list copies on each node scan).
-     3. High-concurrency socket queueing under low Android thread priority.
-   * **Architectural Mitigations**:
-     * **Chunked Batch State Emits**: Buffer background worker discovery updates and dispatch to `DataStore.scannedNodes` in throttled batch intervals (e.g. every 250ms or every 50 nodes) to keep UI rendering locked at 60fps.
-     * **Coroutine Dispatcher Throttling**: Use `Dispatchers.IO.limitedParallelism(24..32)` and unified coroutine `Semaphore` limits to prevent thread starvation.
-     * **Virtual LazyList Pagination / Index Keys**: Ensure Compose `LazyColumn` uses stable compound keys (`key = { node.baseUrl + node.user }`) with lightweight view-model state mapping.
-
-4. **Phase 4: Integrated In-App IPTV Stream & Diagnostics Player (Media3 / ExoPlayer)**
-   * **Floating Mini-Player**: Initiates as a sleek picture-in-picture floating mini-player inside the category/channel explorer with play/pause and live buffer progress.
-   * **Expand / Full-Screen Mode**: One-tap expand to a full-screen hardware-accelerated ExoPlayer interface.
-   * **Forensic Diagnostics HUD**: Overlay stream telemetry showing real-time Resolution (e.g. `1080p60`, `4K`), Video/Audio Codecs (`H.264/HEVC`, `AAC/AC3`), and Live Bitrate (kbps) to immediately confirm stream health.
-
-5. **Phase 5: Settings & About Hub**
-   * **App & Build Metadata**: Sherlock Streams branding, dynamic version name/code from `BuildConfig`, target API, and developer credits.
-   * **Outbound IP & ISP Shield**: Real-time IP geolocation and cloud firewall warning detector.
-   * **GitHub Integration Controls**: Personal Access Token (PAT) manager, validation tester, and cache clearing utilities.
+### 🚀 Upcoming Active Backlog (Next Session Implementation Plan)
+1. **Ultra-Scale Performance Tuning & ANR Prevention (3,000+ Node Payloads)**:
+   * Implement chunked batch state emits to buffer background worker discovery updates and dispatch to UI state in 250ms intervals.
+   * Apply coroutine dispatcher throttling (`Dispatchers.IO.limitedParallelism(24..32)`) and unified semaphores to prevent thread starvation during massive combo imports.
+2. **Base64 Tab Power Actions & Ingestion Pipeline**:
+   * Add rich URL action preview chips and batch external browser/M3U launcher.
+   * Add 1-click "Send Decoded URLs to Scanner" direct pipeline button.
+3. **Provider Intelligence Engine (Android Port)**:
+   * Port regex brand-fingerprinting and community link detector (Telegram `t.me`, Discord, WhatsApp) into `ProviderIntelligence.kt`.
+   * Add automated dummy/separator channel banner detection.
+4. **Dynamic Theme Engine (Multi-Palette Switcher)**:
+   * Material 3 dynamic color scheme engine supporting *Cyber Sherlock Amber/Navy (Default)*, *Midnight Purple*, *Ocean Blue*, *Crimson Dark*, and *System Monet*.
+5. **Landscape Split-Pane Master-Detail Tablet/Foldable View**:
+   * Expand wide screens into side-by-side master list + live detail inspector pane.
 
 ---
 
