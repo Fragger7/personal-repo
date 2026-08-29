@@ -349,7 +349,8 @@ def main() -> None:
                             st.toast("Deal removed from dashboard!")
                             st.rerun()
 
-                    st.caption(f"**AI Valuation Summary:** {deal.summary} | *{deal.actionable_recommendation}*")
+                    if deal.actionable_recommendation or deal.summary:
+                        st.info(f"🤖 **AI Assessment & Commentary:** **{deal.actionable_recommendation}** — *{deal.summary}*")
                     st.markdown("---")
 
     with tab_eval:

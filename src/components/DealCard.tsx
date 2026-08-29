@@ -163,16 +163,21 @@ export const DealCard: React.FC<DealCardProps> = ({ deal, onSendPush, onDeleteDe
           </div>
         </div>
 
-        {/* AI Valuation Recommendation */}
-        <div className="text-xs text-[#888] bg-[#050505] p-4 border border-[#222] mb-5 relative overflow-hidden">
-          <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-emerald-500/50" />
-          <div className="flex items-center gap-2 text-[9px] font-black uppercase tracking-widest text-[#aaa] mb-2 pl-2">
-            <Shield className="h-3 w-3 text-emerald-500" />
-            <span>AI Valuation</span>
+        {/* AI Valuation Recommendation & Friendly Commentary */}
+        <div className="text-xs text-[#888] bg-[#050505] p-3.5 border border-[#222] mb-5 relative overflow-hidden">
+          <div className="absolute left-0 top-0 bottom-0 w-1 bg-emerald-500/60" />
+          <div className="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-emerald-400 mb-1.5 pl-2">
+            <Sparkles className="h-3 w-3 text-emerald-400" />
+            <span>AI Assessment &amp; Commentary</span>
           </div>
-          <p className="pl-2 line-clamp-2 leading-relaxed text-[11px] font-medium">
+          <p className="pl-2 leading-relaxed text-[11px] font-bold text-slate-200">
             {deal.actionable_recommendation}
           </p>
+          {deal.summary && deal.summary !== deal.actionable_recommendation && (
+            <p className="pl-2 mt-1 leading-relaxed text-[11px] text-slate-400 font-normal">
+              {deal.summary}
+            </p>
+          )}
         </div>
       </div>
 

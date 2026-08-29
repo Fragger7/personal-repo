@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from "react";
-import { ExternalLink, Bell, Trash2, ArrowUpDown, ArrowUp, ArrowDown, Clock } from "lucide-react";
+import { ExternalLink, Bell, Trash2, ArrowUpDown, ArrowUp, ArrowDown, Clock, Sparkles } from "lucide-react";
 import { DealRecord } from "../types";
 
 export type TableSortField = "score" | "title" | "cpu" | "ram" | "price" | "fmv" | "spread" | "date";
@@ -203,15 +203,24 @@ export const DealTable: React.FC<DealTableProps> = ({ deals, onSendPush, onDelet
                   </td>
 
                   {/* Title & Source */}
-                  <td className="px-4 py-3 max-w-[280px]">
-                    <div className="font-semibold text-slate-100 truncate group-hover:text-emerald-300 transition">
+                  <td className="px-4 py-3 max-w-[320px]">
+                    <div className="font-semibold text-slate-100 truncate group-hover:text-emerald-300 transition" title={deal.title}>
                       {deal.title}
                     </div>
                     <div className="text-[11px] text-slate-500 flex items-center gap-1.5 mt-0.5">
                       <span className="uppercase font-bold text-slate-400">{deal.source}</span>
                       <span>•</span>
-                      <span>{deal.seller}</span>
+                      <span className="truncate max-w-[120px]">{deal.seller}</span>
                     </div>
+                    {(deal.actionable_recommendation || deal.summary) && (
+                      <div className="mt-1 flex items-start gap-1 text-[11px] text-emerald-400/90 bg-emerald-950/30 border border-emerald-800/30 px-2 py-0.5 rounded leading-tight" title={deal.summary || deal.actionable_recommendation}>
+                        <Sparkles className="h-3 w-3 text-emerald-400 shrink-0 mt-0.5" />
+                        <span className="truncate">
+                          <strong className="text-emerald-300">{deal.actionable_recommendation}</strong>
+                          {deal.summary && deal.summary !== deal.actionable_recommendation ? ` — ${deal.summary}` : ""}
+                        </span>
+                      </div>
+                    )}
                   </td>
 
                   {/* Date Found / Added */}
