@@ -254,6 +254,13 @@ Addressed significant UX complaints regarding the Android app's tabular data dis
   - Verified clean syntax and scoping across all tabs using `kotlinc`.
 * **Build Verification**: GitHub Actions Run #57 (Run ID `31670370319`) completed with `success` status, producing the debug APK artifact cleanly.
 
+### 🐛 Android GitHub Actions Build Failure & Kotlin Compiler Fix (Completed)
+* **Root Cause Analysis**: The GitHub Actions workflow (`android-build.yml`) failed during `compileDebugKotlin` with error: `e: Modifier 'private' is not applicable to 'local function'` in `Base64Tab.kt`. The helper function `isMostlyPrintableText` was declared with `private` visibility inside the `@Composable fun Base64Tab` local function scope, which is forbidden by the Kotlin compiler.
+* **Resolution & Fix**:
+  - Extracted `isMostlyPrintableText` out of the `@Composable` function body into a top-level `private fun` in `Base64Tab.kt`.
+  - Bumped version code and committed changes to `main`.
+* **Build Verification**: GitHub Actions Run #61 (Run ID `33245573252`) finished with status `completed` / `success`, producing the production-ready debug APK artifact (`project-strong-debug-apk`, 18.7 MB).
+
 ### 🚀 CI/CD & Deployment Strategy Overview
 * **Workflow Configuration (`.github/workflows/android-build.yml`)**:
   - Triggers automatically on `push` to `main` for changes inside `project-strong/android/**` or `.github/workflows/android-build.yml`.
@@ -386,12 +393,12 @@ Addressed significant UX complaints regarding the Android app's tabular data dis
 | Feature Area | Python Streamlit Dashboard | Android Jetpack Compose Native App | Status / Action Plan |
 | :--- | :--- | :--- | :--- |
 | **Network Evasion & IP Risk** | Cloud Run / Streamlit Cloud IP ranges get heavily 403-blocked by IPTV firewalls. Requires proxy or local execution. | Runs directly on user's mobile/home WiFi residential carrier IP. Severely minimizes 403 blocks. | ✅ **Android Advantage** — Core architectural win. |
-| **Ingestion / Base64 Decoder** | Base64 tab decodes links, strips garbage, allows 1-click open/copy. | Base64Tab exists with decode and copy, but lacks rich URL action cards and visual payload previews. | 🟡 **Gap to Close** — Upgrade Android Base64 tab to include link preview chips, batch URL launch, and direct scanner pipeline push. |
+| **Ingestion / Base64 Decoder** | Base64 tab decodes links, strips garbage, allows 1-click open/copy. | Base64Tab with regex auto-chunk discovery, padding repair, 1-click `⚡ Send to Scanner` direct pipeline, Discovered URL cards (copy, browser, video player launch), and `🧹 Filter URLs` sanitizer. | 🟢 **Parity & Advantage Achieved**. |
 | **Discovery Scanner (Tier 1)** | Unthrottled asyncio concurrent scan with progress bars, status badges, summary counts. | High-speed coroutine worker with progressive chunked streaming (500ms batched UI refresh). | 🟢 **Parity Achieved** — Highly performant on both platforms. |
 | **Bulk Catalog Querying** | Background async loop fetching channel & VOD totals on-demand. | Background coroutine worker with Pause, Resume, and Stop controls with live active count badges. | 🟢 **Parity Achieved**. |
 | **Master-Detail & Data Grid** | Streamlit dataframes with single-row selection, auto-scroll injection to deep-dive drawer. | Horizontal scrolling 16-column LazyColumn table with header sorting, sort indicators, and auto-scroll snapping to detail screen. | 🟢 **Parity Achieved** — Android Master-Detail flow is fluid. |
 | **Tier 2 Category & Channel Explorer** | Accordion views listing categories and stream counts. | FullScreenCatalogExplorer with grouped collapsible categories, search filtering, and 1-click stream URL copy. | 🟢 **Parity Achieved** — Android has superior categorized grouping. |
-| **Provider Intelligence Engine** | Automatic fingerprinting, Telegram/Discord/WhatsApp scraper, dummy channel detector, JSON sync. | Provider parsed from domain and server responses, displayed in grids. Advanced Telegram/pattern extraction not yet ported. | 🟡 **Gap to Close** — Port regex brand-fingerprinting and community link detector into Android's `ProviderIntelligence.kt`. |
+| **Provider Intelligence Engine** | Automatic fingerprinting, Telegram/Discord/WhatsApp scraper, dummy channel detector, JSON sync. | 2,127+ bundled offline profiles, 35+ provider regex signatures, channel/category prefix mining, confidence scoring (`Verified Brand`, `Category Watermark`), `ProviderIntelligenceCard`, and bidirectional GitHub sync. | 🟢 **Parity Achieved**. |
 | **Settings & Intelligence Hub** | Basic sidebar configuration and session state toggles. | Full-featured Settings & Intelligence Tab with real-time hardware VPN sensor, outbound IP geolocation shield, dynamic timeout/concurrency sliders with instant auto-save, cache clearing, and GitHub PAT cloud sync. | 🟢 **Android Exclusive Feature Completed**. |
 | **In-App Stream Playback & Telemetry** | None (Requires external player). | Full hardware-accelerated Media3 ExoPlayer with true full-screen, landscape sensor sync, scrub slider for non-live items, real-time bitrate (kbps/Mbps), buffer health cushion (seconds ahead), video/audio codecs, and VLC external player intent. | 🟢 **Android Exclusive Feature Completed**. |
 
