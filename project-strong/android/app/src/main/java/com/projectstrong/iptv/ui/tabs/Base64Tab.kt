@@ -37,6 +37,17 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.regex.Pattern
 
+private fun isMostlyPrintableText(str: String): Boolean {
+    if (str.isBlank()) return false
+    var printable = 0
+    for (ch in str) {
+        if (ch.isLetterOrDigit() || ch.isWhitespace() || "!@#$%^&*()_+-=[]{}|;:,.<>/?`~\"'\\".contains(ch)) {
+            printable++
+        }
+    }
+    return (printable.toDouble() / str.length) >= 0.85
+}
+
 @Composable
 fun Base64Tab(onNextTab: () -> Unit = {}) {
     var input by remember { mutableStateOf("") }
@@ -47,17 +58,6 @@ fun Base64Tab(onNextTab: () -> Unit = {}) {
     val scrollState = rememberScrollState()
     val context = LocalContext.current
     val clipboardManager = LocalClipboardManager.current
-
-    private fun isMostlyPrintableText(str: String): Boolean {
-        if (str.isBlank()) return false
-        var printable = 0
-        for (ch in str) {
-            if (ch.isLetterOrDigit() || ch.isWhitespace() || "!@#$%^&*()_+-=[]{}|;:,.<>/?`~\"'\\".contains(ch)) {
-                printable++
-            }
-        }
-        return (printable.toDouble() / str.length) >= 0.85
-    }
 
     fun processDirectBase64(rawInput: String) {
         try {
