@@ -157,7 +157,8 @@ object IPTVClient {
                         baseUrl = baseUrl,
                         serverHeader = serverHeader,
                         isCloudflare = isCloudflare,
-                        serverInfo = serverInfo
+                        serverInfo = serverInfo,
+                        userInfo = userInfo
                     )
                     val auth = userInfo?.optInt("auth", 1) ?: 1
                     val status = userInfo?.optString("status", "")

@@ -467,16 +467,29 @@ def update_provider_intelligence_from_results(results):
                 merged_fp["first_seen"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             merged_fp["last_seen"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             
-            # Simple identity hinting based on server value if it's bespoke
+            # Simple identity hinting based on server value or welcome messages
             srv = fp.get("server", "")
             msg = fp.get("metadata_message", "")
             
             identity_hint = None
-            if srv and srv not in ["Unknown", "nginx", "Apache", "LiteSpeed", "cloudflare"]:
+            if msg:
+                msg_lower = msg.lower()
+                if any(k in msg_lower for k in ["world 8k", "world8k", "strong 8k", "strong8k"]):
+                    identity_hint = "Strong 8K"
+                elif any(k in msg_lower for k in ["trex", "t-rex"]):
+                    identity_hint = "T-Rex OTT"
+                elif any(k in msg_lower for k in ["cobra"]):
+                    identity_hint = "Cobra IPTV"
+                elif any(k in msg_lower for k in ["crystal"]):
+                    identity_hint = "Crystal OTT"
+                elif any(k in msg_lower for k in ["b1g"]):
+                    identity_hint = "B1G OTT"
+                elif any(k in msg_lower for k in ["mega"]):
+                    identity_hint = "Mega OTT"
+                elif len(msg) > 5 and "welcome to xtream codes" not in msg_lower and "welcome" not in msg_lower:
+                    identity_hint = msg[:30]
+            elif srv and srv not in ["Unknown", "nginx", "Apache", "LiteSpeed", "cloudflare"]:
                 identity_hint = srv
-            elif msg and len(msg) > 5 and "Welcome" not in msg:
-                # Some panels set the welcome message to their provider name
-                identity_hint = msg[:30]
                 
             if identity_hint and "🎯 Identified" not in merged_fp["provider_name"]:
                 merged_fp["provider_name"] = f"🎯 Identified: {identity_hint}"
@@ -532,8 +545,8 @@ def mine_provider_branding_from_payloads(base_url, categories_data, streams_data
                 branding_names[brand] = branding_names.get(brand, 0) + 2
                 
         # Known giants
-        if "Strong 8K" in name or "Strong8K" in name:
-            branding_names["Strong 8K"] = branding_names.get("Strong 8K", 0) + 20
+        if any(k in name for k in ["Strong 8K", "Strong8K", "World 8K", "World8K", "³⁸⁴⁰ᴾ", "STARZPLAY SPORT 8K"]):
+            branding_names["Strong 8K"] = branding_names.get("Strong 8K", 0) + 25
         if "Trex" in name or "Trexiptv" in name.lower():
             branding_names["Trex IPTV"] = branding_names.get("Trex IPTV", 0) + 20
         if "Mega" in name and "IPTV" in name:

@@ -85,7 +85,7 @@ object ProviderIntelligenceManager {
 
     // Known Upstream IPTV Provider Signatures & Domain Triggers
     private val KNOWN_PROVIDERS = listOf(
-        Pair("Strong 8K", listOf("strong 8k", "strong8k", "strong-8k", "strong ott", "strongott", "strong8k.vip", "strong8k.me", "strong8k.top", "strong8k.xyz", "strong tv", "strongtv8k", "8k strong", "strong 4k", "strong4k")),
+        Pair("Strong 8K", listOf("strong 8k", "strong8k", "strong-8k", "strong ott", "strongott", "strong8k.vip", "strong8k.me", "strong8k.top", "strong8k.xyz", "strong tv", "strongtv8k", "8k strong", "strong 4k", "strong4k", "world 8k", "world8k", "world-8k", "welcome to world 8k", "³⁸⁴⁰ᴾ", "starzplay sport 8k")),
         Pair("T-Rex OTT", listOf("t-rex", "trex", "trex iptv", "trexiptv", "trextv", "trex-ott", "trexott", "trexiptv.net", "trex 4k", "trex ott")),
         Pair("Dream 4K", listOf("dream 4k", "dream4k", "dream ott", "dream-4k", "dreamiptv", "dream-ott", "dreamott")),
         Pair("B1G OTT", listOf("b1g", "b1g ott", "b1g iptv", "b1g live", "b1gott", "b1g player", "b1gplayer", "b1g-ott")),
@@ -288,13 +288,14 @@ object ProviderIntelligenceManager {
     }
 
     /**
-     * Updates profile based on HTTP Handshake headers and server_info JSON
+     * Updates profile based on HTTP Handshake headers, server_info, and user_info JSON
      */
     fun updateFromFingerprint(
         baseUrl: String,
         serverHeader: String? = null,
         isCloudflare: Boolean = false,
-        serverInfo: JSONObject? = null
+        serverInfo: JSONObject? = null,
+        userInfo: JSONObject? = null
     ): ProviderProfile {
         val domain = extractDomain(baseUrl)
         val hostOnly = domain.substringBefore(':').lowercase(Locale.ROOT)
@@ -308,11 +309,13 @@ object ProviderIntelligenceManager {
         val serverSoftware = serverHeader ?: serverInfo?.optString("server_name") ?: existing.server
         val cfStatus = if (isCloudflare) "Yes" else existing.cloudflare ?: "No"
         val tz = serverInfo?.optString("timezone") ?: existing.timezone
-        val msg = serverInfo?.optString("message") ?: existing.metadataMessage
+        val msg = serverInfo?.optString("message") ?: userInfo?.optString("message") ?: existing.metadataMessage
         val proto = serverInfo?.optString("server_protocol") ?: existing.serverProtocol
         val httpsP = serverInfo?.optString("https_port") ?: existing.httpsPort
         val rtmpP = serverInfo?.optString("rtmp_port") ?: existing.rtmpPort
-        val formats = serverInfo?.optJSONArray("allowed_output_formats")?.toString() ?: existing.allowedFormats
+        val formats = serverInfo?.optJSONArray("allowed_output_formats")?.toString() 
+            ?: userInfo?.optJSONArray("allowed_output_formats")?.toString() 
+            ?: existing.allowedFormats
 
         var newProviderName = existing.providerName
         var confidence = existing.confidence ?: "Server Fingerprint"
