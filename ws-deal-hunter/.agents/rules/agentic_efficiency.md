@@ -48,3 +48,13 @@ Maximize developer speed, eliminate unnecessary input/output/cache token burn, a
 * **Efficiency $\ne$ Laziness**:
   - Token optimization applies strictly to **tool execution overhead, command outputs, file reading bounds, and external test mocking**.
   - **NEVER** produce incomplete stub code, `// TODO: implement later` shortcuts, or superficial reasoning in the name of saving tokens. Full, production-ready, typed implementations are always mandatory.
+
+---
+
+### 🔄 6. Living Guidelines & Continuous Self-Evolution Directive
+* **Floor, Not a Ceiling**:
+  - The economic and development techniques in this document represent the current best-known baseline.
+  - If a newer or more capable AI model (e.g. Claude 3.7+, DeepSeek R1+, GPT-5+, Gemini 2.5/3+) identifies a superior, faster, or more token-efficient technique—or detects that an existing guideline has become stale or sub-optimal:
+    1. **Apply the Better Technique**: The agent is explicitly empowered and expected to use the superior method immediately.
+    2. **Update the Documentation**: Atomically update `.agents/rules/agentic_efficiency.md` and `AGENTS.md` to reflect the new state of the art so all future sessions inherit the improvement.
+    3. **Inform the Developer**: Clearly explain to the user what was improved, the rationale behind the change, and the expected efficiency or performance gain.

@@ -267,6 +267,7 @@ C:\Development\Apps\WS Deal Hunter\
      - **Fast Unit Mode (Default)**: Mocks external LLM calls and network scrapers. Runs all 30 tests in **2.1 seconds** ($0 tokens, 0 network wait, 0 rate limits).
      - **Live Integration Mode (`--live`)**: Tests live internet DOM parsing and Gemini API connectivity on explicit user request.
   2. Created `.agents/rules/agentic_efficiency.md` codifying the global token economy protocol (zero-token test iteration, CLI context hygiene, bounded file slicing, prompt cache alignment, and uncompromising code quality).
+  3. **Living Guidelines & Self-Evolution Directive**: Codified that efficiency techniques are baseline recommendations ("floor, not a ceiling"). Incoming agents (Claude, DeepSeek, GPT, Gemini) that identify superior or newer token-saving/development techniques are explicitly mandated to: (a) employ the better method, (b) update the documentation, and (c) inform the user of the upgrade.
 - **Test Coverage**: 30 / 30 tests passing in 2.1s (`python test_system.py`).
 
 ---
