@@ -1,0 +1,6 @@
+{
+  "name": "Daily Push",
+  "description": "A clean, private, responsive smartphone workout tracker for tracking pushups and crunches locally on your device with cloud replication.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

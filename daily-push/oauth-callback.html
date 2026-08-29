@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Google Drive Authentication Success</title>
+    <style>
+      body {
+        background-color: #02040a;
+        color: #f1f5f9;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+        margin: 0;
+        text-align: center;
+      }
+      .spinner {
+        border: 3px solid rgba(255,255,255,0.05);
+        border-top: 3px solid #10b981;
+        border-radius: 50%;
+        width: 30px;
+        height: 30px;
+        animation: spin 1s linear infinite;
+        margin-bottom: 20px;
+      }
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+      h2 {
+        font-size: 16px;
+        margin: 0 0 10px 0;
+        letter-spacing: 0.05em;
+      }
+      p {
+        font-size: 12px;
+        color: #94a3b8;
+        margin: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="spinner"></div>
+    <h2>AUTHENTICATING WITH GOOGLE DRIVE</h2>
+    <p>Please wait, establishing secure synchronization channel...</p>
+    <script>
+      try {
+        const hash = window.location.hash;
+        if (hash) {
+          const params = new URLSearchParams(hash.substring(1));
+          const accessToken = params.get("access_token");
+          const error = params.get("error");
+          
+          if (accessToken) {
+            if (window.opener) {
+              window.opener.postMessage({
+                type: "GOOGLE_DRIVE_AUTH_SUCCESS",
+                accessToken: accessToken,
+                expiresIn: params.get("expires_in")
+              }, window.location.origin);
+              window.close();
+            } else {
+              document.querySelector("p").innerText = "No parent window detected. Access token acquired successfully.";
+            }
+          } else if (error) {
+            if (window.opener) {
+              window.opener.postMessage({
+                type: "GOOGLE_DRIVE_AUTH_FAILURE",
+                error: error
+              }, window.location.origin);
+              window.close();
+            } else {
+              document.querySelector("p").innerText = "Authentication error: " + error;
+            }
+          }
+        } else {
+          // Check query parameters (for error responses)
+          const qParams = new URLSearchParams(window.location.search);
+          const error = qParams.get("error");
+          if (error) {
+            if (window.opener) {
+              window.opener.postMessage({
+                type: "GOOGLE_DRIVE_AUTH_FAILURE",
+                error: error
+              }, window.location.origin);
+              window.close();
+            } else {
+              document.querySelector("p").innerText = "Authentication error: " + error;
+            }
+          } else {
+            document.querySelector("p").innerText = "Waiting for redirect coordinates...";
+          }
+        }
+      } catch (err) {
+        console.error(err);
+        document.querySelector("p").innerText = "Exception: " + err.message;
+      }
+    </script>
+  </body>
+</html>

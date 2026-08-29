@@ -1,0 +1,86 @@
+package com.projectstrong.iptv.data
+
+import android.content.Context
+import android.content.SharedPreferences
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+
+object SettingsManager {
+    private const val PREFS_NAME = "iptv_settings_prefs"
+    private const val KEY_HTTP_TIMEOUT = "http_timeout_sec"
+    private const val KEY_MAX_CONCURRENCY = "max_concurrency"
+    private const val KEY_AUTO_REFRESH_NET = "auto_refresh_net"
+    private const val KEY_KEEP_SCREEN_ON = "keep_screen_on"
+
+    private lateinit var prefs: SharedPreferences
+
+    var httpTimeoutSeconds by mutableIntStateOf(6)
+    var maxConcurrency by mutableIntStateOf(8)
+    var autoRefreshNetwork by mutableStateOf(true)
+    var keepScreenOnDuringScans by mutableStateOf(true)
+
+    fun init(context: Context) {
+        prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        httpTimeoutSeconds = prefs.getInt(KEY_HTTP_TIMEOUT, 6)
+        maxConcurrency = prefs.getInt(KEY_MAX_CONCURRENCY, 8)
+        autoRefreshNetwork = prefs.getBoolean(KEY_AUTO_REFRESH_NET, true)
+        keepScreenOnDuringScans = prefs.getBoolean(KEY_KEEP_SCREEN_ON, true)
+    }
+
+    fun saveTimeout(seconds: Int) {
+        httpTimeoutSeconds = seconds.coerceIn(3, 30)
+        if (::prefs.isInitialized) {
+            prefs.edit().putInt(KEY_HTTP_TIMEOUT, httpTimeoutSeconds).apply()
+        }
+    }
+
+    fun saveTimeoutSeconds(context: Context? = null, seconds: Int) {
+        saveTimeout(seconds)
+    }
+
+    fun saveConcurrency(count: Int) {
+        maxConcurrency = count.coerceIn(2, 30)
+        if (::prefs.isInitialized) {
+            prefs.edit().putInt(KEY_MAX_CONCURRENCY, maxConcurrency).apply()
+        }
+    }
+
+    fun saveConcurrencyLimit(context: Context? = null, count: Int) {
+        saveConcurrency(count)
+    }
+
+    fun saveAutoRefresh(enabled: Boolean) {
+        autoRefreshNetwork = enabled
+        if (::prefs.isInitialized) {
+            prefs.edit().putBoolean(KEY_AUTO_REFRESH_NET, enabled).apply()
+        }
+    }
+
+    fun saveKeepScreenOn(enabled: Boolean) {
+        keepScreenOnDuringScans = enabled
+        if (::prefs.isInitialized) {
+            prefs.edit().putBoolean(KEY_KEEP_SCREEN_ON, enabled).apply()
+        }
+    }
+
+    fun saveGithubToken(context: Context? = null, token: String) {
+        CommittedManager.saveGithubToken(token)
+    }
+
+    fun purgeVolatileCache(): Int {
+        val count = DataStore.scannedNodes.size
+        DataStore.scannedNodes.clear()
+        DataStore.scannerInput = ""
+        DataStore.scanProgress = 0f
+        DataStore.scanCountText = ""
+        DataStore.isScanning = false
+        DataStore.isScanPaused = false
+        DataStore.isQueryingCatalogs = false
+        DataStore.isCatalogQueryPaused = false
+        DataStore.catalogQueryProgress = 0f
+        DataStore.catalogQueryStatusText = ""
+        return count
+    }
+}

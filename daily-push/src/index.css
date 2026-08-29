@@ -1,0 +1,98 @@
+@import "tailwindcss";
+
+@theme {
+  --color-page-light: var(--page-light);
+  --color-page-dark: var(--page-dark);
+  --color-page-secondary: var(--page-secondary);
+  --color-card-dark: var(--card-dark);
+  
+  --color-brand-primary: var(--brand-primary);
+  --color-brand-primary-hover: var(--brand-primary-hover);
+  --color-brand-primary-deep: var(--brand-primary-deep);
+  --color-brand-primary-text: var(--brand-primary-text);
+  
+  --color-brand-accent: var(--brand-accent);
+  --color-brand-accent-hover: var(--brand-accent-hover);
+}
+
+:root {
+  --page-light: #F0F4FF;
+  --page-dark: #0A1242;
+  --page-secondary: #0E1750;
+  --card-dark: #111B61;
+  --brand-primary: #1434CB;
+  --brand-primary-hover: #1A1F71;
+  --brand-primary-deep: #0A0D36;
+  --brand-primary-text: #1e3a8a; /* blue-900 */
+  --brand-accent: #F7B600;
+  --brand-accent-hover: #CCA200;
+}
+
+:root[data-theme="emerald"] {
+  --page-light: #f8fafc;
+  --page-dark: #03060f;
+  --page-secondary: #060b14;
+  --card-dark: #080d19;
+  --brand-primary: #10b981;
+  --brand-primary-hover: #059669;
+  --brand-primary-deep: #022c22;
+  --brand-primary-text: #047857; /* emerald-700 */
+  --brand-accent: #06b6d4; /* cyan-500 */
+  --brand-accent-hover: #0891b2; /* cyan-600 */
+}
+
+:root[data-theme="crimson"] {
+  --page-light: #fef2f2;
+  --page-dark: #000000;
+  --page-secondary: #0a0a0a;
+  --card-dark: #121212;
+  --brand-primary: #e50000;
+  --brand-primary-hover: #b30000;
+  --brand-primary-deep: #4d0000;
+  --brand-primary-text: #cc0000;
+  --brand-accent: #800000;
+  --brand-accent-hover: #4d0000;
+}
+
+:root[data-theme="product-red"] {
+  --page-light: #fff1f2;
+  --page-dark: #2a040b;
+  --page-secondary: #3f0914;
+  --card-dark: #4c1119;
+  --brand-primary: #e11d48;
+  --brand-primary-hover: #be123c;
+  --brand-primary-deep: #881337;
+  --brand-primary-text: #fda4af;
+  --brand-accent: #f43f5e;
+  --brand-accent-hover: #fb7185;
+}
+
+
+@custom-variant dark (&:is(.dark *));
+
+html.dark {
+  color-scheme: dark;
+}
+
+html {
+  color-scheme: light;
+}
+
+@keyframes blob {
+  0% { transform: translate(0px, 0px) scale(1); }
+  33% { transform: translate(30px, -50px) scale(1.1); }
+  66% { transform: translate(-20px, 20px) scale(0.9); }
+  100% { transform: translate(0px, 0px) scale(1); }
+}
+
+.animate-blob {
+  animation: blob 8s infinite alternate ease-in-out;
+}
+
+.animation-delay-2000 {
+  animation-delay: 2s;
+}
+
+.animation-delay-4000 {
+  animation-delay: 4s;
+}
