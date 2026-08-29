@@ -593,31 +593,10 @@ fun ScannerTab(onNextTab: (() -> Unit)? = null) {
         Spacer(modifier = Modifier.height(60.dp))
     }
 
-    // Floating scroll buttons
-    Column(
-        modifier = Modifier
-            .align(Alignment.BottomEnd)
-            .padding(end = 16.dp, bottom = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        FloatingActionButton(
-            onClick = { coroutineScope.launch { scannerScrollState.animateScrollTo(0) } },
-            containerColor = AppPrimary,
-            contentColor = Color.White,
-            shape = RoundedCornerShape(12.dp),
-            modifier = Modifier.size(44.dp)
-        ) {
-            Icon(Icons.Default.KeyboardArrowUp, contentDescription = "Scroll to Top")
-        }
-        FloatingActionButton(
-            onClick = { coroutineScope.launch { scannerScrollState.animateScrollTo(scannerScrollState.maxValue) } },
-            containerColor = AppPrimary,
-            contentColor = Color.White,
-            shape = RoundedCornerShape(12.dp),
-            modifier = Modifier.size(44.dp)
-        ) {
-            Icon(Icons.Default.KeyboardArrowDown, contentDescription = "Scroll to Bottom")
-        }
-    }
+    // Context-aware floating scroller
+    SmartColumnScroller(
+        scrollState = scannerScrollState,
+        modifier = Modifier.align(Alignment.BottomEnd)
+    )
 }
 }

@@ -602,35 +602,12 @@ fun FullScreenCatalogExplorer(
                         }
 
                         // Floating scroll buttons
-                        Column(
-                            modifier = Modifier
-                                .align(Alignment.BottomEnd)
-                                .padding(end = 16.dp, bottom = 16.dp),
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            FloatingActionButton(
-                                onClick = { coroutineScope.launch { listState.animateScrollToItem(0) } },
-                                containerColor = Color(0xFF3B82F6),
-                                contentColor = Color.White,
-                                modifier = Modifier.size(44.dp)
-                            ) {
-                                Icon(Icons.Default.KeyboardArrowUp, contentDescription = "Top")
-                            }
-                            FloatingActionButton(
-                                onClick = {
-                                    coroutineScope.launch {
-                                        if (filteredChannels.isNotEmpty()) {
-                                            listState.animateScrollToItem(filteredChannels.size - 1)
-                                        }
-                                    }
-                                },
-                                containerColor = Color(0xFF3B82F6),
-                                contentColor = Color.White,
-                                modifier = Modifier.size(44.dp)
-                            ) {
-                                Icon(Icons.Default.KeyboardArrowDown, contentDescription = "Bottom")
-                            }
-                        }
+                        // Context-aware floating scroller
+                        SmartLazyListScroller(
+                            listState = listState,
+                            itemCount = filteredChannels.size,
+                            modifier = Modifier.align(Alignment.BottomEnd)
+                        )
 
                         // Copied Feedback Banner
                         Column(

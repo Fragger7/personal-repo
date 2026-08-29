@@ -264,32 +264,12 @@ fun StalkerMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCreden
                         }
                     }
 
-                    // Floating scroll buttons
-                    Column(
-                        modifier = Modifier
-                            .align(Alignment.BottomEnd)
-                            .padding(end = 16.dp, bottom = 16.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        FloatingActionButton(
-                            onClick = { coroutineScope.launch { listState.animateScrollToItem(0) } },
-                            containerColor = AppPrimary,
-                            contentColor = Color.White,
-                            shape = RoundedCornerShape(12.dp),
-                            modifier = Modifier.size(44.dp)
-                        ) {
-                            Icon(Icons.Default.KeyboardArrowUp, contentDescription = "Scroll to Top")
-                        }
-                        FloatingActionButton(
-                            onClick = { coroutineScope.launch { listState.animateScrollToItem(if (filteredNodes.isNotEmpty()) filteredNodes.size - 1 else 0) } },
-                            containerColor = AppPrimary,
-                            contentColor = Color.White,
-                            shape = RoundedCornerShape(12.dp),
-                            modifier = Modifier.size(44.dp)
-                        ) {
-                            Icon(Icons.Default.KeyboardArrowDown, contentDescription = "Scroll to Bottom")
-                        }
-                    }
+                    // Context-aware floating scroller
+                    SmartLazyListScroller(
+                        listState = listState,
+                        itemCount = filteredNodes.size,
+                        modifier = Modifier.align(Alignment.BottomEnd)
+                    )
                 }
             }
         }

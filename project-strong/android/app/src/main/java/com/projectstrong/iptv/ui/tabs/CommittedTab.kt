@@ -661,36 +661,12 @@ fun CommittedMasterGrid(
                     }
                 }
 
-                // Floating scroll buttons
-                Column(
-                    modifier = Modifier
-                        .align(Alignment.BottomEnd)
-                        .padding(end = 16.dp, bottom = 16.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    FloatingActionButton(
-                        onClick = { coroutineScope.launch { listState.animateScrollToItem(0) } },
-                        containerColor = AppPrimary,
-                        contentColor = Color.White,
-                        shape = RoundedCornerShape(12.dp),
-                        modifier = Modifier.size(44.dp)
-                    ) {
-                        Icon(Icons.Default.KeyboardArrowUp, contentDescription = "Top")
-                    }
-                    FloatingActionButton(
-                        onClick = {
-                            coroutineScope.launch {
-                                if (sortedRecords.isNotEmpty()) listState.animateScrollToItem(sortedRecords.size - 1)
-                            }
-                        },
-                        containerColor = AppPrimary,
-                        contentColor = Color.White,
-                        shape = RoundedCornerShape(12.dp),
-                        modifier = Modifier.size(44.dp)
-                    ) {
-                        Icon(Icons.Default.KeyboardArrowDown, contentDescription = "Bottom")
-                    }
-                }
+                // Context-aware floating scroller
+                SmartLazyListScroller(
+                    listState = listState,
+                    itemCount = sortedRecords.size,
+                    modifier = Modifier.align(Alignment.BottomEnd)
+                )
             }
         }
     }

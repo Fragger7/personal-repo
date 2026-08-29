@@ -204,13 +204,14 @@ fun Base64Tab(onNextTab: () -> Unit = {}) {
         }
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(scrollState)
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
+    Box(modifier = Modifier.fillMaxSize()) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(scrollState)
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
         // Description Card
         Surface(
             shape = RoundedCornerShape(16.dp),
@@ -581,12 +582,19 @@ fun Base64Tab(onNextTab: () -> Unit = {}) {
             }
         }
 
-        SecondaryButton(
-            text = "Continue to Scanner →",
-            onClick = onNextTab,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(44.dp)
+            SecondaryButton(
+                text = "Continue to Scanner →",
+                onClick = onNextTab,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(44.dp)
+            )
+        }
+
+        // Context-aware floating scroller
+        SmartColumnScroller(
+            scrollState = scrollState,
+            modifier = Modifier.align(Alignment.BottomEnd)
         )
     }
 }
