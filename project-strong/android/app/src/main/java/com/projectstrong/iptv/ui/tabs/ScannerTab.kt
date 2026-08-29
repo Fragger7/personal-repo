@@ -90,8 +90,7 @@ fun ScannerTab(onNextTab: (() -> Unit)? = null) {
         }
     }
 
-    fun startOrRestartScan() {
-        val parsed = Parser.parseCredentials(DataStore.scannerInput)
+    fun executeScan(parsed: List<ParsedCredential>) {
         DataStore.scannedNodes.clear()
         DataStore.scannedNodes.addAll(parsed)
 
@@ -214,6 +213,39 @@ fun ScannerTab(onNextTab: (() -> Unit)? = null) {
         }
     }
 
+    fun startOrRestartScan() {
+        val trimmed = DataStore.scannerInput.trim()
+        val isSingleUrl = (trimmed.startsWith("http://", ignoreCase = true) || 
+                           trimmed.startsWith("https://", ignoreCase = true) || 
+                           trimmed.contains("pastebin.", ignoreCase = true) || 
+                           trimmed.contains("rentry.", ignoreCase = true) || 
+                           trimmed.contains("gist.github.", ignoreCase = true)) && !trimmed.contains("\n") && !trimmed.contains(" ")
+
+        val initialParsed = Parser.parseCredentials(DataStore.scannerInput)
+        if (initialParsed.isEmpty() && isSingleUrl) {
+            coroutineScope.launch {
+                ToastManager.info("Fetching remote playlist from URL...")
+                val fetched = IPTVClient.fetchRemoteText(trimmed)
+                if (!fetched.isNullOrBlank()) {
+                    localInput = fetched
+                    DataStore.scannerInput = fetched
+                    val parsed = Parser.parseCredentials(fetched)
+                    if (parsed.isNotEmpty()) {
+                        ToastManager.success("Downloaded ${parsed.size} credentials! Starting scan...")
+                        executeScan(parsed)
+                    } else {
+                        ToastManager.warning("URL downloaded (${fetched.length} chars), but no valid credentials recognized")
+                    }
+                } else {
+                    ToastManager.error("Failed to download text from URL")
+                }
+            }
+            return
+        }
+
+        executeScan(initialParsed)
+    }
+
     val scannerScrollState = rememberScrollState()
 
     Box(modifier = Modifier.fillMaxSize()) {
@@ -295,13 +327,54 @@ fun ScannerTab(onNextTab: (() -> Unit)? = null) {
 
                 Spacer(modifier = Modifier.height(10.dp))
 
-                // Tier 2: Dedicated Action Controls Row (Paste & Clear)
+                // Tier 2: Dedicated Action Controls Row (Fetch Link, Paste & Clear)
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.End,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        // Fetch Remote Link Button
+                        Surface(
+                            shape = RoundedCornerShape(8.dp),
+                            color = Color(0xFF10B981).copy(alpha = 0.15f),
+                            border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF10B981).copy(alpha = 0.4f)),
+                            modifier = Modifier.clickable {
+                                coroutineScope.launch {
+                                    val candidateUrl = localInput.trim().ifBlank {
+                                        ClipboardHelper.getSafeClipboardText(context, clipboardManager)?.trim() ?: ""
+                                    }
+                                    if (candidateUrl.startsWith("http://", ignoreCase = true) || 
+                                        candidateUrl.startsWith("https://", ignoreCase = true) || 
+                                        candidateUrl.contains("pastebin.", ignoreCase = true) || 
+                                        candidateUrl.contains("rentry.", ignoreCase = true) || 
+                                        candidateUrl.contains("gist.github.", ignoreCase = true)) {
+                                        ToastManager.info("Fetching remote playlist from URL...")
+                                        val fetched = IPTVClient.fetchRemoteText(candidateUrl)
+                                        if (!fetched.isNullOrBlank()) {
+                                            localInput = fetched
+                                            DataStore.scannerInput = fetched
+                                            val creds = Parser.parseCredentials(fetched).size
+                                            ToastManager.success("Downloaded ${fetched.length} chars ($creds credentials detected)!")
+                                        } else {
+                                            ToastManager.error("Failed to download text from URL")
+                                        }
+                                    } else {
+                                        ToastManager.warning("Enter or paste a valid URL (e.g. Pastebin, Rentry, M3U link)")
+                                    }
+                                }
+                            }
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(Icons.Default.CloudDownload, contentDescription = null, modifier = Modifier.size(14.dp), tint = Color(0xFF34D399))
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text("Fetch Link", color = Color(0xFF34D399), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
+                            }
+                        }
+
                         // Paste Button
                         Surface(
                             shape = RoundedCornerShape(8.dp),
@@ -324,7 +397,7 @@ fun ScannerTab(onNextTab: (() -> Unit)? = null) {
                             ) {
                                 Icon(Icons.Default.ContentPaste, contentDescription = null, modifier = Modifier.size(14.dp), tint = Color(0xFF60A5FA))
                                 Spacer(modifier = Modifier.width(6.dp))
-                                Text("Paste from Clipboard", color = Color(0xFF60A5FA), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
+                                Text("Paste", color = Color(0xFF60A5FA), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
                             }
                         }
 
@@ -349,7 +422,7 @@ fun ScannerTab(onNextTab: (() -> Unit)? = null) {
                                 ) {
                                     Icon(Icons.Default.DeleteOutline, contentDescription = null, modifier = Modifier.size(14.dp), tint = Color(0xFFF87171))
                                     Spacer(modifier = Modifier.width(6.dp))
-                                    Text("Clear Payload", color = Color(0xFFF87171), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
+                                    Text("Clear", color = Color(0xFFF87171), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
                                 }
                             }
                         }

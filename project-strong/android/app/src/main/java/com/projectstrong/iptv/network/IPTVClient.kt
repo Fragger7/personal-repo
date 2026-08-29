@@ -645,33 +645,113 @@ object IPTVClient {
         return null
     }
 
+    private fun extractPayloadFromHtmlIfPresent(html: String): String {
+        try {
+            // Check for textarea (e.g. Pastebin HTML, ControlC HTML, Rentry HTML)
+            val textareaPattern = Pattern.compile("<textarea[^>]*>([\\s\\S]*?)</textarea>", Pattern.CASE_INSENSITIVE)
+            val textareaMatcher = textareaPattern.matcher(html)
+            if (textareaMatcher.find()) {
+                val content = textareaMatcher.group(1)?.trim() ?: ""
+                if (content.isNotBlank()) {
+                    return unescapeHtml(content)
+                }
+            }
+
+            // Check for pre or code or paste_container
+            val prePattern = Pattern.compile("<pre[^>]*>([\\s\\S]*?)</pre>", Pattern.CASE_INSENSITIVE)
+            val preMatcher = prePattern.matcher(html)
+            if (preMatcher.find()) {
+                val content = preMatcher.group(1)?.trim() ?: ""
+                if (content.isNotBlank() && !content.contains("<html", ignoreCase = true)) {
+                    return unescapeHtml(content)
+                }
+            }
+        } catch (e: Exception) {
+            // Ignore HTML parse errors and fallback
+        }
+        return html
+    }
+
+    private fun unescapeHtml(input: String): String {
+        return input
+            .replace("&amp;", "&")
+            .replace("&lt;", "<")
+            .replace("&gt;", ">")
+            .replace("&quot;", "\"")
+            .replace("&#39;", "'")
+            .replace("&#x2F;", "/")
+            .replace("&nbsp;", " ")
+    }
+
     suspend fun fetchRemoteText(rawUrl: String): String? = withContext(Dispatchers.IO) {
         try {
             var targetUrl = rawUrl.trim()
-            // Transform standard pastebin/github web links to raw text links if applicable
-            if (targetUrl.contains("pastebin.com/") && !targetUrl.contains("pastebin.com/raw/")) {
-                targetUrl = targetUrl.replace("pastebin.com/", "pastebin.com/raw/")
-            } else if (targetUrl.contains("gist.github.com/") && !targetUrl.contains("/raw")) {
+            if (targetUrl.isEmpty()) return@withContext null
+
+            // Prepend https:// if protocol is missing
+            if (!targetUrl.startsWith("http://", ignoreCase = true) && !targetUrl.startsWith("https://", ignoreCase = true)) {
+                targetUrl = "https://$targetUrl"
+            }
+
+            // Transform standard pastebin/github/rentry web links to direct raw text links
+            if (targetUrl.contains("pastebin.com/", ignoreCase = true) && !targetUrl.contains("pastebin.com/raw/", ignoreCase = true)) {
+                targetUrl = targetUrl.replace("pastebin.com/", "pastebin.com/raw/", ignoreCase = true)
+            } else if (targetUrl.contains("gist.github.com/", ignoreCase = true) && !targetUrl.endsWith("/raw", ignoreCase = true)) {
+                targetUrl = if (targetUrl.contains("/raw/")) targetUrl else "$targetUrl/raw"
+            } else if (targetUrl.contains("rentry.co/", ignoreCase = true) && !targetUrl.contains("rentry.co/raw/", ignoreCase = true)) {
+                targetUrl = targetUrl.replace("rentry.co/", "rentry.co/raw/", ignoreCase = true)
+            } else if (targetUrl.contains("rentry.org/", ignoreCase = true) && !targetUrl.contains("rentry.org/raw/", ignoreCase = true)) {
+                targetUrl = targetUrl.replace("rentry.org/", "rentry.org/raw/", ignoreCase = true)
+            } else if (targetUrl.contains("dpaste.org/", ignoreCase = true) && !targetUrl.endsWith(".txt", ignoreCase = true) && !targetUrl.endsWith("/raw", ignoreCase = true)) {
+                targetUrl = "$targetUrl.txt"
+            } else if (targetUrl.contains("dpaste.com/", ignoreCase = true) && !targetUrl.endsWith(".txt", ignoreCase = true)) {
+                targetUrl = "$targetUrl.txt"
+            } else if (targetUrl.contains("paste.ee/p/", ignoreCase = true)) {
+                targetUrl = targetUrl.replace("paste.ee/p/", "paste.ee/r/", ignoreCase = true)
+            } else if (targetUrl.contains("pastery.net/", ignoreCase = true) && !targetUrl.contains("/raw", ignoreCase = true)) {
                 targetUrl = "$targetUrl/raw"
-            } else if (targetUrl.contains("rentry.co/") && !targetUrl.contains("rentry.co/raw/")) {
-                targetUrl = targetUrl.replace("rentry.co/", "rentry.co/raw/")
-            } else if (targetUrl.contains("controlc.com/") && !targetUrl.contains("/index.php?act=submit&mode=ajax")) {
-                // controlc paste raw format or direct page fetch
+            } else if (targetUrl.contains("paste.debian.net/", ignoreCase = true) && !targetUrl.contains("/plain/", ignoreCase = true)) {
+                targetUrl = targetUrl.replace("paste.debian.net/", "paste.debian.net/plain/", ignoreCase = true)
+            } else if (targetUrl.contains("hastebin.com/", ignoreCase = true) && !targetUrl.contains("hastebin.com/raw/", ignoreCase = true)) {
+                targetUrl = targetUrl.replace("hastebin.com/", "hastebin.com/raw/", ignoreCase = true)
             }
 
-            val request = Request.Builder()
-                .url(targetUrl)
-                .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36")
-                .header("Accept", "text/plain, text/html, */*")
-                .build()
+            val candidateUserAgents = listOf(
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+                "Mozilla/5.0 (Linux; Android 13; SM-S908B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Mobile Safari/537.36",
+                "IPTVSmartersPro/3.1.5.1 (Linux; Android 12; Build/SQ1D.220205.004)",
+                "curl/8.4.0"
+            )
 
-            getClient().newCall(request).execute().use { response ->
-                if (response.isSuccessful) {
-                    response.body?.string()
-                } else {
-                    null
+            var rawBody: String? = null
+            for (ua in candidateUserAgents) {
+                try {
+                    val request = Request.Builder()
+                        .url(targetUrl)
+                        .header("User-Agent", ua)
+                        .header("Accept", "text/plain, text/html, application/xhtml+xml, */*")
+                        .header("Accept-Language", "en-US,en;q=0.9")
+                        .build()
+
+                    getClient().newCall(request).execute().use { response ->
+                        if (response.isSuccessful) {
+                            val bodyText = response.body?.string()
+                            if (!bodyText.isNullOrBlank()) {
+                                rawBody = bodyText
+                                return@use
+                            }
+                        }
+                    }
+                } catch (e: Throwable) {
+                    // Try next user agent
                 }
+                if (rawBody != null) break
             }
+
+            if (rawBody.isNullOrBlank()) return@withContext null
+
+            val cleanedBody = extractPayloadFromHtmlIfPresent(rawBody!!)
+            if (cleanedBody.isNotBlank()) cleanedBody else rawBody
         } catch (e: Exception) {
             null
         }

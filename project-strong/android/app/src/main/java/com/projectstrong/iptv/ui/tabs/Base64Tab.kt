@@ -127,7 +127,13 @@ fun Base64Tab(onNextTab: () -> Unit = {}) {
 
         // Check if rawInput is a single URL (e.g. pastebin, controlc, rentry, gist, raw url)
         val trimmed = rawInput.trim()
-        val isSingleUrl = (trimmed.startsWith("http://") || trimmed.startsWith("https://")) && !trimmed.contains("\n") && !trimmed.contains(" ")
+        val isSingleUrl = (trimmed.startsWith("http://", ignoreCase = true) || 
+                           trimmed.startsWith("https://", ignoreCase = true) || 
+                           trimmed.contains("pastebin.", ignoreCase = true) || 
+                           trimmed.contains("rentry.", ignoreCase = true) || 
+                           trimmed.contains("gist.github.", ignoreCase = true) || 
+                           trimmed.contains("controlc.", ignoreCase = true) ||
+                           (trimmed.contains(".") && !trimmed.contains(" ") && trimmed.length < 250)) && !trimmed.contains("\n") && !trimmed.contains(" ")
 
         if (isSingleUrl) {
             coroutineScope.launch {
@@ -176,9 +182,11 @@ fun Base64Tab(onNextTab: () -> Unit = {}) {
                         }
                     }
                     extractedUrls = foundUrls
-                    ToastManager.success("Downloaded & processed ${output.length} characters from URL!")
+                    val credsFound = com.projectstrong.iptv.network.Parser.parseCredentials(output).size
+                    ToastManager.success("Downloaded ${output.length} characters ($credsFound credentials detected)!")
                 } else {
                     // Fallback to standard Base64 string decoding on the URL itself
+                    ToastManager.warning("Could not download text from URL. Checking Base64...")
                     processDirectBase64(trimmed)
                 }
             }
