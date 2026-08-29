@@ -7,6 +7,7 @@ on:
     paths:
       - 'project-strong/android/**'
       - '.github/workflows/android-build.yml'
+      - 'project-strong/.github/workflows/android-build.yml'
   workflow_dispatch:
 
 jobs:

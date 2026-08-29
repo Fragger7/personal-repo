@@ -336,7 +336,7 @@ object IPTVClient {
                                     com.projectstrong.iptv.ui.components.CategoryItem(
                                         id = obj.optString("category_id", ""),
                                         name = obj.optString("category_name", ""),
-                                        parentId = obj.optString("parent_id", "")
+                                        count = 0
                                     )
                                 }
                             }
@@ -361,7 +361,7 @@ object IPTVClient {
                             com.projectstrong.iptv.ui.components.CategoryItem(
                                 id = obj.optString("category_id", ""),
                                 name = obj.optString("category_name", ""),
-                                parentId = obj.optString("parent_id", "")
+                                count = 0
                             )
                         }
                     }
