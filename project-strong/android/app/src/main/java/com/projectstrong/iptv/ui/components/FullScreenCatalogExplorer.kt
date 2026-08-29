@@ -60,14 +60,16 @@ fun FullScreenCatalogExplorer(
     var toastText by remember { mutableStateOf("") }
     var previewChannel by remember { mutableStateOf<ChannelItem?>(null) }
 
-    // Fetch catalog data
+    // Fetch catalog data concurrently
     LaunchedEffect(baseUrl, user, pass) {
         isLoading = true
         errorMessage = null
         try {
             withContext(Dispatchers.IO) {
-                val catJson = IPTVClient.getLiveCategories(baseUrl, user, pass)
-                val streamsJson = IPTVClient.getAllLiveStreams(baseUrl, user, pass)
+                val catDeferred = kotlinx.coroutines.async { IPTVClient.getLiveCategories(baseUrl, user, pass) }
+                val streamsDeferred = kotlinx.coroutines.async { IPTVClient.getAllLiveStreams(baseUrl, user, pass) }
+                val catJson = catDeferred.await()
+                val streamsJson = streamsDeferred.await()
 
                 if (streamsJson != null) {
                     val parsedChannels = mutableListOf<ChannelItem>()
