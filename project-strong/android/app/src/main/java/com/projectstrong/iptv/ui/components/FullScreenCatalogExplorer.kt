@@ -104,6 +104,9 @@ fun FullScreenCatalogExplorer(
                         }
                     }
 
+                    // Mine Provider Intelligence from channels and categories
+                    com.projectstrong.iptv.data.ProviderIntelligenceManager.mineFromStreams(baseUrl, parsedCategories, parsedChannels)
+
                     withContext(Dispatchers.Main) {
                         categories = parsedCategories
                         allChannels = parsedChannels
@@ -174,12 +177,30 @@ fun FullScreenCatalogExplorer(
                     }
                     Spacer(modifier = Modifier.width(8.dp))
                     Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = "Channel Explorer",
-                            color = Color.White,
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
-                        )
+                        val profile = com.projectstrong.iptv.data.ProviderIntelligenceManager.getProfile(baseUrl)
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            Text(
+                                text = "Channel Explorer",
+                                color = Color.White,
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold
+                            )
+                            if (profile?.isIdentified == true) {
+                                Surface(
+                                    shape = RoundedCornerShape(6.dp),
+                                    color = Color(0xFFA855F7).copy(alpha = 0.2f),
+                                    border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFA855F7).copy(alpha = 0.5f))
+                                ) {
+                                    Text(
+                                        text = profile.cleanBrand,
+                                        color = Color(0xFFE9D5FF),
+                                        style = MaterialTheme.typography.labelSmall,
+                                        fontWeight = FontWeight.Bold,
+                                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                    )
+                                }
+                            }
+                        }
                         Text(
                             text = baseUrl.replace("http://", "").replace("https://", ""),
                             color = Color(0xFF60A5FA),

@@ -210,6 +210,8 @@ fun StalkerMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCreden
 
                             LazyColumn(modifier = Modifier.fillMaxSize(), state = listState) {
                                 items(filteredNodes) { node: ParsedCredential ->
+                                    val profile = com.projectstrong.iptv.data.ProviderIntelligenceManager.getProfile(node.baseUrl)
+                                    val displayBrand = if (profile?.isIdentified == true) profile.cleanBrand else node.provider.ifEmpty { "Unbranded" }
                                     Row(
                                         modifier = Modifier
                                             .fillMaxWidth()
@@ -220,7 +222,7 @@ fun StalkerMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCreden
                                         GridCell(node.baseUrl, 250.dp, isBold = true)
                                         StatusBadge(node.status, 120.dp)
                                         GridCell(node.mac, 160.dp)
-                                        GridCell(node.provider, 150.dp)
+                                        GridCell(displayBrand, 150.dp, color = if (profile?.isIdentified == true) Color(0xFFC084FC) else AppTextPrimary)
                                         GridCell(node.serverTimezone, 120.dp)
                                         GridCell(node.expires, 100.dp)
                                         GridCell(node.daysLeft, 100.dp)
@@ -334,6 +336,14 @@ fun StalkerDetailScreen(node: ParsedCredential, onBack: () -> Unit) {
                 fontWeight = FontWeight.Bold
             )
         }
+
+        // Provider Intelligence & Forensics Card
+        val providerProfile = com.projectstrong.iptv.data.ProviderIntelligenceManager.getProfile(node.baseUrl)
+        ProviderIntelligenceCard(
+            profile = providerProfile,
+            baseUrl = node.baseUrl,
+            modifier = Modifier.padding(bottom = 16.dp)
+        )
 
         // Host Info Card
         Surface(

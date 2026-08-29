@@ -133,6 +133,8 @@ object IPTVClient {
             }
 
             val code = response.code
+            val serverHeader = response.header("Server")
+            val isCloudflare = response.header("CF-RAY") != null || serverHeader?.contains("cloudflare", ignoreCase = true) == true
             val body = response.body?.string() ?: ""
 
             if (code == 200 && body.contains("\"user_info\"")) {
@@ -140,6 +142,14 @@ object IPTVClient {
                     val json = JSONObject(body)
                     val userInfo = json.optJSONObject("user_info")
                     val serverInfo = json.optJSONObject("server_info")
+
+                    // Update Provider Intelligence Forensics
+                    com.projectstrong.iptv.data.ProviderIntelligenceManager.updateFromFingerprint(
+                        baseUrl = baseUrl,
+                        serverHeader = serverHeader,
+                        isCloudflare = isCloudflare,
+                        serverInfo = serverInfo
+                    )
                     val auth = userInfo?.optInt("auth", 1) ?: 1
                     val status = userInfo?.optString("status", "")
                     

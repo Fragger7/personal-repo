@@ -50,6 +50,7 @@ class MainActivity : ComponentActivity() {
         ToastManager.init(applicationContext)
         CommittedManager.init(applicationContext)
         com.projectstrong.iptv.data.SettingsManager.init(applicationContext)
+        com.projectstrong.iptv.data.ProviderIntelligenceManager.init(applicationContext)
 
         // Setup reactive network callback to dynamically track VPN / WiFi / Cellular / Offline transitions
         connectivityManager = getSystemService(Context.CONNECTIVITY_SERVICE) as? ConnectivityManager

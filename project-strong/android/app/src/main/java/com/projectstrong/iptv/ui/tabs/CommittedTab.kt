@@ -576,8 +576,10 @@ fun CommittedMasterGrid(
                                     SyncBadge(record.isLocal, 110.dp)
                                     // 5. Server / Host URL
                                     GridCell(record.safeBaseUrl, 230.dp, isBold = true)
+                                    val profile = com.projectstrong.iptv.data.ProviderIntelligenceManager.getProfile(record.safeBaseUrl)
+                                    val displayBrand = if (profile?.isIdentified == true) profile.cleanBrand else record.safeProvider.ifEmpty { "Unbranded" }
                                     // 6. Provider
-                                    GridCell(record.safeProvider, 140.dp, color = AppPrimary)
+                                    GridCell(displayBrand, 140.dp, color = if (profile?.isIdentified == true) Color(0xFFC084FC) else AppPrimary)
                                     // 7. Username
                                     GridCell(if (record.safeType == "Xtream") record.safeUser.ifEmpty { "-" } else "-", 140.dp)
                                     // 8. Password
@@ -739,6 +741,14 @@ fun CommittedDetailScreen(record: CommittedRecord, onBack: () -> Unit, onDelete:
                 Icon(Icons.Default.Delete, contentDescription = "Delete", tint = AppError)
             }
         }
+
+        // Provider Intelligence & Forensics Card
+        val providerProfile = com.projectstrong.iptv.data.ProviderIntelligenceManager.getProfile(record.safeBaseUrl)
+        ProviderIntelligenceCard(
+            profile = providerProfile,
+            baseUrl = record.safeBaseUrl,
+            modifier = Modifier.padding(bottom = 16.dp)
+        )
 
         // Host & Credentials Card
         Surface(

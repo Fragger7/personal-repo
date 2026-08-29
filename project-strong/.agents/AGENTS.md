@@ -238,9 +238,10 @@ Create a dedicated **⚙️ Settings & About** tab or modal inside the Android a
 ### ✅ Completed Milestones
 1. **Integrated In-App IPTV Stream & Channel Player (Media3 / ExoPlayer - VERIFIED & COMPLETED)**: Hardware-accelerated video playback modal with full-screen orientation lock, auto-hiding controls (3s inactivity timer / tap-to-show), labeled action buttons, scrub timeline slider, and live bitrate/buffer telemetry.
 2. **Settings & Intelligence Hub**: Complete preferences tab with real-time VPN hardware monitor, IP geolocation shield, concurrency/timeout sliders with instant auto-save, cache clearing, and GitHub PAT sync.
-3. **Responsive Multi-Orientation Detail Layouts**: Full vertical scrolling on all master-detail drawers (Committed, Xtream, Stalker, Scanner) and flexible channel title layouts in catalog explorer.
-4. **Sherlock Streams Visual Branding**: Adaptive launcher icons and vector brand emblems across the UI.
-5. **Universal Toast Architecture & Git Cloud Persistence**: Reliable main-thread feedback and bidirectional GitHub synchronization with safety merge guards.
+3. **Provider Intelligence & Forensic Brand Engine (`ProviderIntelligence.kt` & `ProviderIntelligenceCard.kt`)**: Ported regex brand extraction, community link detection (Telegram `t.me`, Discord, WhatsApp), dummy channel watermarks, and HTTP server fingerprinting (`Server`, `CF-RAY`, `timezone`, format capabilities) with bidirectional GitHub JSON synchronization and UI card integration across all detail views.
+4. **Responsive Multi-Orientation Detail Layouts**: Full vertical scrolling on all master-detail drawers (Committed, Xtream, Stalker, Scanner) and flexible channel title layouts in catalog explorer.
+5. **Sherlock Streams Visual Branding**: Adaptive launcher icons and vector brand emblems across the UI.
+6. **Universal Toast Architecture & Git Cloud Persistence**: Reliable main-thread feedback and bidirectional GitHub synchronization with safety merge guards.
 
 ### 🚀 Upcoming Active Backlog (Next Session Implementation Plan)
 1. **Ultra-Scale Performance Tuning & ANR Prevention (3,000+ Node Payloads)**:
@@ -249,12 +250,9 @@ Create a dedicated **⚙️ Settings & About** tab or modal inside the Android a
 2. **Base64 Tab Power Actions & Ingestion Pipeline**:
    * Add rich URL action preview chips and batch external browser/M3U launcher.
    * Add 1-click "Send Decoded URLs to Scanner" direct pipeline button.
-3. **Provider Intelligence Engine (Android Port)**:
-   * Port regex brand-fingerprinting and community link detector (Telegram `t.me`, Discord, WhatsApp) into `ProviderIntelligence.kt`.
-   * Add automated dummy/separator channel banner detection.
-4. **Dynamic Theme Engine (Multi-Palette Switcher)**:
+3. **Dynamic Theme Engine (Multi-Palette Switcher)**:
    * Material 3 dynamic color scheme engine supporting *Cyber Sherlock Amber/Navy (Default)*, *Midnight Purple*, *Ocean Blue*, *Crimson Dark*, and *System Monet*.
-5. **Landscape Split-Pane Master-Detail Tablet/Foldable View**:
+4. **Landscape Split-Pane Master-Detail Tablet/Foldable View**:
    * Expand wide screens into side-by-side master list + live detail inspector pane.
 
 ---
