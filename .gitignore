@@ -10,3 +10,6 @@ build/
 test_pipeline.json
 test_deals.json
 .DS_Store
+scratch/
+*/scratch/
+.agents/scratch/
