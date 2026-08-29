@@ -182,6 +182,22 @@ class AtomicDealStorage:
                         pass
                 raise RuntimeError(f"Atomic write failed to {self.filepath}: {err}") from err
 
+            # Mirror sync to public/deals.json, dist/deals.json, and ws-deal-hunter/deals.json if present
+            extra_targets = [
+                self.filepath.parent / "public" / "deals.json",
+                self.filepath.parent / "dist" / "deals.json",
+                self.filepath.parent / "ws-deal-hunter" / "deals.json",
+                self.filepath.parent / "ws-deal-hunter" / "public" / "deals.json",
+                self.filepath.parent.parent / "ws-deal-hunter" / "deals.json",
+            ]
+            for target_file in extra_targets:
+                if target_file.parent.exists() and target_file.parent.is_dir():
+                    try:
+                        with open(target_file, "w", encoding="utf-8") as f:
+                            json.dump(records, f, indent=2, ensure_ascii=False)
+                    except Exception:
+                        pass
+
     def get_all(self) -> List[DealRecord]:
         """Fetch all deal records sorted by deal_score descending."""
         raw_list = self._read_raw()
@@ -208,7 +224,11 @@ class AtomicDealStorage:
             updated = False
             for idx, item in enumerate(records):
                 if item.get("id") == deal_obj.id or (deal_obj.url and item.get("url") == deal_obj.url and deal_obj.url != "#"):
-                    records[idx] = deal_obj.to_dict()
+                    original_created = item.get("created_utc")
+                    deal_dict = deal_obj.to_dict()
+                    if original_created:
+                        deal_dict["created_utc"] = original_created
+                    records[idx] = deal_dict
                     updated = True
                     break
             if not updated:
@@ -232,10 +252,14 @@ class AtomicDealStorage:
                 if target_idx is None and deal_obj.url and deal_obj.url in url_map:
                     target_idx = url_map[deal_obj.url]
 
+                deal_dict = deal_obj.to_dict()
                 if target_idx is not None:
-                    records[target_idx] = deal_obj.to_dict()
+                    original_created = records[target_idx].get("created_utc")
+                    if original_created:
+                        deal_dict["created_utc"] = original_created
+                    records[target_idx] = deal_dict
                 else:
-                    records.insert(0, deal_obj.to_dict())
+                    records.insert(0, deal_dict)
                     id_map[deal_obj.id] = 0
                     if deal_obj.url and deal_obj.url != "#":
                         url_map[deal_obj.url] = 0
