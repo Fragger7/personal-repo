@@ -55,10 +55,15 @@ object IPTVClient {
 
     private fun getClient(): OkHttpClient {
         val timeout = com.projectstrong.iptv.data.SettingsManager.httpTimeoutSeconds.toLong()
+        val connectTimeout = if (com.projectstrong.iptv.data.SettingsManager.fastFailHedgingEnabled) {
+            minOf(timeout, 4L)
+        } else {
+            timeout
+        }
         return baseClient.newBuilder()
-            .connectTimeout(timeout, TimeUnit.SECONDS)
+            .connectTimeout(connectTimeout, TimeUnit.SECONDS)
             .readTimeout(timeout, TimeUnit.SECONDS)
-            .writeTimeout(timeout, TimeUnit.SECONDS)
+            .writeTimeout(minOf(timeout, 5L), TimeUnit.SECONDS)
             .build()
     }
 
@@ -94,7 +99,7 @@ object IPTVClient {
         extraHeaders: Map<String, String> = emptyMap()
     ): Response {
         var lastResponse: Response? = null
-        for (userAgent in USER_AGENTS) {
+        for ((index, userAgent) in USER_AGENTS.withIndex()) {
             val reqBuilder = Request.Builder()
                 .url(targetUrl)
                 .header("User-Agent", userAgent)
@@ -116,7 +121,11 @@ object IPTVClient {
                 lastResponse?.close()
                 lastResponse = response
             } catch (e: Throwable) {
-                // Try next user-agent on socket/reset error
+                // If the very first request failed due to an unreachable host (DNS or Connect failure),
+                // do not waste time retrying 5 different user agents on a non-existent/dead host.
+                if (index == 0 && (e is java.net.UnknownHostException || e is java.net.ConnectException || e is java.net.NoRouteToHostException)) {
+                    throw e
+                }
             }
         }
         return lastResponse ?: client.newCall(

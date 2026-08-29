@@ -85,28 +85,28 @@ object ProviderIntelligenceManager {
 
     // Known Upstream IPTV Provider Signatures & Domain Triggers
     private val KNOWN_PROVIDERS = listOf(
-        Pair("Strong 8K", listOf("strong 8k", "strong8k", "strong-8k", "strong ott", "strongott", "strong8k.vip", "strong8k.me", "strong8k.top", "strong8k.xyz", "strong tv", "strongtv8k", "8k strong", "strong 4k", "strong4k", "world 8k", "world8k", "world-8k", "welcome to world 8k", "³⁸⁴⁰ᴾ", "starzplay sport 8k")),
-        Pair("T-Rex OTT", listOf("t-rex", "trex", "trex iptv", "trexiptv", "trextv", "trex-ott", "trexott", "trexiptv.net", "trex 4k", "trex ott")),
-        Pair("Dream 4K", listOf("dream 4k", "dream4k", "dream ott", "dream-4k", "dreamiptv", "dream-ott", "dreamott", "eagle 4k", "eagle4k")),
-        Pair("B1G OTT", listOf("b1g", "b1g ott", "b1g iptv", "b1g live", "b1gott", "b1g player", "b1gplayer", "b1g-ott")),
-        Pair("Crystal OTT", listOf("crystal ott", "crystal iptv", "crystal-ott", "crystalott", "crystal 4k", "crystaltv", "crystal-tv", "|8ᴋ|")),
-        Pair("Cobra IPTV", listOf("cobra iptv", "cobra 4k", "cobra-iptv", "cobra ott", "cobraott", "cobraipty", "cobra-4k")),
-        Pair("Mega OTT", listOf("mega ott", "mega iptv", "mega-ott", "megaiptv", "mega-iptv", "megaott", "mega-ott.vip")),
-        Pair("Dino OTT", listOf("dino ott", "dino.ws", "dino iptv", "dino-ott", "dinoott", "dino 4k", "dino4k", "iptvdino")),
-        Pair("Magnum OTT (Golden)", listOf("magnum", "golden", "magnum ott", "magnumott", "golden (magnum)", "4 golden", "golden - relax", "magnum iptv")),
-        Pair("Max OTT", listOf("max ott", "max-ott", "maxiptv", "max iptv", "★ sky", "★ cinema", "alb ★", "de ★")),
-        Pair("TiviOne", listOf("tivione", "tivi-one", "tivi one", "┃at┃", "┃de┃", "┃uk┃", "┃us┃", "┃ar┃", "┃af┃")),
+        Pair("Strong 8K", listOf("strong 8k", "strong8k", "strong-8k", "strong ott", "strongott", "strong8k.vip", "strong8k.me", "strong8k.top", "strong8k.xyz", "strong tv", "strongtv8k", "8k strong", "strong 4k", "strong4k", "world 8k", "world8k", "world-8k", "welcome to world 8k", "³⁸⁴⁰ᴾ", "starzplay sport 8k", "strong stream")),
+        Pair("T-Rex OTT", listOf("t-rex", "trex", "trex iptv", "trexiptv", "trextv", "trex-ott", "trexott", "trexiptv.net", "trex 4k", "trex ott", "trex-server")),
+        Pair("Dream 4K", listOf("dream 4k", "dream4k", "dream ott", "dream-4k", "dreamiptv", "dream-ott", "dreamott", "eagle 4k", "eagle4k", "dream server")),
+        Pair("B1G OTT", listOf("b1g", "b1g ott", "b1g iptv", "b1g live", "b1gott", "b1g player", "b1gplayer", "b1g-ott", "b1g stream")),
+        Pair("Crystal OTT", listOf("crystal ott", "crystal iptv", "crystal-ott", "crystalott", "crystal 4k", "crystaltv", "crystal-tv", "|8ᴋ|", "crystal server")),
+        Pair("Cobra IPTV", listOf("cobra iptv", "cobra 4k", "cobra-iptv", "cobra ott", "cobraott", "cobraipty", "cobra-4k", "cobra server", "cobra plus")),
+        Pair("Mega OTT", listOf("mega ott", "mega iptv", "mega-ott", "megaiptv", "mega-iptv", "megaott", "mega-ott.vip", "mega 4k", "mega server")),
+        Pair("Dino OTT", listOf("dino ott", "dino.ws", "dino iptv", "dino-ott", "dinoott", "dino 4k", "dino4k", "iptvdino", "dino server")),
+        Pair("Magnum OTT (Golden)", listOf("magnum", "golden", "magnum ott", "magnumott", "golden (magnum)", "4 golden", "golden - relax", "magnum iptv", "magnum 4k")),
+        Pair("Max OTT", listOf("max ott", "max-ott", "maxiptv", "max iptv", "★ sky", "★ cinema", "alb ★", "de ★", "max-server")),
+        Pair("TiviOne", listOf("tivione", "tivi-one", "tivi one", "┃at┃", "┃de┃", "┃uk┃", "┃us┃", "┃ar┃", "┃af┃", "tivione ott")),
         Pair("Promax OTT", listOf("promax", "pro-max", "promax ott", "promax iptv", "▎sky", "▎bein", "at ▎", "de ▎", "al ▎")),
         Pair("SLTV OTT", listOf("sltv", "sltv ott", "sl tv", "sltv iptv", "(spielzeit)", "sltv.live")),
         Pair("Nexon IPTV", listOf("nexon", "nexon iptv", "nexon-ott", "nexonott", "nexon 4k")),
-        Pair("King 365", listOf("king 365", "king365", "king365tv", "king 365 tv", "king-365")),
+        Pair("King 365", listOf("king 365", "king365", "king365tv", "king 365 tv", "king-365", "king365 ott")),
         Pair("Lion OTT", listOf("lion-ott", "lion ott", "tvlion", "lion 4k", "lion iptv", "[aus] sky")),
-        Pair("Ultra OTT", listOf("ultra ott", "ultra-ott", "ultraiptv 4k", "ultra 8k", "ultra8k")),
-        Pair("4K OTT", listOf("4kott", "4k-ott", "4k ott live", "tx-4kott", "4kott.pro", "4k ott pro")),
-        Pair("Apollo Group TV", listOf("apollo group", "apollogroup", "apollo iptv", "apollo-tv", "apollogrouptv", "apollo tv")),
+        Pair("Ultra OTT", listOf("ultra ott", "ultra-ott", "ultraiptv 4k", "ultra 8k", "ultra8k", "ultra server")),
+        Pair("4K OTT", listOf("4kott", "4k-ott", "4k ott live", "tx-4kott", "4kott.pro", "4k ott pro", "4k stream")),
+        Pair("Apollo Group TV", listOf("apollo group", "apollogroup", "apollo iptv", "apollo-tv", "apollogrouptv", "apollo tv", "startv.site")),
         Pair("Xtreme HD", listOf("xtreme hd", "xtremehd", "xtreme-hd", "xtremehd.io", "xtreme hd iptv")),
         Pair("King 4K", listOf("king 4k", "king4k", "king-4k", "king ott", "king-iptv", "king4k.tv", "king 8k")),
-        Pair("Rey de Reyes", listOf("reydereyes", "rey de reyes", "streaming latino", "reydereyesiptv", "rey de reyes iptv")),
+        Pair("Rey de Reyes", listOf("reydereyes", "rey de reyes", "streaming latino", "reydereyesiptv", "rey de reyes iptv", "reydereyes.xyz")),
         Pair("StarShare", listOf("starshare", "star-share", "star share", "starshare.live", "star share iptv")),
         Pair("Prime+ OTT", listOf("prime+", "prime plus", "primeplus", "prime-plus", "primeplus.ott", "prime plus ott")),
         Pair("Diamond OTT", listOf("diamond ott", "diamond-tv", "diamondiptv", "diamond 4k", "diamondott")),
@@ -123,6 +123,8 @@ object ProviderIntelligenceManager {
         Pair("Iron TV Pro", listOf("iron tv", "iron-iptv", "irontv", "iron pro", "iron tv pro", "iron max")),
         Pair("Shooter IPTV", listOf("shooter iptv", "shooter-tv", "shooterott", "shooter 4k")),
         Pair("Star IPTV", listOf("star iptv", "star-iptv", "star 4k iptv")),
+        Pair("Beast TV", listOf("beast tv", "beasttv", "beast iptv", "beast-iptv", "beastott")),
+        Pair("Helix IPTV", listOf("helix iptv", "helix hosting", "helix-iptv", "helixtv")),
         Pair("IBO Player", listOf("ibo player", "iboplayer", "ibopro")),
         Pair("BOB Player", listOf("bob player", "bobplayer")),
         Pair("SET IPTV", listOf("set iptv", "setiptv")),
@@ -463,17 +465,25 @@ object ProviderIntelligenceManager {
             val bestCandidate = brandScores.maxByOrNull { it.value }
             if (bestCandidate != null && bestCandidate.value >= 12) {
                 val bestBrand = bestCandidate.key
+                val hostMatchedExisting = existing.providerName.contains(bestBrand, ignoreCase = true)
                 val confidence = when {
+                    hostMatchedExisting || (foundCommunityLink != null && bestCandidate.value >= 25) -> "🎯 Cross-Verified (99%)"
                     foundCommunityLink != null || bestCandidate.value >= 40 -> "Verified Brand (95%)"
                     bestCandidate.value >= 25 -> "Category Watermark (85%)"
                     else -> "Stream Signature (75%)"
+                }
+
+                val evidenceMsg = if (hostMatchedExisting) {
+                    "Double-Checked: Host signature and stream watermarks independently confirmed \"$bestBrand\"."
+                } else {
+                    detectedEvidence ?: "Discovered via recurring category and stream watermarks"
                 }
 
                 val updated = existing.copy(
                     providerName = "🎯 Identified: $bestBrand",
                     communityLink = foundCommunityLink,
                     confidence = confidence,
-                    evidence = detectedEvidence ?: "Discovered via recurring category and stream watermarks",
+                    evidence = evidenceMsg,
                     lastSeen = nowStr
                 )
                 profiles[domain] = updated

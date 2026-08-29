@@ -466,6 +466,54 @@ fun SettingsTab() {
 
                 Divider(color = AppSurfaceBorder.copy(alpha = 0.6f))
 
+                // Fast-Fail Hedging & Straggler Optimization Toggle
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            Text(
+                                text = "Adaptive Fast-Fail Hedging",
+                                color = AppTextPrimary,
+                                fontWeight = FontWeight.SemiBold,
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                            Surface(
+                                shape = RoundedCornerShape(6.dp),
+                                color = Color(0xFF0F766E).copy(alpha = 0.3f),
+                                border = BorderStroke(1.dp, Color(0xFF0F766E))
+                            ) {
+                                Text(
+                                    text = "Tail-Latency Fix",
+                                    color = Color(0xFF34D399),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        }
+                        Text(
+                            text = "Aggressively times out dead socket handshakes during bulk batch scans, eliminating the 98% hang.",
+                            color = AppTextMuted,
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
+                    Switch(
+                        checked = SettingsManager.fastFailHedgingEnabled,
+                        onCheckedChange = { SettingsManager.saveFastFailHedging(it) },
+                        colors = SwitchDefaults.colors(
+                            checkedThumbColor = Color.White,
+                            checkedTrackColor = Color(0xFF34D399),
+                            uncheckedThumbColor = AppTextSecondary,
+                            uncheckedTrackColor = AppSurfaceBorder
+                        )
+                    )
+                }
+
+                Divider(color = AppSurfaceBorder.copy(alpha = 0.6f))
+
                 // Screen Wake Lock Option
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -499,7 +547,124 @@ fun SettingsTab() {
             }
         }
 
-        // Section 3: Volatile Memory & Storage Cache
+        // Section 3: Visual Themes & Design Engine
+        SettingsSectionHeader(title = "Visual Themes & Palettes", icon = Icons.Default.Palette)
+        Surface(
+            shape = RoundedCornerShape(16.dp),
+            color = AppSurface,
+            border = BorderStroke(1.dp, AppSurfaceBorder),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Column(
+                modifier = Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Text(
+                    text = "Select your preferred visual atmosphere. Custom palettes dynamically re-style the entire UI across all tabs and data grids in real time.",
+                    color = AppTextSecondary,
+                    style = MaterialTheme.typography.bodySmall
+                )
+
+                AppThemeMode.values().forEach { theme ->
+                    val isSelected = SettingsManager.currentTheme == theme
+                    val (primaryColor, secondaryColor, surfaceColor) = when (theme) {
+                        AppThemeMode.SHERLOCK_AMBER -> Triple(Color(0xFFF59E0B), Color(0xFF06B6D4), Color(0xFF131B2A))
+                        AppThemeMode.MIDNIGHT_PURPLE -> Triple(Color(0xFFA78BFA), Color(0xFFC084FC), Color(0xFF18132B))
+                        AppThemeMode.OCEAN_BLUE -> Triple(Color(0xFF38BDF8), Color(0xFF06B6D4), Color(0xFF132034))
+                        AppThemeMode.CRIMSON_DARK -> Triple(Color(0xFFEF4444), Color(0xFFF43F5E), Color(0xFF1E1014))
+                        AppThemeMode.SYSTEM_MONET -> Triple(Color(0xFF60A5FA), Color(0xFF34D399), Color(0xFF1E293B))
+                    }
+
+                    Surface(
+                        shape = RoundedCornerShape(12.dp),
+                        color = if (isSelected) primaryColor.copy(alpha = 0.12f) else AppSurfaceVariant.copy(alpha = 0.5f),
+                        border = BorderStroke(
+                            1.dp,
+                            if (isSelected) primaryColor.copy(alpha = 0.6f) else AppSurfaceBorder
+                        ),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                SettingsManager.saveTheme(theme)
+                                ToastManager.success("Applied ${theme.title} theme!")
+                            }
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(12.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                // Color swatches preview
+                                Row(
+                                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(16.dp)
+                                            .clip(CircleShape)
+                                            .background(primaryColor)
+                                    )
+                                    Box(
+                                        modifier = Modifier
+                                            .size(14.dp)
+                                            .clip(CircleShape)
+                                            .background(secondaryColor)
+                                    )
+                                    Box(
+                                        modifier = Modifier
+                                            .size(12.dp)
+                                            .clip(CircleShape)
+                                            .background(surfaceColor)
+                                            .border(1.dp, Color.White.copy(alpha = 0.2f), CircleShape)
+                                    )
+                                }
+
+                                Column {
+                                    Text(
+                                        text = theme.title,
+                                        color = if (isSelected) primaryColor else AppTextPrimary,
+                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.SemiBold,
+                                        style = MaterialTheme.typography.bodyMedium
+                                    )
+                                    Text(
+                                        text = theme.description,
+                                        color = AppTextMuted,
+                                        style = MaterialTheme.typography.labelSmall
+                                    )
+                                }
+                            }
+
+                            if (isSelected) {
+                                Surface(
+                                    shape = CircleShape,
+                                    color = primaryColor,
+                                    modifier = Modifier.size(22.dp)
+                                ) {
+                                    Box(contentAlignment = Alignment.Center) {
+                                        Icon(
+                                            Icons.Default.Check,
+                                            contentDescription = "Selected",
+                                            tint = Color.Black,
+                                            modifier = Modifier.size(14.dp)
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Section 4: Volatile Memory & Storage Cache
         SettingsSectionHeader(title = "Data & Cache Management", icon = Icons.Default.Storage)
         Surface(
             shape = RoundedCornerShape(16.dp),

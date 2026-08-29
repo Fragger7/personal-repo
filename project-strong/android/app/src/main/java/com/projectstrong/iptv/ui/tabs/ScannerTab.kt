@@ -160,12 +160,12 @@ fun ScannerTab(onNextTab: (() -> Unit)? = null) {
 
             // Throttled UI updater loop to eliminate Choreographer starvation / ANR
             while (DataStore.isScanning && completedCount.get() < total) {
-                delay(500) // Adaptive delay: wait 500ms between batches to let the UI breathe
+                delay(200) // Adaptive delay: wait 200ms between batches to keep UI responsive and smooth
                 val batch = mutableListOf<Pair<Int, ParsedCredential>>()
                 while (true) {
                     val item = updateQueue.poll() ?: break
                     batch.add(item)
-                    if (batch.size >= 500) break
+                    if (batch.size >= 300) break
                 }
 
                 if (batch.isEmpty()) continue
@@ -578,6 +578,63 @@ fun ScannerTab(onNextTab: (() -> Unit)? = null) {
                             color = if (DataStore.isScanPaused) AppWarning else AppPrimary,
                             trackColor = AppSurface
                         )
+                    }
+                }
+            }
+        }
+
+        // Lingering Stragglers Fast-Finish Action
+        if (DataStore.isScanning && DataStore.scanProgress >= 0.80f) {
+            Spacer(modifier = Modifier.height(8.dp))
+            Surface(
+                shape = RoundedCornerShape(10.dp),
+                color = Color(0xFF0F766E).copy(alpha = 0.15f),
+                border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF0F766E).copy(alpha = 0.5f)),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "Lingering Stragglers Detected",
+                            color = Color(0xFF34D399),
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text = "Skip remaining unresponsive hosts to finalize results instantly.",
+                            color = AppTextMuted,
+                            style = MaterialTheme.typography.labelSmall
+                        )
+                    }
+                    Button(
+                        onClick = {
+                            DataStore.isScanning = false
+                            DataStore.isScanPaused = false
+                            scanJob?.cancel()
+                            // Mark unverified pending nodes as Timed Out
+                            for (i in 0 until DataStore.scannedNodes.size) {
+                                val n = DataStore.scannedNodes[i]
+                                if (n.isVerifying || n.status.isEmpty() || n.status == "Pending") {
+                                    DataStore.scannedNodes[i] = n.copy(isVerifying = false, status = "Timed Out (Dead Host)")
+                                }
+                            }
+                            DataStore.scanProgress = 1f
+                            val activeCount = DataStore.scannedNodes.count { it.status.contains("Active", ignoreCase = true) }
+                            val total = DataStore.scannedNodes.size
+                            DataStore.scanCountText = "Scan Complete! Found $activeCount active nodes out of $total total (stragglers skipped)."
+                            ToastManager.success("Scan finalized! Lingering stragglers marked dead.")
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0F766E)),
+                        shape = RoundedCornerShape(8.dp),
+                        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp)
+                    ) {
+                        Icon(Icons.Default.Bolt, contentDescription = null, tint = Color.White, modifier = Modifier.size(14.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("Skip Stragglers", color = Color.White, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
                     }
                 }
             }

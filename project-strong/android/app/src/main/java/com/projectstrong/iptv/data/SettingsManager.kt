@@ -7,12 +7,22 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 
+enum class AppThemeMode(val title: String, val description: String) {
+    SHERLOCK_AMBER("Cyber Sherlock (Default)", "Cyber amber gold & deep obsidian navy"),
+    MIDNIGHT_PURPLE("Midnight Purple", "Neon violet glow & deep twilight dark"),
+    OCEAN_BLUE("Ocean Blue", "Electric cyan & deep abyss navy"),
+    CRIMSON_DARK("Crimson Dark", "Vibrant crimson & pitch dark OLED"),
+    SYSTEM_MONET("System Monet", "Dynamic Material You colors from your Android wallpaper")
+}
+
 object SettingsManager {
     private const val PREFS_NAME = "iptv_settings_prefs"
     private const val KEY_HTTP_TIMEOUT = "http_timeout_sec"
     private const val KEY_MAX_CONCURRENCY = "max_concurrency"
     private const val KEY_AUTO_REFRESH_NET = "auto_refresh_net"
     private const val KEY_KEEP_SCREEN_ON = "keep_screen_on"
+    private const val KEY_THEME_MODE = "theme_mode"
+    private const val KEY_FAST_FAIL_HEDGING = "fast_fail_hedging"
 
     private lateinit var prefs: SharedPreferences
 
@@ -20,6 +30,8 @@ object SettingsManager {
     var maxConcurrency by mutableIntStateOf(8)
     var autoRefreshNetwork by mutableStateOf(true)
     var keepScreenOnDuringScans by mutableStateOf(true)
+    var currentTheme by mutableStateOf(AppThemeMode.SHERLOCK_AMBER)
+    var fastFailHedgingEnabled by mutableStateOf(true)
 
     fun init(context: Context) {
         prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -27,6 +39,28 @@ object SettingsManager {
         maxConcurrency = prefs.getInt(KEY_MAX_CONCURRENCY, 8)
         autoRefreshNetwork = prefs.getBoolean(KEY_AUTO_REFRESH_NET, true)
         keepScreenOnDuringScans = prefs.getBoolean(KEY_KEEP_SCREEN_ON, true)
+        fastFailHedgingEnabled = prefs.getBoolean(KEY_FAST_FAIL_HEDGING, true)
+        
+        val savedThemeName = prefs.getString(KEY_THEME_MODE, AppThemeMode.SHERLOCK_AMBER.name)
+        currentTheme = try {
+            AppThemeMode.valueOf(savedThemeName ?: AppThemeMode.SHERLOCK_AMBER.name)
+        } catch (e: Exception) {
+            AppThemeMode.SHERLOCK_AMBER
+        }
+    }
+
+    fun saveTheme(theme: AppThemeMode) {
+        currentTheme = theme
+        if (::prefs.isInitialized) {
+            prefs.edit().putString(KEY_THEME_MODE, theme.name).apply()
+        }
+    }
+
+    fun saveFastFailHedging(enabled: Boolean) {
+        fastFailHedgingEnabled = enabled
+        if (::prefs.isInitialized) {
+            prefs.edit().putBoolean(KEY_FAST_FAIL_HEDGING, enabled).apply()
+        }
     }
 
     fun saveTimeout(seconds: Int) {

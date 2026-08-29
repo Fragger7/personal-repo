@@ -492,6 +492,15 @@ fun Base64Tab(onNextTab: () -> Unit = {}) {
                                 },
                                 modifier = Modifier.height(44.dp)
                             )
+
+                            SecondaryButton(
+                                text = "📋 Copy URLs",
+                                onClick = {
+                                    clipboardManager.setText(AnnotatedString(extractedUrls.joinToString("\n")))
+                                    ToastManager.success("Copied ${extractedUrls.size} URLs to clipboard!")
+                                },
+                                modifier = Modifier.height(44.dp)
+                            )
                         }
                     }
 

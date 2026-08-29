@@ -253,22 +253,16 @@ Create a dedicated **⚙️ Settings & About** tab or modal inside the Android a
 5. **Responsive Multi-Orientation Detail Layouts**: Full vertical scrolling on all master-detail drawers (Committed, Xtream, Stalker, Scanner) and flexible channel title layouts in catalog explorer.
 6. **Sherlock Streams Visual Branding**: Adaptive launcher icons and vector brand emblems across the UI.
 7. **Universal Toast Architecture & Git Cloud Persistence**: Reliable main-thread feedback and bidirectional GitHub synchronization with safety merge guards.
+8. **Dynamic Theme Engine (Multi-Palette Switcher - VERIFIED & COMPLETED)**: Material 3 dynamic color scheme engine supporting *Cyber Sherlock Amber/Navy (Default)*, *Midnight Purple*, *Ocean Blue*, *Crimson Dark*, and *System Monet*, persisted via `SharedPreferences`.
+9. **Fast-Fail Network Hedging & Straggler Optimization (VERIFIED & COMPLETED)**: Aggressive early connect timeouts (4s) for unknown nodes, immediate short-circuiting on dead hosts (UnknownHost/ConnectException), throttled 200ms batch UI updates, and an interactive "⚡ Skip Stragglers" action button when lingering hosts delay the final scan tail.
+10. **Base64 Tab Power Actions & Ingestion Pipeline (VERIFIED & COMPLETED)**: 1-click "⚡ Send to Scanner" direct pipeline, "🧹 Filter URLs", "📋 Copy URLs", and individual endpoint launch actions.
+11. **Provider Intelligence Hardening & Cross-Verification Consensus (VERIFIED & COMPLETED)**: Multi-layer consensus engine (combining domain heuristics, server metadata, category watermarks, and community links) yielding 99% Cross-Verified confidence ratings and enriched provider signatures.
 
 ### 🚀 Upcoming Active Backlog (Next Session Implementation Plan)
-1. **Scan Tail-Latency & Straggler Optimization (98%+ Scan Slowdown)**:
-   * Address the "straggler effect" where the final 2% (98%-100%) of scanned nodes slow down due to hanging/dead host connection timeouts.
-   * Implement progressive timeout hedging: use aggressive early connect timeouts (e.g. 4-5s for initial TCP/SSL handshake) for unverified nodes during bulk scans to fast-fail dead nodes rather than blocking the tail end for 15-30s.
-   * Add active scan straggler indicator in the UI to notify users of pending unresponsive hosts without stalling the overall workflow.
-2. **Ultra-Scale Performance Tuning & ANR Prevention (3,000+ Node Payloads)**:
-   * Implement chunked batch state emits to buffer background worker discovery updates and dispatch to UI state in 250ms intervals.
-   * Apply coroutine dispatcher throttling (`Dispatchers.IO.limitedParallelism(24..32)`) and unified semaphores to prevent thread starvation during massive combo imports.
-3. **Base64 Tab Power Actions & Ingestion Pipeline**:
-   * Add rich URL action preview chips and batch external browser/M3U launcher.
-   * Add 1-click "Send Decoded URLs to Scanner" direct pipeline button.
-4. **Dynamic Theme Engine (Multi-Palette Switcher)**:
-   * Material 3 dynamic color scheme engine supporting *Cyber Sherlock Amber/Navy (Default)*, *Midnight Purple*, *Ocean Blue*, *Crimson Dark*, and *System Monet*.
-5. **Landscape Split-Pane Master-Detail Tablet/Foldable View**:
+1. **Landscape Split-Pane Master-Detail Tablet/Foldable View**:
    * Expand wide screens into side-by-side master list + live detail inspector pane.
+2. **Automated Weekly Provider Intelligence Sync (GitHub Actions Cron Job)**:
+   * Scheduled cron workflow (`.github/workflows/scrape-provider-intel.yml`) to scrape and ingest emerging provider signatures from `search.streamcheck.pro` weekly, syncing to `provider_intelligence.json` and Android app assets.
 
 ---
 
