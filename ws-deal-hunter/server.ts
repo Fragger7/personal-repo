@@ -44,6 +44,18 @@ function writeDealsAtomic(deals: any[]): void {
   const tempPath = path.join(process.cwd(), `deals_${Date.now()}.tmp`);
   fs.writeFileSync(tempPath, JSON.stringify(deals, null, 2), "utf-8");
   fs.renameSync(tempPath, DEALS_FILE);
+
+  // Mirror sync to public/deals.json and dist/deals.json if folders exist
+  for (const folder of ["public", "dist"]) {
+    const targetDir = path.join(process.cwd(), folder);
+    if (fs.existsSync(targetDir) && fs.statSync(targetDir).isDirectory()) {
+      try {
+        fs.writeFileSync(path.join(targetDir, "deals.json"), JSON.stringify(deals, null, 2), "utf-8");
+      } catch (err) {
+        console.warn(`[server] Warning syncing to ${folder}/deals.json:`, err);
+      }
+    }
+  }
 }
 
 // ==========================================

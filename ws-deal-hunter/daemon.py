@@ -249,78 +249,207 @@ class DealHunterDaemon:
     def reap_dead_and_sold_deals(self, current_deals: List[DealRecord]) -> int:
         """
         Probe status of stored listings and automatically purge any sold, 404, or ended items.
+        Utilizes eBay search-by-ID validation, Reddit post flair inspection, and retail stock checks.
         """
         if not current_deals:
             return 0
 
         from concurrent.futures import ThreadPoolExecutor
-        import cloudscraper
+        import re
+
+        try:
+            from curl_cffi import requests as cffi_requests
+        except ImportError:
+            cffi_requests = None
+
+        try:
+            import cloudscraper
+            cloud_scraper = cloudscraper.create_scraper(browser={"browser": "chrome", "platform": "windows", "desktop": True})
+        except ImportError:
+            cloud_scraper = None
+
+        try:
+            from bs4 import BeautifulSoup
+        except ImportError:
+            BeautifulSoup = None
 
         dead_ids: List[str] = []
-        scraper = cloudscraper.create_scraper(browser={"browser": "chrome", "platform": "windows", "desktop": True})
+        headers = {
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+            "Accept-Language": "en-US,en;q=0.9",
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+        }
 
         def check_deal_liveness(deal: DealRecord) -> Optional[str]:
             if not deal.url or deal.url == "#":
                 return None
+            url = deal.url.strip()
+            
             try:
-                # Fast probe with 3.5s timeout
-                res = scraper.get(deal.url, timeout=3.5, allow_redirects=True)
-                
-                # Check HTTP Status: 404/410 means listing was deleted
-                if res.status_code in [404, 410]:
-                    return deal.id
+                # 1. eBay Liveness Check (Search-by-ID validation & DOM inspection)
+                if "ebay.com" in url:
+                    item_id_match = re.search(r"/itm/([0-9]{9,14})", url)
+                    if item_id_match:
+                        item_id = item_id_match.group(1)
+                        search_url = f"https://www.ebay.com/sch/i.html?_nkw={item_id}"
+                        
+                        resp_text = ""
+                        status_code = 200
+                        if cffi_requests:
+                            try:
+                                r = cffi_requests.get(search_url, impersonate="chrome99_android", headers=headers, timeout=5.0)
+                                resp_text = r.text
+                                status_code = r.status_code
+                            except Exception:
+                                pass
+                        
+                        if not resp_text and cloud_scraper:
+                            try:
+                                r = cloud_scraper.get(search_url, timeout=5.0)
+                                resp_text = r.text
+                                status_code = r.status_code
+                            except Exception:
+                                pass
 
-                text = res.text.lower()
+                        if status_code in [404, 410]:
+                            return deal.id
 
-                # Reddit liveness: check for [sold], [closed], linkflair-closed, or removed text
-                if "reddit.com" in deal.url:
-                    if (
-                        "linkflair-closed" in text
-                        or "linkflair-sold" in text
-                        or "[sold]" in text
-                        or "[closed]" in text
-                        or "this post was removed" in text
-                        or "this post has been removed" in text
-                    ):
-                        return deal.id
+                        if resp_text:
+                            if BeautifulSoup:
+                                soup = BeautifulSoup(resp_text, "html.parser")
+                                items = soup.select(".s-item, .s-card, li.s-item")
+                                found_active = any(
+                                    item_id in (item.select_one("a.s-item__link, a[href*='/itm/']") or {}).get("href", "")
+                                    for item in items
+                                )
+                                if not found_active:
+                                    return deal.id
+                            else:
+                                if item_id not in resp_text or "0 results found" in resp_text.lower() or "no exact matches found" in resp_text.lower():
+                                    return deal.id
 
-                # Swappa liveness: check if listing is closed/sold
-                elif "swappa.com" in deal.url:
-                    if "listing closed" in text or "this listing has been sold" in text or "listing not found" in text:
-                        return deal.id
-
-                # B&H / Best Buy liveness: check if out of stock
-                elif "bhphotovideo.com" in deal.url:
-                    if "no longer available" in text or "item unavailable" in text:
-                        return deal.id
-                elif "bestbuy.com" in deal.url:
-                    if "sold out" in text or "this item is currently unavailable" in text:
-                        return deal.id
-
-                # eBay liveness: check for ended notification if page returns 200
-                elif "ebay.com" in deal.url and res.status_code == 200:
-                    from bs4 import BeautifulSoup
-                    soup = BeautifulSoup(res.text, "html.parser")
-                    page_title = soup.title.text.lower() if soup.title else ""
-                    has_buy_btn = bool(soup.select("a[href*='bin'], button[id*='bin'], button[id*='atc'], .vi-btn, .x-bin-action, .x-atc-action"))
+                # 2. Reddit Liveness Check (JSON and HTML inspection)
+                elif "reddit.com" in url:
+                    # Clean URL to get JSON endpoint
+                    clean_url = url.split("?")[0].rstrip("/")
+                    json_url = f"{clean_url}.json"
                     
-                    if (
-                        "error page" in page_title
-                        or "this listing was ended" in text
-                        or "this listing has ended" in text
-                        or "the seller ended this listing" in text
-                        or "out of stock" in text
-                        or "we couldn't find this page" in text
-                        or ("popular categories" in text and not has_buy_btn)
-                    ):
+                    req_headers = {"User-Agent": "WorkstationDealHunter/3.0 (Arbitrage Monitor)"}
+                    resp_text = ""
+                    status_code = 200
+
+                    if cffi_requests:
+                        try:
+                            r = cffi_requests.get(json_url, headers=req_headers, timeout=5.0)
+                            resp_text = r.text
+                            status_code = r.status_code
+                        except Exception:
+                            pass
+                    
+                    if not resp_text and cloud_scraper:
+                        try:
+                            r = cloud_scraper.get(url, timeout=5.0)
+                            resp_text = r.text
+                            status_code = r.status_code
+                        except Exception:
+                            pass
+
+                    if status_code in [404, 410]:
                         return deal.id
+
+                    if resp_text:
+                        text_lower = resp_text.lower()
+                        if (
+                            "linkflair-closed" in text_lower
+                            or "linkflair-sold" in text_lower
+                            or '"link_flair_text": "closed"' in text_lower
+                            or '"link_flair_text": "sold"' in text_lower
+                            or '"link_flair_text": "pending"' in text_lower
+                            or "[sold]" in text_lower
+                            or "[closed]" in text_lower
+                            or "this post was removed" in text_lower
+                            or "this post has been removed" in text_lower
+                            or '"author": "[deleted]"' in text_lower
+                            or '"removed_by_category"' in text_lower
+                        ):
+                            return deal.id
+
+                # 3. Swappa Liveness Check
+                elif "swappa.com" in url:
+                    resp_text = ""
+                    status_code = 200
+                    if cffi_requests:
+                        try:
+                            r = cffi_requests.get(url, impersonate="chrome120", headers=headers, timeout=5.0)
+                            resp_text = r.text
+                            status_code = r.status_code
+                        except Exception:
+                            pass
+                    if not resp_text and cloud_scraper:
+                        try:
+                            r = cloud_scraper.get(url, timeout=5.0)
+                            resp_text = r.text
+                            status_code = r.status_code
+                        except Exception:
+                            pass
+
+                    if status_code in [404, 410]:
+                        return deal.id
+                    if resp_text:
+                        text_lower = resp_text.lower()
+                        if (
+                            "listing closed" in text_lower
+                            or "this listing has been sold" in text_lower
+                            or "listing not found" in text_lower
+                            or "this listing is no longer active" in text_lower
+                        ):
+                            return deal.id
+
+                # 4. Retail & Refurbished Liveness Check (B&H, Best Buy, Dell, Lenovo, Goodwill)
+                else:
+                    resp_text = ""
+                    status_code = 200
+                    if cffi_requests:
+                        try:
+                            r = cffi_requests.get(url, impersonate="chrome120", headers=headers, timeout=5.0)
+                            resp_text = r.text
+                            status_code = r.status_code
+                        except Exception:
+                            pass
+                    if not resp_text and cloud_scraper:
+                        try:
+                            r = cloud_scraper.get(url, timeout=5.0)
+                            resp_text = r.text
+                            status_code = r.status_code
+                        except Exception:
+                            pass
+
+                    if status_code in [404, 410]:
+                        return deal.id
+
+                    if resp_text:
+                        text_lower = resp_text.lower()
+                        if "bhphotovideo.com" in url:
+                            if "no longer available" in text_lower or "item unavailable" in text_lower or "discontinued" in text_lower:
+                                return deal.id
+                        elif "bestbuy.com" in url:
+                            if "sold out" in text_lower or "this item is currently unavailable" in text_lower or "not available for shipping" in text_lower:
+                                return deal.id
+                        elif "dellrefurbished.com" in url:
+                            if "requested product could not be found" in text_lower or "out of stock" in text_lower:
+                                return deal.id
+                        elif "lenovo.com" in url:
+                            if "temporarily out of stock" in text_lower or "no longer available" in text_lower or "out of stock" in text_lower:
+                                return deal.id
+                        elif "shopgoodwill.com" in url:
+                            if "auction closed" in text_lower or "this auction has ended" in text_lower:
+                                return deal.id
 
             except Exception:
-                # On timeout or network error, retain deal safely
                 pass
             return None
 
-        with ThreadPoolExecutor(max_workers=6) as executor:
+        with ThreadPoolExecutor(max_workers=8) as executor:
             results = executor.map(check_deal_liveness, current_deals)
             for res_id in results:
                 if res_id:
@@ -328,7 +457,7 @@ class DealHunterDaemon:
 
         if dead_ids:
             purged = self.storage.delete_many(dead_ids)
-            self.log(f"🗑️ Reaped {purged} dead/sold listings from deals.json: {dead_ids}")
+            self.log(f"🗑️ Reaped {purged} dead/sold/ended listings from deals.json: {dead_ids}")
             return purged
         return 0
 

@@ -14,6 +14,7 @@ import json
 import os
 import re
 import socket
+import threading
 import time
 import urllib.error
 import urllib.parse
@@ -54,14 +55,14 @@ TITLE_ACCESSORY_REGEX = re.compile(
 )
 
 HARD_EXCLUSION_REGEX = re.compile(
-    r"(?i)(for\s*parts|not\s*working|as\s*is\b|untested|repair\s*only|broken\s*screen|bad\s*screen|liquid\s*damage|"
+    r"(?i)(for\s*parts|not\s*working|as\s*is\b|untested|repair\s*only|needs\s*repair|needs\s*fix|needs\s*fixing|for\s*repair|read\s*desc\b|read\s*description|broken\s*screen|bad\s*screen|liquid\s*damage|"
     r"cracked\s*(?:screen|display|glass|panel|lcd)|crack\s*(?:on|in)\s*(?:screen|display|glass)|hairline\s*crack|"
     r"screen\s*(?:defect|issue|blemish|burn|line)|lines?\s*(?:on|in)\s*(?:screen|display)|dead\s*pixels?|delaminat\w+|staingate|backlight\s*bleed|"
     r"water\s*damage|icp\b|mdm\b|icloud\s*lock|activation\s*lock|managed\s*profile|profile\s*lock|bios\s*lock|computrace|"
     r"bad\s*gpu|dead\s*gpu|no\s*nvidia|iris\s*only|iris\s*xe\s*only|intel\s*graphics\s*only|uhd\s*graphics\s*only|touch\s*bar|"
     r"frame\s*separating|frame\s*is\s*separating|hinge\s*separated|broken\s*hinge|loose\s*hinge|cracked\s*palmrest|keyboard\s*imprints|"
     r"i5-\d{4,5}[a-z]*|core\s*i5|intel\s*i5|"
-    r"i[3579]-11\d{3}|i[3579]-10\d{3}|i[3579]-[89]\d{3}|11850h|11950h|11800h|11400h|11980hk|10885h|10750h|11955m|w-11\d{3}|xeon.*11\d{3}|"
+    r"i[3579][\s-]11\d{3}|i[3579][\s-]11th(?:\s*gen)?|i[3579]\s*11gen|11th\s*gen|i[3579][\s-]10\d{3}|i[3579][\s-]10th(?:\s*gen)?|i[3579][\s-][89]\d{3}|11850h|11950h|11800h|11400h|11980hk|10885h|10750h|11955m|w-11\d{3}|xeon.*11\d{3}|"
     r"1260p|1360p|1370p|1240p|1250p|1340p|1350p|1355u|1335u|1235u|1245u|1255u|"
     r"latitude\s*(?:3[0-9]{3}|5[0-9]{3}|7[0-3][0-9]{2}|e[0-9]{4})|inspiron|vostro|ideapad|thinkbook|flex\s*5|chromebook|pavilion|envy|omnibook|stream\s*14|victus|vivobook|katana|gf63|thin\s*15|sony\s*vaio)"
 )
@@ -144,17 +145,18 @@ class EBayCollector:
         """Fetch live items via direct TLS-impersonated search queries across multiple catalog pages."""
         all_listings: List[RawListing] = []
         seen_urls = set()
+        lock = threading.Lock()
 
         try:
             from bs4 import BeautifulSoup
             from curl_cffi import requests
 
-            for target in self.TARGET_QUERIES:
+            def scrape_query_target(target: Dict[str, str]) -> List[RawListing]:
                 q = target["query"]
                 sacat = target.get("sacat", "177")
+                sub_results: List[RawListing] = []
                 
                 for page in range(1, max_pages + 1):
-                    # Category-isolated, Buy-It-Now, Good-to-New condition, newly listed, multi-page deep sweep
                     url = (
                         f"https://www.ebay.com/sch/{sacat}/i.html?"
                         f"_nkw={urllib.parse.quote(q)}&LH_BIN=1&LH_ItemCondition=1000|1500|2000|2500|3000"
@@ -204,9 +206,10 @@ class EBayCollector:
                                     clean_url = f"https://www.ebay.com/sch/i.html?_nkw={urllib.parse.quote(title)}&LH_BIN=1&_sop=10"
                                     item_id = f"ebay_{abs(hash(clean_url)) % 1000000}"
 
-                                if clean_url in seen_urls:
-                                    continue
-                                seen_urls.add(clean_url)
+                                with lock:
+                                    if clean_url in seen_urls:
+                                        continue
+                                    seen_urls.add(clean_url)
 
                                 # Parse numeric price
                                 price_match = re.search(r"\$([0-9,]+(?:\.[0-9]{2})?)", price_str)
@@ -237,7 +240,7 @@ class EBayCollector:
                                 if is_blacklisted_item(title, full_desc):
                                     continue
 
-                                all_listings.append(
+                                sub_results.append(
                                     RawListing(
                                         id=f"ebay_{item_id}",
                                         source="ebay",
@@ -253,12 +256,17 @@ class EBayCollector:
                                 )
                                 page_items_count += 1
 
-                            # If page had 0 valid new items, advance to next query
                             if page_items_count == 0:
                                 break
                     except Exception as err:
                         print(f"[EBayCollector] Sub-query error for {q[:30]} (page {page}): {err}")
                         break
+                return sub_results
+
+            with ThreadPoolExecutor(max_workers=5) as executor:
+                query_results = executor.map(scrape_query_target, self.TARGET_QUERIES)
+                for res_list in query_results:
+                    all_listings.extend(res_list)
 
             if all_listings:
                 print(f"[EBayCollector] Successfully fetched {len(all_listings)} live targeted workstation listings from eBay!")
