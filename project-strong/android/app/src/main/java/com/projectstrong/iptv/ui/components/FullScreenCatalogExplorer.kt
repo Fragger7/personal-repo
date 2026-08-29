@@ -28,6 +28,8 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.projectstrong.iptv.network.IPTVClient
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
@@ -66,58 +68,60 @@ fun FullScreenCatalogExplorer(
         errorMessage = null
         try {
             withContext(Dispatchers.IO) {
-                val catDeferred = kotlinx.coroutines.async { IPTVClient.getLiveCategories(baseUrl, user, pass) }
-                val streamsDeferred = kotlinx.coroutines.async { IPTVClient.getAllLiveStreams(baseUrl, user, pass) }
-                val catJson = catDeferred.await()
-                val streamsJson = streamsDeferred.await()
+                coroutineScope {
+                    val catDeferred = async { IPTVClient.getLiveCategories(baseUrl, user, pass) }
+                    val streamsDeferred = async { IPTVClient.getAllLiveStreams(baseUrl, user, pass) }
+                    val catJson = catDeferred.await()
+                    val streamsJson = streamsDeferred.await()
 
-                if (streamsJson != null) {
-                    val parsedChannels = mutableListOf<ChannelItem>()
-                    val catCountMap = mutableMapOf<String, Int>()
+                    if (streamsJson != null) {
+                        val parsedChannels = mutableListOf<ChannelItem>()
+                        val catCountMap = mutableMapOf<String, Int>()
 
-                    val cleanBaseUrl = baseUrl.trimEnd('/')
-                    for (i in 0 until streamsJson.length()) {
-                        val stream = streamsJson.optJSONObject(i)
-                        if (stream != null) {
-                            val streamId = stream.optString("stream_id", "")
-                            val name = stream.optString("name", "Unknown Stream")
-                            val catId = stream.optString("category_id", "")
-                            val icon = stream.optString("stream_icon", "")
-                            val directSource = stream.optString("direct_source", "")
-                            val direct = if (directSource.isNotEmpty()) directSource else "$cleanBaseUrl/live/$user/$pass/$streamId.ts"
+                        val cleanBaseUrl = baseUrl.trimEnd('/')
+                        for (i in 0 until streamsJson.length()) {
+                            val stream = streamsJson.optJSONObject(i)
+                            if (stream != null) {
+                                val streamId = stream.optString("stream_id", "")
+                                val name = stream.optString("name", "Unknown Stream")
+                                val catId = stream.optString("category_id", "")
+                                val icon = stream.optString("stream_icon", "")
+                                val directSource = stream.optString("direct_source", "")
+                                val direct = if (directSource.isNotEmpty()) directSource else "$cleanBaseUrl/live/$user/$pass/$streamId.ts"
 
-                            parsedChannels.add(ChannelItem(streamId, name, catId, icon, direct))
-                            catCountMap[catId] = (catCountMap[catId] ?: 0) + 1
-                        }
-                    }
-
-                    val parsedCategories = mutableListOf<CategoryItem>()
-                    parsedCategories.add(CategoryItem("all", "All Channels", parsedChannels.size))
-
-                    if (catJson != null) {
-                        for (i in 0 until catJson.length()) {
-                            val cat = catJson.optJSONObject(i)
-                            if (cat != null) {
-                                val cid = cat.optString("category_id", "")
-                                val cname = cat.optString("category_name", "Category $cid")
-                                val count = catCountMap[cid] ?: 0
-                                parsedCategories.add(CategoryItem(cid, cname, count))
+                                parsedChannels.add(ChannelItem(streamId, name, catId, icon, direct))
+                                catCountMap[catId] = (catCountMap[catId] ?: 0) + 1
                             }
                         }
-                    }
 
-                    // Mine Provider Intelligence from channels and categories
-                    com.projectstrong.iptv.data.ProviderIntelligenceManager.mineFromStreams(baseUrl, parsedCategories, parsedChannels)
+                        val parsedCategories = mutableListOf<CategoryItem>()
+                        parsedCategories.add(CategoryItem("all", "All Channels", parsedChannels.size))
 
-                    withContext(Dispatchers.Main) {
-                        categories = parsedCategories
-                        allChannels = parsedChannels
-                        isLoading = false
-                    }
-                } else {
-                    withContext(Dispatchers.Main) {
-                        errorMessage = "Could not load stream catalog from server."
-                        isLoading = false
+                        if (catJson != null) {
+                            for (i in 0 until catJson.length()) {
+                                val cat = catJson.optJSONObject(i)
+                                if (cat != null) {
+                                    val cid = cat.optString("category_id", "")
+                                    val cname = cat.optString("category_name", "Category $cid")
+                                    val count = catCountMap[cid] ?: 0
+                                    parsedCategories.add(CategoryItem(cid, cname, count))
+                                }
+                            }
+                        }
+
+                        // Mine Provider Intelligence from channels and categories
+                        com.projectstrong.iptv.data.ProviderIntelligenceManager.mineFromStreams(baseUrl, parsedCategories, parsedChannels)
+
+                        withContext(Dispatchers.Main) {
+                            categories = parsedCategories
+                            allChannels = parsedChannels
+                            isLoading = false
+                        }
+                    } else {
+                        withContext(Dispatchers.Main) {
+                            errorMessage = "Could not load stream catalog from server."
+                            isLoading = false
+                        }
                     }
                 }
             }
