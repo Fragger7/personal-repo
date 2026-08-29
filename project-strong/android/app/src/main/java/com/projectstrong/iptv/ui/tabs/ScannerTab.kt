@@ -54,6 +54,13 @@ fun ScannerTab(onNextTab: (() -> Unit)? = null) {
     // Use local Compose state for raw text input to prevent global singleton recomposition thrashing
     var localInput by remember { mutableStateOf(DataStore.scannerInput) }
 
+    // Synchronize localInput when DataStore.scannerInput is updated externally (e.g. from Base64 tab)
+    LaunchedEffect(DataStore.scannerInput) {
+        if (localInput != DataStore.scannerInput) {
+            localInput = DataStore.scannerInput
+        }
+    }
+
     // Track metrics asynchronously off the main thread with debouncing to prevent UI lockups
     var discoveredCount by remember { mutableIntStateOf(0) }
     var lineCount by remember { mutableIntStateOf(0) }

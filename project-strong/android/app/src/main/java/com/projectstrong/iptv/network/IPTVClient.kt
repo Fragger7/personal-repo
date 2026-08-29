@@ -330,6 +330,18 @@ object IPTVClient {
                     }
                     reader.close()
                     if (result.length() > 0) {
+                        try {
+                            val parsedCats = (0 until minOf(result.length(), 200)).mapNotNull { i ->
+                                result.optJSONObject(i)?.let { obj ->
+                                    com.projectstrong.iptv.ui.components.CategoryItem(
+                                        id = obj.optString("category_id", ""),
+                                        name = obj.optString("category_name", ""),
+                                        parentId = obj.optString("parent_id", "")
+                                    )
+                                }
+                            }
+                            com.projectstrong.iptv.data.ProviderIntelligenceManager.mineFromStreams(baseUrl, parsedCats, null)
+                        } catch (e: Exception) { }
                         return@withContext result
                     }
                 }
@@ -343,6 +355,18 @@ object IPTVClient {
         try {
             val m3uCategories = fetchCategoriesFromM3U(normalizedUrl, encodedUser, encodedPass)
             if (m3uCategories != null && m3uCategories.length() > 0) {
+                try {
+                    val parsedCats = (0 until minOf(m3uCategories.length(), 200)).mapNotNull { i ->
+                        m3uCategories.optJSONObject(i)?.let { obj ->
+                            com.projectstrong.iptv.ui.components.CategoryItem(
+                                id = obj.optString("category_id", ""),
+                                name = obj.optString("category_name", ""),
+                                parentId = obj.optString("parent_id", "")
+                            )
+                        }
+                    }
+                    com.projectstrong.iptv.data.ProviderIntelligenceManager.mineFromStreams(baseUrl, parsedCats, null)
+                } catch (e: Exception) { }
                 return@withContext m3uCategories
             }
         } catch (e: Exception) {

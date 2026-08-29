@@ -41,17 +41,17 @@ data class ProviderProfile(
             if (providerName.startsWith("🎯 Identified: ")) {
                 val candidate = providerName.removePrefix("🎯 Identified: ").trim()
                 if (candidate.startsWith("nginx", ignoreCase = true) || candidate.startsWith("apache", ignoreCase = true) || candidate.equals("cloudflare", ignoreCase = true)) {
-                    return "Unbranded Node"
+                    return "Unidentified Provider"
                 }
                 return candidate
             }
-            if (providerName.startsWith("👤 Host: ") || providerName.startsWith("Host:")) {
-                return "Unbranded Node"
+            if (providerName.startsWith("👤 Host: ") || providerName.startsWith("Host:") || providerName.equals("Unbranded Node", ignoreCase = true) || providerName.equals("Unidentified Provider", ignoreCase = true)) {
+                return "Unidentified Provider"
             }
             if (providerName.isNotBlank() && !providerName.startsWith("Host:")) {
                 return providerName
             }
-            return "Unbranded Node"
+            return "Unidentified Provider"
         }
 
     val isIdentified: Boolean
@@ -63,15 +63,18 @@ data class ProviderProfile(
                 }
                 return true
             }
-            return (!confidence.isNullOrBlank() && confidence != "Generic" && confidence != "Server Fingerprint")
+            if (providerName.startsWith("👤 Host: ") || providerName.startsWith("Host:") || providerName.equals("Unbranded Node", ignoreCase = true) || providerName.equals("Unidentified Provider", ignoreCase = true)) {
+                return false
+            }
+            return (!confidence.isNullOrBlank() && !confidence.startsWith("Unknown") && confidence != "Generic" && confidence != "Server Fingerprint")
         }
 
     val safeServer get() = server ?: "Unknown"
     val safeCloudflare get() = cloudflare ?: "No"
     val safeTimezone get() = timezone ?: "UTC"
     val safeCommunityLink get() = communityLink ?: ""
-    val safeConfidence get() = confidence ?: if (isIdentified) "High Confidence" else "Server Fingerprint"
-    val safeEvidence get() = evidence ?: ""
+    val safeConfidence get() = confidence ?: if (isIdentified) "High Confidence (90%)" else "Unknown (No Signatures Found)"
+    val safeEvidence get() = evidence ?: if (isIdentified) "Identified via provider footprint" else "No recognized watermark in server response or channel metadata."
 }
 
 object ProviderIntelligenceManager {
@@ -82,34 +85,34 @@ object ProviderIntelligenceManager {
 
     // Known Upstream IPTV Provider Signatures & Domain Triggers
     private val KNOWN_PROVIDERS = listOf(
-        Pair("Strong 8K", listOf("strong 8k", "strong8k", "strong-8k", "strong ott", "strong8k.vip", "strong8k.me", "strong8k.top")),
-        Pair("T-Rex OTT", listOf("t-rex", "trex", "trex iptv", "trexiptv", "trextv", "trex-ott", "trexiptv.net")),
-        Pair("Dream 4K", listOf("dream 4k", "dream4k", "dream ott", "dream-4k", "dreamiptv")),
-        Pair("B1G OTT", listOf("b1g", "b1g ott", "b1g iptv", "b1g live", "b1gott")),
-        Pair("Crystal OTT", listOf("crystal ott", "crystal iptv", "crystal-ott", "crystalott")),
-        Pair("Cobra IPTV", listOf("cobra iptv", "cobra 4k", "cobra-iptv", "cobra ott", "cobraipty")),
-        Pair("Mega OTT", listOf("mega ott", "mega iptv", "mega-ott", "megaiptv", "mega-iptv")),
-        Pair("Dino OTT", listOf("dino ott", "dino.ws", "dino iptv", "dino-ott", "dinoott")),
-        Pair("4K OTT", listOf("4kott", "4k-ott", "4k ott live", "tx-4kott")),
-        Pair("Apollo Group TV", listOf("apollo group", "apollogroup", "apollo iptv", "apollo-tv")),
-        Pair("Xtreme HD", listOf("xtreme hd", "xtremehd", "xtreme-hd")),
-        Pair("King 4K", listOf("king 4k", "king4k", "king-4k", "king ott", "king-iptv")),
-        Pair("Rey de Reyes", listOf("reydereyes", "rey de reyes", "streaming latino")),
-        Pair("StarShare", listOf("starshare", "star-share", "star share")),
-        Pair("Prime+ OTT", listOf("prime+", "prime plus", "primeplus", "prime-plus")),
-        Pair("Diamond OTT", listOf("diamond ott", "diamond-tv", "diamondiptv")),
-        Pair("Nexus OTT", listOf("nexus ott", "nexus-ott", "nexusiptv")),
-        Pair("Vision IPTV", listOf("vision iptv", "vision-iptv", "visionott")),
-        Pair("Matrix IPTV", listOf("matrix iptv", "matrix-iptv", "matrixott")),
-        Pair("GoBox IPTV", listOf("gobox", "gobox vip", "gobox-iptv")),
-        Pair("Volka TV", listOf("volka", "volkatv", "volka-tv")),
-        Pair("Forever IPTV", listOf("forever iptv", "forever-tv", "forevertv")),
-        Pair("Platinum OTT", listOf("platinum ott", "ott-platinum", "platinumiptv")),
-        Pair("Sonic IPTV", listOf("sonic iptv", "sonic-tv", "sonicott")),
-        Pair("Eagle IPTV", listOf("eagle iptv", "eagle-iptv", "eagleott")),
-        Pair("Atlas Pro ONTV", listOf("atlas pro", "atlas-pro", "atlaspro")),
-        Pair("Iron TV Pro", listOf("iron tv", "iron-iptv", "irontv")),
-        Pair("IBO Player", listOf("ibo player", "iboplayer")),
+        Pair("Strong 8K", listOf("strong 8k", "strong8k", "strong-8k", "strong ott", "strong8k.vip", "strong8k.me", "strong8k.top", "strong tv", "strongtv8k")),
+        Pair("T-Rex OTT", listOf("t-rex", "trex", "trex iptv", "trexiptv", "trextv", "trex-ott", "trexiptv.net", "trex 4k", "trex ott")),
+        Pair("Dream 4K", listOf("dream 4k", "dream4k", "dream ott", "dream-4k", "dreamiptv", "dream-ott")),
+        Pair("B1G OTT", listOf("b1g", "b1g ott", "b1g iptv", "b1g live", "b1gott", "b1g player", "b1gplayer")),
+        Pair("Crystal OTT", listOf("crystal ott", "crystal iptv", "crystal-ott", "crystalott", "crystal 4k", "crystaltv")),
+        Pair("Cobra IPTV", listOf("cobra iptv", "cobra 4k", "cobra-iptv", "cobra ott", "cobraipty", "cobra-4k")),
+        Pair("Mega OTT", listOf("mega ott", "mega iptv", "mega-ott", "megaiptv", "mega-iptv", "megaott")),
+        Pair("Dino OTT", listOf("dino ott", "dino.ws", "dino iptv", "dino-ott", "dinoott", "dino 4k", "iptvdino")),
+        Pair("4K OTT", listOf("4kott", "4k-ott", "4k ott live", "tx-4kott", "4kott.pro")),
+        Pair("Apollo Group TV", listOf("apollo group", "apollogroup", "apollo iptv", "apollo-tv", "apollogrouptv")),
+        Pair("Xtreme HD", listOf("xtreme hd", "xtremehd", "xtreme-hd", "xtremehd.io")),
+        Pair("King 4K", listOf("king 4k", "king4k", "king-4k", "king ott", "king-iptv", "king4k.tv")),
+        Pair("Rey de Reyes", listOf("reydereyes", "rey de reyes", "streaming latino", "reydereyesiptv")),
+        Pair("StarShare", listOf("starshare", "star-share", "star share", "starshare.live")),
+        Pair("Prime+ OTT", listOf("prime+", "prime plus", "primeplus", "prime-plus", "primeplus.ott")),
+        Pair("Diamond OTT", listOf("diamond ott", "diamond-tv", "diamondiptv", "diamond 4k")),
+        Pair("Nexus OTT", listOf("nexus ott", "nexus-ott", "nexusiptv", "nexus 4k")),
+        Pair("Vision IPTV", listOf("vision iptv", "vision-iptv", "visionott", "vision 4k")),
+        Pair("Matrix IPTV", listOf("matrix iptv", "matrix-iptv", "matrixott", "matrix 4k")),
+        Pair("GoBox IPTV", listOf("gobox", "gobox vip", "gobox-iptv", "gobox 4k")),
+        Pair("Volka TV", listOf("volka", "volkatv", "volka-tv", "volka pro")),
+        Pair("Forever IPTV", listOf("forever iptv", "forever-tv", "forevertv", "forever vip")),
+        Pair("Platinum OTT", listOf("platinum ott", "ott-platinum", "platinumiptv", "platinum 4k")),
+        Pair("Sonic IPTV", listOf("sonic iptv", "sonic-tv", "sonicott", "sonic 4k")),
+        Pair("Eagle IPTV", listOf("eagle iptv", "eagle-iptv", "eagleott", "eagle 4k")),
+        Pair("Atlas Pro ONTV", listOf("atlas pro", "atlas-pro", "atlaspro", "atlasontv")),
+        Pair("Iron TV Pro", listOf("iron tv", "iron-iptv", "irontv", "iron pro")),
+        Pair("IBO Player", listOf("ibo player", "iboplayer", "ibopro")),
         Pair("BOB Player", listOf("bob player", "bobplayer")),
         Pair("SET IPTV", listOf("set iptv", "setiptv")),
         Pair("SmartOne IPTV", listOf("smartone", "smartone-iptv")),
@@ -371,7 +374,7 @@ object ProviderIntelligenceManager {
         val nowStr = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())
         val existing = profiles[domain] ?: ProviderProfile(
             domain = domain,
-            providerName = "👤 Host: $domain",
+            providerName = "Unidentified Provider",
             firstSeen = nowStr
         )
 
@@ -381,11 +384,13 @@ object ProviderIntelligenceManager {
 
         val contactRegex = Pattern.compile("(t\\.me/[a-zA-Z0-9_]+|discord\\.gg/[a-zA-Z0-9_]+|wa\\.me/\\d+|https?://[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}/[a-zA-Z0-9_.-]*)", Pattern.CASE_INSENSITIVE)
         val bannerRegex = Pattern.compile("^[#=~\\|\\*\\-\\+]{2,}\\s*(.+?)\\s*[#=~\\|\\*\\-\\+]{2,}$")
-        val prefixRegex = Pattern.compile("^\\[([a-zA-Z0-9\\s\\-_.]+)\\]")
+        val categoryPrefixRegex = Pattern.compile("^(?:\\|[A-Za-z0-9\\s\\-_.]+\\||\\[[A-Za-z0-9\\s\\-_.]+\\])\\s*([A-Za-z0-9\\s\\-_.]+)")
+        val bracketPrefixRegex = Pattern.compile("^\\[([a-zA-Z0-9\\s\\-_.]+)\\]")
 
-        fun analyzeText(text: String?) {
+        fun analyzeText(text: String?, isCategory: Boolean) {
             if (text.isNullOrBlank()) return
             val clean = text.trim()
+            val lower = clean.lowercase(Locale.ROOT)
 
             // 1. Community Links
             val contactMatcher = contactRegex.matcher(clean)
@@ -397,17 +402,18 @@ object ProviderIntelligenceManager {
                 }
             }
 
-            // 2. Known Providers Fast-Match
+            // 2. Known Providers Fast-Match with High-Weighting for Category Names
             KNOWN_PROVIDERS.forEach { (brandName, triggers) ->
-                if (triggers.any { clean.contains(it, ignoreCase = true) }) {
-                    brandScores[brandName] = (brandScores[brandName] ?: 0) + 20
+                if (triggers.any { lower.contains(it) }) {
+                    val weight = if (isCategory) 25 else 15
+                    brandScores[brandName] = (brandScores[brandName] ?: 0) + weight
                     if (detectedEvidence.isNullOrBlank()) {
-                        detectedEvidence = "Detected brand pattern \"$brandName\" in \"$clean\""
+                        detectedEvidence = if (isCategory) "Found category signature: \"$clean\"" else "Found stream signature: \"$clean\""
                     }
                 }
             }
 
-            // 3. Decorated Dummy Channel Watermarks (e.g. ### Strong 8K VIP ###)
+            // 3. Decorated Dummy Channel Watermarks (e.g. ### Strong 8K VIP ### or === CRYSTAL OTT ===)
             val bannerMatcher = bannerRegex.matcher(clean)
             if (bannerMatcher.find()) {
                 val candidate = bannerMatcher.group(1)?.trim() ?: ""
@@ -415,40 +421,46 @@ object ProviderIntelligenceManager {
                 if (candidate.length in 4..35 && !GENERIC_BLACKLIST.contains(lowerCandidate) &&
                     !candidate.all { !it.isLetterOrDigit() }
                 ) {
-                    brandScores[candidate] = (brandScores[candidate] ?: 0) + 12
+                    brandScores[candidate] = (brandScores[candidate] ?: 0) + 18
                     detectedEvidence = "Found watermark banner: \"$clean\""
                 }
             }
 
-            // 4. Bracketed Prefix (e.g. [Strong 8K] US | HBO)
-            val prefixMatcher = prefixRegex.matcher(clean)
-            if (prefixMatcher.find()) {
-                val p = prefixMatcher.group(1)?.trim() ?: ""
-                val lowerP = p.lowercase(Locale.ROOT)
-                if (p.length in 3..25 && !GENERIC_BLACKLIST.contains(lowerP) && !p.all { !it.isLetterOrDigit() }) {
-                    brandScores[p] = (brandScores[p] ?: 0) + 3
+            // 4. Category Prefix (e.g. |US| STRONG 8K or [DINO] MOVIES)
+            if (isCategory) {
+                val prefixMatcher = categoryPrefixRegex.matcher(clean)
+                if (prefixMatcher.find()) {
+                    val p = prefixMatcher.group(1)?.trim() ?: ""
+                    val lowerP = p.lowercase(Locale.ROOT)
+                    if (p.length in 3..25 && !GENERIC_BLACKLIST.contains(lowerP) && !p.all { !it.isLetterOrDigit() }) {
+                        KNOWN_PROVIDERS.forEach { (brandName, triggers) ->
+                            if (triggers.any { lowerP.contains(it) }) {
+                                brandScores[brandName] = (brandScores[brandName] ?: 0) + 20
+                            }
+                        }
+                    }
                 }
             }
         }
 
-        categoriesData?.forEach { analyzeText(it.name) }
-        streamsData?.take(300)?.forEach { analyzeText(it.name) }
+        categoriesData?.forEach { analyzeText(it.name, isCategory = true) }
+        streamsData?.take(300)?.forEach { analyzeText(it.name, isCategory = false) }
 
         if (brandScores.isNotEmpty()) {
             val bestCandidate = brandScores.maxByOrNull { it.value }
-            if (bestCandidate != null && bestCandidate.value >= 6) {
+            if (bestCandidate != null && bestCandidate.value >= 12) {
                 val bestBrand = bestCandidate.key
-                val confidence = if (bestCandidate.value >= 20 || foundCommunityLink != null) {
-                    "Verified Brand (95%)"
-                } else {
-                    "Probable Match (75%)"
+                val confidence = when {
+                    foundCommunityLink != null || bestCandidate.value >= 40 -> "Verified Brand (95%)"
+                    bestCandidate.value >= 25 -> "Category Watermark (85%)"
+                    else -> "Stream Signature (75%)"
                 }
 
                 val updated = existing.copy(
                     providerName = "🎯 Identified: $bestBrand",
                     communityLink = foundCommunityLink,
                     confidence = confidence,
-                    evidence = detectedEvidence ?: "Discovered via recurring stream watermarks",
+                    evidence = detectedEvidence ?: "Discovered via recurring category and stream watermarks",
                     lastSeen = nowStr
                 )
                 profiles[domain] = updated
@@ -457,10 +469,13 @@ object ProviderIntelligenceManager {
             }
         }
 
-        if (foundCommunityLink != null && foundCommunityLink != existing.communityLink) {
+        // If categories or streams were actively queried but nothing matched, mark explicitly as Unidentified
+        val checkedCount = (categoriesData?.size ?: 0) + (streamsData?.size ?: 0)
+        if (checkedCount > 0 && !existing.isIdentified) {
             val updated = existing.copy(
-                communityLink = foundCommunityLink,
-                evidence = detectedEvidence,
+                providerName = "Unidentified Provider",
+                confidence = "Unknown (0% Confidence - No Signatures)",
+                evidence = "Checked $checkedCount categories and streams. No recognized provider signatures found.",
                 lastSeen = nowStr
             )
             profiles[domain] = updated
