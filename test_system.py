@@ -16,11 +16,18 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import MagicMock, patch
 
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 if hasattr(sys.stderr, "reconfigure"):
     sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+
+IS_LIVE_TEST = "--live" in sys.argv or "--full" in sys.argv
+if "--live" in sys.argv:
+    sys.argv.remove("--live")
+if "--full" in sys.argv:
+    sys.argv.remove("--full")
 
 from collector import (
     AppleRefurbishedCollector,
@@ -94,8 +101,11 @@ class TestStorageEngine(unittest.TestCase):
 class TestCollectors(unittest.TestCase):
     def test_ebay_collector_format(self) -> None:
         collector = EBayCollector()
-        listings = collector.fetch_listings()
-        self.assertIsInstance(listings, list)
+        if IS_LIVE_TEST:
+            listings = collector.fetch_listings()
+            self.assertIsInstance(listings, list)
+        else:
+            self.assertTrue(hasattr(collector, "fetch_listings"))
 
     def test_reddit_price_extraction(self) -> None:
         collector = RedditCollector()
@@ -118,58 +128,104 @@ class TestCollectors(unittest.TestCase):
 
     def test_swappa_collector_feed(self) -> None:
         collector = SwappaCollector()
-        listings = collector.fetch_listings()
-        self.assertIsInstance(listings, list)
+        if IS_LIVE_TEST:
+            listings = collector.fetch_listings()
+            self.assertIsInstance(listings, list)
+        else:
+            self.assertTrue(hasattr(collector, "fetch_listings"))
 
     def test_dell_refurbished_collector(self) -> None:
         collector = DellRefurbishedCollector()
-        listings = collector.fetch_listings()
-        self.assertIsInstance(listings, list)
+        if IS_LIVE_TEST:
+            listings = collector.fetch_listings()
+            self.assertIsInstance(listings, list)
+        else:
+            self.assertTrue(hasattr(collector, "fetch_listings"))
 
     def test_lenovo_outlet_collector(self) -> None:
         collector = LenovoOutletCollector()
-        listings = collector.fetch_listings()
-        self.assertIsInstance(listings, list)
+        if IS_LIVE_TEST:
+            listings = collector.fetch_listings()
+            self.assertIsInstance(listings, list)
+        else:
+            self.assertTrue(hasattr(collector, "fetch_listings"))
 
     def test_shopgoodwill_collector(self) -> None:
         collector = ShopGoodwillCollector()
-        listings = collector.fetch_listings()
-        self.assertIsInstance(listings, list)
+        if IS_LIVE_TEST:
+            listings = collector.fetch_listings()
+            self.assertIsInstance(listings, list)
+        else:
+            self.assertTrue(hasattr(collector, "fetch_listings"))
 
     def test_bh_photo_collector(self) -> None:
         collector = BAndHCollector()
-        listings = collector.fetch_listings()
-        self.assertIsInstance(listings, list)
+        if IS_LIVE_TEST:
+            listings = collector.fetch_listings()
+            self.assertIsInstance(listings, list)
+        else:
+            self.assertTrue(hasattr(collector, "fetch_listings"))
 
     def test_bestbuy_outlet_collector(self) -> None:
         collector = BestBuyOutletCollector()
-        listings = collector.fetch_listings()
-        self.assertIsInstance(listings, list)
+        if IS_LIVE_TEST:
+            listings = collector.fetch_listings()
+            self.assertIsInstance(listings, list)
+        else:
+            self.assertTrue(hasattr(collector, "fetch_listings"))
 
     def test_microcenter_collector(self) -> None:
         collector = MicroCenterCollector()
-        listings = collector.fetch_listings()
-        self.assertIsInstance(listings, list)
+        if IS_LIVE_TEST:
+            listings = collector.fetch_listings()
+            self.assertIsInstance(listings, list)
+        else:
+            self.assertTrue(hasattr(collector, "fetch_listings"))
 
     def test_apple_refurbished_collector(self) -> None:
         collector = AppleRefurbishedCollector()
-        listings = collector.fetch_listings()
-        self.assertIsInstance(listings, list)
+        if IS_LIVE_TEST:
+            listings = collector.fetch_listings()
+            self.assertIsInstance(listings, list)
+        else:
+            self.assertTrue(hasattr(collector, "fetch_listings"))
 
     def test_woot_collector(self) -> None:
         collector = WootCollector()
-        listings = collector.fetch_listings()
-        self.assertIsInstance(listings, list)
+        if IS_LIVE_TEST:
+            listings = collector.fetch_listings()
+            self.assertIsInstance(listings, list)
+        else:
+            self.assertTrue(hasattr(collector, "fetch_listings"))
 
     def test_collector_hub_aggregation(self) -> None:
         hub = HardwareCollectorHub()
-        aggregated = hub.collect_all()
-        self.assertIsInstance(aggregated, list)
+        if IS_LIVE_TEST:
+            aggregated = hub.collect_all()
+            self.assertIsInstance(aggregated, list)
+        else:
+            self.assertTrue(hasattr(hub, "ebay") and hasattr(hub, "dell") and hasattr(hub, "collect_all"))
 
 
 class TestEvaluator(unittest.TestCase):
     def setUp(self) -> None:
         self.evaluator = GeminiHardwareEvaluator()
+        if not IS_LIVE_TEST:
+            self.evaluator._call_gemini = MagicMock(return_value={
+                "cpu": "Intel Core i7-13800H",
+                "ram_gb": 64,
+                "ssd_gb": 1024,
+                "gpu": "NVIDIA RTX 3500 Ada",
+                "screen": "16-inch UHD+",
+                "condition": "Used - Turnkey",
+                "fair_market_value": 1450.0,
+                "estimated_profit": 650.0,
+                "arbitrage_margin_pct": 47.0,
+                "deal_score": 9.6,
+                "summary": "Verified halo workstation with 64GB RAM and RTX Ada GPU.",
+                "actionable_recommendation": "🎯 HIGH-CONVICTION STRIKE",
+                "confidence_score": 0.95,
+            })
 
     def test_heuristic_spec_extraction(self) -> None:
         raw = RawListing(
@@ -392,16 +448,62 @@ class TestDaemonPipeline(unittest.TestCase):
         self.tmp_dir.cleanup()
 
     def test_single_pipeline_cycle(self) -> None:
-        summary = self.daemon.run_cycle()
-        self.assertIn("duration_seconds", summary)
-        self.assertGreaterEqual(summary["collected"], 1)
-        # Check that records are persisted in storage
-        deals = self.daemon.storage.get_all()
-        self.assertGreater(len(deals), 0)
+        if not IS_LIVE_TEST:
+            # Fast mock mode: zero tokens, zero network requests, instant regression validation
+            mock_listings = [
+                RawListing(
+                    id="mock_test_1",
+                    source="ebay",
+                    title="Dell Precision 5680 16in FHD+ i7-13800H 64GB RAM 2TB SSD RTX A1000",
+                    description="Enterprise off-lease workstation in excellent turnkey condition.",
+                    price=900.0,
+                    url="https://ebay.com/itm/mock1",
+                    seller="EnterpriseITAD",
+                ),
+                RawListing(
+                    id="mock_test_2",
+                    source="ebay",
+                    title="Dell Inspiron 15 3000 i3 8GB RAM for parts",
+                    description="Broken screen non-functional consumer laptop.",
+                    price=150.0,
+                    url="https://ebay.com/itm/mock2",
+                    seller="PartsSeller",
+                ),
+            ]
+            self.daemon.evaluator._call_gemini = MagicMock(return_value={
+                "cpu": "Intel Core i7-13800H",
+                "ram_gb": 64,
+                "ssd_gb": 2048,
+                "gpu": "NVIDIA RTX A1000",
+                "screen": "16-inch FHD+",
+                "condition": "Used - Excellent",
+                "fair_market_value": 1500.0,
+                "estimated_profit": 600.0,
+                "arbitrage_margin_pct": 66.0,
+                "deal_score": 9.6,
+                "summary": "Enterprise turnkey workstation.",
+                "actionable_recommendation": "🎯 HIGH-CONVICTION STRIKE",
+                "confidence_score": 0.95,
+            })
+            with patch.object(self.daemon.collector, "collect_all", return_value=mock_listings):
+                summary = self.daemon.run_cycle()
+                self.assertIn("duration_seconds", summary)
+                self.assertEqual(summary["collected"], 2)
+                deals = self.daemon.storage.get_all()
+                self.assertGreater(len(deals), 0)
+        else:
+            summary = self.daemon.run_cycle()
+            self.assertIn("duration_seconds", summary)
+            self.assertGreaterEqual(summary["collected"], 1)
+            deals = self.daemon.storage.get_all()
+            self.assertGreater(len(deals), 0)
 
 
 if __name__ == "__main__":
+    mode_str = "LIVE NETWORK MODE" if IS_LIVE_TEST else "FAST UNIT MODE (0 API Tokens, Zero Latency)"
     print("\n==========================================")
-    print("  RUNNING WORKSTATION DEAL HUNTER TESTS   ")
+    print(f"  RUNNING WORKSTATION DEAL HUNTER TESTS   ")
+    print(f"  Mode: {mode_str}")
     print("==========================================\n")
     unittest.main(verbosity=2)
+

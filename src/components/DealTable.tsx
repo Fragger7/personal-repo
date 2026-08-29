@@ -1,9 +1,27 @@
 import React, { useState, useMemo } from "react";
-import { ExternalLink, Bell, Trash2, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
+import { ExternalLink, Bell, Trash2, ArrowUpDown, ArrowUp, ArrowDown, Clock } from "lucide-react";
 import { DealRecord } from "../types";
 
-export type TableSortField = "score" | "title" | "cpu" | "ram" | "price" | "fmv" | "spread";
+export type TableSortField = "score" | "title" | "cpu" | "ram" | "price" | "fmv" | "spread" | "date";
 export type TableSortDirection = "asc" | "desc";
+
+function formatRelativeTime(dateStr?: string): string {
+  if (!dateStr) return "Recently";
+  const date = new Date(dateStr);
+  if (isNaN(date.getTime())) return "Recently";
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffMinutes = Math.floor(diffMs / (1000 * 60));
+  const diffHours = Math.floor(diffMinutes / 60);
+  const diffDays = Math.floor(diffHours / 24);
+
+  if (diffMinutes < 5) return "Just now";
+  if (diffMinutes < 60) return `${diffMinutes}m ago`;
+  if (diffHours < 24) return `${diffHours}h ago`;
+  if (diffDays === 1) return "Yesterday";
+  if (diffDays < 7) return `${diffDays}d ago`;
+  return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}
 
 interface DealTableProps {
   deals: DealRecord[];
@@ -20,7 +38,7 @@ export const DealTable: React.FC<DealTableProps> = ({ deals, onSendPush, onDelet
       setSortDirection((prev) => (prev === "asc" ? "desc" : "asc"));
     } else {
       setSortField(field);
-      // Default to ascending for price/title, descending for scores and profits
+      // Default to ascending for price/title, descending for scores and profits/date
       setSortDirection(field === "price" || field === "title" ? "asc" : "desc");
     }
   };
@@ -50,6 +68,12 @@ export const DealTable: React.FC<DealTableProps> = ({ deals, onSendPush, onDelet
         case "spread":
           comparison = (a.estimated_profit || 0) - (b.estimated_profit || 0);
           break;
+        case "date": {
+          const dateA = new Date(a.created_utc || a.evaluated_at || 0).getTime();
+          const dateB = new Date(b.created_utc || b.evaluated_at || 0).getTime();
+          comparison = dateA - dateB;
+          break;
+        }
         default:
           comparison = 0;
       }
@@ -97,6 +121,15 @@ export const DealTable: React.FC<DealTableProps> = ({ deals, onSendPush, onDelet
               >
                 <div className="flex items-center gap-1">
                   Listing Title &amp; Source {renderSortIndicator("title")}
+                </div>
+              </th>
+              <th
+                className={getHeaderClass("date")}
+                onClick={() => handleHeaderClick("date")}
+                title="Click to sort by Date Found / Added"
+              >
+                <div className="flex items-center gap-1">
+                  Date Found {renderSortIndicator("date")}
                 </div>
               </th>
               <th
@@ -150,6 +183,7 @@ export const DealTable: React.FC<DealTableProps> = ({ deals, onSendPush, onDelet
           <tbody className="divide-y divide-slate-800/60 text-slate-300">
             {sortedDeals.map((deal) => {
               const isHigh = deal.deal_score >= 8.5;
+              const dateFoundStr = deal.created_utc || deal.evaluated_at;
               return (
                 <tr
                   key={deal.id}
@@ -177,6 +211,17 @@ export const DealTable: React.FC<DealTableProps> = ({ deals, onSendPush, onDelet
                       <span className="uppercase font-bold text-slate-400">{deal.source}</span>
                       <span>•</span>
                       <span>{deal.seller}</span>
+                    </div>
+                  </td>
+
+                  {/* Date Found / Added */}
+                  <td className="px-4 py-3 whitespace-nowrap" title={dateFoundStr || ""}>
+                    <div className="flex items-center gap-1 text-slate-300 font-medium">
+                      <Clock className="h-3 w-3 text-slate-500" />
+                      <span>{formatRelativeTime(dateFoundStr)}</span>
+                    </div>
+                    <div className="text-[10px] text-slate-500">
+                      {dateFoundStr ? new Date(dateFoundStr).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "Today"}
                     </div>
                   </td>
 

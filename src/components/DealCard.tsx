@@ -1,6 +1,24 @@
 import React, { useState } from "react";
-import { ExternalLink, Bell, CheckCircle2, Cpu, HardDrive, Monitor, Shield, Sparkles, Flame, Trash2 } from "lucide-react";
+import { ExternalLink, Bell, CheckCircle2, Cpu, HardDrive, Monitor, Shield, Sparkles, Flame, Trash2, Clock } from "lucide-react";
 import { DealRecord } from "../types";
+
+function formatRelativeTime(dateStr?: string): string {
+  if (!dateStr) return "Recently";
+  const date = new Date(dateStr);
+  if (isNaN(date.getTime())) return "Recently";
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffMinutes = Math.floor(diffMs / (1000 * 60));
+  const diffHours = Math.floor(diffMinutes / 60);
+  const diffDays = Math.floor(diffHours / 24);
+
+  if (diffMinutes < 5) return "Just now";
+  if (diffMinutes < 60) return `${diffMinutes}m ago`;
+  if (diffHours < 24) return `${diffHours}h ago`;
+  if (diffDays === 1) return "Yesterday";
+  if (diffDays < 7) return `${diffDays}d ago`;
+  return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}
 
 interface DealCardProps {
   deal: DealRecord;
@@ -42,6 +60,8 @@ export const DealCard: React.FC<DealCardProps> = ({ deal, onSendPush, onDeleteDe
     manual: "bg-purple-950/60 text-purple-400 border-purple-800/60",
   }[deal.source] || "bg-slate-800 text-slate-400 border-slate-700";
 
+  const dateFoundStr = deal.created_utc || deal.evaluated_at;
+
   return (
     <div
       id={`deal-card-${deal.id}`}
@@ -64,6 +84,10 @@ export const DealCard: React.FC<DealCardProps> = ({ deal, onSendPush, onDeleteDe
                 Alert
               </span>
             )}
+            <span className="text-[10px] text-slate-400 font-medium flex items-center gap-1 border border-slate-800 bg-slate-900/60 px-1.5 py-0.5 rounded" title={`Found: ${dateFoundStr || "N/A"}`}>
+              <Clock className="w-2.5 h-2.5 text-slate-500" />
+              {formatRelativeTime(dateFoundStr)}
+            </span>
             <span className="text-[10px] uppercase tracking-widest font-bold text-[#666] truncate max-w-[100px]">
               {deal.seller}
             </span>

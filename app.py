@@ -327,6 +327,7 @@ def main() -> None:
                         st.markdown(f"**Fair Market Value:** `${deal.fair_market_value:.2f}`")
                         st.markdown(f"**Est. Arbitrage Profit:** `+${deal.estimated_profit:.2f}` (`+{deal.arbitrage_margin_pct:.1f}%`)")
                         st.markdown(f"**Source:** `{deal.source.upper()}` ({deal.seller})")
+                        st.markdown(f"**Date Found:** `{deal.created_utc[:10] if getattr(deal, 'created_utc', '') else 'Today'}`")
 
                     with c2:
                         st.markdown(f"• **CPU:** {deal.specs.cpu}")
