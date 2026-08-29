@@ -48,6 +48,74 @@ fun Base64Tab(onNextTab: () -> Unit = {}) {
     val context = LocalContext.current
     val clipboardManager = LocalClipboardManager.current
 
+    fun processDirectBase64(rawInput: String) {
+        try {
+            val results = mutableListOf<String>()
+            val foundUrls = mutableListOf<String>()
+            val urlPattern = Pattern.compile("https?://[^\\s\"'<>]+", Pattern.CASE_INSENSITIVE)
+
+            // 1. Scan for embedded Base64 chunks (minimum 16 alphanumeric Base64 chars)
+            val chunkPattern = Pattern.compile("[A-Za-z0-9+/=]{16,}")
+            val chunkMatcher = chunkPattern.matcher(rawInput)
+            var foundChunks = 0
+
+            while (chunkMatcher.find() && foundChunks < 50) {
+                val candidate = chunkMatcher.group()
+                val pad = candidate.length % 4
+                val padded = candidate + "=".repeat(if (pad > 0) 4 - pad else 0)
+                try {
+                    val decodedBytes = Base64.decode(padded, Base64.DEFAULT)
+                    val decodedStr = String(decodedBytes, Charsets.UTF_8).trim()
+                    if (decodedStr.isNotBlank() && decodedStr.any { it.isLetterOrDigit() } && !results.contains(decodedStr)) {
+                        results.add(decodedStr)
+                        foundChunks++
+                        
+                        // Extract any URLs inside this decoded chunk
+                        val uMatcher = urlPattern.matcher(decodedStr)
+                        while (uMatcher.find()) {
+                            val u = uMatcher.group()
+                            if (!foundUrls.contains(u)) foundUrls.add(u)
+                        }
+                    }
+                } catch (e: Throwable) {
+                    // Ignore non-base64 candidates
+                }
+            }
+
+            // 2. Fallback: Full block decode if no distinct chunks found
+            if (results.isEmpty()) {
+                val cleanInput = rawInput.replace(Regex("\\s+"), "")
+                if (cleanInput.isNotBlank()) {
+                    val pad = cleanInput.length % 4
+                    val padded = cleanInput + "=".repeat(if (pad > 0) 4 - pad else 0)
+                    val decodedBytes = Base64.decode(padded, Base64.DEFAULT)
+                    val decodedStr = String(decodedBytes, Charsets.UTF_8).trim()
+                    output = decodedStr
+                    val uMatcher = urlPattern.matcher(decodedStr)
+                    while (uMatcher.find()) {
+                        val u = uMatcher.group()
+                        if (!foundUrls.contains(u)) foundUrls.add(u)
+                    }
+                } else {
+                    output = ""
+                }
+            } else {
+                output = results.joinToString("\n\n")
+            }
+
+            extractedUrls = foundUrls
+            if (output.isNotBlank()) {
+                ToastManager.success("Base64 payload decoded successfully!")
+            } else {
+                ToastManager.warning("No valid Base64 patterns found in text")
+            }
+        } catch (e: Throwable) {
+            output = "Error decoding: ${e.message ?: "Invalid Base64 payload"}"
+            extractedUrls = emptyList()
+            ToastManager.error("Failed to decode Base64 data")
+        }
+    }
+
     // Helper decoding function
     fun decodeBase64Payload(rawInput: String) {
         if (rawInput.isBlank()) {
@@ -116,74 +184,6 @@ fun Base64Tab(onNextTab: () -> Unit = {}) {
             }
         } else {
             processDirectBase64(rawInput)
-        }
-    }
-
-    fun processDirectBase64(rawInput: String) {
-        try {
-            val results = mutableListOf<String>()
-            val foundUrls = mutableListOf<String>()
-            val urlPattern = Pattern.compile("https?://[^\\s\"'<>]+", Pattern.CASE_INSENSITIVE)
-
-            // 1. Scan for embedded Base64 chunks (minimum 16 alphanumeric Base64 chars)
-            val chunkPattern = Pattern.compile("[A-Za-z0-9+/=]{16,}")
-            val chunkMatcher = chunkPattern.matcher(rawInput)
-            var foundChunks = 0
-
-            while (chunkMatcher.find() && foundChunks < 50) {
-                val candidate = chunkMatcher.group()
-                val pad = candidate.length % 4
-                val padded = candidate + "=".repeat(if (pad > 0) 4 - pad else 0)
-                try {
-                    val decodedBytes = Base64.decode(padded, Base64.DEFAULT)
-                    val decodedStr = String(decodedBytes, Charsets.UTF_8).trim()
-                    if (decodedStr.isNotBlank() && decodedStr.any { it.isLetterOrDigit() } && !results.contains(decodedStr)) {
-                        results.add(decodedStr)
-                        foundChunks++
-                        
-                        // Extract any URLs inside this decoded chunk
-                        val uMatcher = urlPattern.matcher(decodedStr)
-                        while (uMatcher.find()) {
-                            val u = uMatcher.group()
-                            if (!foundUrls.contains(u)) foundUrls.add(u)
-                        }
-                    }
-                } catch (e: Throwable) {
-                    // Ignore non-base64 candidates
-                }
-            }
-
-            // 2. Fallback: Full block decode if no distinct chunks found
-            if (results.isEmpty()) {
-                val cleanInput = rawInput.replace(Regex("\\s+"), "")
-                if (cleanInput.isNotBlank()) {
-                    val pad = cleanInput.length % 4
-                    val padded = cleanInput + "=".repeat(if (pad > 0) 4 - pad else 0)
-                    val decodedBytes = Base64.decode(padded, Base64.DEFAULT)
-                    val decodedStr = String(decodedBytes, Charsets.UTF_8).trim()
-                    output = decodedStr
-                    val uMatcher = urlPattern.matcher(decodedStr)
-                    while (uMatcher.find()) {
-                        val u = uMatcher.group()
-                        if (!foundUrls.contains(u)) foundUrls.add(u)
-                    }
-                } else {
-                    output = ""
-                }
-            } else {
-                output = results.joinToString("\n\n")
-            }
-
-            extractedUrls = foundUrls
-            if (output.isNotBlank()) {
-                ToastManager.success("Base64 payload decoded successfully!")
-            } else {
-                ToastManager.warning("No valid Base64 patterns found in text")
-            }
-        } catch (e: Throwable) {
-            output = "Error decoding: ${e.message ?: "Invalid Base64 payload"}"
-            extractedUrls = emptyList()
-            ToastManager.error("Failed to decode Base64 data")
         }
     }
 
