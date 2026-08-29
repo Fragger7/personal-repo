@@ -248,6 +248,18 @@ C:\Development\Apps\WS Deal Hunter\
   3. Added automatic atomic mirror synchronization from `storage.py` and `server.ts` directly into `public/deals.json` and `dist/deals.json`.
 - **Test Coverage**: Verified live pruning of 16 dead listings in `deals.json` in single-cycle sweep.
 
+### Decision 37: Vercel Serverless Direct GitHub API Deletion & Instant Telegram Push Dispatch
+- **Problem**: In static Vercel hosting, deleting a deal from the React dashboard did not modify the upstream Git repository `deals.json`, causing the deletion to be lost if viewed on other devices or when background GitHub Actions refreshed.
+- **Decision & Solution**:
+  1. Built dedicated Vercel Serverless Functions (`api/deals.ts`, `api/deals/[id].ts`) utilizing the GitHub Contents REST API (`GITHUB_PAT`).
+  2. When a user clicks **Delete** on any device (phone, laptop, desktop):
+     - The serverless function fetches the latest `deals.json` directly from `Fragger7/personal-repo`.
+     - Filters out the specified deal.
+     - Commits and pushes the updated `deals.json` directly back to GitHub repository `main` (`[skip ci]`).
+     - Simultaneously dispatches an instant Telegram confirmation notification (`TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`).
+  3. Added `/api/*` exclusion from SPA rewrites in both root and subfolder `vercel.json`.
+- **Test Coverage**: Verified serverless handler compilation and seamless local/Vercel parity.
+
 ---
 
 ## 📌 5. Project Backlog & Future Roadmap

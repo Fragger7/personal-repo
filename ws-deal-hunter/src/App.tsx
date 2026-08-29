@@ -10,6 +10,28 @@ import { PushoverSettingsModal } from "./components/PushoverSettingsModal";
 import { DealRecord, DashboardStats, FilterState } from "./types";
 import { Sparkles, Layers, RefreshCw, Info, AlertTriangle } from "lucide-react";
 
+const DISMISSED_STORAGE_KEY = "ws_dismissed_deal_ids_v2";
+
+const getDismissedIds = (): Set<string> => {
+  try {
+    const raw = localStorage.getItem(DISMISSED_STORAGE_KEY);
+    return new Set(raw ? JSON.parse(raw) : []);
+  } catch {
+    return new Set();
+  }
+};
+
+const addDismissedId = (id: string, url?: string) => {
+  try {
+    const set = getDismissedIds();
+    set.add(id);
+    if (url && url !== "#") set.add(url);
+    localStorage.setItem(DISMISSED_STORAGE_KEY, JSON.stringify(Array.from(set)));
+  } catch (e) {
+    console.warn("Error saving dismissed id to localStorage", e);
+  }
+};
+
 export function App() {
   const [deals, setDeals] = useState<DealRecord[]>([]);
   const [stats, setStats] = useState<DashboardStats | null>(null);
@@ -48,7 +70,7 @@ export function App() {
         ? ["/deals.json", `https://raw.githubusercontent.com/Fragger7/personal-repo/main/ws-deal-hunter/deals.json?t=${Date.now()}`]
         : ["/api/deals", "/deals.json"];
 
-      let fetchedData = null;
+      let fetchedData: DealRecord[] | null = null;
       for (const endpoint of endpoints) {
         try {
           const res = await fetch(endpoint);
@@ -68,7 +90,9 @@ export function App() {
       }
 
       if (Array.isArray(fetchedData)) {
-        setDeals(fetchedData);
+        const dismissed = getDismissedIds();
+        const activeDeals = fetchedData.filter((d: DealRecord) => !dismissed.has(d.id) && !dismissed.has(d.url));
+        setDeals(activeDeals);
       }
     } catch (err) {
       console.error("Failed to fetch deals:", err);
@@ -215,13 +239,21 @@ export function App() {
   };
 
   const handleDeleteDeal = async (dealId: string) => {
+    const targetDeal = deals.find((d) => d.id === dealId);
+    addDismissedId(dealId, targetDeal?.url);
     setDeals((prev) => prev.filter((d) => d.id !== dealId));
-    showToast("🗑️ Listing dismissed & removed from dashboard");
+    showToast("🗑️ Listing dismissed & permanently removed from dashboard");
     try {
-      if (!import.meta.env.PROD) {
-        await fetch(`/api/deals/${encodeURIComponent(dealId)}`, {
-          method: "DELETE",
-        });
+      const res = await fetch(`/api/deals?id=${encodeURIComponent(dealId)}`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: dealId, url: targetDeal?.url }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.committedToGithub) {
+          showToast("☁️ Synchronized: Deal permanently deleted from GitHub repository!");
+        }
       }
     } catch (err) {
       console.warn("Could not delete from backend:", err);

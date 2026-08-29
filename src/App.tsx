@@ -244,9 +244,17 @@ export function App() {
     setDeals((prev) => prev.filter((d) => d.id !== dealId));
     showToast("🗑️ Listing dismissed & permanently removed from dashboard");
     try {
-      await fetch(`/api/deals/${encodeURIComponent(dealId)}`, {
+      const res = await fetch(`/api/deals?id=${encodeURIComponent(dealId)}`, {
         method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: dealId, url: targetDeal?.url }),
       });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.committedToGithub) {
+          showToast("☁️ Synchronized: Deal permanently deleted from GitHub repository!");
+        }
+      }
     } catch (err) {
       console.warn("Could not delete from backend:", err);
     }

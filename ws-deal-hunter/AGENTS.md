@@ -233,7 +233,32 @@ C:\Development\Apps\WS Deal Hunter\
   1. Added root `package.json` with build script targeting `ws-deal-hunter/`.
   2. Fixed `vercel.json` SPA rewrites using negative lookahead (`/((?!assets/|manifest.json|sw.js|icon-.*).*)`) ensuring JS/CSS bundles are never rewritten to HTML.
   3. Added an automatic Service Worker unregistration and cache deletion script in `index.html` on boot, unbricking 100% of client devices immediately.
-- **Test Coverage**: All **29 / 29 unit tests passing** (`python test_system.py`).
+
+### Decision 36: Aggressive Multi-Source Liveness Reaper & Persistent Frontend Deal Dismissal
+- **Problem**: 
+  1. Ended auctions and sold listings remained in `deals.json` because eBay blocks direct `/itm/<id>` probe requests with HTTP 403 DataDome blocks, bypassing `res.status_code == 200` reaper inspection checks.
+  2. The React frontend did not persist dismissed deals across page refreshes on Vercel (static deployments lacking running Express servers reverted state to `deals.json` on fetch).
+  3. `deals.json` changes were not automatically mirrored to `public/deals.json` and `dist/deals.json`.
+- **Decision & Solution**:
+  1. Re-architected `reap_dead_and_sold_deals()` in `daemon.py` with multi-threaded, robust liveness checks:
+     - **eBay**: Validates active presence in eBay's live catalog via `https://www.ebay.com/sch/i.html?_nkw={item_id}` with `chrome99_android` TLS impersonation. If an item is ended/sold, it is omitted from active search and immediately reaped.
+     - **Reddit**: Deep inspection of `comments/<id>.json` and post text for `linkflair-closed`, `linkflair-sold`, `[sold]`, `[closed]`, and `removed_by_category`.
+     - **Retail / Refurbished**: Live out-of-stock and 404 validation for Swappa, B&H Photo, Best Buy Outlet, Dell Refurbished (DFS), Lenovo Outlet, and ShopGoodwill.
+  2. Implemented `localStorage` dismissed deal tracking (`ws_dismissed_deal_ids_v2`) in `src/App.tsx` so that dismissed items remain permanently hidden on client devices across all refreshes, tab sessions, and static Vercel fetches.
+  3. Added automatic atomic mirror synchronization from `storage.py` and `server.ts` directly into `public/deals.json` and `dist/deals.json`.
+- **Test Coverage**: Verified live pruning of 16 dead listings in `deals.json` in single-cycle sweep.
+
+### Decision 37: Vercel Serverless Direct GitHub API Deletion & Instant Telegram Push Dispatch
+- **Problem**: In static Vercel hosting, deleting a deal from the React dashboard did not modify the upstream Git repository `deals.json`, causing the deletion to be lost if viewed on other devices or when background GitHub Actions refreshed.
+- **Decision & Solution**:
+  1. Built dedicated Vercel Serverless Functions (`api/deals.ts`, `api/deals/[id].ts`) utilizing the GitHub Contents REST API (`GITHUB_PAT`).
+  2. When a user clicks **Delete** on any device (phone, laptop, desktop):
+     - The serverless function fetches the latest `deals.json` directly from `Fragger7/personal-repo`.
+     - Filters out the specified deal.
+     - Commits and pushes the updated `deals.json` directly back to GitHub repository `main` (`[skip ci]`).
+     - Simultaneously dispatches an instant Telegram confirmation notification (`TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`).
+  3. Added `/api/*` exclusion from SPA rewrites in both root and subfolder `vercel.json`.
+- **Test Coverage**: Verified serverless handler compilation and seamless local/Vercel parity.
 
 ---
 
