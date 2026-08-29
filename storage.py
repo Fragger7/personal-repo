@@ -182,12 +182,17 @@ class AtomicDealStorage:
                         pass
                 raise RuntimeError(f"Atomic write failed to {self.filepath}: {err}") from err
 
-            # Mirror sync to public/deals.json and dist/deals.json if present
-            for folder_name in ["public", "dist"]:
-                target_dir = self.filepath.parent / folder_name
-                if target_dir.exists() and target_dir.is_dir():
+            # Mirror sync to public/deals.json, dist/deals.json, and ws-deal-hunter/deals.json if present
+            extra_targets = [
+                self.filepath.parent / "public" / "deals.json",
+                self.filepath.parent / "dist" / "deals.json",
+                self.filepath.parent / "ws-deal-hunter" / "deals.json",
+                self.filepath.parent / "ws-deal-hunter" / "public" / "deals.json",
+                self.filepath.parent.parent / "ws-deal-hunter" / "deals.json",
+            ]
+            for target_file in extra_targets:
+                if target_file.parent.exists() and target_file.parent.is_dir():
                     try:
-                        target_file = target_dir / "deals.json"
                         with open(target_file, "w", encoding="utf-8") as f:
                             json.dump(records, f, indent=2, ensure_ascii=False)
                     except Exception:

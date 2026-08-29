@@ -414,9 +414,9 @@ class GeminiHardwareEvaluator:
         # B. Damaged / Defective / Structural Defects (Hinges, Separating Frame, Cracked Screen/Glass/Palmrest)
         structural_damage_keywords = [
             "for parts", "parts only", "broken screen", "cracked screen", "crack on screen", "crack in screen",
-            "cracked display", "cracked glass", "cracked panel", "cracked lcd", "hairline crack", "screen defect",
-            "screen issue", "screen line", "lines on screen", "lines in screen", "screen blemish", "dead pixel", "dead pixels",
-            "delamination", "staingate", "ghosting", "backlight bleed", "flickering screen", "flicker screen",
+                       "screen damage", "cracked screen", "cracked display", "cracked glass", "crack on screen", "crack in screen", "hairline crack",
+            "screen defect", "screen issue", "screen blemish", "screen burn", "burn in", "dead pixel", "dead pixels", "staingate", "delamination", "backlight bleed", "lines on screen", "line on display",
+            "needs repair", "needs fix", "needs fixing", "for repair", "read desc", "read description", "as-is", "as is", "untested", "parts only",
             "display issue", "damaged screen", "no power", "bad logic board",
             "broken hinge", "loose hinge", "hinge separated", "hinge screw", "frame separating", "frame is separating",
             "cracked palm rest", "cracked palmrest", "keyboard imprints", "deep screen marks", "bent corner", "dropped impact"
@@ -434,7 +434,7 @@ class GeminiHardwareEvaluator:
 
         # D. Intel 11th-Gen & Older Silicon Blacklist (Tiger Lake, Ice Lake, Comet Lake, Xeons)
         # Drops i7-11850H, i9-11950H, 11800H, 11400H, Xeon W-11955M, and all 10th/9th/8th Gen
-        intel_old_gen = re.search(r'\b(i[3579]-11\d{3}|i[3579]-10\d{3}|i[3579]-[89]\d{3}|11850h|11950h|11800h|11400h|11980hk|10885h|10750h|9750h|8750h|11955m|w-11\d{3}|xeon.*11\d{3})\b', text)
+        intel_old_gen = re.search(r'\b(i[3579][\s-]11\d{3}|i[3579][\s-]11th(?:\s*gen)?|i[3579]\s*11gen|11th\s*gen|i[3579][\s-]10\d{3}|i[3579][\s-]10th(?:\s*gen)?|i[3579][\s-][89]\d{3}|11850h|11950h|11800h|11400h|11980hk|10885h|10750h|9750h|8750h|11955m|w-11\d{3}|xeon.*11\d{3})\b', text)
         if intel_old_gen:
             return self._reject_dict(f"Hard Excluded: Older Intel/Xeon CPU ({intel_old_gen.group(0)}) rejected. Minimum 12th-Gen Intel required.")
 
