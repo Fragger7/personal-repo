@@ -39,9 +39,13 @@ data class ProviderProfile(
     val cleanBrand: String
         get() {
             if (providerName.startsWith("🎯 Identified: ")) {
-                return providerName.removePrefix("🎯 Identified: ").trim()
+                val candidate = providerName.removePrefix("🎯 Identified: ").trim()
+                if (candidate.startsWith("nginx", ignoreCase = true) || candidate.startsWith("apache", ignoreCase = true) || candidate.equals("cloudflare", ignoreCase = true)) {
+                    return "Unbranded Node"
+                }
+                return candidate
             }
-            if (providerName.startsWith("👤 Host: ")) {
+            if (providerName.startsWith("👤 Host: ") || providerName.startsWith("Host:")) {
                 return "Unbranded Node"
             }
             if (providerName.isNotBlank() && !providerName.startsWith("Host:")) {
@@ -51,7 +55,16 @@ data class ProviderProfile(
         }
 
     val isIdentified: Boolean
-        get() = providerName.startsWith("🎯") || (!confidence.isNullOrBlank() && confidence != "Generic")
+        get() {
+            if (providerName.startsWith("🎯 Identified: ")) {
+                val candidate = providerName.removePrefix("🎯 Identified: ").trim()
+                if (candidate.startsWith("nginx", ignoreCase = true) || candidate.startsWith("apache", ignoreCase = true) || candidate.equals("cloudflare", ignoreCase = true)) {
+                    return false
+                }
+                return true
+            }
+            return (!confidence.isNullOrBlank() && confidence != "Generic" && confidence != "Server Fingerprint")
+        }
 
     val safeServer get() = server ?: "Unknown"
     val safeCloudflare get() = cloudflare ?: "No"
@@ -67,20 +80,40 @@ object ProviderIntelligenceManager {
     private val gson = Gson()
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
-    // Known Upstream IPTV Provider Signatures
+    // Known Upstream IPTV Provider Signatures & Domain Triggers
     private val KNOWN_PROVIDERS = listOf(
-        Pair("Strong 8K", listOf("strong 8k", "strong8k", "strong-8k", "strong ott", "strong8k.vip")),
-        Pair("T-Rex OTT", listOf("t-rex", "trex", "trex iptv", "trexiptv", "trextv")),
-        Pair("Dream 4K", listOf("dream 4k", "dream4k", "dream ott", "dream-4k")),
-        Pair("B1G OTT", listOf("b1g", "b1g ott", "b1g iptv", "b1g live")),
-        Pair("Crystal OTT", listOf("crystal ott", "crystal iptv", "crystal-ott")),
-        Pair("Cobra IPTV", listOf("cobra iptv", "cobra 4k", "cobra-iptv", "cobra ott")),
-        Pair("Mega OTT", listOf("mega ott", "mega iptv", "mega-ott", "megaiptv")),
-        Pair("Dino OTT", listOf("dino ott", "dino.ws", "dino iptv", "dino-ott")),
+        Pair("Strong 8K", listOf("strong 8k", "strong8k", "strong-8k", "strong ott", "strong8k.vip", "strong8k.me", "strong8k.top")),
+        Pair("T-Rex OTT", listOf("t-rex", "trex", "trex iptv", "trexiptv", "trextv", "trex-ott", "trexiptv.net")),
+        Pair("Dream 4K", listOf("dream 4k", "dream4k", "dream ott", "dream-4k", "dreamiptv")),
+        Pair("B1G OTT", listOf("b1g", "b1g ott", "b1g iptv", "b1g live", "b1gott")),
+        Pair("Crystal OTT", listOf("crystal ott", "crystal iptv", "crystal-ott", "crystalott")),
+        Pair("Cobra IPTV", listOf("cobra iptv", "cobra 4k", "cobra-iptv", "cobra ott", "cobraipty")),
+        Pair("Mega OTT", listOf("mega ott", "mega iptv", "mega-ott", "megaiptv", "mega-iptv")),
+        Pair("Dino OTT", listOf("dino ott", "dino.ws", "dino iptv", "dino-ott", "dinoott")),
         Pair("4K OTT", listOf("4kott", "4k-ott", "4k ott live", "tx-4kott")),
-        Pair("Apollo Group TV", listOf("apollo group", "apollogroup", "apollo iptv")),
+        Pair("Apollo Group TV", listOf("apollo group", "apollogroup", "apollo iptv", "apollo-tv")),
         Pair("Xtreme HD", listOf("xtreme hd", "xtremehd", "xtreme-hd")),
-        Pair("King 4K", listOf("king 4k", "king4k", "king-4k", "king ott")),
+        Pair("King 4K", listOf("king 4k", "king4k", "king-4k", "king ott", "king-iptv")),
+        Pair("Rey de Reyes", listOf("reydereyes", "rey de reyes", "streaming latino")),
+        Pair("StarShare", listOf("starshare", "star-share", "star share")),
+        Pair("Prime+ OTT", listOf("prime+", "prime plus", "primeplus", "prime-plus")),
+        Pair("Diamond OTT", listOf("diamond ott", "diamond-tv", "diamondiptv")),
+        Pair("Nexus OTT", listOf("nexus ott", "nexus-ott", "nexusiptv")),
+        Pair("Vision IPTV", listOf("vision iptv", "vision-iptv", "visionott")),
+        Pair("Matrix IPTV", listOf("matrix iptv", "matrix-iptv", "matrixott")),
+        Pair("GoBox IPTV", listOf("gobox", "gobox vip", "gobox-iptv")),
+        Pair("Volka TV", listOf("volka", "volkatv", "volka-tv")),
+        Pair("Forever IPTV", listOf("forever iptv", "forever-tv", "forevertv")),
+        Pair("Platinum OTT", listOf("platinum ott", "ott-platinum", "platinumiptv")),
+        Pair("Sonic IPTV", listOf("sonic iptv", "sonic-tv", "sonicott")),
+        Pair("Eagle IPTV", listOf("eagle iptv", "eagle-iptv", "eagleott")),
+        Pair("Atlas Pro ONTV", listOf("atlas pro", "atlas-pro", "atlaspro")),
+        Pair("Iron TV Pro", listOf("iron tv", "iron-iptv", "irontv")),
+        Pair("IBO Player", listOf("ibo player", "iboplayer")),
+        Pair("BOB Player", listOf("bob player", "bobplayer")),
+        Pair("SET IPTV", listOf("set iptv", "setiptv")),
+        Pair("SmartOne IPTV", listOf("smartone", "smartone-iptv")),
+        Pair("Net IPTV", listOf("net iptv", "netiptv")),
         Pair("Nanotech", listOf("nanotech", "nanotech copyright")),
         Pair("Pluto TV Gateway", listOf("pluto.png", "italy/pluto")),
         Pair("Lion OTT", listOf("lion-ott", "lion ott", "tvlion")),
@@ -98,8 +131,51 @@ object ProviderIntelligenceManager {
 
     fun init(context: Context) {
         file = File(context.filesDir, "provider_intelligence.json")
+        loadFromAssets(context)
         loadLocal()
         syncFromCloudAsync()
+    }
+
+    private fun parseAndPopulate(json: String) {
+        try {
+            val type = object : TypeToken<Map<String, Map<String, Any?>>>() {}.type
+            val map: Map<String, Map<String, Any?>> = gson.fromJson(json, type)
+            map.forEach { (domain, values) ->
+                val profile = ProviderProfile(
+                    domain = domain,
+                    providerName = values["provider_name"]?.toString() ?: "👤 Host: $domain",
+                    server = values["server"]?.toString(),
+                    cloudflare = values["cloudflare"]?.toString() ?: "No",
+                    timezone = values["timezone"]?.toString(),
+                    metadataMessage = values["metadata_message"]?.toString(),
+                    serverProtocol = values["server_protocol"]?.toString(),
+                    httpsPort = values["https_port"]?.toString(),
+                    rtmpPort = values["rtmp_port"]?.toString(),
+                    allowedFormats = values["allowed_formats"]?.toString(),
+                    communityLink = values["community_link"]?.toString(),
+                    confidence = values["confidence"]?.toString(),
+                    evidence = values["evidence"]?.toString(),
+                    firstSeen = values["first_seen"]?.toString(),
+                    lastSeen = values["last_seen"]?.toString()
+                )
+                profiles[domain] = profile
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    private fun loadFromAssets(context: Context) {
+        try {
+            context.assets.open("provider_intelligence.json").use { stream ->
+                val json = stream.bufferedReader().use { it.readText() }
+                if (json.isNotBlank()) {
+                    parseAndPopulate(json)
+                }
+            }
+        } catch (e: Exception) {
+            // Assets optional
+        }
     }
 
     fun extractDomain(rawUrl: String): String {
@@ -127,29 +203,7 @@ object ProviderIntelligenceManager {
         try {
             val json = file.readText()
             if (json.isNotBlank()) {
-                val type = object : TypeToken<Map<String, Map<String, Any?>>>() {}.type
-                val map: Map<String, Map<String, Any?>> = gson.fromJson(json, type)
-                profiles.clear()
-                map.forEach { (domain, values) ->
-                    val profile = ProviderProfile(
-                        domain = domain,
-                        providerName = values["provider_name"]?.toString() ?: "👤 Host: $domain",
-                        server = values["server"]?.toString(),
-                        cloudflare = values["cloudflare"]?.toString() ?: "No",
-                        timezone = values["timezone"]?.toString(),
-                        metadataMessage = values["metadata_message"]?.toString(),
-                        serverProtocol = values["server_protocol"]?.toString(),
-                        httpsPort = values["https_port"]?.toString(),
-                        rtmpPort = values["rtmp_port"]?.toString(),
-                        allowedFormats = values["allowed_formats"]?.toString(),
-                        communityLink = values["community_link"]?.toString(),
-                        confidence = values["confidence"]?.toString(),
-                        evidence = values["evidence"]?.toString(),
-                        firstSeen = values["first_seen"]?.toString(),
-                        lastSeen = values["last_seen"]?.toString()
-                    )
-                    profiles[domain] = profile
-                }
+                parseAndPopulate(json)
             }
         } catch (e: Exception) {
             e.printStackTrace()
@@ -185,8 +239,46 @@ object ProviderIntelligenceManager {
     }
 
     fun getProfile(baseUrlOrDomain: String): ProviderProfile? {
+        if (baseUrlOrDomain.isBlank()) return null
         val domain = extractDomain(baseUrlOrDomain)
-        return profiles[domain] ?: profiles[domain.substringBefore(':')]
+        val hostOnly = domain.substringBefore(':').lowercase(Locale.ROOT)
+
+        // 1. Direct key match
+        profiles[domain]?.let { return it }
+        profiles[hostOnly]?.let { return it }
+
+        // 2. Common port variations
+        profiles["$hostOnly:80"]?.let { return it }
+        profiles["$hostOnly:8080"]?.let { return it }
+        profiles["$hostOnly:443"]?.let { return it }
+        profiles["$hostOnly:25461"]?.let { return it }
+        profiles["$hostOnly:25460"]?.let { return it }
+        profiles["$hostOnly:7718"]?.let { return it }
+
+        // 3. Scan profiles keys where the host matches
+        val matched = profiles.entries.firstOrNull {
+            it.key.substringBefore(':').equals(hostOnly, ignoreCase = true)
+        }?.value
+        if (matched != null) return matched
+
+        // 4. Hostname heuristics against KNOWN_PROVIDERS
+        for ((brandName, triggers) in KNOWN_PROVIDERS) {
+            val cleanHost = hostOnly.replace("-", "").replace(".", "")
+            if (triggers.any {
+                val cleanTrigger = it.lowercase(Locale.ROOT).replace(" ", "").replace("-", "").replace(".", "")
+                cleanHost.contains(cleanTrigger) || hostOnly.contains(it, ignoreCase = true)
+            }) {
+                val inferred = ProviderProfile(
+                    domain = domain,
+                    providerName = "🎯 Identified: $brandName",
+                    confidence = "Domain Signature Match (90%)",
+                    evidence = "Hostname \"$hostOnly\" matched known provider signature \"$brandName\""
+                )
+                profiles[domain] = inferred
+                return inferred
+            }
+        }
+        return null
     }
 
     /**
@@ -199,8 +291,9 @@ object ProviderIntelligenceManager {
         serverInfo: JSONObject? = null
     ): ProviderProfile {
         val domain = extractDomain(baseUrl)
+        val hostOnly = domain.substringBefore(':').lowercase(Locale.ROOT)
         val nowStr = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())
-        val existing = profiles[domain] ?: ProviderProfile(
+        val existing = profiles[domain] ?: profiles[hostOnly] ?: ProviderProfile(
             domain = domain,
             providerName = "👤 Host: $domain",
             firstSeen = nowStr
@@ -219,22 +312,29 @@ object ProviderIntelligenceManager {
         var confidence = existing.confidence ?: "Server Fingerprint"
         var evidence = existing.evidence
 
-        // Check for recognized server signature
-        if (!newProviderName.startsWith("🎯") && serverSoftware != null && serverSoftware.isNotBlank() &&
-            serverSoftware != "Unknown" && serverSoftware != "nginx" && serverSoftware != "Apache"
-        ) {
-            newProviderName = "🎯 Identified: $serverSoftware"
-            confidence = "Server Software Signature"
-            evidence = "Identified via HTTP Server Header: $serverSoftware"
-        }
-
         // Check if welcome message contains provider identity
-        if (!newProviderName.startsWith("🎯") && !msg.isNullOrBlank() && msg.length > 5 && !msg.equals("Welcome", ignoreCase = true)) {
+        if (!msg.isNullOrBlank() && msg.length > 3 && !msg.equals("Welcome", ignoreCase = true)) {
             KNOWN_PROVIDERS.forEach { (brandName, triggers) ->
                 if (triggers.any { msg.contains(it, ignoreCase = true) }) {
                     newProviderName = "🎯 Identified: $brandName"
                     confidence = "High Confidence (95%)"
                     evidence = "Matched Server Metadata Message: \"$msg\""
+                }
+            }
+        }
+
+        // Check if hostname contains known provider signature
+        if (!newProviderName.startsWith("🎯") || newProviderName.contains("nginx", ignoreCase = true)) {
+            for ((brandName, triggers) in KNOWN_PROVIDERS) {
+                val cleanHost = hostOnly.replace("-", "").replace(".", "")
+                if (triggers.any {
+                    val cleanTrigger = it.lowercase(Locale.ROOT).replace(" ", "").replace("-", "").replace(".", "")
+                    cleanHost.contains(cleanTrigger) || hostOnly.contains(it, ignoreCase = true)
+                }) {
+                    newProviderName = "🎯 Identified: $brandName"
+                    confidence = "Domain Signature Match (90%)"
+                    evidence = "Hostname \"$hostOnly\" matched known provider signature \"$brandName\""
+                    break
                 }
             }
         }

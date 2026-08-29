@@ -12,6 +12,8 @@ import androidx.compose.material.icons.filled.Cloud
 import androidx.compose.material.icons.filled.CloudOff
 import androidx.compose.material.icons.filled.ContentPaste
 import androidx.compose.material.icons.filled.DeleteOutline
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material.icons.filled.Warning
@@ -207,13 +209,14 @@ fun ScannerTab(onNextTab: (() -> Unit)? = null) {
 
     val scannerScrollState = rememberScrollState()
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(scannerScrollState)
-            .padding(16.dp)
-    ) {
-        // IP Network Status Banner
+    Box(modifier = Modifier.fillMaxSize()) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(scannerScrollState)
+                .padding(16.dp)
+        ) {
+            // IP Network Status Banner
         if (DataStore.ipInfo.isNotEmpty()) {
             Surface(
                 shape = RoundedCornerShape(14.dp),
@@ -502,5 +505,34 @@ fun ScannerTab(onNextTab: (() -> Unit)? = null) {
             onClick = { onNextTab?.invoke() },
             modifier = Modifier.fillMaxWidth().height(44.dp)
         )
+        Spacer(modifier = Modifier.height(60.dp))
     }
+
+    // Floating scroll buttons
+    Column(
+        modifier = Modifier
+            .align(Alignment.BottomEnd)
+            .padding(end = 16.dp, bottom = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        FloatingActionButton(
+            onClick = { coroutineScope.launch { scannerScrollState.animateScrollTo(0) } },
+            containerColor = AppPrimary,
+            contentColor = Color.White,
+            shape = RoundedCornerShape(12.dp),
+            modifier = Modifier.size(44.dp)
+        ) {
+            Icon(Icons.Default.KeyboardArrowUp, contentDescription = "Scroll to Top")
+        }
+        FloatingActionButton(
+            onClick = { coroutineScope.launch { scannerScrollState.animateScrollTo(scannerScrollState.maxValue) } },
+            containerColor = AppPrimary,
+            contentColor = Color.White,
+            shape = RoundedCornerShape(12.dp),
+            modifier = Modifier.size(44.dp)
+        ) {
+            Icon(Icons.Default.KeyboardArrowDown, contentDescription = "Scroll to Bottom")
+        }
+    }
+}
 }
