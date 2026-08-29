@@ -198,17 +198,34 @@ fun Base64Tab(onNextTab: () -> Unit = {}) {
             modifier = Modifier.fillMaxWidth()
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
+                // Tier 1: Header title
+                Text(
+                    text = "Base64 Encoded Block",
+                    color = AppTextPrimary,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = "Paste raw Base64 payload, token blocks, or messy URLs",
+                    color = AppTextSecondary,
+                    style = MaterialTheme.typography.bodySmall
+                )
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                // Tier 2: Dedicated Action Controls Row (Paste & Decode, Clear)
                 Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = 8.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text("Base64 Encoded Block", color = AppTextSecondary, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
-                    Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                        TextButton(
-                            onClick = {
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        // Paste & Decode Button
+                        Surface(
+                            shape = RoundedCornerShape(8.dp),
+                            color = AppPrimary.copy(alpha = 0.15f),
+                            border = BorderStroke(1.dp, AppPrimary.copy(alpha = 0.4f)),
+                            modifier = Modifier.clickable {
                                 val clipText = ClipboardHelper.getSafeClipboardText(context, clipboardManager)
                                 if (!clipText.isNullOrBlank()) {
                                     input = clipText
@@ -216,27 +233,44 @@ fun Base64Tab(onNextTab: () -> Unit = {}) {
                                 } else {
                                     ToastManager.warning("Clipboard is empty or contains non-text data")
                                 }
-                            },
-                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp)
+                            }
                         ) {
-                            Icon(Icons.Default.ContentPaste, contentDescription = null, tint = AppPrimary, modifier = Modifier.size(16.dp))
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text("Paste & Decode", color = AppPrimary, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
+                            Row(
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(Icons.Default.ContentPaste, contentDescription = null, tint = AppPrimary, modifier = Modifier.size(14.dp))
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text("Paste & Decode", color = AppPrimary, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
+                            }
                         }
-                        TextButton(
-                            onClick = {
-                                input = ""
-                                output = ""
-                                extractedUrls = emptyList()
-                            },
-                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp)
-                        ) {
-                            Icon(Icons.Default.DeleteOutline, contentDescription = null, tint = AppError, modifier = Modifier.size(16.dp))
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text("Clear", color = AppError, style = MaterialTheme.typography.labelSmall)
+
+                        // Clear Button (Interactive when input or output has text)
+                        if (input.isNotEmpty() || output.isNotEmpty()) {
+                            Surface(
+                                shape = RoundedCornerShape(8.dp),
+                                color = AppError.copy(alpha = 0.15f),
+                                border = BorderStroke(1.dp, AppError.copy(alpha = 0.4f)),
+                                modifier = Modifier.clickable {
+                                    input = ""
+                                    output = ""
+                                    extractedUrls = emptyList()
+                                }
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Icon(Icons.Default.DeleteOutline, contentDescription = null, tint = AppError, modifier = Modifier.size(14.dp))
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text("Clear", color = AppError, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
+                                }
+                            }
                         }
                     }
                 }
+
+                Spacer(modifier = Modifier.height(10.dp))
 
                 OutlinedTextField(
                     value = input,
@@ -351,9 +385,9 @@ fun Base64Tab(onNextTab: () -> Unit = {}) {
                         PrimaryButton(
                             text = "⚡ Send to Scanner",
                             onClick = {
-                                val textToSend = if (extractedUrls.isNotEmpty()) extractedUrls.joinToString("\n") else output
+                                val textToSend = output.ifBlank { extractedUrls.joinToString("\n") }
                                 DataStore.scannerInput = textToSend
-                                ToastManager.success("Pushed ${if (extractedUrls.isNotEmpty()) extractedUrls.size else 1} payload(s) to Scanner!")
+                                ToastManager.success("Decoded payload pushed to Scanner!")
                                 onNextTab()
                             },
                             modifier = Modifier

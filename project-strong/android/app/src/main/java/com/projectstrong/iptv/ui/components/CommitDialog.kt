@@ -1,5 +1,6 @@
 package com.projectstrong.iptv.ui.components
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -37,6 +38,15 @@ fun CommitAccountDialog(
 ) {
     var notes by remember { mutableStateOf(initialNotes) }
 
+    val resolvedProvider = remember(baseUrl, provider) {
+        if (provider.isNotEmpty() && provider != "Unknown" && provider != "Unbranded") {
+            provider
+        } else {
+            val profile = com.projectstrong.iptv.data.ProviderIntelligenceManager.getProfile(baseUrl)
+            if (profile?.isIdentified == true) profile.cleanBrand else "Unbranded"
+        }
+    }
+
     Dialog(onDismissRequest = onDismiss) {
         Card(
             shape = RoundedCornerShape(16.dp),
@@ -61,7 +71,7 @@ fun CommitAccountDialog(
                     }
                 }
 
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(14.dp))
 
                 // Account Preview
                 Card(
@@ -69,13 +79,35 @@ fun CommitAccountDialog(
                     colors = CardDefaults.cardColors(containerColor = Color(0xFF12121A)),
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Column(modifier = Modifier.padding(12.dp)) {
-                        Text(
-                            text = "HOST: $baseUrl",
-                            color = Color(0xFF60A5FA),
-                            style = MaterialTheme.typography.bodySmall,
-                            fontWeight = FontWeight.SemiBold
-                        )
+                    Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "HOST: $baseUrl",
+                                color = Color(0xFF60A5FA),
+                                style = MaterialTheme.typography.bodySmall,
+                                fontWeight = FontWeight.SemiBold,
+                                modifier = Modifier.weight(1f)
+                            )
+                            if (resolvedProvider.isNotEmpty() && resolvedProvider != "Unbranded") {
+                                Surface(
+                                    shape = RoundedCornerShape(6.dp),
+                                    color = Color(0xFFC084FC).copy(alpha = 0.15f),
+                                    border = BorderStroke(1.dp, Color(0xFFC084FC).copy(alpha = 0.4f))
+                                ) {
+                                    Text(
+                                        text = "🎯 $resolvedProvider",
+                                        color = Color(0xFFC084FC),
+                                        style = MaterialTheme.typography.labelSmall,
+                                        fontWeight = FontWeight.Bold,
+                                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                    )
+                                }
+                            }
+                        }
                         if (user.isNotEmpty()) {
                             Text(
                                 text = "USER: $user | PASS: $pass",
@@ -162,7 +194,7 @@ fun CommitAccountDialog(
                                 vods = vods,
                                 activeConn = activeConn,
                                 maxConn = maxConn,
-                                provider = provider,
+                                provider = resolvedProvider,
                                 serverTimezone = serverTimezone,
                                 notes = notes.trim()
                             )
