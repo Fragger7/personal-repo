@@ -260,6 +260,15 @@ C:\Development\Apps\WS Deal Hunter\
   3. Added `/api/*` exclusion from SPA rewrites in both root and subfolder `vercel.json`.
 - **Test Coverage**: Verified serverless handler compilation and seamless local/Vercel parity.
 
+### Decision 38: Two-Tier Test Suite Architecture & Global Agentic Token Economics Protocol
+- **Problem**: Running regression suites (`test_system.py`) during development was making live network calls to 11 external websites and unmocked calls to Gemini 2.5 Flash, burning LLM API tokens, triggering 429 rate limit retries (2s, 4s backoffs), and flooding the agent's context window with large terminal logs.
+- **Decision & Solution**:
+  1. Split `test_system.py` into a **Two-Tier Architecture**:
+     - **Fast Unit Mode (Default)**: Mocks external LLM calls and network scrapers. Runs all 30 tests in **2.1 seconds** ($0 tokens, 0 network wait, 0 rate limits).
+     - **Live Integration Mode (`--live`)**: Tests live internet DOM parsing and Gemini API connectivity on explicit user request.
+  2. Created `.agents/rules/agentic_efficiency.md` codifying the global token economy protocol (zero-token test iteration, CLI context hygiene, bounded file slicing, prompt cache alignment, and uncompromising code quality).
+- **Test Coverage**: 30 / 30 tests passing in 2.1s (`python test_system.py`).
+
 ---
 
 ## 📌 5. Project Backlog & Future Roadmap
