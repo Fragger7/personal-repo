@@ -65,15 +65,24 @@ export function App() {
 
   const fetchDeals = useCallback(async () => {
     try {
-      // In production (Vercel), try static /deals.json on same origin first, then raw GitHub with cache-buster
-      const endpoints = import.meta.env.PROD
-        ? ["/deals.json", `https://raw.githubusercontent.com/Fragger7/personal-repo/main/ws-deal-hunter/deals.json?t=${Date.now()}`]
-        : ["/api/deals", "/deals.json"];
+      const now = Date.now();
+      const endpoints = [
+        `/api/deals?t=${now}`,
+        `/deals.json?t=${now}`,
+        `https://raw.githubusercontent.com/Fragger7/personal-repo/main/deals.json?t=${now}`,
+        `https://raw.githubusercontent.com/Fragger7/personal-repo/main/ws-deal-hunter/deals.json?t=${now}`,
+      ];
 
       let fetchedData: DealRecord[] | null = null;
       for (const endpoint of endpoints) {
         try {
-          const res = await fetch(endpoint);
+          const res = await fetch(endpoint, {
+            cache: "no-store",
+            headers: {
+              "Cache-Control": "no-cache, no-store, must-revalidate",
+              Pragma: "no-cache",
+            },
+          });
           if (res.ok) {
             const data = await res.json();
             if (Array.isArray(data) && data.length > 0) {
