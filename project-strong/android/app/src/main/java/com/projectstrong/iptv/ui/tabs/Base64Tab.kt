@@ -28,9 +28,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.projectstrong.iptv.data.DataStore
+import com.projectstrong.iptv.network.IPTVClient
 import com.projectstrong.iptv.ui.components.*
 import com.projectstrong.iptv.ui.theme.*
 import com.projectstrong.iptv.utils.ClipboardHelper
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.util.regex.Pattern
 
 @Composable
@@ -38,6 +42,8 @@ fun Base64Tab(onNextTab: () -> Unit = {}) {
     var input by remember { mutableStateOf("") }
     var output by remember { mutableStateOf("") }
     var extractedUrls by remember { mutableStateOf<List<String>>(emptyList()) }
+    var isFetchingRemote by remember { mutableStateOf(false) }
+    val coroutineScope = rememberCoroutineScope()
     val scrollState = rememberScrollState()
     val context = LocalContext.current
     val clipboardManager = LocalClipboardManager.current
@@ -51,6 +57,69 @@ fun Base64Tab(onNextTab: () -> Unit = {}) {
             return
         }
 
+        // Check if rawInput is a single URL (e.g. pastebin, controlc, rentry, gist, raw url)
+        val trimmed = rawInput.trim()
+        val isSingleUrl = (trimmed.startsWith("http://") || trimmed.startsWith("https://")) && !trimmed.contains("\n") && !trimmed.contains(" ")
+
+        if (isSingleUrl) {
+            coroutineScope.launch {
+                isFetchingRemote = true
+                ToastManager.info("Fetching remote payload from URL...")
+                val remoteContent = IPTVClient.fetchRemoteText(trimmed)
+                isFetchingRemote = false
+
+                if (!remoteContent.isNullOrBlank()) {
+                    // Try decoding the remote content if it contains Base64, otherwise treat it directly as plaintext
+                    val chunkPattern = Pattern.compile("[A-Za-z0-9+/=]{16,}")
+                    val chunkMatcher = chunkPattern.matcher(remoteContent)
+                    val urlPattern = Pattern.compile("https?://[^\\s\"'<>]+", Pattern.CASE_INSENSITIVE)
+                    val results = mutableListOf<String>()
+                    val foundUrls = mutableListOf<String>()
+
+                    while (chunkMatcher.find() && results.size < 50) {
+                        val candidate = chunkMatcher.group()
+                        val pad = candidate.length % 4
+                        val padded = candidate + "=".repeat(if (pad > 0) 4 - pad else 0)
+                        try {
+                            val decodedBytes = Base64.decode(padded, Base64.DEFAULT)
+                            val decodedStr = String(decodedBytes, Charsets.UTF_8).trim()
+                            if (decodedStr.isNotBlank() && decodedStr.any { it.isLetterOrDigit() } && !results.contains(decodedStr)) {
+                                results.add(decodedStr)
+                                val uMatcher = urlPattern.matcher(decodedStr)
+                                while (uMatcher.find()) {
+                                    val u = uMatcher.group()
+                                    if (!foundUrls.contains(u)) foundUrls.add(u)
+                                }
+                            }
+                        } catch (e: Throwable) {
+                            // ignore non-base64
+                        }
+                    }
+
+                    if (results.isNotEmpty()) {
+                        output = results.joinToString("\n\n")
+                    } else {
+                        // Fallback: full block or use remote content directly
+                        output = remoteContent.trim()
+                        val uMatcher = urlPattern.matcher(output)
+                        while (uMatcher.find()) {
+                            val u = uMatcher.group()
+                            if (!foundUrls.contains(u)) foundUrls.add(u)
+                        }
+                    }
+                    extractedUrls = foundUrls
+                    ToastManager.success("Downloaded & processed ${output.length} characters from URL!")
+                } else {
+                    // Fallback to standard Base64 string decoding on the URL itself
+                    processDirectBase64(trimmed)
+                }
+            }
+        } else {
+            processDirectBase64(rawInput)
+        }
+    }
+
+    fun processDirectBase64(rawInput: String) {
         try {
             val results = mutableListOf<String>()
             val foundUrls = mutableListOf<String>()
@@ -292,8 +361,8 @@ fun Base64Tab(onNextTab: () -> Unit = {}) {
                 Spacer(modifier = Modifier.height(12.dp))
 
                 PrimaryButton(
-                    text = "⚡ Decode Data",
-                    onClick = { decodeBase64Payload(input) },
+                    text = if (isFetchingRemote) "⏳ Fetching URL Payload..." else "⚡ Decode Data",
+                    onClick = { if (!isFetchingRemote) decodeBase64Payload(input) },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(44.dp)

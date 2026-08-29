@@ -644,4 +644,36 @@ object IPTVClient {
         }
         return null
     }
+
+    suspend fun fetchRemoteText(rawUrl: String): String? = withContext(Dispatchers.IO) {
+        try {
+            var targetUrl = rawUrl.trim()
+            // Transform standard pastebin/github web links to raw text links if applicable
+            if (targetUrl.contains("pastebin.com/") && !targetUrl.contains("pastebin.com/raw/")) {
+                targetUrl = targetUrl.replace("pastebin.com/", "pastebin.com/raw/")
+            } else if (targetUrl.contains("gist.github.com/") && !targetUrl.contains("/raw")) {
+                targetUrl = "$targetUrl/raw"
+            } else if (targetUrl.contains("rentry.co/") && !targetUrl.contains("rentry.co/raw/")) {
+                targetUrl = targetUrl.replace("rentry.co/", "rentry.co/raw/")
+            } else if (targetUrl.contains("controlc.com/") && !targetUrl.contains("/index.php?act=submit&mode=ajax")) {
+                // controlc paste raw format or direct page fetch
+            }
+
+            val request = Request.Builder()
+                .url(targetUrl)
+                .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36")
+                .header("Accept", "text/plain, text/html, */*")
+                .build()
+
+            getClient().newCall(request).execute().use { response ->
+                if (response.isSuccessful) {
+                    response.body?.string()
+                } else {
+                    null
+                }
+            }
+        } catch (e: Exception) {
+            null
+        }
+    }
 }
