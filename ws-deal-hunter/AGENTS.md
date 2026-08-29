@@ -276,12 +276,14 @@ C:\Development\Apps\WS Deal Hunter\
 *See [`BACKLOG.md`](file:///C:/Development/Apps/WS%20Deal%20Hunter/BACKLOG.md) for full technical task breakdown and UI/UX design specifications.*
 
 ### 🔴 Immediate Backlog (Next Session)
-1. **Adaptive "Self-Learning" FMV Price Index**:
+1. **Multi-Item Reddit Liquidation Table Parser**:
+   - Upgrade `RedditCollector` to parse multi-row Markdown tables (`| Item | Specs | Price |`) in `r/hardwareswap` & `r/homelabsales` bulk liquidation posts to unlock 15–20 additional off-lease enterprise units per cycle.
+2. **Swappa Workstation Directory Expansion**:
+   - Expand Swappa crawling matrix with new model slugs (MacBook Pro 16 M3/M4 Max, ThinkPad P1 Gen 6, Precision 5680, ThinkPad P16).
+3. **Enterprise Refurbished Surge Monitor (DFS & Woot Drops)**:
+   - Wire targeted flash-drop watchers for Dell Financial Services (DFS) off-lease Precision events and Woot bulk enterprise liquidation drops.
+4. **Adaptive "Self-Learning" FMV Price Index**:
    - Scaffold rolling exponential moving average calibration (`price_benchmarks.json`).
-2. **Scheduled Daily Executive Digest (Telegram / Pushover)**:
-   - Automated 8:00 AM daily briefing of top 3 highest-ROI workstation arbitrage opportunities.
-3. **PWA / Offline Service Worker**:
-   - Add service worker caching for offline mobile browsing on Vercel.
 
 ---
 
