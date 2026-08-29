@@ -544,7 +544,7 @@ def mine_provider_branding_from_payloads(base_url, categories_data, streams_data
             if len(brand) > 3 and not bool(re.search(r'^[-_*~=#|]+$', brand)) and brand.lower() not in ['vip', 'vod', 'series', 'movies', 'live', 'channels', 'sport', 'sports', 'kids', 'news', 'catchup', 'all', 'xxx']:
                 branding_names[brand] = branding_names.get(brand, 0) + 2
                 
-        # Known giants
+        # Known giants & StreamCheck verified providers
         if any(k in name for k in ["Strong 8K", "Strong8K", "World 8K", "World8K", "³⁸⁴⁰ᴾ", "STARZPLAY SPORT 8K"]):
             branding_names["Strong 8K"] = branding_names.get("Strong 8K", 0) + 25
         if "Trex" in name or "Trexiptv" in name.lower():
@@ -553,6 +553,24 @@ def mine_provider_branding_from_payloads(base_url, categories_data, streams_data
             branding_names["Mega IPTV"] = branding_names.get("Mega IPTV", 0) + 15
         if "Cobra" in name:
             branding_names["Cobra IPTV"] = branding_names.get("Cobra IPTV", 0) + 15
+        if "Crystal" in name or "|8ᴋ|" in name:
+            branding_names["Crystal OTT"] = branding_names.get("Crystal OTT", 0) + 15
+        if "Dino" in name or "iptvdino" in name.lower():
+            branding_names["Dino OTT"] = branding_names.get("Dino OTT", 0) + 15
+        if "Dream 4k" in name.lower() or "eagle 4k" in name.lower():
+            branding_names["Dream 4K"] = branding_names.get("Dream 4K", 0) + 15
+        if "Magnum" in name or "Golden" in name:
+            branding_names["Magnum OTT (Golden)"] = branding_names.get("Magnum OTT (Golden)", 0) + 15
+        if "┃AT┃" in name or "┃DE┃" in name or "┃UK┃" in name or "┃AF┃" in name or "┃AR┃" in name:
+            branding_names["TiviOne"] = branding_names.get("TiviOne", 0) + 20
+        if "★ SKY" in name or "★ CINEMA" in name or "ALB ★" in name or "DE ★" in name:
+            branding_names["Max OTT"] = branding_names.get("Max OTT", 0) + 20
+        if "▎SKY" in name or "▎BEIN" in name or "AT ▎" in name or "DE ▎" in name:
+            branding_names["Promax OTT"] = branding_names.get("Promax OTT", 0) + 20
+        if "(SPIELZEIT)" in name or "(Spielzeit)" in name:
+            branding_names["SLTV OTT"] = branding_names.get("SLTV OTT", 0) + 20
+        if "Lion" in name or "[AUS] SKY" in name:
+            branding_names["Lion OTT"] = branding_names.get("Lion OTT", 0) + 15
         if "Xtreme HD" in name or "XtremeHD" in name:
             branding_names["Xtreme HD"] = branding_names.get("Xtreme HD", 0) + 15
         if "Apollo" in name and "Group" in name:

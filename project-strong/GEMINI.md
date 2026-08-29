@@ -524,8 +524,10 @@ Create a dedicated **⚙️ Settings & About** tab or modal inside the Android a
    - Floating Picture-in-Picture & Modal stream inspector with ExoPlayer hardware-accelerated playback.
    - Stream health diagnostics overlay (Resolution e.g. `1080p FHD`, Video Codec e.g. `H.264/HEVC`, Audio Codec e.g. `AAC/AC3`, Latency ms).
    - Fast 1-tap quick stream tester inside the Full-Screen Channel & Catalog Explorer.
-2. **Provider Intelligence & Forensic Brand Engine (Android Port - COMPLETED)**:
-   - Bundled 2,127+ provider forensic profiles directly into Android assets (`assets/provider_intelligence.json`) for instant offline brand recognition on first boot.
+2. **Provider Intelligence & Forensic Brand Engine (StreamCheck Scraping Agent & Android Port - COMPLETED)**:
+   - Integrated multi-stream scraping intelligence from `search.streamcheck.pro` across 16 major IPTV providers (B1G, Crystal, Dino, Dream 4k, King 365, Lion, Magnum Golden, Max, Mega, Nexon, Promax, SLTV, Strong 8K, TiviOne, Trex, Ultra 8K).
+   - Mapped distinct regional channel delimiter signatures (`┃AT┃` for TiviOne, `▎SKY` for Promax, `★ SKY` for Max, `|8ᴋ|` for Crystal, `(SPIELZEIT)` for SLTV, `[AUS] SKY` for Lion, `³⁸⁴⁰ᴾ` & `STARZPLAY SPORT 8K` for Strong 8K).
+   - Bundled 2,127+ provider forensic profiles directly into Android assets (`assets/provider_intelligence.json`) and `app.py` for instant offline brand recognition on first boot.
    - Upgraded flexible multi-port, host-only, and hostname regex heuristics (supporting 35+ top IPTV providers including Strong 8K, T-Rex, Dream 4K, B1G, Crystal, Dino, Cobra, Mega, Apollo Group, StarShare, King 4K, Prime+, Diamond, Atlas Pro, and more).
    - Deep-Query Channel & Category Mining: Automatically triggers during catalog querying and stream counts, extracting category prefix conventions (`|US| STRONG 8K`, `[TREX] SPORTS`), banner dummy channels (`### BRAND ###`), and community links (`t.me`, `discord.gg`).
    - Granular Confidence Percentages: Computes precise confidence ratings (`Verified Brand (95%)`, `Category Watermark (85%)`, `Stream Signature (75%)`, or `Unknown (0% Confidence - No Signatures)`).
