@@ -513,9 +513,13 @@ Create a dedicated **⚙️ Settings & About** tab or modal inside the Android a
    - Stream health diagnostics overlay (Resolution e.g. `1080p FHD`, Video Codec e.g. `H.264/HEVC`, Audio Codec e.g. `AAC/AC3`, Latency ms).
    - Fast 1-tap quick stream tester inside the Full-Screen Channel & Catalog Explorer.
 2. **Provider Intelligence & Forensic Brand Engine (Android Port - COMPLETED)**:
-   - Upgraded provider recognition using category name watermarks (e.g., Strong 8K, T-Rex, Dream 4K, Dino), dummy/separator banner streams, and Telegram/Discord community channel signatures.
+   - Bundled 2,127+ provider forensic profiles directly into Android assets (`assets/provider_intelligence.json`) for instant offline brand recognition on first boot.
+   - Upgraded flexible multi-port, host-only, and hostname regex heuristics (supporting 30+ top IPTV providers including Strong 8K, T-Rex, Dream 4K, B1G, Crystal, Dino, Cobra, Mega, Apollo Group, StarShare, King 4K, Prime+, Diamond, Atlas Pro, and more).
+   - Integrated automatic stream & category watermark mining on catalog exploration and live stream counting.
    - Server technical specs micro-grid (`Server`, `CF-RAY`, `timezone`, format capabilities) and bidirectional GitHub sync with `provider_intelligence.json`.
-3. **Performance Tuning & Memory Backlog (HIGH PRIORITY)**:
+3. **Scanner Tab Workflow & Floating Quick-Scroll (COMPLETED)**:
+   - Added floating action buttons (Scroll to Top & Scroll to Bottom) matching the master grid pattern for effortless navigation through large ingestion blocks.
+4. **Performance Tuning & Memory Backlog (HIGH PRIORITY)**:
    - Throttled coroutine chunking and memory-efficient recyclers on multi-thousand row payloads to ensure 60fps scrolling and eliminate any potential memory pressure.
 4. **Base64 Tab Power Actions & Automation Pipeline**:
    - Automated Base64 chunk discovery with 1-click "Push to Scanner", URL action chips, and external M3U player launch intents.
