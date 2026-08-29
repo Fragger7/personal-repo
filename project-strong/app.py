@@ -217,6 +217,114 @@ if "has_pulled_initially" not in st.session_state:
     st.session_state["has_pulled_initially"] = True
     pull_committed_data()
 
+def fetch_and_decrypt_paste_sh(url: str) -> str:
+    try:
+        hash_idx = url.find('#')
+        url_part = url[:hash_idx].strip() if hash_idx != -1 else url.strip()
+        client_key = url[hash_idx+1:].strip() if hash_idx != -1 else ''
+        id_val = url_part.rstrip('/').split('/')[-1]
+        download_url = url_part if url_part.endswith(".txt") else f"{url_part}.txt"
+        
+        with httpx.Client(timeout=15.0, follow_redirects=True) as client:
+            resp = client.get(download_url, headers={"User-Agent": "curl/8.4.0"})
+            if resp.status_code != 200:
+                return ""
+            body = resp.text
+            
+        if not client_key:
+            return body.strip()
+            
+        lines = body.splitlines()
+        server_key = lines[0].strip() if lines else ""
+        cipher_b64 = "".join(lines[1:]).strip() if len(lines) > 1 else ""
+        if not cipher_b64:
+            return body.strip()
+            
+        raw_bytes = base64.b64decode(cipher_b64)
+        if len(raw_bytes) < 16 or not raw_bytes.startswith(b"Salted__"):
+            return body.strip()
+            
+        passphrase = f"{id_val}{server_key}{client_key}https://paste.sh"
+        
+        plain = ""
+        try:
+            from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+            from cryptography.hazmat.primitives import hashes, hmac as chmac
+            
+            salt = raw_bytes[8:16]
+            ciphertext = raw_bytes[16:]
+            
+            h = chmac.HMAC(passphrase.encode('utf-8'), hashes.SHA512())
+            h.update(salt)
+            h.update(b"\x00\x00\x00\x01")
+            derived = h.finalize()
+            key = derived[:32]
+            iv = derived[32:48]
+            
+            cipher = Cipher(algorithms.AES(key), modes.CBC(iv))
+            decryptor = cipher.decryptor()
+            padded_data = decryptor.update(ciphertext) + decryptor.finalize()
+            pad_len = padded_data[-1]
+            plain = padded_data[:-pad_len].decode('utf-8', errors='ignore')
+        except Exception:
+            p = subprocess.Popen(['openssl', 'enc', '-d', '-aes-256-cbc', '-md', 'sha512', '-pass', f'pass:{passphrase}', '-iter', '1'], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            stdout, _ = p.communicate(input=raw_bytes)
+            plain = stdout.decode('utf-8', errors='ignore')
+            
+        if (plain.startswith("Subject:") or plain.startswith("Content-Type:")) and "\n\n" in plain:
+            plain = plain.split("\n\n", 1)[1]
+        return plain.strip()
+    except Exception:
+        return ""
+
+def fetch_remote_text_payload(raw_url: str) -> str:
+    target_url = raw_url.strip()
+    if not target_url:
+        return ""
+    if not (target_url.startswith("http://") or target_url.startswith("https://")):
+        target_url = f"https://{target_url}"
+        
+    if "paste.sh/" in target_url:
+        decrypted = fetch_and_decrypt_paste_sh(target_url)
+        if decrypted:
+            return decrypted
+            
+    if "pastebin.com/" in target_url and "pastebin.com/raw/" not in target_url:
+        target_url = target_url.replace("pastebin.com/", "pastebin.com/raw/")
+    elif "gist.github.com/" in target_url and not target_url.endswith("/raw"):
+        target_url = target_url if "/raw/" in target_url else f"{target_url}/raw"
+    elif "rentry.co/" in target_url and "rentry.co/raw/" not in target_url:
+        target_url = target_url.replace("rentry.co/", "rentry.co/raw/")
+    elif "rentry.org/" in target_url and "rentry.org/raw/" not in target_url:
+        target_url = target_url.replace("rentry.org/", "rentry.org/raw/")
+    elif "dpaste.org/" in target_url and not target_url.endswith(".txt") and not target_url.endswith("/raw"):
+        target_url = f"{target_url}.txt"
+    elif "dpaste.com/" in target_url and not target_url.endswith(".txt"):
+        target_url = f"{target_url}.txt"
+    elif "paste.ee/p/" in target_url:
+        target_url = target_url.replace("paste.ee/p/", "paste.ee/r/")
+    elif "pastery.net/" in target_url and not target_url.endswith("/raw"):
+        target_url = f"{target_url}/raw"
+    elif "hastebin.com/" in target_url and "hastebin.com/raw/" not in target_url:
+        target_url = target_url.replace("hastebin.com/", "hastebin.com/raw/")
+        
+    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"}
+    try:
+        with httpx.Client(timeout=15.0, follow_redirects=True) as client:
+            resp = client.get(target_url, headers=headers)
+            if resp.status_code == 200:
+                body = resp.text
+                m = re.search(r'<textarea[^>]*>(.*?)</textarea>', body, re.DOTALL | re.IGNORECASE)
+                if m:
+                    return m.group(1).strip()
+                m_pre = re.search(r'<pre[^>]*>(.*?)</pre>', body, re.DOTALL | re.IGNORECASE)
+                if m_pre:
+                    return m_pre.group(1).strip()
+                return body.strip()
+    except Exception:
+        pass
+    return ""
+
 PROVIDER_INTEL_FILE = "provider_intelligence.json"
 
 def load_provider_intel():
@@ -1392,29 +1500,45 @@ with tab_tools:
             st.warning("Please provide input text to process.")
         else:
             try:
+                processed_input = b64_input.strip()
+                # Check if input is a single remote URL (e.g. paste.sh, pastebin, rentry, gist)
+                if (processed_input.startswith("http://") or processed_input.startswith("https://") or "paste.sh" in processed_input or "pastebin." in processed_input or "rentry." in processed_input) and "\n" not in processed_input:
+                    with st.spinner("🌐 Fetching & Decrypting remote payload from URL..."):
+                        remote_text = fetch_remote_text_payload(processed_input)
+                        if remote_text:
+                            processed_input = remote_text
+                            st.toast(f"Downloaded {len(remote_text)} characters from URL", icon="🌐")
+
                 if "Decode" in b64_action:
-                    # Find potential base64 strings (at least 20 chars long, valid chars, optional padding)
-                    potential_b64s = re.findall(r'[A-Za-z0-9+/]{20,}={0,2}', b64_input)
-                    if not potential_b64s:
-                        potential_b64s = [b64_input.strip()]
-                    
-                    decoded_results = []
-                    for p in potential_b64s:
-                        try:
-                            pad = len(p) % 4
-                            padded = p + "=" * ((4 - pad) if pad else 0)
-                            res = base64.b64decode(padded).decode('utf-8', errors='replace')
-                            decoded_results.append(res)
-                        except Exception:
-                            pass
-                    
-                    if decoded_results:
-                        result = "\n\n".join(decoded_results)
-                        st.success("✅ Successfully decoded. (Use the copy button in the top right of the block)")
+                    # If the content is already plaintext credentials, output directly
+                    if "http://" in processed_input or "https://" in processed_input or "#EXTM3U" in processed_input or parse_credentials(processed_input):
+                        result = processed_input
+                        st.success("✅ Payload loaded and formatted.")
                     else:
-                        raise ValueError("No valid Base64 encoded strings found in the payload.")
+                        # Find potential base64 strings (at least 20 chars long, valid chars, optional padding)
+                        potential_b64s = re.findall(r'[A-Za-z0-9+/]{20,}={0,2}', processed_input)
+                        if not potential_b64s:
+                            potential_b64s = [processed_input.strip()]
+                        
+                        decoded_results = []
+                        for p in potential_b64s:
+                            try:
+                                pad = len(p) % 4
+                                padded = p + "=" * ((4 - pad) if pad else 0)
+                                res = base64.b64decode(padded).decode('utf-8', errors='replace')
+                                if res.strip():
+                                    decoded_results.append(res.strip())
+                            except Exception:
+                                pass
+                        
+                        if decoded_results:
+                            result = "\n\n".join(decoded_results)
+                            st.success("✅ Successfully decoded. (Use the copy button in the top right of the block)")
+                        else:
+                            result = processed_input
+                            st.info("Payload processed.")
                 else:
-                    result = base64.b64encode(b64_input.encode('utf-8')).decode('utf-8')
+                    result = base64.b64encode(processed_input.encode('utf-8')).decode('utf-8')
                     st.success("✅ Successfully encoded. (Use the copy button in the top right of the block)")
                     
                 st.code(result, language="text")
@@ -1458,7 +1582,16 @@ with tab_scanner:
 
 
     if analyze_pressed:
-        accounts = parse_credentials(pasted_data)
+        trimmed_paste = pasted_data.strip()
+        accounts = parse_credentials(trimmed_paste)
+        
+        if not accounts and (trimmed_paste.startswith("http://") or trimmed_paste.startswith("https://") or "paste.sh" in trimmed_paste or "pastebin." in trimmed_paste or "rentry." in trimmed_paste or "gist.github." in trimmed_paste) and "\n" not in trimmed_paste:
+            with st.spinner("🌐 Fetching & Decrypting remote playlist from URL..."):
+                fetched = fetch_remote_text_payload(trimmed_paste)
+                if fetched:
+                    accounts = parse_credentials(fetched)
+                    if accounts:
+                        st.success(f"Downloaded {len(fetched)} chars ({len(accounts)} credentials detected) from URL!")
         
         if not accounts:
             st.warning("No valid Xtream Codes or Stalker Portal parameters identified. Double-check your formatting input.")

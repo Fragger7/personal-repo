@@ -220,7 +220,9 @@ fun ScannerTab(onNextTab: (() -> Unit)? = null) {
                            trimmed.startsWith("https://", ignoreCase = true) || 
                            trimmed.contains("pastebin.", ignoreCase = true) || 
                            trimmed.contains("rentry.", ignoreCase = true) || 
-                           trimmed.contains("gist.github.", ignoreCase = true)) && !trimmed.contains("\n") && !trimmed.contains(" ")
+                           trimmed.contains("paste.sh", ignoreCase = true) || 
+                           trimmed.contains("gist.github.", ignoreCase = true) ||
+                           trimmed.contains("controlc.", ignoreCase = true)) && !trimmed.contains("\n") && !trimmed.contains(" ")
 
         val initialParsed = Parser.parseCredentials(DataStore.scannerInput)
         if (initialParsed.isEmpty() && isSingleUrl) {
@@ -349,7 +351,9 @@ fun ScannerTab(onNextTab: (() -> Unit)? = null) {
                                         candidateUrl.startsWith("https://", ignoreCase = true) || 
                                         candidateUrl.contains("pastebin.", ignoreCase = true) || 
                                         candidateUrl.contains("rentry.", ignoreCase = true) || 
-                                        candidateUrl.contains("gist.github.", ignoreCase = true)) {
+                                        candidateUrl.contains("paste.sh", ignoreCase = true) || 
+                                        candidateUrl.contains("gist.github.", ignoreCase = true) ||
+                                        candidateUrl.contains("controlc.", ignoreCase = true)) {
                                         ToastManager.info("Fetching remote playlist from URL...")
                                         val fetched = IPTVClient.fetchRemoteText(candidateUrl)
                                         if (!fetched.isNullOrBlank()) {

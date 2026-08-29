@@ -13,6 +13,11 @@ import java.net.URLEncoder
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.util.regex.Pattern
+import javax.crypto.Cipher
+import javax.crypto.Mac
+import javax.crypto.spec.IvParameterSpec
+import javax.crypto.spec.SecretKeySpec
+import android.util.Base64
 
 sealed class VerificationResult {
     data class Success(
@@ -683,6 +688,93 @@ object IPTVClient {
             .replace("&nbsp;", " ")
     }
 
+    private fun fetchAndDecryptPasteSh(rawUrl: String): String? {
+        return try {
+            val hashIndex = rawUrl.indexOf('#')
+            val urlPart = if (hashIndex != -1) rawUrl.substring(0, hashIndex).trim() else rawUrl.trim()
+            val clientKey = if (hashIndex != -1) rawUrl.substring(hashIndex + 1).trim() else ""
+            val idVal = urlPart.trimEnd('/').substringAfterLast('/')
+            val downloadUrl = if (urlPart.endsWith(".txt", ignoreCase = true)) urlPart else "$urlPart.txt"
+
+            val request = Request.Builder()
+                .url(downloadUrl)
+                .header("User-Agent", "curl/8.4.0")
+                .header("Accept", "text/plain, text/vnd.paste.sh-v2, text/vnd.paste.sh-v3, */*")
+                .build()
+
+            var responseBody: String? = null
+            getClient().newCall(request).execute().use { response ->
+                if (response.isSuccessful) {
+                    responseBody = response.body?.string()
+                }
+            }
+
+            if (responseBody.isNullOrBlank()) return null
+
+            // If it is a public unencrypted paste, responseBody is direct plaintext
+            if (clientKey.isBlank()) {
+                return responseBody!!.trim()
+            }
+
+            val lines = responseBody!!.lines()
+            val serverKey = if (lines.isNotEmpty()) lines[0].trim() else ""
+            val cipherB64 = if (lines.size > 1) lines.drop(1).joinToString("").trim() else ""
+
+            if (cipherB64.isBlank()) {
+                return responseBody!!.trim()
+            }
+
+            val rawBytes = try {
+                Base64.decode(cipherB64, Base64.DEFAULT)
+            } catch (e: Exception) {
+                return responseBody!!.trim()
+            }
+
+            // Verify "Salted__" header (8 bytes)
+            if (rawBytes.size < 16) return responseBody!!.trim()
+            val headerMagic = String(rawBytes, 0, 8, Charsets.US_ASCII)
+            if (headerMagic != "Salted__") {
+                return responseBody!!.trim()
+            }
+
+            val salt = rawBytes.copyOfRange(8, 16)
+            val ciphertext = rawBytes.copyOfRange(16, rawBytes.size)
+
+            val passphrase = "${idVal}${serverKey}${clientKey}https://paste.sh"
+
+            // Key derivation: PBKDF2 with HMAC-SHA512, iter=1, dkLen=48 (32 bytes AES Key + 16 bytes IV)
+            val mac = Mac.getInstance("HmacSHA512")
+            val keySpec = SecretKeySpec(passphrase.toByteArray(Charsets.UTF_8), "HmacSHA512")
+            mac.init(keySpec)
+            mac.update(salt)
+            mac.update(byteArrayOf(0x00, 0x00, 0x00, 0x01))
+            val keyAndIv = mac.doFinal()
+
+            val key = keyAndIv.copyOfRange(0, 32)
+            val iv = keyAndIv.copyOfRange(32, 48)
+
+            val cipher = Cipher.getInstance("AES/CBC/PKCS5Padding")
+            cipher.init(Cipher.DECRYPT_MODE, SecretKeySpec(key, "AES"), IvParameterSpec(iv))
+            val decryptedBytes = cipher.doFinal(ciphertext)
+            var decryptedStr = String(decryptedBytes, Charsets.UTF_8)
+
+            // Remove any leading metadata headers (Subject: ... / Content-Type: ...) if present
+            if (decryptedStr.startsWith("Subject:", ignoreCase = true) || decryptedStr.startsWith("Content-Type:", ignoreCase = true)) {
+                val splitIndex = decryptedStr.indexOf("\n\n")
+                val splitIndexCr = decryptedStr.indexOf("\r\n\r\n")
+                if (splitIndex != -1) {
+                    decryptedStr = decryptedStr.substring(splitIndex + 2).trim()
+                } else if (splitIndexCr != -1) {
+                    decryptedStr = decryptedStr.substring(splitIndexCr + 4).trim()
+                }
+            }
+
+            if (decryptedStr.isNotBlank()) decryptedStr else responseBody
+        } catch (e: Exception) {
+            null
+        }
+    }
+
     suspend fun fetchRemoteText(rawUrl: String): String? = withContext(Dispatchers.IO) {
         try {
             var targetUrl = rawUrl.trim()
@@ -691,6 +783,14 @@ object IPTVClient {
             // Prepend https:// if protocol is missing
             if (!targetUrl.startsWith("http://", ignoreCase = true) && !targetUrl.startsWith("https://", ignoreCase = true)) {
                 targetUrl = "https://$targetUrl"
+            }
+
+            // Special decryption handler for paste.sh links
+            if (targetUrl.contains("paste.sh/", ignoreCase = true)) {
+                val decrypted = fetchAndDecryptPasteSh(targetUrl)
+                if (!decrypted.isNullOrBlank()) {
+                    return@withContext decrypted
+                }
             }
 
             // Transform standard pastebin/github/rentry web links to direct raw text links
