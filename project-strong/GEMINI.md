@@ -504,6 +504,17 @@ Create a dedicated **⚙️ Settings & About** tab or modal inside the Android a
    * Material 3 dynamic color scheme engine supporting *Cyber Sherlock Amber/Navy (Default)*, *Midnight Purple*, *Ocean Blue*, *Crimson Dark*, and *System Monet*.
 5. **Landscape Split-Pane Master-Detail Tablet/Foldable View**:
    * Expand wide screens into side-by-side master list + live detail inspector pane.
+6. **Provider Intelligence Hardening & Cross-Verification Engine (Double/Triple Check)**:
+   * **Multi-Layer Weighted Consensus**: Combine discrete signals (1. Server Header & Timezone + 2. Metadata Welcome Message + 3. Distinct Delimiter Syntax e.g. `┃AT┃`, `★`, `▎` + 4. Dummy Watermark Channels e.g. `STARZPLAY SPORT 8K` + 5. Community URLs e.g. `t.me`) with a weighted scoring threshold before declaring an upstream provider.
+   * **Confidence Breakdown Tooltip / Inspector**: Expose the exact forensic evidence chain in the UI (e.g., "Identified: Strong 8K via Welcome Message [30%] + Superscript ³⁸⁴⁰ᴾ formatting [35%] + Server Timezone Amsterdam [15%] -> 95% Confidence").
+   * **False-Positive Guardrails**: Avoid overly broad generic token matches (e.g. `VIP`, `HD`, `4K`, `Movies`, `Sports`) and require structural delimiter patterns or unique Unicode small-cap markers.
+7. **Automated Weekly Provider Intelligence Sync (GitHub Actions Cron Job)**:
+   * Implement a scheduled GitHub Actions workflow (`.github/workflows/scrape-provider-intel.yml`) running weekly (e.g. every Sunday at 00:00 UTC).
+   * **Workflow Actions**:
+     1. Probes `https://search.streamcheck.pro/api/providers` and query search endpoints for new upstream providers and updated channel delimiters.
+     2. Extracts and merges new provider signatures and domain mappings into `project-strong/provider_intelligence.json`.
+     3. Syncs updated `provider_intelligence.json` directly into `project-strong/android/app/src/main/assets/provider_intelligence.json`.
+     4. Commits and pushes changes back to `main` with an automated changelog summary.
 
 ---
 

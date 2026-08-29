@@ -240,6 +240,11 @@ Create a dedicated **⚙️ Settings & About** tab or modal inside the Android a
      * **Coroutine Dispatcher Throttling**: Use `Dispatchers.IO.limitedParallelism(24..32)` and unified coroutine `Semaphore` limits to prevent thread starvation.
      * **Virtual LazyList Pagination / Index Keys**: Ensure Compose `LazyColumn` uses stable compound keys (`key = { node.baseUrl + node.user }`) with lightweight view-model state mapping.
 
+4. **Phase 4: Provider Intelligence Hardening & Periodic Automation Pipeline**
+   * **Multi-Tier Forensic Consensus**: Require a 2-point or 3-point weighted consensus (e.g. Hostname/Port pattern + Message/Server header + Channel delimiter style) before asserting high-confidence provider identity to avoid false positives.
+   * **Evidence Inspector UI**: Display the exact forensic match chain directly in the intelligence card so users understand why a node was tagged with a specific provider.
+   * **Automated Weekly GitHub Actions Scraper**: A scheduled cron workflow (`.github/workflows/scrape-provider-intel.yml`) to scrape and ingest emerging provider signatures from `search.streamcheck.pro` weekly, automatically syncing to `provider_intelligence.json` and Android app assets.
+
 ### ✅ Completed Milestones
 1. **Context-Aware Smart Floating Scrollers (`SmartFloatingScroller.kt`)**: Replaced static scroll buttons across Base64Tab, ScannerTab, XtreamTab, StalkerTab, CommittedTab, and FullScreenCatalogExplorer with dynamic, context-aware `SmartLazyListScroller` and `SmartColumnScroller` components utilizing `derivedStateOf` to only reveal scroll buttons when list overflow or user scrolling is actively detected.
 2. **Integrated In-App IPTV Stream & Channel Player (Media3 / ExoPlayer - VERIFIED & COMPLETED)**: Hardware-accelerated video playback modal with full-screen orientation lock, auto-hiding controls (3s inactivity timer / tap-to-show), labeled action buttons, scrub timeline slider, and live bitrate/buffer telemetry.
