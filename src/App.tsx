@@ -10,6 +10,28 @@ import { PushoverSettingsModal } from "./components/PushoverSettingsModal";
 import { DealRecord, DashboardStats, FilterState } from "./types";
 import { Sparkles, Layers, RefreshCw, Info, AlertTriangle } from "lucide-react";
 
+const DISMISSED_STORAGE_KEY = "ws_dismissed_deal_ids_v2";
+
+const getDismissedIds = (): Set<string> => {
+  try {
+    const raw = localStorage.getItem(DISMISSED_STORAGE_KEY);
+    return new Set(raw ? JSON.parse(raw) : []);
+  } catch {
+    return new Set();
+  }
+};
+
+const addDismissedId = (id: string, url?: string) => {
+  try {
+    const set = getDismissedIds();
+    set.add(id);
+    if (url && url !== "#") set.add(url);
+    localStorage.setItem(DISMISSED_STORAGE_KEY, JSON.stringify(Array.from(set)));
+  } catch (e) {
+    console.warn("Error saving dismissed id to localStorage", e);
+  }
+};
+
 export function App() {
   const [deals, setDeals] = useState<DealRecord[]>([]);
   const [stats, setStats] = useState<DashboardStats | null>(null);
@@ -31,7 +53,7 @@ export function App() {
     search: "",
     onlyHighYield: false,
     sortBy: "newest",
-    viewMode: "grid",
+    viewMode: "table",
   });
 
   const showToast = (msg: string) => {
@@ -43,20 +65,34 @@ export function App() {
 
   const fetchDeals = useCallback(async () => {
     try {
-      // In production (Vercel), fetch directly from the raw GitHub JSON
-      // In development (npm run dev), fetch from the local Express server
-      const url = import.meta.env.PROD 
-        ? "https://raw.githubusercontent.com/Fragger7/personal-repo/main/ws-deal-hunter/deals.json"
-        : "/api/deals";
+      // In production (Vercel), try static /deals.json on same origin first, then raw GitHub with cache-buster
+      const endpoints = import.meta.env.PROD
+        ? ["/deals.json", `https://raw.githubusercontent.com/Fragger7/personal-repo/main/ws-deal-hunter/deals.json?t=${Date.now()}`]
+        : ["/api/deals", "/deals.json"];
 
-      const res = await fetch(url);
-      const data = await res.json();
-      
-      // Handle both formats (raw array vs express object)
-      if (Array.isArray(data)) {
-        setDeals(data);
-      } else if (data.success && Array.isArray(data.deals)) {
-        setDeals(data.deals);
+      let fetchedData: DealRecord[] | null = null;
+      for (const endpoint of endpoints) {
+        try {
+          const res = await fetch(endpoint);
+          if (res.ok) {
+            const data = await res.json();
+            if (Array.isArray(data) && data.length > 0) {
+              fetchedData = data;
+              break;
+            } else if (data && data.success && Array.isArray(data.deals) && data.deals.length > 0) {
+              fetchedData = data.deals;
+              break;
+            }
+          }
+        } catch {
+          // continue to next fallback
+        }
+      }
+
+      if (Array.isArray(fetchedData)) {
+        const dismissed = getDismissedIds();
+        const activeDeals = fetchedData.filter((d: DealRecord) => !dismissed.has(d.id) && !dismissed.has(d.url));
+        setDeals(activeDeals);
       }
     } catch (err) {
       console.error("Failed to fetch deals:", err);
@@ -202,11 +238,25 @@ export function App() {
     showToast(`Evaluated: ${newDeal.title.slice(0, 30)}... (Score: ${newDeal.deal_score}/10)`);
   };
 
+  const handleDeleteDeal = async (dealId: string) => {
+    const targetDeal = deals.find((d) => d.id === dealId);
+    addDismissedId(dealId, targetDeal?.url);
+    setDeals((prev) => prev.filter((d) => d.id !== dealId));
+    showToast("🗑️ Listing dismissed & permanently removed from dashboard");
+    try {
+      await fetch(`/api/deals/${encodeURIComponent(dealId)}`, {
+        method: "DELETE",
+      });
+    } catch (err) {
+      console.warn("Could not delete from backend:", err);
+    }
+  };
+
   const handleResetFilters = () => {
     setFilters({
       minScore: 0.0,
       maxPrice: 2500,
-      sources: ["ebay", "reddit", "swappa"],
+      sources: ["ebay", "reddit", "swappa", "bestbuy", "bh_photo", "dell_refurbished", "microcenter", "goodwill", "lenovo_outlet", "syndicated"],
       search: "",
       onlyHighYield: false,
       sortBy: "score",
@@ -250,33 +300,22 @@ export function App() {
       <div className="fixed inset-0 pointer-events-none opacity-[0.03] z-0" style={{ backgroundImage: 'linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)', backgroundSize: '50px 50px' }} />
       <div className="crt-scanline fixed" />
 
-      {/* Top Header */}
-      <div className="relative z-20 border-b border-[#222] bg-[#0a0a0abf] backdrop-blur-md sticky top-0">
-        <Header
-          onSync={handleSyncEndpoints}
-          isSyncing={isSyncing}
-          onOpenEvaluate={() => setIsEvaluateOpen(true)}
-          onOpenCode={() => setIsCodeOpen(true)}
-          onOpenNotify={() => setIsNotifyOpen(true)}
-          onGitPush={handleGitPush}
-          isPushingGit={isPushingGit}
-          totalDeals={deals.length}
-        />
-        
-        {/* Horizontal Ribbon Filter Bar */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <FilterBar
-            filters={filters}
-            onChange={setFilters}
-            onReset={handleResetFilters}
-          />
-        </div>
-      </div>
+      {/* Top Header (Clean and slim, no giant sticky wrapper) */}
+      <Header
+        onSync={handleSyncEndpoints}
+        isSyncing={isSyncing}
+        onOpenEvaluate={() => setIsEvaluateOpen(true)}
+        onOpenCode={() => setIsCodeOpen(true)}
+        onOpenNotify={() => setIsNotifyOpen(true)}
+        onGitPush={handleGitPush}
+        isPushingGit={isPushingGit}
+        totalDeals={deals.length}
+      />
 
       {/* Main Layout Container */}
-      <main className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="relative z-10 max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-3 sm:py-6">
         
-        {/* KPI Metrics Dashboard (Collapsible & Click-to-Filter) */}
+        {/* KPI Metrics Dashboard (Compact & Collapsible) */}
         <KpiMetrics
           stats={stats}
           filteredCount={filteredDeals.length}
@@ -285,12 +324,20 @@ export function App() {
           onResetFilters={handleResetFilters}
         />
 
-        <div className="flex items-center justify-between mb-8 mt-4 pb-2 border-b border-[#222]">
-          <h2 className="text-[11px] font-bold uppercase tracking-widest text-[#666] auto-glitch">
-            <span className="text-emerald-500 tech-text">{filteredDeals.length}</span> Active Opportunities
+        {/* Filter Bar (In natural document flow, never covering listings) */}
+        <FilterBar
+          filters={filters}
+          onChange={setFilters}
+          onReset={handleResetFilters}
+        />
+
+        <div className="flex items-center justify-between mb-4 mt-2 pb-2 border-b border-[#222]">
+          <h2 className="text-[11px] font-bold uppercase tracking-widest text-[#666]">
+            <span className="text-emerald-400 tech-text">{filteredDeals.length}</span> Active Vetted Deals
           </h2>
-          <div className="flex gap-2">
-            <span className="inline-block w-2 h-2 bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)] animate-pulse" />
+          <div className="flex items-center gap-2 text-[10px] text-[#888] font-mono">
+            <span className="inline-block w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)] animate-pulse" />
+            <span className="uppercase tracking-wider">Live</span>
           </div>
         </div>
 
@@ -325,6 +372,7 @@ export function App() {
                 key={deal.id}
                 deal={deal}
                 onSendPush={handleSendPush}
+                onDeleteDeal={handleDeleteDeal}
               />
             ))}
           </div>
@@ -332,6 +380,7 @@ export function App() {
           <DealTable
             deals={filteredDeals}
             onSendPush={handleSendPush}
+            onDeleteDeal={handleDeleteDeal}
           />
         )}
       </main>

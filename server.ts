@@ -44,6 +44,18 @@ function writeDealsAtomic(deals: any[]): void {
   const tempPath = path.join(process.cwd(), `deals_${Date.now()}.tmp`);
   fs.writeFileSync(tempPath, JSON.stringify(deals, null, 2), "utf-8");
   fs.renameSync(tempPath, DEALS_FILE);
+
+  // Mirror sync to public/deals.json and dist/deals.json if folders exist
+  for (const folder of ["public", "dist"]) {
+    const targetDir = path.join(process.cwd(), folder);
+    if (fs.existsSync(targetDir) && fs.statSync(targetDir).isDirectory()) {
+      try {
+        fs.writeFileSync(path.join(targetDir, "deals.json"), JSON.stringify(deals, null, 2), "utf-8");
+      } catch (err) {
+        console.warn(`[server] Warning syncing to ${folder}/deals.json:`, err);
+      }
+    }
+  }
 }
 
 // ==========================================
@@ -89,6 +101,26 @@ app.get("/api/deals", (req: Request, res: Response) => {
       count: filtered.length,
       total_in_store: deals.length,
       deals: filtered,
+    });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 2.5 Delete single deal by ID or URL
+app.delete("/api/deals/:id", (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const deals = readDeals();
+    const filtered = deals.filter((d: any) => d.id !== id && d.url !== id);
+    const deletedCount = deals.length - filtered.length;
+    if (deletedCount > 0) {
+      writeDealsAtomic(filtered);
+    }
+    res.json({
+      success: true,
+      deletedCount,
+      remaining: filtered.length,
     });
   } catch (err: any) {
     res.status(500).json({ success: false, error: err.message });

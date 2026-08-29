@@ -11,6 +11,8 @@ Continuous background pipeline orchestrator:
 from __future__ import annotations
 
 import argparse
+import json
+import os
 import signal
 import subprocess
 import sys
@@ -18,6 +20,7 @@ import threading
 import time
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 if hasattr(sys.stdout, "reconfigure"):
@@ -54,16 +57,20 @@ class DealHunterDaemon:
     def __init__(
         self,
         poll_interval: int = 180,
-        min_deal_score: float = 8.5,
-        max_alert_price: float = 750.0,
+        min_deal_score: float = 9.0,
+        max_alert_price: float = 850.0,
         storage_path: str = "deals.json",
         auto_push: bool = False,
         discord_webhook: Optional[str] = None,
+        heartbeat_interval_cycles: int = 6,
+        once: bool = False,
     ) -> None:
         self.poll_interval = poll_interval
         self.min_deal_score = min_deal_score
         self.max_alert_price = max_alert_price
         self.auto_push = auto_push
+        self.once = once
+        self.heartbeat_interval_cycles = int(os.environ.get("HEARTBEAT_INTERVAL_CYCLES", heartbeat_interval_cycles))
         
         self.storage = AtomicDealStorage(filepath=storage_path)
         self.collector = HardwareCollectorHub()
@@ -93,7 +100,8 @@ class DealHunterDaemon:
     def run_cycle(self) -> Dict[str, Any]:
         """Execute a single end-to-end collection, evaluation, notification cycle."""
         cycle_start = time.time()
-        self.log("Starting hardware sync cycle across eBay, Reddit, and Swappa...")
+        current_cycle = self.status.cycle_count + 1
+        self.log(f"Starting hardware sync cycle #{current_cycle} across eBay, Reddit, and Swappa...")
         
         # 1. Collect
         try:
@@ -104,19 +112,34 @@ class DealHunterDaemon:
             err_msg = f"Collection failed: {e}"
             self.log(err_msg)
             self.status.last_error = err_msg
+            # Dispatch urgent deadman error alert to Telegram
+            if self.telegram_notifier.bot_token and self.telegram_notifier.chat_id:
+                self.telegram_notifier.send_error_alert("HardwareCollectorHub", str(e), current_cycle)
             return {"error": err_msg}
 
-        # 2. Filter out already known listings
+        # 2. Filter out already known listings & reap dead/sold deals
         existing_deals = self.storage.get_all()
-        known_ids = {d.id for d in existing_deals}
-        known_urls = {d.url for d in existing_deals if d.url and d.url != "#"}
+        
+        # Liveness & Expiry Reaper: Automatically purge sold/ended/404 deals
+        reaped_count = self.reap_dead_and_sold_deals(existing_deals)
+        if reaped_count > 0:
+            existing_deals = self.storage.get_all()
+
+        existing_id_map = {d.id: d for d in existing_deals}
+        existing_url_map = {d.url: d for d in existing_deals if d.url and d.url != "#"}
 
         new_listings: List[RawListing] = []
         for raw in raw_listings:
-            if raw.id not in known_ids and (not raw.url or raw.url not in known_urls):
+            prev_deal = existing_id_map.get(raw.id) or (existing_url_map.get(raw.url) if raw.url else None)
+            if prev_deal is None:
+                new_listings.append(raw)
+            elif raw.price > 0 and (prev_deal.price - raw.price) >= 50.0:
+                # Active Price Drop detected on tracked listing!
+                price_cut = prev_deal.price - raw.price
+                self.log(f"⚡ PRICE DROP DETECTED: {raw.title[:45]} dropped from ${prev_deal.price:.0f} to ${raw.price:.0f} (-${price_cut:.0f})")
                 new_listings.append(raw)
 
-        self.log(f"Found {len(new_listings)} new unanalyzed candidate hardware listings.")
+        self.log(f"Found {len(new_listings)} new or price-dropped candidate hardware listings.")
 
         evaluated_deals: List[DealRecord] = []
         alerts_in_cycle = 0
@@ -127,9 +150,9 @@ class DealHunterDaemon:
                 self.log(f"Evaluating [{raw.source.upper()}] ${raw.price:.0f} - {raw.title[:60]}...")
                 deal = self.evaluator.evaluate_listing(raw)
                 
-                # Quality Gate: Only drop hard-excluded junk, parts, or accessories (Score 0.0)
-                if deal.deal_score <= 0.0 or "hard excluded" in deal.summary.lower():
-                    self.log(f"⏩ Dropped Excluded: {raw.title[:45]} (Score {deal.deal_score}/10 | {deal.actionable_recommendation})")
+                # Quality Gate: Only persist genuine deals (Score >= 7.0). Drop non-arbitrage retail clutter (< 7.0)
+                if deal.deal_score < 7.0 or "hard excluded" in deal.summary.lower():
+                    self.log(f"⏩ Dropped Non-Deal: {raw.title[:45]} (Score {deal.deal_score}/10 | {deal.actionable_recommendation})")
                     continue
 
                 evaluated_deals.append(deal)
@@ -147,7 +170,8 @@ class DealHunterDaemon:
 
                     # Also send to Telegram if configured
                     if self.telegram_notifier.bot_token and self.telegram_notifier.chat_id:
-                        tg_res = self.telegram_notifier.send_deal_alert(deal)
+                        usage_stats = self.evaluator.usage_tracker.get_summary()
+                        tg_res = self.telegram_notifier.send_deal_alert(deal, usage_info=usage_stats)
                         if tg_res.success:
                             self.log(f"✈️ Telegram alert dispatched for deal: {deal.id}")
 
@@ -165,7 +189,7 @@ class DealHunterDaemon:
             upserted = self.storage.upsert_many(evaluated_deals)
             self.log(f"Atomically committed {upserted} evaluated deals to {self.storage.filepath.name}.")
 
-        # 6. Always-On Telegram Pulse Digest & Heartbeat (Dispatches every cycle)
+        # 6. Telegram Pulse Digest & Periodic Heartbeat (Every N hours/cycles or when new deals arrive)
         if self.telegram_notifier.bot_token and self.telegram_notifier.chat_id:
             total_active = len(self.storage.get_all())
             usage = self.evaluator.usage_tracker.get_summary()
@@ -175,23 +199,27 @@ class DealHunterDaemon:
                 for d in evaluated_deals[:5]:
                     summary_lines.append(f"• <b>${d.price:,.0f}</b> | {d.deal_score}/10 | {d.title[:45]}...")
                 digest_html = (
-                    f"📥 <b>Sync Cycle #{self.status.cycle_count + 1} Complete</b>\n"
-                    f"✨ Discovered <b>{len(evaluated_deals)} new listings</b> (Total Active: {total_active})\n\n"
+                    f"📥 <b>Sync Cycle #{current_cycle} Complete</b>\n"
+                    f"✨ Discovered <b>{len(evaluated_deals)} new deals</b> (Total Active: {total_active})\n\n"
                     + "\n".join(summary_lines)
-                    + f"\n\n🤖 <b>AI Usage:</b> {usage['cycle_calls']} calls ({usage['total_tokens']:,} tokens) | ~{usage['estimated_daily_left']:,}/1,500 daily requests left\n"
-                    + f"\n👉 <a href=\"https://wsdealhunter.streamlit.app/\"><b>[OPEN WEB DASHBOARD]</b></a>"
+                    + f"\n\n🤖 <b>AI Usage:</b> {usage['cycle_calls']} calls ({usage['total_tokens']:,} tokens) | ~{usage['estimated_daily_left']:,}/1,500 daily requests left\n\n"
+                    + self.telegram_notifier._format_dashboard_links()
                 )
                 self.telegram_notifier.send_system_message("Inventory Updated", digest_html)
-            else:
+            elif (
+                (not self.once and current_cycle % self.heartbeat_interval_cycles == 0)
+                or (self.once and datetime.now(timezone.utc).hour % self.heartbeat_interval_cycles == 0)
+            ):
+                # Periodic Heartbeat (Sprinkled every 6 hours instead of buzzing every hour)
                 heartbeat_html = (
-                    f"💓 <b>Sync Cycle #{self.status.cycle_count + 1} Heartbeat</b>\n"
+                    f"💓 <b>Autonomous Heartbeat (Every {self.heartbeat_interval_cycles}h)</b>\n"
                     f"🔍 Scanned <b>{len(raw_listings)} listings</b> across eBay, Reddit & Syndicated Feeds.\n"
-                    f"📊 <b>0 new unanalyzed items</b> this hour (<b>{total_active} active deals</b> monitored in store).\n"
-                    f"🤖 <b>AI Usage:</b> {usage['total_calls']} total calls ({usage['total_tokens']:,} tokens) | ~{usage['estimated_daily_left']:,}/1,500 daily free requests left\n\n"
-                    f"⚡ <i>Autonomous Scraper Online & Standing By</i>\n"
-                    f"👉 <a href=\"https://wsdealhunter.streamlit.app/\"><b>[OPEN WEB DASHBOARD]</b></a>"
+                    f"📊 <b>{total_active} active deals</b> monitored in store (0 unanalyzed items this interval).\n"
+                    f"🤖 <b>AI Usage:</b> {usage['total_calls']} total calls ({usage['total_tokens']:,} tokens) | ~{usage['estimated_daily_left']:,}/1,500 requests left\n\n"
+                    f"⚡ <i>Autonomous Scraper Online & Standing By (Heartbeat every {self.heartbeat_interval_cycles}h)</i>\n"
+                    + self.telegram_notifier._format_dashboard_links()
                 )
-                self.telegram_notifier.send_system_message("Bot Heartbeat", heartbeat_html)
+                self.telegram_notifier.send_system_message(f"Heartbeat ({self.heartbeat_interval_cycles}h)", heartbeat_html)
 
         # 7. Optional auto-push to GitHub repo
         if self.auto_push and evaluated_deals:
@@ -217,6 +245,221 @@ class DealHunterDaemon:
             "alerts_sent": alerts_in_cycle,
             "duration_seconds": elapsed,
         }
+
+    def reap_dead_and_sold_deals(self, current_deals: List[DealRecord]) -> int:
+        """
+        Probe status of stored listings and automatically purge any sold, 404, or ended items.
+        Utilizes eBay search-by-ID validation, Reddit post flair inspection, and retail stock checks.
+        """
+        if not current_deals:
+            return 0
+
+        from concurrent.futures import ThreadPoolExecutor
+        import re
+
+        try:
+            from curl_cffi import requests as cffi_requests
+        except ImportError:
+            cffi_requests = None
+
+        try:
+            import cloudscraper
+            cloud_scraper = cloudscraper.create_scraper(browser={"browser": "chrome", "platform": "windows", "desktop": True})
+        except ImportError:
+            cloud_scraper = None
+
+        try:
+            from bs4 import BeautifulSoup
+        except ImportError:
+            BeautifulSoup = None
+
+        dead_ids: List[str] = []
+        headers = {
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+            "Accept-Language": "en-US,en;q=0.9",
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+        }
+
+        def check_deal_liveness(deal: DealRecord) -> Optional[str]:
+            if not deal.url or deal.url == "#":
+                return None
+            url = deal.url.strip()
+            
+            try:
+                # 1. eBay Liveness Check (Search-by-ID validation & DOM inspection)
+                if "ebay.com" in url:
+                    item_id_match = re.search(r"/itm/([0-9]{9,14})", url)
+                    if item_id_match:
+                        item_id = item_id_match.group(1)
+                        search_url = f"https://www.ebay.com/sch/i.html?_nkw={item_id}"
+                        
+                        resp_text = ""
+                        status_code = 200
+                        if cffi_requests:
+                            try:
+                                r = cffi_requests.get(search_url, impersonate="chrome99_android", headers=headers, timeout=5.0)
+                                resp_text = r.text
+                                status_code = r.status_code
+                            except Exception:
+                                pass
+                        
+                        if not resp_text and cloud_scraper:
+                            try:
+                                r = cloud_scraper.get(search_url, timeout=5.0)
+                                resp_text = r.text
+                                status_code = r.status_code
+                            except Exception:
+                                pass
+
+                        if status_code in [404, 410]:
+                            return deal.id
+
+                        if resp_text:
+                            if BeautifulSoup:
+                                soup = BeautifulSoup(resp_text, "html.parser")
+                                items = soup.select(".s-item, .s-card, li.s-item")
+                                found_active = any(
+                                    item_id in (item.select_one("a.s-item__link, a[href*='/itm/']") or {}).get("href", "")
+                                    for item in items
+                                )
+                                if not found_active:
+                                    return deal.id
+                            else:
+                                if item_id not in resp_text or "0 results found" in resp_text.lower() or "no exact matches found" in resp_text.lower():
+                                    return deal.id
+
+                # 2. Reddit Liveness Check (JSON and HTML inspection)
+                elif "reddit.com" in url:
+                    # Clean URL to get JSON endpoint
+                    clean_url = url.split("?")[0].rstrip("/")
+                    json_url = f"{clean_url}.json"
+                    
+                    req_headers = {"User-Agent": "WorkstationDealHunter/3.0 (Arbitrage Monitor)"}
+                    resp_text = ""
+                    status_code = 200
+
+                    if cffi_requests:
+                        try:
+                            r = cffi_requests.get(json_url, headers=req_headers, timeout=5.0)
+                            resp_text = r.text
+                            status_code = r.status_code
+                        except Exception:
+                            pass
+                    
+                    if not resp_text and cloud_scraper:
+                        try:
+                            r = cloud_scraper.get(url, timeout=5.0)
+                            resp_text = r.text
+                            status_code = r.status_code
+                        except Exception:
+                            pass
+
+                    if status_code in [404, 410]:
+                        return deal.id
+
+                    if resp_text:
+                        text_lower = resp_text.lower()
+                        if (
+                            "linkflair-closed" in text_lower
+                            or "linkflair-sold" in text_lower
+                            or '"link_flair_text": "closed"' in text_lower
+                            or '"link_flair_text": "sold"' in text_lower
+                            or '"link_flair_text": "pending"' in text_lower
+                            or "[sold]" in text_lower
+                            or "[closed]" in text_lower
+                            or "this post was removed" in text_lower
+                            or "this post has been removed" in text_lower
+                            or '"author": "[deleted]"' in text_lower
+                            or '"removed_by_category"' in text_lower
+                        ):
+                            return deal.id
+
+                # 3. Swappa Liveness Check
+                elif "swappa.com" in url:
+                    resp_text = ""
+                    status_code = 200
+                    if cffi_requests:
+                        try:
+                            r = cffi_requests.get(url, impersonate="chrome120", headers=headers, timeout=5.0)
+                            resp_text = r.text
+                            status_code = r.status_code
+                        except Exception:
+                            pass
+                    if not resp_text and cloud_scraper:
+                        try:
+                            r = cloud_scraper.get(url, timeout=5.0)
+                            resp_text = r.text
+                            status_code = r.status_code
+                        except Exception:
+                            pass
+
+                    if status_code in [404, 410]:
+                        return deal.id
+                    if resp_text:
+                        text_lower = resp_text.lower()
+                        if (
+                            "listing closed" in text_lower
+                            or "this listing has been sold" in text_lower
+                            or "listing not found" in text_lower
+                            or "this listing is no longer active" in text_lower
+                        ):
+                            return deal.id
+
+                # 4. Retail & Refurbished Liveness Check (B&H, Best Buy, Dell, Lenovo, Goodwill)
+                else:
+                    resp_text = ""
+                    status_code = 200
+                    if cffi_requests:
+                        try:
+                            r = cffi_requests.get(url, impersonate="chrome120", headers=headers, timeout=5.0)
+                            resp_text = r.text
+                            status_code = r.status_code
+                        except Exception:
+                            pass
+                    if not resp_text and cloud_scraper:
+                        try:
+                            r = cloud_scraper.get(url, timeout=5.0)
+                            resp_text = r.text
+                            status_code = r.status_code
+                        except Exception:
+                            pass
+
+                    if status_code in [404, 410]:
+                        return deal.id
+
+                    if resp_text:
+                        text_lower = resp_text.lower()
+                        if "bhphotovideo.com" in url:
+                            if "no longer available" in text_lower or "item unavailable" in text_lower or "discontinued" in text_lower:
+                                return deal.id
+                        elif "bestbuy.com" in url:
+                            if "sold out" in text_lower or "this item is currently unavailable" in text_lower or "not available for shipping" in text_lower:
+                                return deal.id
+                        elif "dellrefurbished.com" in url:
+                            if "requested product could not be found" in text_lower or "out of stock" in text_lower:
+                                return deal.id
+                        elif "lenovo.com" in url:
+                            if "temporarily out of stock" in text_lower or "no longer available" in text_lower or "out of stock" in text_lower:
+                                return deal.id
+                        elif "shopgoodwill.com" in url:
+                            if "auction closed" in text_lower or "this auction has ended" in text_lower:
+                                return deal.id
+
+            except Exception:
+                pass
+            return None
+
+        with ThreadPoolExecutor(max_workers=8) as executor:
+            results = executor.map(check_deal_liveness, current_deals)
+            for res_id in results:
+                if res_id:
+                    dead_ids.append(res_id)
+
+        if dead_ids:
+            purged = self.storage.delete_many(dead_ids)
+            self.log(f"🗑️ Reaped {purged} dead/sold/ended listings from deals.json: {dead_ids}")
+            return purged
+        return 0
 
     def start(self) -> None:
         """Start daemon loop in background thread."""
@@ -259,8 +502,9 @@ def main() -> None:
     parser.add_argument("--min-score", type=float, default=8.5, help="Minimum Deal Score for mobile push alerts (default: 8.5)")
     parser.add_argument("--max-price", type=float, default=750.0, help="Maximum Asking Price for mobile push alerts (default: 750.0)")
     parser.add_argument("--once", action="store_true", help="Run a single evaluation cycle and exit")
+    parser.add_argument("--briefing", action="store_true", help="Send scheduled 12:00 PM CST executive deal briefing and exit")
     parser.add_argument("--auto-push", action="store_true", help="Auto-push deals.json to GitHub when new deals arrive")
-    parser.add_argument("--discord-webhook", type=str, default="", help="Discord webhook URL for 100% free mobile push alerts")
+    parser.add_argument("--discord-webhook", type=str, default="", help="Discord webhook URL for mobile push alerts")
     parser.add_argument("--storage", type=str, default="deals.json", help="Path to atomic storage JSON file")
     
     args = parser.parse_args()
@@ -272,7 +516,16 @@ def main() -> None:
         storage_path=args.storage,
         auto_push=args.auto_push,
         discord_webhook=args.discord_webhook or None,
+        once=args.once or args.briefing,
     )
+
+    if args.briefing:
+        print("\n=== Dispatching 12:00 PM CST Executive Deal Briefing ===")
+        all_deals = daemon.storage.get_all()
+        all_deals.sort(key=lambda d: (d.deal_score, d.estimated_profit), reverse=True)
+        res = daemon.telegram_notifier.send_executive_briefing(all_deals[:3])
+        print(f"Briefing Status: {res.message}")
+        return
 
     if args.once:
         print("\n=== Running Single Hardware Arbitrage Scan ===")

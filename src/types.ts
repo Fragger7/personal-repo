@@ -9,7 +9,7 @@ export interface HardwareSpecs {
 
 export interface DealRecord {
   id: string;
-  source: "ebay" | "reddit" | "swappa" | "manual";
+  source: string;
   title: string;
   price: number;
   url: string;

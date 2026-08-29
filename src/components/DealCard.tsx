@@ -1,13 +1,14 @@
 import React, { useState } from "react";
-import { ExternalLink, Bell, CheckCircle2, Cpu, HardDrive, Monitor, Shield, Sparkles, Flame } from "lucide-react";
+import { ExternalLink, Bell, CheckCircle2, Cpu, HardDrive, Monitor, Shield, Sparkles, Flame, Trash2 } from "lucide-react";
 import { DealRecord } from "../types";
 
 interface DealCardProps {
   deal: DealRecord;
   onSendPush: (deal: DealRecord) => Promise<void>;
+  onDeleteDeal?: (dealId: string) => void;
 }
 
-export const DealCard: React.FC<DealCardProps> = ({ deal, onSendPush }) => {
+export const DealCard: React.FC<DealCardProps> = ({ deal, onSendPush, onDeleteDeal }) => {
   const [isSending, setIsSending] = useState(false);
   const [pushSent, setPushSent] = useState(deal.alerted);
 
@@ -179,6 +180,16 @@ export const DealCard: React.FC<DealCardProps> = ({ deal, onSendPush }) => {
             <Bell className={`h-4 w-4 ${isSending ? "animate-pulse text-amber-500" : ""}`} />
           )}
         </button>
+
+        {onDeleteDeal && (
+          <button
+            onClick={() => onDeleteDeal(deal.id)}
+            className="inline-flex items-center justify-center p-2.5 text-xs font-semibold border border-rose-900/40 bg-rose-950/30 hover:bg-rose-900/60 text-rose-400 hover:text-rose-200 transition duration-150 active:scale-95"
+            title="Delete / Dismiss deal from list"
+          >
+            <Trash2 className="h-4 w-4" />
+          </button>
+        )}
       </div>
     </div>
   );

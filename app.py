@@ -12,8 +12,18 @@ from __future__ import annotations
 
 import json
 import os
+import sys
+from pathlib import Path
 from datetime import datetime
 from typing import List
+
+# Dynamic path resolution for Streamlit Cloud running from root or ws-deal-hunter/
+current_dir = Path(__file__).resolve().parent
+ws_sub = current_dir / "ws-deal-hunter"
+if ws_sub.exists() and str(ws_sub) not in sys.path:
+    sys.path.insert(0, str(ws_sub))
+if str(current_dir) not in sys.path:
+    sys.path.insert(0, str(current_dir))
 
 try:
     import streamlit as st
@@ -38,11 +48,18 @@ def main() -> None:
         initial_sidebar_state="expanded",
     )
 
-    from pathlib import Path
-
-    db_path = Path(__file__).parent / "deals.json"
-    if not db_path.exists() and Path("deals.json").exists():
-        db_path = Path("deals.json")
+    possible_paths = [
+        current_dir / "deals.json",
+        ws_sub / "deals.json",
+        current_dir.parent / "deals.json",
+        Path("deals.json"),
+        Path("ws-deal-hunter/deals.json"),
+    ]
+    db_path = current_dir / "deals.json"
+    for p in possible_paths:
+        if p.exists():
+            db_path = p
+            break
 
     storage = AtomicDealStorage(filepath=db_path)
     evaluator = GeminiHardwareEvaluator()
@@ -326,6 +343,10 @@ def main() -> None:
                                 st.toast(f"Pushover alert dispatched for {deal.id}!")
                             else:
                                 st.error(res.message)
+                        if st.button("🗑️ Dismiss Deal", key=f"btn_del_{deal.id}", use_container_width=True):
+                            storage.delete_deal(deal.id)
+                            st.toast("Deal removed from dashboard!")
+                            st.rerun()
 
                     st.caption(f"**AI Valuation Summary:** {deal.summary} | *{deal.actionable_recommendation}*")
                     st.markdown("---")

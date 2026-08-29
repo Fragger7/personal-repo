@@ -14,6 +14,7 @@ import json
 import os
 import re
 import socket
+import threading
 import time
 import urllib.error
 import urllib.parse
@@ -55,10 +56,13 @@ TITLE_ACCESSORY_REGEX = re.compile(
 
 HARD_EXCLUSION_REGEX = re.compile(
     r"(?i)(for\s*parts|not\s*working|as\s*is\b|untested|repair\s*only|broken\s*screen|bad\s*screen|liquid\s*damage|"
+    r"cracked\s*(?:screen|display|glass|panel|lcd)|crack\s*(?:on|in)\s*(?:screen|display|glass)|hairline\s*crack|"
+    r"screen\s*(?:defect|issue|blemish|burn|line)|lines?\s*(?:on|in)\s*(?:screen|display)|dead\s*pixels?|delaminat\w+|staingate|backlight\s*bleed|"
     r"water\s*damage|icp\b|mdm\b|icloud\s*lock|activation\s*lock|managed\s*profile|profile\s*lock|bios\s*lock|computrace|"
     r"bad\s*gpu|dead\s*gpu|no\s*nvidia|iris\s*only|iris\s*xe\s*only|intel\s*graphics\s*only|uhd\s*graphics\s*only|touch\s*bar|"
     r"frame\s*separating|frame\s*is\s*separating|hinge\s*separated|broken\s*hinge|loose\s*hinge|cracked\s*palmrest|keyboard\s*imprints|"
-    r"i[3579]-11\d{3}|i[3579]-10\d{3}|i[3579]-[89]\d{3}|11850h|11950h|11800h|11400h|11980hk|10885h|10750h|"
+    r"i5-\d{4,5}[a-z]*|core\s*i5|intel\s*i5|"
+    r"i[3579]-11\d{3}|i[3579]-10\d{3}|i[3579]-[89]\d{3}|11850h|11950h|11800h|11400h|11980hk|10885h|10750h|11955m|w-11\d{3}|xeon.*11\d{3}|"
     r"1260p|1360p|1370p|1240p|1250p|1340p|1350p|1355u|1335u|1235u|1245u|1255u|"
     r"latitude\s*(?:3[0-9]{3}|5[0-9]{3}|7[0-3][0-9]{2}|e[0-9]{4})|inspiron|vostro|ideapad|thinkbook|flex\s*5|chromebook|pavilion|envy|omnibook|stream\s*14|victus|vivobook|katana|gf63|thin\s*15|sony\s*vaio)"
 )
@@ -82,6 +86,19 @@ class EBayCollector:
     Buy-It-Now filter (LH_BIN=1), condition whitelisting, and newly listed sort (_sop=10).
     Zero API credentials required; bypasses DataDome / anti-bot firewalls directly.
     """
+
+    TARGETED_ENTERPRISE_SELLERS = {
+        "wisetekca": "Wisetek Market",
+        "epc-texas": "EPC-Texas",
+        "epc-global": "EPC Global",
+        "human-i-t": "Human-I-T",
+        "smartresale": "Smart Resale",
+        "greenteksolutionsllc": "GreenTek Solutions",
+        "joysystems": "Joy Systems",
+        "planitroi": "PlanITROI",
+        "techdiscounts_online": "Tech Discounts",
+        "blairtechnologygroup": "Blair Tech Group",
+    }
 
     TARGET_QUERIES = [
         # 1. Dell Precision Workstations (Category 177 - PC Laptops)
@@ -110,6 +127,8 @@ class EBayCollector:
         {"query": "(Minisforum MS-01, Minisforum UM780 XTX, Beelink SER8, Beelink SER7, OptiPlex 7010 Micro) (32GB, 64GB)", "sacat": "179"},
         # 13. Modular / Linux Workstations (Category 177)
         {"query": "(Framework 16, System76 Bonobo, System76 Serval, Eurocom) (32GB, 64GB)", "sacat": "177"},
+        # 14. Targeted Enterprise Liquidator Off-Lease Workstation Fleets (Category 177)
+        {"query": "off-lease (Precision 5570, Precision 5680, ThinkPad P1, ZBook Studio) (32GB, 64GB)", "sacat": "177"},
     ]
 
     def __init__(
@@ -122,87 +141,132 @@ class EBayCollector:
         self.client_secret = client_secret or os.environ.get("EBAY_CLIENT_SECRET", "")
         self.search_query = search_query
 
-    def fetch_listings(self, limit: int = 100) -> List[RawListing]:
-        """Fetch live items via direct TLS-impersonated search queries."""
+    def fetch_listings(self, limit: int = 350, max_pages: int = 3) -> List[RawListing]:
+        """Fetch live items via direct TLS-impersonated search queries across multiple catalog pages."""
         all_listings: List[RawListing] = []
         seen_urls = set()
+        lock = threading.Lock()
 
         try:
             from bs4 import BeautifulSoup
             from curl_cffi import requests
 
-            for target in self.TARGET_QUERIES:
+            def scrape_query_target(target: Dict[str, str]) -> List[RawListing]:
                 q = target["query"]
                 sacat = target.get("sacat", "177")
+                sub_results: List[RawListing] = []
                 
-                # Category-isolated, Buy-It-Now, Good-to-New condition, newly listed, $300-$2500 price floor
-                url = (
-                    f"https://www.ebay.com/sch/{sacat}/i.html?"
-                    f"_nkw={urllib.parse.quote(q)}&LH_BIN=1&LH_ItemCondition=1000|1500|2000|2500|3000"
-                    f"&_sop=10&_udlo=300&_udhi=2500"
-                )
+                for page in range(1, max_pages + 1):
+                    url = (
+                        f"https://www.ebay.com/sch/{sacat}/i.html?"
+                        f"_nkw={urllib.parse.quote(q)}&LH_BIN=1&LH_ItemCondition=1000|1500|2000|2500|3000"
+                        f"&_sop=10&_udlo=300&_udhi=2500&_pgn={page}"
+                    )
 
-                headers = {
-                    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-                    "Accept-Language": "en-US,en;q=0.9",
-                    "Referer": "https://www.ebay.com/",
-                }
+                    headers = {
+                        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+                        "Accept-Language": "en-US,en;q=0.9",
+                        "Referer": "https://www.ebay.com/",
+                    }
 
-                try:
-                    res = requests.get(url, impersonate="chrome99_android", headers=headers, timeout=5.0)
-                    if res.status_code == 200:
-                        soup = BeautifulSoup(res.text, "html.parser")
-                        items = soup.select(".s-item, .s-card, li.s-item")
-                        
-                        for item in items:
-                            title_elem = item.select_one(".s-item__title, .s-card__title, h3")
-                            price_elem = item.select_one(".s-item__price, .s-card__price")
-                            link_elem = item.select_one(".s-item__link, a.s-card__link, a[href*='/itm/']")
+                    try:
+                        res = requests.get(url, impersonate="chrome99_android", headers=headers, timeout=5.0)
+                        if res.status_code == 200:
+                            soup = BeautifulSoup(res.text, "html.parser")
+                            items = soup.select(".s-item, .s-card, li.s-item")
+                            page_items_count = 0
+                            
+                            for item in items:
+                                title_elem = item.select_one(".s-item__title, .s-card__title, h3")
+                                price_elem = item.select_one(".s-item__price, .s-card__price")
+                                link_elem = item.select_one(".s-item__link, a.s-card__link, a[href*='/itm/']")
 
-                            if not title_elem or not price_elem:
-                                continue
+                                if not title_elem or not price_elem:
+                                    continue
 
-                            title = title_elem.get_text(strip=True)
-                            price_str = price_elem.get_text(strip=True)
-                            link = link_elem.get("href", "") if link_elem else ""
+                                title = title_elem.get_text(strip=True)
+                                price_str = price_elem.get_text(strip=True)
+                                link = link_elem.get("href", "") if link_elem else ""
 
-                            if "Shop on eBay" in title or not link or "/itm/" not in link:
-                                continue
+                                if "Shop on eBay" in title or not link or "/itm/" not in link:
+                                    continue
 
-                            clean_url = link.split("?")[0]
-                            if clean_url in seen_urls:
-                                continue
-                            seen_urls.add(clean_url)
+                                item_id_match = re.search(r"/itm/([0-9]{9,14})", link)
+                                if item_id_match:
+                                    item_id = item_id_match.group(1)
+                                    clean_url = f"https://www.ebay.com/itm/{item_id}"
+                                elif "/itm/" in link:
+                                    clean_url = link.split("?")[0]
+                                    if clean_url.startswith("//"):
+                                        clean_url = "https:" + clean_url
+                                    elif not clean_url.startswith("http"):
+                                        clean_url = f"https://www.ebay.com{clean_url}"
+                                    item_id = f"ebay_{abs(hash(clean_url)) % 1000000}"
+                                else:
+                                    clean_url = f"https://www.ebay.com/sch/i.html?_nkw={urllib.parse.quote(title)}&LH_BIN=1&_sop=10"
+                                    item_id = f"ebay_{abs(hash(clean_url)) % 1000000}"
 
-                            # Parse numeric price
-                            price_match = re.search(r"\$([0-9,]+(?:\.[0-9]{2})?)", price_str)
-                            if not price_match:
-                                continue
-                            price = float(price_match.group(1).replace(",", ""))
+                                with lock:
+                                    if clean_url in seen_urls:
+                                        continue
+                                    seen_urls.add(clean_url)
 
-                            # Pre-filter blacklist
-                            if is_blacklisted_item(title):
-                                continue
+                                # Parse numeric price
+                                price_match = re.search(r"\$([0-9,]+(?:\.[0-9]{2})?)", price_str)
+                                if not price_match:
+                                    continue
+                                price = float(price_match.group(1).replace(",", ""))
 
-                            item_id_match = re.search(r"/itm/([0-9]+)", clean_url)
-                            item_id = item_id_match.group(1) if item_id_match else f"ebay_{abs(hash(clean_url)) % 1000000}"
+                                # Extract Subtitle, Seller Notes, and Condition description from DOM
+                                sub_elem = item.select_one(".s-item__subtitle, .s-card__subtitle, .s-item__seller-notes, .s-item__condition-description, .s-item__dynamic-wrapper, .SECONDARY_INFO, .s-item__desc")
+                                cond_elem = item.select_one(".s-item__condition, .s-card__condition, span.s-item__condition-text")
+                                sub_text = sub_elem.get_text(strip=True) if sub_elem else ""
+                                cond_text = cond_elem.get_text(strip=True) if cond_elem else "Used / Refurbished"
 
-                            all_listings.append(
-                                RawListing(
-                                    id=f"ebay_{item_id}",
-                                    source="ebay",
-                                    title=title,
-                                    description=f"eBay Buy-It-Now Listing: {title}",
-                                    price=price,
-                                    url=clean_url,
-                                    seller="eBay Seller",
-                                    location="US",
-                                    condition_raw="Used / Refurbished",
-                                    created_utc=datetime.now(timezone.utc).isoformat(),
+                                # Extract Seller handle and match against Targeted ITAD Sellers
+                                seller_elem = item.select_one(".s-item__seller-info-text, .s-item__user, [data-testid='seller-info'], .s-item__seller-info")
+                                seller_raw = seller_elem.get_text(strip=True) if seller_elem else "eBay Seller"
+                                
+                                matched_seller = None
+                                for handle, name in self.TARGETED_ENTERPRISE_SELLERS.items():
+                                    if handle in seller_raw.lower() or name.lower() in seller_raw.lower() or handle in title.lower() or name.lower() in title.lower():
+                                        matched_seller = f"{name} ({handle})"
+                                        break
+                                
+                                seller_name = matched_seller if matched_seller else seller_raw
+                                full_desc = f"eBay Buy-It-Now Listing: {title}. Notes: {sub_text}. Condition: {cond_text}. Seller: {seller_name}"
+
+                                # Pre-filter blacklist using title AND full description text
+                                if is_blacklisted_item(title, full_desc):
+                                    continue
+
+                                sub_results.append(
+                                    RawListing(
+                                        id=f"ebay_{item_id}",
+                                        source="ebay",
+                                        title=title,
+                                        description=full_desc,
+                                        price=price,
+                                        url=clean_url,
+                                        seller=seller_name,
+                                        location="US",
+                                        condition_raw=cond_text,
+                                        created_utc=datetime.now(timezone.utc).isoformat(),
+                                    )
                                 )
-                            )
-                except Exception as err:
-                    print(f"[EBayCollector] Sub-query error for {q[:30]}: {err}")
+                                page_items_count += 1
+
+                            if page_items_count == 0:
+                                break
+                    except Exception as err:
+                        print(f"[EBayCollector] Sub-query error for {q[:30]} (page {page}): {err}")
+                        break
+                return sub_results
+
+            with ThreadPoolExecutor(max_workers=5) as executor:
+                query_results = executor.map(scrape_query_target, self.TARGET_QUERIES)
+                for res_list in query_results:
+                    all_listings.extend(res_list)
 
             if all_listings:
                 print(f"[EBayCollector] Successfully fetched {len(all_listings)} live targeted workstation listings from eBay!")
@@ -346,6 +410,11 @@ class RedditCollector:
                 else:
                     url_full = f"https://www.reddit.com/r/{subreddit}/comments/{post_id}/"
 
+                # Check for closed/sold flair class on entry
+                classes = " ".join(entry.get("class", []))
+                if "linkflair-closed" in classes or "linkflair-sold" in classes:
+                    continue
+
                 # Filter: P2P vs Deal Aggregator Subreddits
                 if is_p2p:
                     if not any(tag in title for tag in ["[H]", "[h]", "[FS]", "[fs]", "[Selling]", "[Trade]"]):
@@ -383,17 +452,41 @@ class RedditCollector:
                 if not is_spec_match:
                     continue
 
-                # Extract price
+                # Extract price from title first
+                post_body = ""
                 price = self._extract_price(title, "")
+
+                # If price not in title or if RAM specs need body verification, inspect post body
+                if (price <= 0 or not has_ram) and permalink:
+                    try:
+                        post_res = scraper.get(f"https://old.reddit.com{permalink}", timeout=3.0)
+                        if post_res.status_code == 200:
+                            post_soup = BeautifulSoup(post_res.text, "html.parser")
+                            md_el = post_soup.select_one(".entry .usertext-body .md")
+                            if md_el:
+                                post_body = md_el.get_text(separator=" ", strip=True)
+                                if price <= 0:
+                                    price = self._extract_price(title, post_body)
+                                if not has_ram:
+                                    has_ram = any(re.search(pat, post_body, re.I) for pat in self.RAM_PATTERNS)
+                                if not has_cpu:
+                                    has_cpu = any(re.search(pat, post_body, re.I) for pat in self.CPU_PATTERNS)
+                    except Exception:
+                        pass
+
                 if price <= 0 or price < 80:
                     continue
+
+                description = f"Live r/{subreddit} hardware post by u/{author}"
+                if post_body:
+                    description += f": {post_body[:300]}"
 
                 listings.append(
                     RawListing(
                         id=f"reddit_{post_id}",
                         source=f"reddit (r/{subreddit})",
                         title=title,
-                        description=f"Live r/{subreddit} hardware post by u/{author}",
+                        description=description,
                         price=price,
                         url=url_full,
                         seller=f"u/{author}",
@@ -412,27 +505,60 @@ class RedditCollector:
         return []
 
     def _extract_price(self, title: str, text: str) -> float:
-        """Extract asking price from title or selftext using multi-stage regex."""
-        # 1. Look for asking pattern in title: [W] ... $XXX or asking $XXX
-        title_matches = re.findall(r"\$\s*([0-9]{2,5}(?:\.[0-9]{2})?)", title)
-        if title_matches:
+        """Extract asking price from title or selftext using multi-stage smart regex."""
+        # 1. Look for explicit current purchase price: "Now: $XXX", "Price: $XXX", "For: $XXX", "at $XXX"
+        current_price_match = re.search(r"(?i)\b(?:now|price|for|pay|current\s*price|at|was\s*\$[0-9,]+(?:\.[0-9]{2})?,\s*now)\s*[:=\-]?\s*\$\s*([0-9,]+(?:\.[0-9]{2})?)", title)
+        if current_price_match:
             try:
-                return float(title_matches[-1])
+                p = float(current_price_match.group(1).replace(",", ""))
+                if 80 <= p <= 6000:
+                    return p
             except ValueError:
                 pass
 
-        # 2. Look for PayPal / Shipped / Asking price patterns in body
+        # 2. Look for [W] $XXX in hardware swap / appleswap titles
+        w_match = re.search(r"(?i)\[w\]\s*(?:paypal\s*|cash\s*|local\s*)?\$?\s*([0-9,]+(?:\.[0-9]{2})?)", title)
+        if w_match:
+            try:
+                p = float(w_match.group(1).replace(",", ""))
+                if 80 <= p <= 6000:
+                    return p
+            except ValueError:
+                pass
+
+        # 3. Match all price mentions in title, ignoring any number immediately followed by "off", "discount", "save", "savings"
+        title_prices = []
+        for m in re.finditer(r"\$\s*([0-9,]+(?:\.[0-9]{2})?)(\s*(?:off|discount|save|savings|rebate|drop|cut))?", title, re.I):
+            val_str = m.group(1).replace(",", "")
+            is_discount = bool(m.group(2))
+            if not is_discount:
+                try:
+                    val = float(val_str)
+                    if 80 <= val <= 6000:
+                        title_prices.append(val)
+                except ValueError:
+                    pass
+
+        if title_prices:
+            return title_prices[0]
+
+        # 4. Look for PayPal / Shipped / Asking price patterns in post body
         body_patterns = [
-            r"(?:asking|price|shipped|selling for|paypal|looking for)\s*[:=\-]?\s*\$\s*([0-9]{2,5})",
-            r"\$\s*([0-9]{2,5})\s*(?:shipped|paypal|local|obo|firm)",
-            r"\$\s*([0-9]{2,5})",
+            r"(?i)(?:now|price|pay|at|asking|price|shipped|selling for|paypal|looking for)\s*[:=\-]?\s*\$\s*([0-9,]+(?:\.[0-9]{2})?)",
+            r"(?i)\$\s*([0-9,]+(?:\.[0-9]{2})?)\s*(?:shipped|paypal|local|obo|firm)",
+            r"\$\s*([0-9,]+(?:\.[0-9]{2})?)",
         ]
         for pat in body_patterns:
-            matches = re.findall(pat, text, re.IGNORECASE)
-            if matches:
+            matches = re.finditer(pat, text)
+            for match in matches:
+                val_str = match.group(1).replace(",", "")
+                # Check if followed by "off" in text
+                snippet_after = text[match.end():match.end() + 15].lower()
+                if any(w in snippet_after for w in ["off", "discount", "save", "rebate"]):
+                    continue
                 try:
-                    p = float(matches[0])
-                    if 100 <= p <= 4000:
+                    p = float(val_str)
+                    if 80 <= p <= 6000:
                         return p
                 except ValueError:
                     pass
@@ -607,15 +733,40 @@ class DellRefurbishedCollector:
 
     def __init__(self) -> None:
         self.last_request_time = 0.0
+        self.last_detected_coupon: Tuple[str, float] = ("", 0.0)
+
+    def _fetch_active_coupon(self, scraper: Any) -> Tuple[str, float]:
+        """Dynamically fetch whatever active promotional sitewide coupon code and discount percentage DFS has live."""
+        try:
+            res = scraper.get("https://www.dellrefurbished.com/coupons", timeout=5.0)
+            if res.status_code == 200:
+                raw_codes = re.findall(r"coupon\s*code\s*[:=\s]*([a-zA-Z0-9_-]{3,20})", res.text, re.I)
+                valid_codes = [c.upper() for c in raw_codes if c.lower() not in ["s", "needed", "here", "apply", "none", "promo"]]
+                
+                raw_pcts = re.findall(r"([0-9]{2})%\s*off", res.text, re.I)
+                valid_pcts = [float(p) for p in raw_pcts if 15 <= float(p) <= 75]
+
+                code = valid_codes[0] if valid_codes else "DFS-PROMO"
+                pct = max(valid_pcts) if valid_pcts else 0.0
+                return code, pct
+        except Exception:
+            pass
+        return "", 0.0
 
     def fetch_listings(self) -> List[RawListing]:
-        """Fetch and parse live certified refurbished Precision & XPS workstations from Dell Refurbished."""
+        """Fetch and parse live certified refurbished Precision & XPS workstations from Dell Refurbished with auto-coupon deduction."""
         try:
             import cloudscraper
             from bs4 import BeautifulSoup
 
             scraper = cloudscraper.create_scraper(browser={"browser": "chrome", "platform": "windows", "desktop": True})
             listings: List[RawListing] = []
+
+            # 1. Fetch active sitewide coupon
+            coupon_code, discount_pct = self._fetch_active_coupon(scraper)
+            self.last_detected_coupon = (coupon_code, discount_pct)
+            if discount_pct > 0:
+                print(f"[DellRefurbishedCollector] Active promo detected: Code '{coupon_code}' ({discount_pct:.0f}% Off)")
 
             for target_url in self.TARGET_URLS:
                 try:
@@ -626,7 +777,7 @@ class DellRefurbishedCollector:
                     soup = BeautifulSoup(res.text, "html.parser")
                     items = soup.find_all("div", class_="thumb-grid")
 
-                    for idx, item in enumerate(items[:15]):
+                    for idx, item in enumerate(items[:20]):
                         title_elem = item.find(["h3", "h4", "a", "span"], class_=re.compile(r"title|name|header", re.I)) or item.find("a")
                         title = title_elem.get_text(" ", strip=True) if title_elem else item.get_text(" ", strip=True)[:50]
                         link = title_elem.get("href", "") if title_elem and title_elem.name == "a" else ""
@@ -646,15 +797,21 @@ class DellRefurbishedCollector:
                         # Extract Sale / List price
                         sale_match = re.search(r"SALE\s*\$\s*([0-9,]+(?:\.[0-9]{2})?)", full_text)
                         list_match = re.search(r"\$\s*([0-9,]+(?:\.[0-9]{2})?)", full_text)
-                        price = float(sale_match.group(1).replace(",", "")) if sale_match else (float(list_match.group(1).replace(",", "")) if list_match else 0.0)
+                        list_price = float(sale_match.group(1).replace(",", "")) if sale_match else (float(list_match.group(1).replace(",", "")) if list_match else 0.0)
 
-                        if price < 250:
+                        if list_price < 250:
                             continue
 
-                        # Extract coupon discount if present (e.g. 50% off)
-                        discount_match = re.search(r"([0-9]{2})%\s*off", full_text, re.I)
-                        discount_pct = float(discount_match.group(1)) if discount_match else 0.0
-                        coupon_tag = f" ({int(discount_pct)}% OFF Coupon Applied)" if discount_pct > 0 else ""
+                        # Apply coupon discount if available
+                        item_disc_m = re.search(r"([0-9]{2})%\s*off", full_text, re.I)
+                        eff_pct = float(item_disc_m.group(1)) if item_disc_m else discount_pct
+                        
+                        if eff_pct > 0:
+                            net_price = round(list_price * (1.0 - eff_pct / 100.0), 2)
+                            coupon_tag = f" [Coupon {coupon_code}: -{int(eff_pct)}% applied]"
+                        else:
+                            net_price = list_price
+                            coupon_tag = ""
 
                         # Extract specs from card text
                         cpu_match = re.search(r"CPU\s*1x\s*([^\n\r\|]+?)(?=\s*Memory|\s*Hard Drive|\s*Display|\s*Graphics|\s*\$|$)", full_text, re.I)
@@ -664,7 +821,7 @@ class DellRefurbishedCollector:
                         mem_str = f"{mem_match.group(1)}GB RAM" if mem_match else ""
                         spec_summary = f"{cpu_str}, {mem_str}".strip(", ")
 
-                        clean_title = f"Dell Certified Refurbished: {title} ({spec_summary}){coupon_tag}"
+                        clean_title = f"Dell DFS Refurbished: {title} ({spec_summary}){coupon_tag}"
                         item_id = f"dell_refurb_{abs(hash(link or title)) % 1000000}"
 
                         listings.append(
@@ -672,8 +829,8 @@ class DellRefurbishedCollector:
                                 id=item_id,
                                 source="dell_refurbished",
                                 title=clean_title,
-                                description=f"Dell Financial Services Certified Refurbished Workstation. {full_text[:300]}",
-                                price=price,
+                                description=f"Dell Financial Services Certified Refurbished. List: ${list_price:.2f}, Net: ${net_price:.2f}. Coupon: {coupon_code}. {full_text[:300]}",
+                                price=net_price,
                                 url=link or "https://www.dellrefurbished.com/laptops?model_family=266",
                                 seller="Dell Financial Services (DFS)",
                                 location="TX, USA",
@@ -1075,10 +1232,149 @@ class MicroCenterCollector:
         return []
 
 
+class AppleRefurbishedCollector:
+    """
+    Apple Certified Refurbished Direct Store Collector.
+    Scrapes official Apple refurbished inventory (MacBook Pro, Mac Studio, Mac Pro).
+    All units include genuine Apple replacement parts, thorough cleaning, and 1-year AppleCare warranty.
+    """
+
+    def fetch_listings(self, limit: int = 50) -> List[RawListing]:
+        """Fetch live Apple Certified Refurbished workstation inventory."""
+        try:
+            import re
+            from bs4 import BeautifulSoup
+            from curl_cffi import requests
+
+            url = "https://www.apple.com/shop/refurbished/mac"
+            headers = {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+            }
+            res = requests.get(url, impersonate="chrome120", headers=headers, timeout=10.0)
+            if res.status_code != 200:
+                return []
+
+            soup = BeautifulSoup(res.text, "html.parser")
+            links = soup.find_all("a", href=lambda h: h and "/shop/product/" in h)
+
+            listings: List[RawListing] = []
+            seen_urls = set()
+
+            for a in links:
+                href = a.get("href", "")
+                clean_path = href.split("?")[0]
+                if clean_path in seen_urls:
+                    continue
+                seen_urls.add(clean_path)
+
+                title = a.get_text(strip=True)
+                if not title or not any(k in title.lower() for k in ["macbook pro", "mac studio", "mac pro"]):
+                    continue
+
+                card = a.find_parent("li") or a.find_parent("div")
+                text = card.get_text(" | ", strip=True) if card else title
+
+                p_m = re.search(r"\$([0-9,]+(?:\.[0-9]{2})?)", text)
+                price = float(p_m.group(1).replace(",", "")) if p_m else 0.0
+
+                if price < 400 or price > 5500:
+                    continue
+
+                full_url = f"https://www.apple.com{clean_path}"
+
+                listings.append(
+                    RawListing(
+                        id=f"apple_refurb_{abs(hash(clean_path)) % 1000000}",
+                        source="apple_refurbished",
+                        title=title,
+                        description=f"Apple Certified Refurbished with 1-Year AppleCare Warranty. {text[:250]}",
+                        price=price,
+                        url=full_url,
+                        seller="Apple Certified Refurbished Direct",
+                        location="US (Free 2-Day Shipping)",
+                        condition_raw="Apple Certified Refurbished",
+                        created_utc=datetime.now(timezone.utc).isoformat(),
+                    )
+                )
+
+            if listings:
+                print(f"[AppleRefurbishedCollector] Ingested {len(listings)} live official Apple Refurbished workstation deals!")
+                return listings[:limit]
+
+        except Exception as e:
+            print(f"[AppleRefurbishedCollector] Scrape error: {e}")
+
+        return []
+
+
+class WootCollector:
+    """
+    Woot! Computers & Enterprise Refurbished Workstation Collector.
+    Scrapes syndicated Woot bulk off-lease workstation drops (Dell Precision, ThinkPad P-Series, HP ZBook, MacBooks).
+    Filters out consumer electronics, accessories, and food/apparel drops.
+    """
+
+    def fetch_listings(self, limit: int = 25) -> List[RawListing]:
+        """Fetch live Woot computer & laptop workstation drops."""
+        try:
+            import cloudscraper
+            import html
+
+            scraper = cloudscraper.create_scraper(browser={"browser": "chrome", "platform": "windows", "desktop": True})
+            url = "https://slickdeals.net/newsearch.php?searchfirst=1&q=woot+laptop+refurbished+dell+precision+thinkpad+macbook&hideexpired=1&sort=newest&rss=1"
+            res = scraper.get(url, timeout=4.0)
+
+            if res.status_code == 200:
+                item_blocks = re.findall(r"<item>([\s\S]*?)</item>", res.text)
+                listings: List[RawListing] = []
+                for idx, block in enumerate(item_blocks[:limit]):
+                    title_m = re.search(r"<title>(?:<!\[CDATA\[)?(.*?)(?:\]\]>)?</title>", block, re.DOTALL)
+                    link_m = re.search(r"<link>(.*?)</link>", block) or re.search(r"<guid[^>]*>(.*?)</guid>", block)
+                    desc_m = re.search(r"<description>(?:<!\[CDATA\[)?(.*?)(?:\]\]>)?</description>", block, re.DOTALL)
+
+                    title = html.unescape(title_m.group(1).strip()) if title_m else ""
+                    link = html.unescape(link_m.group(1).strip()) if link_m else "https://computers.woot.com"
+                    desc = html.unescape(desc_m.group(1).strip()) if desc_m else title
+
+                    price_match = re.search(r"\$\s*([0-9,]+(?:\.[0-9]{2})?)", f"{title} {desc}")
+                    price = float(price_match.group(1).replace(",", "")) if price_match else 0.0
+
+                    if price < 250 or is_blacklisted_item(title):
+                        continue
+
+                    title_lower = title.lower()
+                    if not any(kw in title_lower for kw in ["laptop", "thinkpad", "precision", "zbook", "macbook", "xps", "workstation", "razer", "legion"]):
+                        continue
+
+                    listings.append(
+                        RawListing(
+                            id=f"woot_{idx}_{abs(hash(title)) % 1000000}",
+                            source="woot",
+                            title=f"Woot Refurbished: {title}",
+                            description=desc[:350],
+                            price=price,
+                            url=link,
+                            seller="Woot! (Amazon)",
+                            location="US (Free Prime Shipping)",
+                            condition_raw="Factory Refurbished / Off-Lease",
+                            created_utc=datetime.now(timezone.utc).isoformat(),
+                        )
+                    )
+
+                if listings:
+                    print(f"[WootCollector] Ingested {len(listings)} live workstation drops from Woot!")
+                    return listings
+        except Exception as e:
+            print(f"[WootCollector] Scrape error: {e}")
+
+        return []
+
+
 class HardwareCollectorHub:
     """
     Master collector orchestrating eBay, Reddit, Swappa/Syndicated,
-    Dell Refurbished, Lenovo Outlet, B&H Photo, Best Buy Outlet, Micro Center, and ShopGoodwill in parallel.
+    Dell Refurbished, Lenovo Outlet, B&H Photo, Best Buy Outlet, Micro Center, Apple Refurbished, Woot, and ShopGoodwill in parallel.
     Handles rate-limiting, deduplication, and aggregation.
     """
 
@@ -1092,6 +1388,8 @@ class HardwareCollectorHub:
         bh_collector: Optional[BAndHCollector] = None,
         bestbuy_collector: Optional[BestBuyOutletCollector] = None,
         microcenter_collector: Optional[MicroCenterCollector] = None,
+        apple_collector: Optional[AppleRefurbishedCollector] = None,
+        woot_collector: Optional[WootCollector] = None,
         goodwill_collector: Optional[ShopGoodwillCollector] = None,
     ) -> None:
         self.ebay = ebay_collector or EBayCollector()
@@ -1102,9 +1400,11 @@ class HardwareCollectorHub:
         self.bh = bh_collector or BAndHCollector()
         self.bestbuy = bestbuy_collector or BestBuyOutletCollector()
         self.microcenter = microcenter_collector or MicroCenterCollector()
+        self.apple = apple_collector or AppleRefurbishedCollector()
+        self.woot = woot_collector or WootCollector()
         self.goodwill = goodwill_collector or ShopGoodwillCollector()
 
-    def collect_all(self, max_workers: int = 8) -> List[RawListing]:
+    def collect_all(self, max_workers: int = 10) -> List[RawListing]:
         """Run all collectors concurrently and aggregate results."""
         collected: List[RawListing] = []
         tasks = {
@@ -1116,6 +1416,8 @@ class HardwareCollectorHub:
             "bh_photo": self.bh.fetch_listings,
             "bestbuy": self.bestbuy.fetch_listings,
             "microcenter": self.microcenter.fetch_listings,
+            "apple_refurbished": self.apple.fetch_listings,
+            "woot": self.woot.fetch_listings,
             "goodwill": self.goodwill.fetch_listings,
         }
 

@@ -23,6 +23,7 @@ if hasattr(sys.stderr, "reconfigure"):
     sys.stderr.reconfigure(encoding="utf-8", errors="replace")
 
 from collector import (
+    AppleRefurbishedCollector,
     BAndHCollector,
     BestBuyOutletCollector,
     DellRefurbishedCollector,
@@ -34,10 +35,11 @@ from collector import (
     RedditCollector,
     ShopGoodwillCollector,
     SwappaCollector,
+    WootCollector,
 )
 from daemon import DealHunterDaemon
 from evaluator import GeminiHardwareEvaluator
-from notifier import PushoverNotifier
+from notifier import PushoverNotifier, TelegramNotifier
 from storage import AtomicDealStorage, DealRecord, HardwareSpecs
 
 
@@ -102,6 +104,18 @@ class TestCollectors(unittest.TestCase):
         price = collector._extract_price(title, body)
         self.assertEqual(price, 680.0)
 
+    def test_reddit_discount_price_extraction(self) -> None:
+        """Verify that titles with '$X off' or 'Now: $Y After $X Off' extract the actual price $Y, not the discount $X."""
+        collector = RedditCollector()
+        title = '[Walmart] Gigabyte Aero X16 Gaming Laptop (2025): 16" 165Hz Display, Ryzen AI 7 350, RTX 5070, 32GB DDR5, 1TB SSD, Now: $1,499 After $500 Off'
+        price = collector._extract_price(title, "")
+        self.assertEqual(price, 1499.0)
+
+        # Also test ($300 off) format
+        title2 = "[BestBuy] Dell XPS 15 9530 i7-13700H 32GB 1TB for $1,299.99 ($300 off)"
+        price2 = collector._extract_price(title2, "")
+        self.assertEqual(price2, 1299.99)
+
     def test_swappa_collector_feed(self) -> None:
         collector = SwappaCollector()
         listings = collector.fetch_listings()
@@ -134,6 +148,16 @@ class TestCollectors(unittest.TestCase):
 
     def test_microcenter_collector(self) -> None:
         collector = MicroCenterCollector()
+        listings = collector.fetch_listings()
+        self.assertIsInstance(listings, list)
+
+    def test_apple_refurbished_collector(self) -> None:
+        collector = AppleRefurbishedCollector()
+        listings = collector.fetch_listings()
+        self.assertIsInstance(listings, list)
+
+    def test_woot_collector(self) -> None:
+        collector = WootCollector()
         listings = collector.fetch_listings()
         self.assertIsInstance(listings, list)
 
@@ -188,6 +212,33 @@ class TestEvaluator(unittest.TestCase):
         evaluated = self.evaluator.evaluate_listing(raw)
         self.assertEqual(evaluated.deal_score, 0.0)
 
+    def test_screen_damage_and_cracked_rejection(self) -> None:
+        """Verify that cracked screens in title, subtitle, or condition notes are hard-rejected (Score 0.0)."""
+        # Case A: Pristine title, but cracked screen in notes
+        raw_cracked_notes = RawListing(
+            id="eval_test_cracked_notes",
+            source="ebay",
+            title="Apple MacBook Pro 16\" M1 Pro 32GB RAM 1TB SSD A2485 Gray (2021)",
+            description="eBay Buy-It-Now Listing: Apple MacBook Pro 16. Notes: Cracked screen on bottom right. Condition: Used. Seller: eBay Seller",
+            price=700.0,
+            url="https://ebay.com/itm/267756837307",
+        )
+        evaluated = self.evaluator.evaluate_listing(raw_cracked_notes)
+        self.assertEqual(evaluated.deal_score, 0.0)
+        self.assertFalse(evaluated.is_high_yield)
+
+        # Case B: Hairline crack in title
+        raw_hairline = RawListing(
+            id="eval_test_hairline",
+            source="reddit",
+            title="[H] ThinkPad P1 Gen 5 32GB 1TB hairline crack on display [W] $600",
+            description="Works well, small hairline crack.",
+            price=600.0,
+            url="https://reddit.com/eval_hairline",
+        )
+        evaluated_hairline = self.evaluator.evaluate_listing(raw_hairline)
+        self.assertEqual(evaluated_hairline.deal_score, 0.0)
+
     def test_blown_dgpu_rejection(self) -> None:
         raw = RawListing(
             id="eval_test_dgpu",
@@ -200,10 +251,68 @@ class TestEvaluator(unittest.TestCase):
         evaluated = self.evaluator.evaluate_listing(raw)
         self.assertEqual(evaluated.deal_score, 0.0)
 
+    def test_targeted_seller_caveats_and_badges(self) -> None:
+        # Test 1: Smart Resale Grade C rejection
+        raw_sr_c = RawListing(
+            id="sr_1",
+            source="ebay",
+            title="Apple MacBook Pro 16 M1 Max 32GB 1TB Grade C heavy scratches",
+            description="Smart Resale listing with Grade C heavy scratches on bottom case.",
+            price=700.0,
+            url="https://ebay.com/sr1",
+            seller="Smart Resale (smartresale)",
+        )
+        eval_sr = self.evaluator.evaluate_listing(raw_sr_c)
+        self.assertEqual(eval_sr.deal_score, 0.0)
+
+        # Test 2: Wisetek ITAD Badge application
+        raw_wt = RawListing(
+            id="wt_1",
+            source="ebay",
+            title="Lenovo ThinkPad P1 Gen 6 16 inch 64GB 2TB",
+            description="Wisetek Market corporate off-lease laptop in excellent condition.",
+            price=610.0,
+            url="https://ebay.com/wt1",
+            seller="Wisetek Market (wisetekca)",
+        )
+        eval_wt = self.evaluator.evaluate_listing(raw_wt)
+        self.assertGreaterEqual(eval_wt.deal_score, 9.8)
+        self.assertIn("Enterprise ITAD", eval_wt.summary)
+
+    def test_dynamic_price_benchmark_index(self) -> None:
+        from evaluator import DynamicPriceBenchmarkIndex
+        index = DynamicPriceBenchmarkIndex()
+        fmv, strike = index.get_benchmark("dell_precision_5680", 64)
+        self.assertGreaterEqual(fmv, 1400.0)
+        self.assertGreaterEqual(strike, 1000.0)
+
+        # Test EMA update
+        prev_sample = index.benchmarks.get("dell_precision_5680", {}).get("sample_count", 0)
+        index.update_ema_clearing_price("dell_precision_5680", 64, 1420.0)
+        new_sample = index.benchmarks.get("dell_precision_5680", {}).get("sample_count", 0)
+        self.assertEqual(new_sample, prev_sample + 1)
+
 
 class TestNotifier(unittest.TestCase):
     def setUp(self) -> None:
         self.notifier = PushoverNotifier(min_deal_score=8.5, max_price=750.0)
+
+    def test_send_executive_briefing(self) -> None:
+        from notifier import TelegramNotifier
+        tg = TelegramNotifier(bot_token="", chat_id="")
+        sample_deals = [
+            DealRecord(id="brief_1", source="ebay", title="Precision 5680", price=800.0, url="https://ebay.com/1", deal_score=9.3, estimated_profit=450.0, fair_market_value=1250.0),
+            DealRecord(id="brief_2", source="reddit", title="MacBook Pro 16", price=699.99, url="https://reddit.com/2", deal_score=9.4, estimated_profit=350.0, fair_market_value=1050.0),
+        ]
+        res = tg.send_executive_briefing(sample_deals)
+        # In test mode without token, it safely returns 400 without crashing
+        self.assertEqual(res.deal_id, "briefing")
+
+    def test_send_dell_promo_alert(self) -> None:
+        from notifier import TelegramNotifier
+        tg = TelegramNotifier(bot_token="", chat_id="")
+        res = tg.send_dell_promo_alert("SAVE45NOW", 45.0)
+        self.assertEqual(res.deal_id, "dell_promo")
 
     def test_should_alert_criteria(self) -> None:
         high_yield_deal = DealRecord(
@@ -250,6 +359,22 @@ class TestNotifier(unittest.TestCase):
         )
         res = self.notifier.send_deal_alert(deal)
         self.assertTrue(res.success)
+
+    def test_telegram_notifier_format(self) -> None:
+        tg = TelegramNotifier(bot_token="", chat_id="")
+        deal = DealRecord(
+            id="tg_test_1",
+            source="ebay",
+            title="Dell Precision 5680",
+            price=799.0,
+            url="https://ebay.com/itm/123",
+            deal_score=9.5,
+            specs=HardwareSpecs(cpu="i7-13700H", ram_gb=32, ssd_gb=1024, gpu="RTX 2000 Ada"),
+        )
+        # Without credentials, it should return status 400 safely
+        res = tg.send_deal_alert(deal)
+        self.assertFalse(res.success)
+        self.assertEqual(res.status_code, 400)
 
 
 class TestDaemonPipeline(unittest.TestCase):

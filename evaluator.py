@@ -17,10 +17,37 @@ import time
 import urllib.error
 import urllib.request
 from dataclasses import dataclass
+from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, Union
 
 from collector import RawListing
 from storage import DealRecord, HardwareSpecs
+
+
+def _load_dotenv_safely() -> None:
+    """Load .env file if available into os.environ."""
+    try:
+        from dotenv import load_dotenv
+        load_dotenv()
+    except Exception:
+        pass
+    env_path = os.path.join(os.path.dirname(__file__), ".env")
+    if os.path.exists(env_path):
+        try:
+            with open(env_path, "r", encoding="utf-8") as f:
+                for line in f:
+                    line = line.strip()
+                    if line and not line.startswith("#") and "=" in line:
+                        k, v = line.split("=", 1)
+                        k = k.strip()
+                        v = v.strip().strip('"').strip("'")
+                        if k and k not in os.environ:
+                            os.environ[k] = v
+        except Exception:
+            pass
+
+
+_load_dotenv_safely()
 
 
 SYSTEM_EVALUATION_PROMPT = """You are an elite quantitative hardware arbitrage valuation engine for high-performance developer workstations.
@@ -89,6 +116,89 @@ class GeminiUsageTracker:
         }
 
 
+class DynamicPriceBenchmarkIndex:
+    """
+    Adaptive Self-Learning Fair Market Value (FMV) Price Index.
+    Loads baseline benchmarks from price_benchmarks.json and dynamically updates
+    rolling Exponential Moving Averages (EMA) with decay alpha=0.10 when verified clearing prices are observed.
+    """
+
+    def __init__(self, filepath: Optional[Union[str, Any]] = None) -> None:
+        from pathlib import Path
+        if filepath is None:
+            base_dir = Path(__file__).resolve().parent
+            possible = [base_dir / "price_benchmarks.json", Path("price_benchmarks.json")]
+            self.filepath = next((p for p in possible if p.exists()), base_dir / "price_benchmarks.json")
+        else:
+            self.filepath = Path(filepath)
+
+        self.alpha_decay = 0.10
+        self.benchmarks: Dict[str, Dict[str, float]] = {}
+        self.component_adders: Dict[str, float] = {
+            "rtx_4080_4090_ada": 450.0,
+            "rtx_4070_3500_ada": 250.0,
+            "ssd_2tb_plus": 80.0,
+            "ssd_4tb_plus": 180.0,
+            "oled_4k_display": 120.0,
+        }
+        self.load_benchmarks()
+
+    def load_benchmarks(self) -> None:
+        """Load benchmark index from JSON file."""
+        if self.filepath.exists():
+            try:
+                with open(self.filepath, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                    self.alpha_decay = data.get("alpha_decay", 0.10)
+                    self.benchmarks = data.get("benchmarks", {})
+                    self.component_adders = data.get("component_adders", self.component_adders)
+            except Exception as err:
+                print(f"[PriceBenchmarkIndex] Error reading {self.filepath}: {err}")
+
+    def save_benchmarks(self) -> None:
+        """Persist calibrated benchmark index back to JSON file."""
+        try:
+            from datetime import timezone
+            payload = {
+                "version": "1.0.0",
+                "last_updated": datetime.now(timezone.utc).isoformat(),
+                "alpha_decay": self.alpha_decay,
+                "benchmarks": self.benchmarks,
+                "component_adders": self.component_adders,
+            }
+            with open(self.filepath, "w", encoding="utf-8") as f:
+                json.dump(payload, f, indent=2)
+        except Exception as err:
+            print(f"[PriceBenchmarkIndex] Error saving {self.filepath}: {err}")
+
+    def get_benchmark(self, model_key: str, ram_gb: int) -> Tuple[float, float]:
+        """Return (base_fmv, strike_ceiling) from benchmark index."""
+        entry = self.benchmarks.get(model_key)
+        if entry:
+            if ram_gb >= 64:
+                return entry.get("base_fmv_64gb", 1000.0), entry.get("strike_ceiling_64gb", 850.0)
+            elif ram_gb >= 32:
+                return entry.get("base_fmv_32gb", 800.0), entry.get("strike_ceiling_32gb", 700.0)
+            else:
+                return entry.get("base_fmv_32gb", 800.0) * 0.85, entry.get("strike_ceiling_32gb", 700.0) * 0.85
+        return 0.0, 0.0
+
+    def update_ema_clearing_price(self, model_key: str, ram_gb: int, observed_price: float) -> None:
+        """Update the rolling exponential moving average for a model."""
+        if model_key not in self.benchmarks or observed_price <= 100.0:
+            return
+        entry = self.benchmarks[model_key]
+        field_fmv = "base_fmv_64gb" if ram_gb >= 64 else "base_fmv_32gb"
+        field_strike = "strike_ceiling_64gb" if ram_gb >= 64 else "strike_ceiling_32gb"
+        
+        current_fmv = entry.get(field_fmv, observed_price)
+        new_fmv = round((1.0 - self.alpha_decay) * current_fmv + self.alpha_decay * observed_price, 2)
+        entry[field_fmv] = new_fmv
+        entry[field_strike] = round(new_fmv * 0.82, 2)
+        entry["sample_count"] = entry.get("sample_count", 0) + 1
+        self.save_benchmarks()
+
+
 class GeminiHardwareEvaluator:
     """
     AI valuation engine powered by Gemini 2.5 Flash / Gemini models.
@@ -98,11 +208,13 @@ class GeminiHardwareEvaluator:
     def __init__(
         self,
         api_key: Optional[str] = None,
-        model_name: str = "gemini-2.5-flash",
+        model_name: str = "gemini-3.6-flash",
+        benchmark_index: Optional[DynamicPriceBenchmarkIndex] = None,
     ) -> None:
         self.api_key = api_key or os.environ.get("GEMINI_API_KEY", "")
         self.model_name = model_name
         self.usage_tracker = GeminiUsageTracker()
+        self.benchmark_index = benchmark_index or DynamicPriceBenchmarkIndex()
         self._client: Any = None
         self._init_client()
 
@@ -153,18 +265,33 @@ class GeminiHardwareEvaluator:
                 is_high_yield=False,
             )
 
-        # 1. Try Gemini evaluation if valid API key is present
+        # 1. First-Stage: Fast Deterministic Heuristic Evaluation (0ms, $0 tokens)
+        heuristic_data = self._heuristic_evaluate(raw)
+        deal = self._build_deal_record(raw, heuristic_data)
+
+        # 2. Quality Filter: If disqualified (Score 0.0) or low margin (<8.0), skip AI entirely
+        if deal.deal_score < 8.0:
+            return deal
+
+        # 3. Strategy #1 AI-Escalation Gate: Only invoke Gemini for high-potential candidates (Score >= 8.0)
         if self.api_key and len(self.api_key) >= 15:
             try:
                 ai_data = self._call_gemini(raw)
                 if ai_data:
-                    return self._build_deal_record(raw, ai_data)
+                    ai_deal = self._build_deal_record(raw, ai_data)
+                    # Blend AI second-opinion into recommendation & summary while preserving strict hardware constraints
+                    deal.summary = ai_deal.summary or deal.summary
+                    deal.actionable_recommendation = ai_deal.actionable_recommendation or deal.actionable_recommendation
+                    if ai_deal.deal_score > 0.0:
+                        # Refine score with AI validation
+                        deal.deal_score = max(deal.deal_score, ai_deal.deal_score)
+                        deal.fair_market_value = ai_deal.fair_market_value or deal.fair_market_value
+                        deal.estimated_profit = round(max(0.0, deal.fair_market_value - deal.price), 2)
+                        deal.arbitrage_margin_pct = round((deal.estimated_profit / deal.price) * 100.0, 1) if deal.price > 0 else 0.0
             except Exception as err:
-                print(f"[GeminiEvaluator] Gemini API error ({err}), falling back to heuristic engine.")
+                print(f"[GeminiEvaluator] AI Escalation error ({err}), keeping heuristic baseline.")
 
-        # 2. Resilient Rule-Based Heuristic Evaluator
-        heuristic_data = self._heuristic_evaluate(raw)
-        return self._build_deal_record(raw, heuristic_data)
+        return deal
 
     def _call_gemini(self, listing: RawListing) -> Optional[Dict[str, Any]]:
         """Call Gemini model with structured JSON response schema."""
@@ -178,7 +305,7 @@ class GeminiHardwareEvaluator:
         # Method A: Use google-genai SDK if initialized
         if self._client:
             try:
-                response = self._client.models.generateContent(
+                response = self._client.models.generate_content(
                     model=self.model_name,
                     contents=prompt,
                     config={
@@ -191,7 +318,7 @@ class GeminiHardwareEvaluator:
                 self.usage_tracker.record_call(250, 120)
                 return self._parse_json_response(text)
             except Exception as e:
-                print(f"[GeminiEvaluator] SDK generateContent failed: {e}")
+                print(f"[GeminiEvaluator] SDK generate_content failed: {e}")
 
         # Method B: Direct REST API invocation
         return self._call_gemini_rest(prompt)
@@ -284,41 +411,54 @@ class GeminiHardwareEvaluator:
         if any(w in text for w in ["macbook", "mac book"]) and any(w in text for w in ["intel", "i7", "i9", "touch bar", "touchbar", "2016", "2017", "2018", "2019", "2020"]) and not any(m in text for m in ["m1", "m2", "m3", "m4", "m5"]):
             return self._reject_dict("Hard Excluded: Legacy Intel MacBook Pro (2016-2020) rejected per Knowledge Base.")
 
-        # B. Damaged / Defective / Structural Defects (Hinges, Separating Frame, Cracked Palmrest)
+        # B. Damaged / Defective / Structural Defects (Hinges, Separating Frame, Cracked Screen/Glass/Palmrest)
         structural_damage_keywords = [
-            "for parts", "parts only", "broken screen", "cracked screen", "no power", "bad logic board",
+            "for parts", "parts only", "broken screen", "cracked screen", "crack on screen", "crack in screen",
+            "cracked display", "cracked glass", "cracked panel", "cracked lcd", "hairline crack", "screen defect",
+            "screen issue", "screen line", "lines on screen", "lines in screen", "screen blemish", "dead pixel", "dead pixels",
+            "delamination", "staingate", "ghosting", "backlight bleed", "flickering screen", "flicker screen",
+            "display issue", "damaged screen", "no power", "bad logic board",
             "broken hinge", "loose hinge", "hinge separated", "hinge screw", "frame separating", "frame is separating",
             "cracked palm rest", "cracked palmrest", "keyboard imprints", "deep screen marks", "bent corner", "dropped impact"
         ]
         if any(w in text for w in structural_damage_keywords):
             return self._reject_dict("Hard Excluded: Listing contains physical, structural, or chassis damage.")
 
+        # B.2. No RAM / Barebones
+        if any(w in text for w in ["no ram", "without ram", "barebones", "missing ram", "no memory"]):
+            return self._reject_dict("Hard Excluded: Barebones / No RAM workstation.")
+
         # C. Blown-dGPU Failure Trap (Workstations listed with "Intel Iris Xe only" or dead dGPU)
         if any(w in text for w in ["iris xe only", "intel graphics only", "uhd graphics only", "dgpu not working", "gpu disabled", "gpu code 43", "no dedicated gpu"]):
             return self._reject_dict("Hard Excluded: Workstation dGPU failure / disabled discrete graphics.")
 
-        # D. Intel 11th-Gen & Older Silicon Blacklist (Tiger Lake, Ice Lake, Comet Lake)
-        # Drops i7-11850H, i9-11950H, 11800H, 11400H, and all 10th/9th/8th Gen
-        intel_old_gen = re.search(r'\b(i[3579]-11\d{3}|i[3579]-10\d{3}|i[3579]-[89]\d{3}|11850h|11950h|11800h|11400h|11980hk|10885h|10750h|9750h|8750h)\b', text)
+        # D. Intel 11th-Gen & Older Silicon Blacklist (Tiger Lake, Ice Lake, Comet Lake, Xeons)
+        # Drops i7-11850H, i9-11950H, 11800H, 11400H, Xeon W-11955M, and all 10th/9th/8th Gen
+        intel_old_gen = re.search(r'\b(i[3579]-11\d{3}|i[3579]-10\d{3}|i[3579]-[89]\d{3}|11850h|11950h|11800h|11400h|11980hk|10885h|10750h|9750h|8750h|11955m|w-11\d{3}|xeon.*11\d{3})\b', text)
         if intel_old_gen:
-            return self._reject_dict(f"Hard Excluded: Older Intel CPU ({intel_old_gen.group(0)}) rejected. Minimum 12th-Gen Intel required.")
+            return self._reject_dict(f"Hard Excluded: Older Intel/Xeon CPU ({intel_old_gen.group(0)}) rejected. Minimum 12th-Gen Intel required.")
 
-        # E. Intel P-Series & Low-Voltage U-Series Blacklist (15W-28W limits)
+        # E. Intel Core i5 & Low-Tier Silicon Blacklist (All i5s rejected for developer workstation tier)
+        intel_i5_match = re.search(r'\b(i5-\d{4,5}[a-z]*|core i5|intel i5)\b', text)
+        if intel_i5_match:
+            return self._reject_dict(f"Hard Excluded: Intel Core i5 processor ({intel_i5_match.group(0)}) lacks 14-core workstation baseline.")
+
+        # F. Intel P-Series & Low-Voltage U-Series Blacklist (15W-28W limits)
         intel_low_voltage = re.search(r'\b(1260p|1360p|1370p|1240p|1250p|1270p|1340p|1350p|1355u|1335u|1235u|1245u|1255u|1135g7|1165g7)\b', text)
-        if intel_low_voltage and not any(w in text for w in ["precision 5680", "precision 7680", "thinkpad p16"]):
+        if intel_low_voltage and not any(w in text for w in ["precision 7680", "thinkpad p16"]):
             return self._reject_dict(f"Hard Excluded: Low-voltage / thermal-limited CPU ({intel_low_voltage.group(0)}) rejected.")
 
-        # F. Cut-Down Intel H-Die Blacklist (Reduced E-Cores / Cache)
+        # G. Cut-Down Intel H-Die Blacklist (Reduced E-Cores / Cache)
         cutdown_intel = re.search(r'\b(i7-13620h|i7-12650h|i5-13500h|i5-12500h|i5-13420h|i5-12450h)\b', text)
         if cutdown_intel and not any(w in text for w in ["64gb", "2x32gb"]):
             return self._reject_dict(f"Hard Excluded: Cut-down Intel H-series die ({cutdown_intel.group(0)}) without verified 64GB RAM upgrade.")
 
-        # G. AMD Zen 2 / Zen 3 & Legacy Rebrand Blacklist (5000, 6000, 7020, 7030, 7035)
+        # H. AMD Zen 2 / Zen 3 & Legacy Rebrand Blacklist (5000, 6000, 7020, 7030, 7035)
         amd_old_gen = re.search(r'\b(ryzen [3579] 5\d{3}|ryzen [3579] 6\d{3}|ryzen [3579] 7[0-3]\d{2}|5800h|5900hx|6800h|6900hx)\b', text)
         if amd_old_gen:
             return self._reject_dict(f"Hard Excluded: Legacy AMD Zen 2/3 CPU ({amd_old_gen.group(0)}) rejected. Minimum Zen 4 (7840HS/8840HS) required.")
 
-        # H. Consumer & Budget Lines (Latitude 3000/5000, Inspiron, IdeaPad, Yoga, Pavilion, Envy, OmniBook)
+        # I. Consumer & Budget Lines (Latitude 3000/5000, Inspiron, IdeaPad, Yoga, Pavilion, Envy, OmniBook)
         if any(w in text for w in ["latitude 3", "latitude 5", "inspiron", "vostro", "ideapad", "yoga", "thinkbook", "flex 5", "chromebook", "pavilion", "envy", "omnibook", "stream 14", "victus"]):
             if not any(w in text for w in ["precision", "xps 15", "xps 17", "thinkpad p", "p1 gen", "p16", "x1 extreme", "zbook"]):
                 return self._reject_dict("Hard Excluded: Budget consumer / entry business chassis lacks workstation thermal envelope.")
@@ -350,10 +490,7 @@ class GeminiHardwareEvaluator:
         elif any(w in text for w in ["8gb", "8 gb"]):
             ram_gb = 8
 
-        # Hard Exclude <= 16GB Apple Silicon & Soldered Non-Upgradable Units
         is_apple_silicon = any(m in text for m in ["m1", "m2", "m3", "m4", "m5", "apple silicon"])
-        if is_apple_silicon and ram_gb <= 16:
-            return self._reject_dict(f"Hard Excluded: Apple Silicon with {ram_gb}GB Unified RAM is insufficient for multi-agent container workloads.")
 
         # Check for Dual SO-DIMM Upgradable PC Workstation chassis
         is_upgradable_chassis = any(w in text for w in [
@@ -363,13 +500,13 @@ class GeminiHardwareEvaluator:
             "zbook studio g9", "zbook studio g10", "zbook fury", "zbook power"
         ])
 
-        if ram_gb < 32 and not is_upgradable_chassis and not is_apple_silicon:
-            return self._reject_dict(f"Hard Excluded: {ram_gb}GB RAM on non-upgradable or consumer chassis. Minimum 32GB required.")
+        # Universal Hard Ban: Any system <= 16GB is outruled (upgradable or not)
+        if ram_gb <= 16:
+            return self._reject_dict(f"Hard Excluded: {ram_gb}GB RAM is insufficient for modern AI/Developer workloads. Minimum 32GB required.")
 
         # ==========================================
         # 2. TOTAL LANDED COST (TLC) CALCULATION
         # ==========================================
-        # Tax: 0% on Reddit / Local meetups, 8.25% on eBay/Swappa/BestBuy/B&H
         tax_rate = 0.0 if listing.source in ["reddit", "local"] else 0.0825
         sticker_price = max(50.0, listing.price)
         tlc = round(sticker_price * (1.0 + tax_rate), 2)
@@ -396,63 +533,55 @@ class GeminiHardwareEvaluator:
         if any(w in text for w in ["no battery", "no batt", "dead battery", "service battery", "bad battery", "battery not working"]):
             tlc += 65.0
 
-        # Upgradable 16GB Chassis DDR5 RAM Upgrade Penalty (Upgrade to 64GB kit)
-        if ram_gb == 16 and is_upgradable_chassis:
-            tlc += 110.0  # Cost of Crucial/Corsair 64GB DDR5 SO-DIMM kit
-            ram_gb = 64   # Evaluate at upgraded 64GB spec level
-
+        # If a 16GB upgradable machine, calculate base value as 16GB (do not artificially inflate to 64GB)
+        if ram_gb <= 16 and is_upgradable_chassis:
+            tlc += 110.0
         # ==========================================
-        # 3. FAIR MARKET VALUE (FMV) & GROUND TRUTH BENCHMARKS
+        # 3. FAIR MARKET VALUE (FMV) & DYNAMIC BENCHMARK INDEX
         # ==========================================
-        fmv = 0.0
-        strike_ceiling = 0.0
-
-        # Ground Truth Matrix Matching
+        model_key = None
         if "xps 15 9530" in text or "xps 9530" in text:
-            fmv = 1150.0 if ram_gb >= 64 else 950.0
-            strike_ceiling = 850.0 if ram_gb >= 64 else 780.0
+            model_key = "dell_xps_15_9530"
         elif "xps 15 9520" in text or "xps 9520" in text:
-            fmv = 850.0 if ram_gb >= 64 else 750.0
-            strike_ceiling = 750.0 if ram_gb >= 64 else 675.0
+            model_key = "dell_xps_15_9520"
         elif "precision 5680" in text:
-            fmv = 1450.0 if ram_gb >= 64 else 1250.0
-            strike_ceiling = 1050.0 if ram_gb >= 64 else 950.0
+            model_key = "dell_precision_5680"
         elif "precision 5570" in text:
-            fmv = 880.0 if ram_gb >= 64 else 780.0
-            strike_ceiling = 750.0 if ram_gb >= 64 else 680.0
+            model_key = "dell_precision_5570"
         elif "thinkpad p1 gen 6" in text or "p1 gen 6" in text or "p16 gen 2" in text:
-            fmv = 1400.0 if ram_gb >= 64 else 1200.0
-            strike_ceiling = 1050.0 if ram_gb >= 64 else 950.0
+            model_key = "thinkpad_p1_gen_6"
         elif "thinkpad p1 gen 5" in text or "p1 gen 5" in text or "x1 extreme g5" in text or "p16 gen 1" in text:
-            fmv = 920.0 if ram_gb >= 64 else 800.0
-            strike_ceiling = 800.0 if ram_gb >= 64 else 720.0
+            model_key = "thinkpad_p1_gen_5"
         elif "zbook studio g10" in text or "zbook fury g10" in text:
-            fmv = 1200.0 if ram_gb >= 64 else 1050.0
-            strike_ceiling = 950.0 if ram_gb >= 64 else 850.0
-        elif "zbook studio g9" in text or "zbook fury g9" in text:
-            fmv = 850.0 if ram_gb >= 64 else 750.0
-            strike_ceiling = 720.0 if ram_gb >= 64 else 650.0
-        elif is_apple_silicon and ("m2 max" in text or "m3 max" in text or "m4 max" in text):
-            fmv = 1750.0 if ram_gb >= 64 else 1550.0
-            strike_ceiling = 1450.0 if ram_gb >= 64 else 1300.0
+            model_key = "hp_zbook_studio_g10"
+        elif "zbook studio g9" in text or "zbook fury g9" in text or "zbook power g9" in text:
+            model_key = "hp_zbook_studio_g9"
+        elif is_apple_silicon and ("m3 max" in text or "m4 max" in text or "m2 max" in text):
+            model_key = "apple_mbp_16_m3_m4_max"
         elif is_apple_silicon and "m2 pro" in text:
-            fmv = 1550.0 if ram_gb >= 64 else 1350.0
-            strike_ceiling = 1350.0 if ram_gb >= 64 else 1150.0
+            model_key = "apple_mbp_16_m2_pro_max"
         elif is_apple_silicon and ("m1 max" in text or "m1 pro" in text):
-            fmv = 1250.0 if ram_gb >= 64 else 1050.0
-            strike_ceiling = 1100.0 if ram_gb >= 64 else 900.0
+            model_key = "apple_mbp_16_m1_pro_max"
         elif "zephyrus" in text or "legion pro" in text or "razer blade" in text:
-            fmv = 1100.0 if ram_gb >= 64 else 950.0
-            strike_ceiling = 900.0 if ram_gb >= 64 else 800.0
+            model_key = "asus_razer_legion_workstation"
+
+        if model_key:
+            fmv, strike_ceiling = self.benchmark_index.get_benchmark(model_key, ram_gb)
         else:
             # General Whitelisted Silicon Fallback FMV
-            base_fmv = 850.0 if ram_gb >= 64 else 750.0
+            base_fmv = 850.0 if ram_gb >= 64 else (750.0 if ram_gb >= 32 else 600.0)
             if "rtx 4080" in text or "rtx 4090" in text or "rtx 5080" in text:
                 base_fmv += 450.0
             elif "rtx 4070" in text or "rtx 3500 ada" in text or "rtx 4000 ada" in text:
                 base_fmv += 250.0
             fmv = base_fmv
             strike_ceiling = fmv * 0.82
+
+        # Add component bonuses if high-end display or storage
+        if "oled" in text or "4k" in text:
+            fmv += self.benchmark_index.component_adders.get("oled_4k_display", 120.0)
+        if ssd_gb >= 2048:
+            fmv += self.benchmark_index.component_adders.get("ssd_2tb_plus", 80.0)
 
         # ==========================================
         # 4. CALIBRATED ARBITRAGE SCORING CURVE
@@ -461,19 +590,19 @@ class GeminiHardwareEvaluator:
         margin_spread_pct = round(((fmv - tlc) / fmv) * 100.0, 1)
         profit = round(max(0.0, fmv - tlc), 2)
 
-        # Disqualify if TLC exceeds Strike Ceiling
+        # Disqualify if TLC exceeds Strike Ceiling or margin < 8%
         if tlc > strike_ceiling or margin_spread_pct < 8.0:
             deal_score = max(1.0, round(5.0 + (margin_spread_pct / 10.0), 1))
             recommendation = "PASS / NO ARBITRAGE (Exceeds Strike Ceiling)"
         elif margin_spread_pct >= 38.0 and ram_gb >= 64:
-            # 🦄 TRUE UNICORN DEAL (38%+ Margin, 64GB DDR5 / Unified, Tier 1 Chassis)
+            # 🦄 TRUE UNICORN DEAL (Strict: 38%+ Margin, True 64GB DDR5 / Unified, Tier 1 Chassis)
             deal_score = round(min(10.0, 9.8 + ((margin_spread_pct - 38.0) / 20.0)), 1)
             recommendation = "🦄 TRUE UNICORN DEAL (High Liquidity Equity)"
-        elif margin_spread_pct >= 25.0:
-            # 🎯 HIGH-CONVICTION STRIKE (25.0% - 37.9% Margin)
+        elif margin_spread_pct >= 25.0 and ram_gb >= 32:
+            # 🎯 HIGH-CONVICTION STRIKE (25.0% - 37.9% Margin + >=32GB RAM)
             deal_score = round(min(9.7, 9.0 + ((margin_spread_pct - 25.0) / 18.0)), 1)
             recommendation = "🎯 HIGH-CONVICTION STRIKE"
-        elif margin_spread_pct >= 15.0:
+        elif margin_spread_pct >= 15.0 and ram_gb >= 32:
             # ⚡ STRONG VALUE BUY (15.0% - 24.9% Margin)
             deal_score = round(min(8.9, 8.0 + ((margin_spread_pct - 15.0) / 10.0)), 1)
             recommendation = "⚡ STRONG VALUE BUY"
@@ -485,25 +614,84 @@ class GeminiHardwareEvaluator:
             deal_score = 5.0
             recommendation = "FAIR MARKET VALUE"
 
-        # CPU label
-        cpu_label = "Intel Core i7/i9 12th/13th-Gen H"
-        if is_apple_silicon:
-            cpu_label = "Apple Silicon M-Series Pro/Max"
+        # ==========================================
+        # 5. PRECISE SPEC EXTRACTION (CPU, GPU, Screen)
+        # ==========================================
+        # Exact CPU extraction
+        cpu_match = re.search(r'\b(i9-\d{4,5}[a-z]*|i7-\d{4,5}[a-z]*|ultra [79] \d{3}[a-z]*|ryzen [79] \d{4}[a-z]*|m[1-4] (?:max|pro|ultra))\b', text)
+        if cpu_match:
+            cpu_label = cpu_match.group(0).upper()
+        elif is_apple_silicon:
+            if "m3 max" in text or "m2 max" in text or "m1 max" in text or "m4 max" in text:
+                cpu_label = "Apple M-Series Max"
+            elif "m3 pro" in text or "m2 pro" in text or "m1 pro" in text or "m4 pro" in text:
+                cpu_label = "Apple M-Series Pro"
+            else:
+                cpu_label = "Apple Silicon"
         elif "ryzen" in text:
             cpu_label = "AMD Ryzen 7/9 Zen 4/5"
         elif "ultra" in text:
             cpu_label = "Intel Core Ultra AI Workstation"
+        else:
+            cpu_label = "Intel Core i7/i9 12th/13th-Gen H"
+
+        # Exact GPU extraction
+        gpu_match = re.search(r'\b(rtx [2345]000 ada|rtx a[12345]000|rtx a5500|rtx 40[6789]0|rtx 50[789]0|rtx 30[78]0 ti|radeon 890m|radeon 8050s)\b', text)
+        if gpu_match:
+            gpu_label = f"NVIDIA {gpu_match.group(0).upper()}"
+        elif is_apple_silicon:
+            gpu_label = "Apple Silicon Unified GPU"
+        else:
+            gpu_label = "NVIDIA RTX / Workstation GPU"
+
+        # Screen extraction
+        screen_label = '15.6" - 16" Workstation Display'
+        if "oled" in text or "3.5k" in text:
+            screen_label = '15.6" / 16" 3.5K OLED Display'
+        elif "4k" in text or "uhd" in text or "3840x" in text:
+            screen_label = '16" 4K UHD+ Display'
+        elif "qhd" in text or "2560x" in text or "wqxga" in text:
+            screen_label = '16" QHD+ 165Hz Display'
+        elif "liquid retina" in text or "xdr" in text:
+            screen_label = '16.2" Liquid Retina XDR 120Hz'
+
+        # ==========================================
+        # 6. TARGETED ENTERPRISE SELLER CAVEATS & BADGES
+        # ==========================================
+        seller_text = f"{(listing.seller or '')} {text}".lower()
+        is_enterprise_itad = any(s in seller_text for s in [
+            "wisetek", "wisetekca", "epc-texas", "epc-global", "epc texas", "epc global",
+            "human-i-t", "human i t", "smartresale", "smart resale", "greentek",
+            "joysystems", "joy systems", "planitroi", "techdiscounts", "tech discounts",
+            "blairtech", "blair technology"
+        ])
+
+        # Caveat 1: Smart Resale - Filter out Grade C / Grade D cosmetic units
+        if any(s in seller_text for s in ["smartresale", "smart resale"]):
+            if any(w in text for w in ["grade c", "grade d", "heavy scratch", "cracked", "dent"]):
+                return self._reject_dict("Hard Excluded: Smart Resale Grade C/D unit rejected per enterprise aesthetic baseline.")
+
+        # Caveat 2: GreenTek Solutions - Add Best Offer notation
+        if "greentek" in seller_text:
+            recommendation += " (💡 Note: GreenTek typically accepts Best Offers ~20% below list)"
+
+        # Caveat 3: Human-I-T - Verify OEM charger
+        if any(s in seller_text for s in ["human-i-t", "human i t"]):
+            if not any(w in text for w in ["includes charger", "oem charger", "power adapter", "with charger"]):
+                tlc += 40.0
+
+        itad_badge = " 🛡️ [Enterprise ITAD]" if is_enterprise_itad else ""
 
         return {
             "cpu": cpu_label,
             "ram_gb": ram_gb,
             "ssd_gb": ssd_gb,
-            "gpu": "NVIDIA RTX / Apple Silicon GPU",
-            "screen": '15.6" - 16" Workstation Display',
+            "gpu": gpu_label,
+            "screen": screen_label,
             "condition": listing.condition_raw,
             "fair_market_value": fmv,
             "deal_score": deal_score,
-            "summary": f"{cpu_label} | {ram_gb}GB RAM | {ssd_gb}GB SSD (TLC: ${tlc:.2f}, Margin: {margin_spread_pct}%).",
+            "summary": f"{cpu_label} | {ram_gb}GB RAM | {ssd_gb}GB SSD | {gpu_label}{itad_badge} (TLC: ${tlc:.2f}, Margin: {margin_spread_pct}%).",
             "actionable_recommendation": recommendation,
             "confidence_score": 0.95,
         }
@@ -541,6 +729,12 @@ class GeminiHardwareEvaluator:
         score = float(eval_dict.get("deal_score", 5.0))
         score = round(max(0.0, min(10.0, score)), 1)
 
+        final_summary = str(eval_dict.get("summary", ""))
+        seller_check = f"{(raw.seller or '')} {raw.title} {raw.description}".lower()
+        if any(s in seller_check for s in ["wisetek", "wisetekca", "epc-texas", "epc-global", "human-i-t", "smartresale", "greentek", "joysystems", "planitroi", "techdiscounts", "blairtech"]):
+            if "Enterprise ITAD" not in final_summary:
+                final_summary += " 🛡️ [Enterprise ITAD Refurbisher]"
+
         return DealRecord(
             id=raw.id,
             source=raw.source,
@@ -552,7 +746,7 @@ class GeminiHardwareEvaluator:
             estimated_profit=profit,
             arbitrage_margin_pct=margin,
             deal_score=score,
-            summary=str(eval_dict.get("summary", "")),
+            summary=final_summary,
             actionable_recommendation=str(eval_dict.get("actionable_recommendation", "")),
             confidence_score=float(eval_dict.get("confidence_score", 0.85)),
             seller=raw.seller,

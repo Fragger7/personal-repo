@@ -46,8 +46,8 @@ class PushoverNotifier:
         self,
         user_key: Optional[str] = None,
         api_token: Optional[str] = None,
-        min_deal_score: float = 8.5,
-        max_price: float = 750.0,
+        min_deal_score: float = 9.0,
+        max_price: float = 850.0,
     ) -> None:
         self.user_key = user_key or os.environ.get("PUSHOVER_USER_KEY", "")
         self.api_token = api_token or os.environ.get("PUSHOVER_API_TOKEN", "")
@@ -194,12 +194,25 @@ class TelegramNotifier:
         self,
         bot_token: Optional[str] = None,
         chat_id: Optional[str] = None,
+        vercel_url: Optional[str] = None,
+        streamlit_url: Optional[str] = None,
     ) -> None:
-        self.bot_token = bot_token or os.environ.get("TELEGRAM_BOT_TOKEN", "")
-        self.chat_id = chat_id or os.environ.get("TELEGRAM_CHAT_ID", "")
+        self.bot_token = bot_token if bot_token is not None else os.environ.get("TELEGRAM_BOT_TOKEN", "")
+        self.chat_id = chat_id if chat_id is not None else os.environ.get("TELEGRAM_CHAT_ID", "")
+        self.vercel_url = vercel_url if vercel_url is not None else os.environ.get("VERCEL_DASHBOARD_URL", "https://wsdealhunter.vercel.app/")
+        self.streamlit_url = streamlit_url or os.environ.get("STREAMLIT_DASHBOARD_URL", "https://wsdealhunter.streamlit.app/")
 
-    def send_deal_alert(self, deal: DealRecord) -> NotificationResult:
-        """Send rich HTML formatted notification to Telegram."""
+    def _format_dashboard_links(self) -> str:
+        """Format clean web dashboard links."""
+        if self.vercel_url:
+            return (
+                f"🌐 <a href=\"{self.vercel_url}\"><b>[OPEN REACT DASHBOARD (VERCEL)]</b></a>\n"
+                f"📊 <a href=\"{self.streamlit_url}\"><b>[STREAMLIT BACKUP]</b></a>"
+            )
+        return f"🌐 <a href=\"{self.streamlit_url}\"><b>[OPEN LIVE DASHBOARD ↗]</b></a>"
+
+    def send_deal_alert(self, deal: DealRecord, usage_info: Optional[Dict[str, Any]] = None) -> NotificationResult:
+        """Send rich HTML formatted notification to Telegram with direct buy links and AI quota status."""
         if not self.bot_token or not self.chat_id:
             return NotificationResult(
                 success=False,
@@ -210,13 +223,26 @@ class TelegramNotifier:
 
         api_url = f"https://api.telegram.org/bot{self.bot_token}/sendMessage"
 
+        # Distinct header badge based on score tier
+        if deal.deal_score >= 9.8:
+            header_badge = f"🦄 <b>[{deal.deal_score:.1f}/10 TRUE UNICORN DEAL]</b>"
+        elif deal.deal_score >= 9.0:
+            header_badge = f"🎯 <b>[{deal.deal_score:.1f}/10 HIGH-CONVICTION STRIKE]</b>"
+        else:
+            header_badge = f"🔥 <b>[{deal.deal_score:.1f}/10 VALUE BUY]</b>"
+
+        # AI Quota Footer Line
+        if usage_info:
+            ai_line = f"🤖 <b>AI Usage Today:</b> {usage_info['total_calls']} calls ({usage_info['total_tokens']:,} tokens) | ~{usage_info['estimated_daily_left']:,}/1,500 left\n\n"
+        else:
+            ai_line = ""
+
         # Format HTML message
         text = (
-            f"🔥 <b>[{deal.deal_score:.1f}/10 DEAL FOUND]</b>\n\n"
+            f"{header_badge}\n\n"
             f"💻 <b>{deal.title}</b>\n\n"
-            f"💰 <b>Asking Price:</b> ${deal.price:.2f}\n"
-            f"📈 <b>Est. Market Value:</b> ${deal.fair_market_value:.2f}\n"
-            f"💵 <b>Arbitrage Spread:</b> <b>+${deal.estimated_profit:.2f}</b> (+{deal.arbitrage_margin_pct:.0f}% ROI)\n\n"
+            f"💰 <b>Asking Price:</b> ${deal.price:,.2f}  <i>(Est. FMV: ${deal.fair_market_value:,.2f})</i>\n"
+            f"💵 <b>Arbitrage Spread:</b> <b>+${deal.estimated_profit:,.2f}</b> (+{deal.arbitrage_margin_pct:.0f}% ROI)\n\n"
             f"⚙️ <b>Hardware Specs:</b>\n"
             f"• <b>CPU:</b> {deal.specs.cpu}\n"
             f"• <b>RAM:</b> {deal.specs.ram_gb} GB\n"
@@ -225,7 +251,9 @@ class TelegramNotifier:
             f"• <b>Display:</b> {deal.specs.screen}\n\n"
             f"🎯 <b>Action:</b> {deal.actionable_recommendation}\n"
             f"📍 <b>Source:</b> {deal.source.upper()} ({deal.seller})\n\n"
-            f"👉 <a href=\"{deal.url}\"><b>[CLICK HERE TO VIEW / BUY LISTING]</b></a>"
+            + ai_line
+            + f"👉 <a href=\"{deal.url}\"><b>[BUY NOW ON {deal.source.upper()} ↗]</b></a>\n"
+            + self._format_dashboard_links()
         )
 
         payload = {
@@ -258,13 +286,21 @@ class TelegramNotifier:
                 deal_id=deal.id,
             )
 
-    def send_system_message(self, title: str, body_html: str) -> NotificationResult:
-        """Send a general system pulse digest or status update."""
+    def send_error_alert(self, component: str, error_msg: str, cycle: int = 0) -> NotificationResult:
+        """Send urgent dead-man / error alert when a scraper or background task fails."""
         if not self.bot_token or not self.chat_id:
-            return NotificationResult(success=False, status_code=400, message="Telegram unconfigured.", deal_id="system")
+            return NotificationResult(success=False, status_code=400, message="Telegram unconfigured.", deal_id="error")
 
         api_url = f"https://api.telegram.org/bot{self.bot_token}/sendMessage"
-        text = f"📊 <b>[{title}]</b>\n\n{body_html}"
+        cycle_str = f" #{cycle}" if cycle > 0 else ""
+        text = (
+            f"🚨 <b>[DAEMON ERROR ALERT]</b>\n\n"
+            f"⚠️ <b>Scraper Failure Detected on Cycle{cycle_str}</b>\n"
+            f"• <b>Component:</b> <code>{component}</code>\n"
+            f"• <b>Error:</b> <code>{error_msg[:400]}</code>\n\n"
+            f"⚡ <i>Daemon attempting automatic self-healing on next interval.</i>\n"
+            f"🌐 <a href=\"{self.streamlit_url}\"><b>[CHECK LIVE DASHBOARD ↗]</b></a>"
+        )
         payload = {
             "chat_id": self.chat_id,
             "text": text,
@@ -279,9 +315,116 @@ class TelegramNotifier:
                 method="POST",
             )
             with urllib.request.urlopen(req, timeout=5.0) as res:
-                return NotificationResult(success=True, status_code=res.status, message="Delivered", deal_id="system")
+                return NotificationResult(success=True, status_code=res.status, message="Error alert delivered", deal_id="error")
+        except Exception as e:
+            return NotificationResult(success=False, status_code=500, message=str(e), deal_id="error")
+
+    def send_system_message(self, title: str, html_body: str) -> NotificationResult:
+        """Send a general formatted system announcement or heartbeat pulse message."""
+        if not self.bot_token or not self.chat_id:
+            return NotificationResult(success=False, status_code=400, message="Telegram unconfigured.", deal_id="system")
+
+        api_url = f"https://api.telegram.org/bot{self.bot_token}/sendMessage"
+        payload = {
+            "chat_id": self.chat_id,
+            "text": html_body,
+            "parse_mode": "HTML",
+            "disable_web_page_preview": True,
+        }
+        try:
+            req = urllib.request.Request(
+                api_url,
+                data=json.dumps(payload).encode("utf-8"),
+                headers={"Content-Type": "application/json", "User-Agent": "WorkstationDealHunter/1.0"},
+                method="POST",
+            )
+            with urllib.request.urlopen(req, timeout=5.0) as res:
+                return NotificationResult(success=True, status_code=res.status, message="System message delivered", deal_id="system")
         except Exception as e:
             return NotificationResult(success=False, status_code=500, message=str(e), deal_id="system")
+
+    def send_executive_briefing(self, top_deals: List[DealRecord]) -> NotificationResult:
+        """Send the scheduled 12:00 PM CST executive briefing of top workstation deals."""
+        if not self.bot_token or not self.chat_id:
+            return NotificationResult(success=False, status_code=400, message="Telegram unconfigured.", deal_id="briefing")
+
+        if not top_deals:
+            return NotificationResult(success=True, status_code=200, message="No active deals to brief.", deal_id="briefing")
+
+        api_url = f"https://api.telegram.org/bot{self.bot_token}/sendMessage"
+        
+        deal_blocks = []
+        rank_emojis = ["🥇", "🥈", "🥉"]
+        for idx, deal in enumerate(top_deals[:3]):
+            rank = rank_emojis[idx] if idx < len(rank_emojis) else f"#{idx+1}"
+            tier_badge = "🦄 UNICORN" if deal.deal_score >= 9.5 else ("🎯 HIGH-CONVICTION" if deal.deal_score >= 9.0 else "🔥 VALUE BUY")
+            deal_blocks.append(
+                f"{rank} <b>[{deal.deal_score:.1f}/10 {tier_badge}]</b>\n"
+                f"💻 <b>{deal.title}</b>\n"
+                f"• <b>Asking:</b> ${deal.price:,.2f} <i>(Est. FMV: ${deal.fair_market_value:,.2f})</i>\n"
+                f"• <b>Arbitrage Spread:</b> <b>+${deal.estimated_profit:,.2f}</b> (+{deal.arbitrage_margin_pct:.0f}% ROI)\n"
+                f"• <b>Specs:</b> {deal.specs.cpu} | {deal.specs.ram_gb}GB RAM | {deal.specs.ssd_gb}GB SSD | {deal.specs.gpu}\n"
+                f"👉 <a href=\"{deal.url}\"><b>[BUY NOW ON {deal.source.upper()} ↗]</b></a>"
+            )
+
+        text = (
+            f"☀️ <b>[12:00 PM CST EXECUTIVE DEAL BRIEFING]</b>\n"
+            f"💼 <i>Top Workstation Arbitrage Opportunities Active Today:</i>\n\n"
+            + "\n\n".join(deal_blocks)
+            + "\n\n"
+            + self._format_dashboard_links()
+        )
+
+        payload = {
+            "chat_id": self.chat_id,
+            "text": text,
+            "parse_mode": "HTML",
+            "disable_web_page_preview": False,
+        }
+
+        try:
+            req = urllib.request.Request(
+                api_url,
+                data=json.dumps(payload).encode("utf-8"),
+                headers={"Content-Type": "application/json", "User-Agent": "WorkstationDealHunter/1.0"},
+                method="POST",
+            )
+            with urllib.request.urlopen(req, timeout=5.0) as res:
+                return NotificationResult(success=True, status_code=res.status, message="Executive briefing delivered.", deal_id="briefing")
+        except Exception as e:
+            return NotificationResult(success=False, status_code=500, message=f"Briefing delivery error: {e}", deal_id="briefing")
+
+    def send_dell_promo_alert(self, coupon_code: str, discount_pct: float) -> NotificationResult:
+        """Send instant flash alert when Dell Financial Services launches a new sitewide coupon code."""
+        if not self.bot_token or not self.chat_id:
+            return NotificationResult(success=False, status_code=400, message="Telegram unconfigured.", deal_id="dell_promo")
+
+        api_url = f"https://api.telegram.org/bot{self.bot_token}/sendMessage"
+        text = (
+            f"🏷️ <b>[DELL REFURBISHED FLASH PROMO DETECTED]</b>\n\n"
+            f"💥 <b>Active Promo Code:</b> <code>{coupon_code}</code> (<b>{int(discount_pct)}% OFF</b>)\n"
+            f"🎯 <b>Eligible Hardware:</b> Dell Precision Mobile Workstations & XPS Laptops\n\n"
+            f"⚡ <i>All Dell DFS inventory prices and arbitrage valuations have been automatically discounted by {int(discount_pct)}% in your dashboard.</i>\n\n"
+            f"👉 <a href=\"https://www.dellrefurbished.com/laptops?model_family=266\"><b>[BROWSE PRECISION WORKSTATIONS ON DELL ↗]</b></a>\n\n"
+            + self._format_dashboard_links()
+        )
+        payload = {
+            "chat_id": self.chat_id,
+            "text": text,
+            "parse_mode": "HTML",
+            "disable_web_page_preview": False,
+        }
+        try:
+            req = urllib.request.Request(
+                api_url,
+                data=json.dumps(payload).encode("utf-8"),
+                headers={"Content-Type": "application/json", "User-Agent": "WorkstationDealHunter/1.0"},
+                method="POST",
+            )
+            with urllib.request.urlopen(req, timeout=5.0) as res:
+                return NotificationResult(success=True, status_code=res.status, message="Dell promo alert delivered.", deal_id="dell_promo")
+        except Exception as e:
+            return NotificationResult(success=False, status_code=500, message=f"Dell promo delivery error: {e}", deal_id="dell_promo")
 
 
 class DiscordNotifier:
