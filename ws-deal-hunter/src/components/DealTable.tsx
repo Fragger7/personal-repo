@@ -123,6 +123,12 @@ export const DealTable: React.FC<DealTableProps> = ({ deals, onSendPush, onDelet
                   Listing Title &amp; Source {renderSortIndicator("title")}
                 </div>
               </th>
+              <th className="px-4 py-3 min-w-[280px] max-w-[380px] text-slate-400 uppercase tracking-wider text-[11px] font-semibold select-none">
+                <div className="flex items-center gap-1.5 text-emerald-400">
+                  <Sparkles className="h-3.5 w-3.5" />
+                  <span>AI Recommendation &amp; Commentary</span>
+                </div>
+              </th>
               <th
                 className={getHeaderClass("date")}
                 onClick={() => handleHeaderClick("date")}
@@ -203,7 +209,7 @@ export const DealTable: React.FC<DealTableProps> = ({ deals, onSendPush, onDelet
                   </td>
 
                   {/* Title & Source */}
-                  <td className="px-4 py-3 max-w-[320px]">
+                  <td className="px-4 py-3 max-w-[280px]">
                     <div className="font-semibold text-slate-100 truncate group-hover:text-emerald-300 transition" title={deal.title}>
                       {deal.title}
                     </div>
@@ -212,14 +218,26 @@ export const DealTable: React.FC<DealTableProps> = ({ deals, onSendPush, onDelet
                       <span>•</span>
                       <span className="truncate max-w-[120px]">{deal.seller}</span>
                     </div>
-                    {(deal.actionable_recommendation || deal.summary) && (
-                      <div className="mt-1 flex items-start gap-1 text-[11px] text-emerald-400/90 bg-emerald-950/30 border border-emerald-800/30 px-2 py-0.5 rounded leading-tight" title={deal.summary || deal.actionable_recommendation}>
-                        <Sparkles className="h-3 w-3 text-emerald-400 shrink-0 mt-0.5" />
-                        <span className="truncate">
-                          <strong className="text-emerald-300">{deal.actionable_recommendation}</strong>
-                          {deal.summary && deal.summary !== deal.actionable_recommendation ? ` — ${deal.summary}` : ""}
-                        </span>
-                      </div>
+                  </td>
+
+                  {/* AI Recommendation & Full Commentary */}
+                  <td className="px-4 py-3 min-w-[280px] max-w-[380px]">
+                    <div className="flex items-center gap-1.5 mb-1">
+                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
+                        deal.deal_score >= 9.0 
+                          ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40" 
+                          : deal.deal_score >= 8.0 
+                          ? "bg-teal-500/20 text-teal-300 border border-teal-500/40"
+                          : "bg-slate-800 text-slate-300 border border-slate-700"
+                      }`}>
+                        <Sparkles className="h-2.5 w-2.5 text-emerald-400" />
+                        {deal.actionable_recommendation || "VETTED OPPORTUNITY"}
+                      </span>
+                    </div>
+                    {deal.summary && (
+                      <p className="text-[11px] text-slate-300 font-normal leading-relaxed hover:text-white transition duration-150" title={deal.summary}>
+                        {deal.summary}
+                      </p>
                     )}
                   </td>
 

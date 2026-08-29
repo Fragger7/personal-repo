@@ -82,8 +82,8 @@ Respond ONLY with valid JSON:
   "condition": string,
   "fair_market_value": number,
   "deal_score": number,
-  "summary": string,
-  "actionable_recommendation": string,
+  "summary": string (2-3 sentences of natural language developer commentary explaining why this deal is valuable, target workload suitability like local AI/LLM inference or compilation, hardware upgrades, and specific arbitrage upside),
+  "actionable_recommendation": string (e.g. "🎯 HIGH-CONVICTION STRIKE: Buy immediately at asking price", "🔥 STRONG VALUE BUY: Excellent developer daily driver", "⚡ COUNTER-OFFER TARGET: Offer $X for high margin"),
   "confidence_score": number
 }
 """
@@ -680,7 +680,23 @@ class GeminiHardwareEvaluator:
             if not any(w in text for w in ["includes charger", "oem charger", "power adapter", "with charger"]):
                 tlc += 40.0
 
-        itad_badge = " 🛡️ [Enterprise ITAD]" if is_enterprise_itad else ""
+        itad_badge = " 🛡️ [Enterprise ITAD Certified]" if is_enterprise_itad else ""
+
+        # Construct natural language developer commentary
+        profit_spread = round(max(0.0, fmv - tlc), 2)
+        workload_context = (
+            "Ideal for local AI/LLM fine-tuning, Docker virtualization, and heavy code compilation."
+            if ram_gb >= 64
+            else "Excellent daily driver for full-stack engineering, multi-container development, and data analysis."
+        )
+        if deal_score >= 9.5:
+            sentiment = f"Rare halo opportunity priced at ${listing.price:.0f} with a massive +${profit_spread:.0f} (+{margin_spread_pct:.0f}% ROI) spread below fair market clearing baseline (${fmv:.0f})."
+        elif deal_score >= 8.5:
+            sentiment = f"High-conviction value buy at ${listing.price:.0f} offering +${profit_spread:.0f} (+{margin_spread_pct:.0f}% ROI) profit spread below estimated FMV (${fmv:.0f})."
+        else:
+            sentiment = f"Opportunistic target priced at ${listing.price:.0f} with +${profit_spread:.0f} margin spread."
+
+        summary_commentary = f"{sentiment} Configured with {cpu_label}, {ram_gb}GB RAM, {ssd_gb}GB SSD, and {gpu_label}. {workload_context}{itad_badge}"
 
         return {
             "cpu": cpu_label,
@@ -691,7 +707,7 @@ class GeminiHardwareEvaluator:
             "condition": listing.condition_raw,
             "fair_market_value": fmv,
             "deal_score": deal_score,
-            "summary": f"{cpu_label} | {ram_gb}GB RAM | {ssd_gb}GB SSD | {gpu_label}{itad_badge} (TLC: ${tlc:.2f}, Margin: {margin_spread_pct}%).",
+            "summary": summary_commentary,
             "actionable_recommendation": recommendation,
             "confidence_score": 0.95,
         }
