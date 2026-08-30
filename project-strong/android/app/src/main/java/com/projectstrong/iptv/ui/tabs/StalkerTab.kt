@@ -360,6 +360,14 @@ fun StalkerDetailScreen(node: ParsedCredential, onBack: () -> Unit) {
                     isMonospaceOrPrimary = true
                 )
 
+                if (node.sourceLink.isNotEmpty()) {
+                    CopyableCredentialField(
+                        label = "Source URL",
+                        value = node.sourceLink,
+                        toastMessage = "Copied Source URL to clipboard!"
+                    )
+                }
+
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     CopyableCredentialField(
                         label = "MAC Address",

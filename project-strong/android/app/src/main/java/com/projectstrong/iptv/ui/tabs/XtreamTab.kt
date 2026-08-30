@@ -653,6 +653,14 @@ fun XtreamDetailScreen(node: ParsedCredential, onBack: () -> Unit) {
                     toastMessage = "Copied M3U Playlist URL to clipboard!"
                 )
 
+                if (node.sourceLink.isNotEmpty()) {
+                    CopyableCredentialField(
+                        label = "Source URL",
+                        value = node.sourceLink,
+                        toastMessage = "Copied Source URL to clipboard!"
+                    )
+                }
+
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text("EXPIRES", color = AppTextSecondary, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
