@@ -22,9 +22,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.projectstrong.iptv.data.CommittedManager
-import com.projectstrong.iptv.data.DataStore
-import com.projectstrong.iptv.data.SettingsManager
+import com.projectstrong.iptv.data.*
 import com.projectstrong.iptv.network.NetworkMonitor
 import com.projectstrong.iptv.ui.components.ToastManager
 import com.projectstrong.iptv.ui.theme.*

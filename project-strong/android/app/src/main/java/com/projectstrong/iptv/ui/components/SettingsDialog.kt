@@ -24,9 +24,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import com.projectstrong.iptv.data.CommittedManager
-import com.projectstrong.iptv.data.DataStore
-import com.projectstrong.iptv.data.SettingsManager
+import com.projectstrong.iptv.data.*
 import com.projectstrong.iptv.network.NetworkMonitor
 import com.projectstrong.iptv.ui.theme.*
 import kotlinx.coroutines.launch
@@ -504,7 +502,109 @@ fun SettingsDialog(
                         }
                     }
 
-                    // Section 3: Data Management & Maintenance
+                    // Section 3: Visual Themes & Palettes
+                    SettingsDialogSectionHeader(title = "Visual Themes & Palettes", icon = Icons.Default.Palette)
+                    Surface(
+                        shape = RoundedCornerShape(16.dp),
+                        color = AppSurface,
+                        border = BorderStroke(1.dp, AppSurfaceBorder),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            Text(
+                                text = "Choose your preferred visual atmosphere. Custom palettes dynamically re-style the entire UI across all tabs in real time.",
+                                color = AppTextSecondary,
+                                style = MaterialTheme.typography.bodySmall
+                            )
+
+                            AppThemeMode.values().forEach { theme ->
+                                val isSelected = SettingsManager.currentTheme == theme
+                                val (primaryColor, secondaryColor) = when (theme) {
+                                    AppThemeMode.SHERLOCK_AMBER -> Pair(Color(0xFFF59E0B), Color(0xFF06B6D4))
+                                    AppThemeMode.MIDNIGHT_PURPLE -> Pair(Color(0xFFA78BFA), Color(0xFFC084FC))
+                                    AppThemeMode.OCEAN_BLUE -> Pair(Color(0xFF38BDF8), Color(0xFF06B6D4))
+                                    AppThemeMode.CRIMSON_DARK -> Pair(Color(0xFFEF4444), Color(0xFFF43F5E))
+                                    AppThemeMode.SYSTEM_MONET -> Pair(Color(0xFF60A5FA), Color(0xFF34D399))
+                                }
+
+                                Surface(
+                                    shape = RoundedCornerShape(12.dp),
+                                    color = if (isSelected) primaryColor.copy(alpha = 0.12f) else AppSurfaceVariant.copy(alpha = 0.5f),
+                                    border = BorderStroke(
+                                        1.dp,
+                                        if (isSelected) primaryColor.copy(alpha = 0.6f) else AppSurfaceBorder
+                                    ),
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable {
+                                            SettingsManager.saveTheme(theme)
+                                            ToastManager.success("Applied ${theme.title} theme!")
+                                        }
+                                ) {
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(12.dp),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                            modifier = Modifier.weight(1f)
+                                        ) {
+                                            Row(
+                                                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                Box(
+                                                    modifier = Modifier
+                                                        .size(14.dp)
+                                                        .clip(CircleShape)
+                                                        .background(primaryColor)
+                                                )
+                                                Box(
+                                                    modifier = Modifier
+                                                        .size(12.dp)
+                                                        .clip(CircleShape)
+                                                        .background(secondaryColor)
+                                                )
+                                            }
+                                            Column {
+                                                Text(
+                                                    text = theme.title,
+                                                    color = if (isSelected) primaryColor else AppTextPrimary,
+                                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.SemiBold,
+                                                    style = MaterialTheme.typography.bodyMedium
+                                                )
+                                                Text(
+                                                    text = theme.description,
+                                                    color = AppTextSecondary,
+                                                    style = MaterialTheme.typography.labelSmall
+                                                )
+                                            }
+                                        }
+                                        RadioButton(
+                                            selected = isSelected,
+                                            onClick = {
+                                                SettingsManager.saveTheme(theme)
+                                                ToastManager.success("Applied ${theme.title} theme!")
+                                            },
+                                            colors = RadioButtonDefaults.colors(
+                                                selectedColor = primaryColor,
+                                                unselectedColor = AppTextMuted
+                                            )
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // Section 4: Data Management & Maintenance
                     SettingsDialogSectionHeader(title = "Data Management & Cache", icon = Icons.Default.FolderDelete)
                     Surface(
                         shape = RoundedCornerShape(16.dp),
