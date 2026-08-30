@@ -31,6 +31,9 @@ object DataStore {
     var activeOnlyStalker by mutableStateOf(false)
     var githubToken by mutableStateOf("")
     
+    // Source Snapshot Cache
+    val sourceSnapshots = mutableMapOf<String, String>()
+    
     // Global Catalog Query State for Xtream
     var isQueryingCatalogs by mutableStateOf(false)
     var isCatalogQueryPaused by mutableStateOf(false)

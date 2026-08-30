@@ -524,23 +524,21 @@ Create a dedicated **⚙️ Settings & About** tab or modal inside the Android a
    - Stream health diagnostics overlay (Resolution e.g. `1080p FHD`, Video Codec e.g. `H.264/HEVC`, Audio Codec e.g. `AAC/AC3`, Latency ms).
    - Fast 1-tap quick stream tester inside the Full-Screen Channel & Catalog Explorer.
 2. **Provider Intelligence & Forensic Brand Engine (StreamCheck Scraping Agent & Android Port - COMPLETED)**:
-   - Integrated multi-stream scraping intelligence from `search.streamcheck.pro` across 16 major IPTV providers (B1G, Crystal, Dino, Dream 4k, King 365, Lion, Magnum Golden, Max, Mega, Nexon, Promax, SLTV, Strong 8K, TiviOne, Trex, Ultra 8K).
-   - Mapped distinct regional channel delimiter signatures (`┃AT┃` for TiviOne, `▎SKY` for Promax, `★ SKY` for Max, `|8ᴋ|` for Crystal, `(SPIELZEIT)` for SLTV, `[AUS] SKY` for Lion, `³⁸⁴⁰ᴾ` & `STARZPLAY SPORT 8K` for Strong 8K).
-   - Bundled 2,127+ provider forensic profiles directly into Android assets (`assets/provider_intelligence.json`) and `app.py` for instant offline brand recognition on first boot.
-   - Upgraded flexible multi-port, host-only, and hostname regex heuristics (supporting 35+ top IPTV providers including Strong 8K, T-Rex, Dream 4K, B1G, Crystal, Dino, Cobra, Mega, Apollo Group, StarShare, King 4K, Prime+, Diamond, Atlas Pro, and more).
-   - Deep-Query Channel & Category Mining: Automatically triggers during catalog querying and stream counts, extracting category prefix conventions (`|US| STRONG 8K`, `[TREX] SPORTS`), banner dummy channels (`### BRAND ###`), and community links (`t.me`, `discord.gg`).
-   - Granular Confidence Percentages: Computes precise confidence ratings (`Verified Brand (95%)`, `Category Watermark (85%)`, `Stream Signature (75%)`, or `Unknown (0% Confidence - No Signatures)`).
-   - Server technical specs micro-grid (`Server`, `CF-RAY`, `timezone`, format capabilities) and bidirectional GitHub sync with `provider_intelligence.json`.
-3. **Scanner Tab Workflow & Floating Quick-Scroll (COMPLETED)**:
-   - Added floating action buttons (Scroll to Top & Scroll to Bottom) matching the master grid pattern for effortless navigation through large ingestion blocks.
-4. **Base64 Tab Power Actions & Automation Pipeline (COMPLETED)**:
-   - Automated Base64 chunk discovery with regex auto-extraction and padding repair.
-   - 1-Click "⚡ Send to Scanner" Power Action with seamless tab switching.
-   - Discovered URL cards with copy actions, browser launcher, and external video player launch intents (`video/*` MIME type).
-   - "🧹 Filter URLs" one-touch output sanitizer.
-5. **Performance Tuning & Memory Backlog (HIGH PRIORITY)**:
-   - Throttled coroutine chunking and memory-efficient recyclers on multi-thousand row payloads to ensure 60fps scrolling and eliminate any potential memory pressure.
-6. **Dynamic Theme Engine (Multi-Palette Selection)**:
+   - Integrated multi-stream scraping intelligence from `search.streamcheck.pro` across 16 major IPTV providers.
+   - Mapped distinct regional channel delimiter signatures.
+   - Bundled 2,127+ provider forensic profiles directly into Android assets and `app.py` for instant offline brand recognition on first boot.
+   - Server technical specs micro-grid and bidirectional GitHub sync with `provider_intelligence.json`.
+3. **Source Link Traceability & Master-Detail Integration (CHECKPOINT 2 - VERIFIED & COMPLETED)**:
+   - Added Source Link columns, sorting, discrete copy widgets, and active URL navigation across all tabs (CommittedTab, XtreamTab, StalkerTab, ScannerTab).
+4. **Committed Record Deletion & Cloud Synchronization (CHECKPOINT 2 - VERIFIED & COMPLETED)**:
+   - Added interactive Delete Confirmation Dialogs across Master Grids and Detail Screens in both mobile and dashboard.
+   - Upgraded `CommittedManager.kt` so local deletions update the local JSON state and safely push updates to GitHub API (`committed.json`), ensuring deleted records are permanently removed and never resurrected upon cloud sync.
+5. **"Forever Source" Snapshot Archive & In-App Recall Viewer (CHECKPOINT 2 - VERIFIED & COMPLETED)**:
+   - On commit, the application captures the raw text/content of the source Pastebin or input block and archives it into a dedicated repository directory (`project-strong/sources/{hash}.txt`).
+   - Store `source_archive_file` reference inside `committed.json` schema and Kotlin `CommittedRecord` data models.
+   - Created `SourceArchiveViewerDialog.kt` and `SourceArchiveManager.kt` allowing users to view cached snapshot raw contents with line counts, search/filter text, copy raw data, open upstream source links, and execute a 1-click **"⚡ Send to Scanner"** recall pipeline.
+   - Linked directly from Master Data Grids (Source Link cells, Action bar document icons) and Detail Screens across Android and Streamlit.
+6. **Dynamic Theme Engine (Multi-Palette Selection - VERIFIED & COMPLETED)**:
    - Dynamic switching between *Cyber Amber & Deep Indigo (Sherlock Default)*, *Midnight Purple*, *Ocean Blue*, *Crimson Red*, and *System Monet*.
 
 ### 2. Regression Testing & Safe Deployment Mandates

@@ -201,6 +201,101 @@ fun CommittedTab() {
         )
     }
 
+    // Delete confirmation state
+    var recordToDelete by remember { mutableStateOf<CommittedRecord?>(null) }
+    var sourceArchiveViewerData by remember { mutableStateOf<Pair<String, String>?>(null) }
+
+    if (sourceArchiveViewerData != null) {
+        val (srcLink, archFile) = sourceArchiveViewerData!!
+        SourceArchiveViewerDialog(
+            sourceLink = srcLink,
+            archiveFileName = archFile,
+            onDismiss = { sourceArchiveViewerData = null },
+            onSendToScanner = { text ->
+                sourceArchiveViewerData = null
+                DataStore.rawInputText = text
+                ToastManager.success("Loaded source snapshot into Multi-Payload Scanner!")
+            }
+        )
+    }
+
+    if (recordToDelete != null) {
+        val rec = recordToDelete!!
+        AlertDialog(
+            onDismissRequest = { recordToDelete = null },
+            title = {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Icon(Icons.Default.Delete, contentDescription = null, tint = AppError)
+                    Text("Delete Saved Account", color = AppTextPrimary, fontWeight = FontWeight.Bold)
+                }
+            },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        "Are you sure you want to remove this record from your Saved Accounts?",
+                        color = AppTextSecondary,
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+
+                    Surface(
+                        shape = RoundedCornerShape(8.dp),
+                        color = AppSurfaceVariant,
+                        border = androidx.compose.foundation.BorderStroke(1.dp, AppSurfaceBorder),
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
+                    ) {
+                        Column(modifier = Modifier.padding(10.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Text("Host: ${rec.safeBaseUrl}", color = AppTextPrimary, fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.bodySmall)
+                            if (rec.safeType == "Xtream") {
+                                Text("User: ${rec.safeUser}", color = AppTextSecondary, style = MaterialTheme.typography.bodySmall)
+                            } else {
+                                Text("MAC: ${rec.safeMac}", color = AppTextSecondary, style = MaterialTheme.typography.bodySmall)
+                            }
+                        }
+                    }
+
+                    if (DataStore.githubToken.isNotEmpty()) {
+                        Text(
+                            "☁️ Git Sync: This deletion will immediately update and sync with your GitHub repository (committed.json).",
+                            color = AppPrimary,
+                            style = MaterialTheme.typography.labelSmall
+                        )
+                    } else {
+                        Text(
+                            "⚠️ Local Only: GitHub token is not configured. This record will be removed from local storage.",
+                            color = AppWarning,
+                            style = MaterialTheme.typography.labelSmall
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        val toDel = recordToDelete!!
+                        recordToDelete = null
+                        CommittedManager.delete(toDel)
+                        if (selectedRecord == toDel) {
+                            selectedRecord = null
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = AppError),
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Text("Delete", color = Color.White, fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { recordToDelete = null }
+                ) {
+                    Text("Cancel", color = AppTextSecondary)
+                }
+            },
+            containerColor = AppSurface,
+            shape = RoundedCornerShape(16.dp)
+        )
+    }
+
     AnimatedContent(
         targetState = selectedRecord,
         modifier = Modifier.fillMaxSize(),
@@ -211,8 +306,10 @@ fun CommittedTab() {
                 record = activeRecord,
                 onBack = { selectedRecord = null },
                 onDelete = {
-                    CommittedManager.delete(activeRecord)
-                    selectedRecord = null
+                    recordToDelete = activeRecord
+                },
+                onViewSourceSnapshot = { link, file ->
+                    sourceArchiveViewerData = Pair(link, file)
                 },
                 onPush = {
                     if (isReloading || isPushing || isRechecking) return@CommittedDetailScreen
@@ -234,6 +331,9 @@ fun CommittedTab() {
                 isBusy = isReloading || isPushing || isRechecking,
                 statusMessage = actionMessage,
                 onSelectRecord = { selectedRecord = it },
+                onViewSourceSnapshot = { link, file ->
+                    sourceArchiveViewerData = Pair(link, file)
+                },
                 onRecheckStatus = {
                     if (isReloading || isPushing || isRechecking || records.isEmpty()) return@CommittedMasterGrid
                     isRechecking = true
@@ -309,6 +409,7 @@ fun CommittedMasterGrid(
     isBusy: Boolean,
     statusMessage: String,
     onSelectRecord: (CommittedRecord) -> Unit,
+    onViewSourceSnapshot: (String, String) -> Unit,
     onRecheckStatus: () -> Unit,
     onReload: () -> Unit,
     onPush: () -> Unit,
@@ -330,6 +431,83 @@ fun CommittedMasterGrid(
             sortColumn = column
             sortAscending = false
         }
+    }
+
+    // Delete confirmation state
+    var recordToDelete by remember { mutableStateOf<CommittedRecord?>(null) }
+
+    if (recordToDelete != null) {
+        val rec = recordToDelete!!
+        AlertDialog(
+            onDismissRequest = { recordToDelete = null },
+            title = {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Icon(Icons.Default.Delete, contentDescription = null, tint = AppError)
+                    Text("Delete Saved Account", color = AppTextPrimary, fontWeight = FontWeight.Bold)
+                }
+            },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        "Are you sure you want to remove this record from your Saved Accounts?",
+                        color = AppTextSecondary,
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+
+                    Surface(
+                        shape = RoundedCornerShape(8.dp),
+                        color = AppSurfaceVariant,
+                        border = androidx.compose.foundation.BorderStroke(1.dp, AppSurfaceBorder),
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
+                    ) {
+                        Column(modifier = Modifier.padding(10.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Text("Host: ${rec.safeBaseUrl}", color = AppTextPrimary, fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.bodySmall)
+                            if (rec.safeType == "Xtream") {
+                                Text("User: ${rec.safeUser}", color = AppTextSecondary, style = MaterialTheme.typography.bodySmall)
+                            } else {
+                                Text("MAC: ${rec.safeMac}", color = AppTextSecondary, style = MaterialTheme.typography.bodySmall)
+                            }
+                        }
+                    }
+
+                    if (DataStore.githubToken.isNotEmpty()) {
+                        Text(
+                            "☁️ Git Sync: This deletion will immediately update and sync with your GitHub repository (committed.json).",
+                            color = AppPrimary,
+                            style = MaterialTheme.typography.labelSmall
+                        )
+                    } else {
+                        Text(
+                            "⚠️ Local Only: GitHub token is not configured. This record will be removed from local storage.",
+                            color = AppWarning,
+                            style = MaterialTheme.typography.labelSmall
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        val toDel = recordToDelete!!
+                        recordToDelete = null
+                        CommittedManager.delete(toDel)
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = AppError),
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Text("Delete", color = Color.White, fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { recordToDelete = null }
+                ) {
+                    Text("Cancel", color = AppTextSecondary)
+                }
+            },
+            containerColor = AppSurface,
+            shape = RoundedCornerShape(16.dp)
+        )
     }
 
     val sortedRecords = remember(records.toList(), sortColumn, sortAscending) {
@@ -557,7 +735,7 @@ fun CommittedMasterGrid(
                             GridHeader("Timezone", 130.dp)
                             GridHeader("Source Link", 180.dp, onClick = { toggleSort(CommittedSortColumn.SOURCE) }, isSorted = sortColumn == CommittedSortColumn.SOURCE, isAscending = sortAscending)
                             GridHeader("Notes", 200.dp)
-                            GridHeader("Actions", 180.dp)
+                            GridHeader("Actions", 200.dp)
                         }
 
                         Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(AppSurfaceBorder))
@@ -612,13 +790,22 @@ fun CommittedMasterGrid(
                                     // 15. Timezone
                                     GridCell(record.safeTimezone.ifEmpty { "-" }, 130.dp, color = AppTextMuted)
                                     // 16. Source Link
-                                    GridCell(record.safeSourceLink.ifEmpty { "-" }, 180.dp, color = if (record.safeSourceLink.startsWith("http")) AppPrimary else AppTextMuted)
+                                    val hasSource = record.safeSourceLink.isNotEmpty() && record.safeSourceLink != "Direct Ingestion"
+                                    val displaySource = if (hasSource) record.safeSourceLink else "-"
+                                    GridCell(
+                                        text = displaySource,
+                                        width = 180.dp,
+                                        color = if (hasSource) AppPrimary else AppTextMuted,
+                                        onClick = if (hasSource || record.safeSourceArchiveFile.isNotEmpty()) {
+                                            { onViewSourceSnapshot(record.safeSourceLink, record.safeSourceArchiveFile) }
+                                        } else null
+                                    )
                                     // 17. Notes
                                     GridCell(record.safeNotes.ifEmpty { "..." }, 200.dp, color = AppTextSecondary)
 
-                                    // Actions (Push if local, Copy, Copy M3U, & Delete)
+                                    // Actions (Push if local, Copy, Copy M3U, Source Snapshot, & Delete)
                                     Row(
-                                        modifier = Modifier.width(180.dp),
+                                        modifier = Modifier.width(200.dp),
                                         horizontalArrangement = Arrangement.spacedBy(6.dp),
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
@@ -659,11 +846,20 @@ fun CommittedMasterGrid(
                                             )
                                         }
 
+                                        if (hasSource || record.safeSourceArchiveFile.isNotEmpty()) {
+                                            GridActionIconButton(
+                                                icon = Icons.Default.Description,
+                                                tooltip = "View Forever Source Archive",
+                                                color = Color(0xFF38BDF8),
+                                                onClick = { onViewSourceSnapshot(record.safeSourceLink, record.safeSourceArchiveFile) }
+                                            )
+                                        }
+
                                         GridActionIconButton(
                                             icon = Icons.Default.Delete,
                                             tooltip = "Delete Record",
                                             color = AppError,
-                                            onClick = { CommittedManager.delete(record) }
+                                            onClick = { recordToDelete = record }
                                         )
                                     }
                                 }
@@ -685,7 +881,13 @@ fun CommittedMasterGrid(
 }
 
 @Composable
-fun CommittedDetailScreen(record: CommittedRecord, onBack: () -> Unit, onDelete: () -> Unit, onPush: () -> Unit) {
+fun CommittedDetailScreen(
+    record: CommittedRecord,
+    onBack: () -> Unit,
+    onDelete: () -> Unit,
+    onViewSourceSnapshot: (String, String) -> Unit,
+    onPush: () -> Unit
+) {
     val clipboardManager = LocalClipboardManager.current
     var currentNotes by remember(record) { mutableStateOf(record.safeNotes) }
     var showCatalogExplorer by remember { mutableStateOf(false) }
@@ -810,9 +1012,10 @@ fun CommittedDetailScreen(record: CommittedRecord, onBack: () -> Unit, onDelete:
                     )
                 }
 
-                if (record.safeDateAdded.isNotEmpty() || record.safeSourceLink.isNotEmpty()) {
+                val hasSource = record.safeSourceLink.isNotEmpty() && record.safeSourceLink != "Direct Ingestion"
+                if (record.safeDateAdded.isNotEmpty() || hasSource || record.safeSourceArchiveFile.isNotEmpty()) {
                     Spacer(modifier = Modifier.height(14.dp))
-                    if (record.safeSourceLink.isNotEmpty() && record.safeSourceLink != "Direct Ingestion") {
+                    if (hasSource) {
                         CopyableCredentialField(
                             label = "ORIGINAL SOURCE LINK",
                             value = record.safeSourceLink,
@@ -820,7 +1023,55 @@ fun CommittedDetailScreen(record: CommittedRecord, onBack: () -> Unit, onDelete:
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                     }
+
+                    // Forever Source Snapshot card
+                    Surface(
+                        shape = RoundedCornerShape(10.dp),
+                        color = AppPrimary.copy(alpha = 0.12f),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, AppPrimary.copy(alpha = 0.35f)),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                onViewSourceSnapshot(record.safeSourceLink, record.safeSourceArchiveFile)
+                            }
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            Icon(Icons.Default.Description, contentDescription = null, tint = AppPrimary, modifier = Modifier.size(20.dp))
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = "📄 Forever Source Snapshot",
+                                    color = AppTextPrimary,
+                                    style = MaterialTheme.typography.labelMedium,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                val subtext = if (record.safeSourceArchiveFile.isNotEmpty()) {
+                                    "Archived file: ${record.safeSourceArchiveFile}"
+                                } else if (hasSource) {
+                                    "View or fetch snapshot from source URL"
+                                } else {
+                                    "Inspect cached raw input snapshot"
+                                }
+                                Text(
+                                    text = subtext,
+                                    color = AppTextSecondary,
+                                    style = MaterialTheme.typography.labelSmall
+                                )
+                            }
+                            Text(
+                                text = "View ↗",
+                                color = AppPrimary,
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+
                     if (record.safeDateAdded.isNotEmpty()) {
+                        Spacer(modifier = Modifier.height(6.dp))
                         Text("DATE ADDED: ${record.safeDateAdded}", color = AppTextMuted, style = MaterialTheme.typography.labelSmall)
                     }
                 }

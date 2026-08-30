@@ -43,7 +43,13 @@ fun GridHeader(
 }
 
 @Composable
-fun GridCell(text: String, width: Dp, isBold: Boolean = false, color: Color = AppTextPrimary) {
+fun GridCell(
+    text: String,
+    width: Dp,
+    isBold: Boolean = false,
+    color: Color = AppTextPrimary,
+    onClick: (() -> Unit)? = null
+) {
     Text(
         text = text,
         color = color,
@@ -51,7 +57,12 @@ fun GridCell(text: String, width: Dp, isBold: Boolean = false, color: Color = Ap
         fontWeight = if (isBold) FontWeight.SemiBold else FontWeight.Normal,
         maxLines = 1,
         overflow = TextOverflow.Ellipsis,
-        modifier = Modifier.width(width).padding(end = 8.dp)
+        modifier = Modifier
+            .width(width)
+            .padding(end = 8.dp)
+            .let {
+                if (onClick != null) it.clickable { onClick() } else it
+            }
     )
 }
 

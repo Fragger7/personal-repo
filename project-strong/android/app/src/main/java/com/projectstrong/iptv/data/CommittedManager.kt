@@ -40,6 +40,7 @@ data class CommittedRecord(
     @SerializedName("M3U Link") val m3uLink: String? = "",
     @SerializedName("Source") val source: String? = "",
     @SerializedName("Source Link") val sourceLink: String? = "Direct Ingestion",
+    @SerializedName("source_archive_file") val sourceArchiveFile: String? = null,
     @SerializedName("Notes") val notes: String? = "",
     @SerializedName("Date Selected") val dateAdded: String? = null,
     @SerializedName("isLocalOnly") val isLocalOnly: Boolean? = false
@@ -57,6 +58,7 @@ data class CommittedRecord(
     val safeActiveConn get() = activeConn?.toString() ?: ""
     val safeMaxConn get() = maxConn?.toString() ?: ""
     val safeSourceLink get() = if (sourceLink.isNullOrBlank()) "Direct Ingestion" else sourceLink
+    val safeSourceArchiveFile get() = sourceArchiveFile ?: ""
     val safeProvider: String
         get() {
             if (!provider.isNullOrEmpty() && provider != "Unknown") return provider
@@ -77,12 +79,14 @@ object CommittedManager {
     val records = mutableStateListOf<CommittedRecord>()
     private lateinit var file: File
     private lateinit var prefs: SharedPreferences
+    private lateinit var appContext: Context
     private val gson = Gson()
 
     private const val PREFS_NAME = "iptv_prefs"
     private const val KEY_GITHUB_TOKEN = "github_token"
 
     fun init(context: Context) {
+        appContext = context.applicationContext
         file = File(context.filesDir, "committed.json")
         prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         val savedToken = prefs.getString(KEY_GITHUB_TOKEN, "") ?: ""
@@ -155,7 +159,8 @@ object CommittedManager {
         provider: String = "Unknown",
         serverTimezone: String = "",
         notes: String = "",
-        sourceLink: String = "Direct Ingestion"
+        sourceLink: String = "Direct Ingestion",
+        sourceArchiveFile: String? = null
     ) {
         val nowStr = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())
         val cleanBaseUrl = normalizeUrl(baseUrl)
@@ -164,6 +169,17 @@ object CommittedManager {
         val m3u = if (type.contains("Xtream", ignoreCase = true) && cleanUser.isNotEmpty()) {
             "$cleanBaseUrl/get.php?username=$cleanUser&password=$pass&type=m3u_plus&output=ts"
         } else ""
+
+        val finalArchiveFile = if (!sourceArchiveFile.isNullOrBlank()) {
+            sourceArchiveFile
+        } else if (sourceLink.isNotBlank() && sourceLink != "Direct Ingestion") {
+            val generated = SourceArchiveManager.generateArchiveFileName(sourceLink)
+            val snapshot = DataStore.sourceSnapshots[sourceLink]
+            if (::appContext.isInitialized && !snapshot.isNullOrBlank()) {
+                SourceArchiveManager.saveArchiveLocally(appContext, generated, snapshot)
+            }
+            generated
+        } else null
 
         val newRecord = CommittedRecord(
             type = type,
@@ -183,6 +199,7 @@ object CommittedManager {
             m3uLink = m3u,
             source = type,
             sourceLink = sourceLink,
+            sourceArchiveFile = finalArchiveFile,
             notes = notes,
             dateAdded = nowStr,
             isLocalOnly = true
@@ -199,7 +216,8 @@ object CommittedManager {
             val existing = records[existingIndex]
             records[existingIndex] = newRecord.copy(
                 dateAdded = if (existing.safeDateAdded.isNotEmpty()) existing.safeDateAdded else nowStr,
-                notes = if (notes.isNotEmpty()) notes else existing.safeNotes
+                notes = if (notes.isNotEmpty()) notes else existing.safeNotes,
+                sourceArchiveFile = finalArchiveFile ?: existing.sourceArchiveFile
             )
             ToastManager.success("Updated existing record in Saved Accounts")
         } else {
@@ -210,10 +228,90 @@ object CommittedManager {
         save()
     }
 
-    fun delete(record: CommittedRecord) {
+    fun delete(record: CommittedRecord, token: String = DataStore.githubToken, onComplete: ((Boolean) -> Unit)? = null) {
         records.remove(record)
         save()
         ToastManager.info("Account removed from Saved Records")
+
+        val authToken = token.trim()
+        if (authToken.isNotEmpty()) {
+            CoroutineScope(Dispatchers.IO).launch {
+                val success = deleteFromCloud(record, authToken)
+                withContext(Dispatchers.Main) {
+                    if (success) {
+                        ToastManager.success("Deleted from GitHub repository")
+                    } else {
+                        ToastManager.warning("Local deletion complete (Cloud sync pending)")
+                    }
+                    onComplete?.invoke(success)
+                }
+            }
+        } else {
+            onComplete?.invoke(true)
+        }
+    }
+
+    suspend fun deleteFromCloud(record: CommittedRecord, token: String): Boolean = withContext(Dispatchers.IO) {
+        try {
+            val getUrl = java.net.URL("https://api.github.com/repos/Fragger7/personal-repo/contents/project-strong/committed.json")
+            val getConnection = getUrl.openConnection() as java.net.HttpURLConnection
+            getConnection.requestMethod = "GET"
+            getConnection.setRequestProperty("Accept", "application/vnd.github.v3+json")
+            getConnection.setRequestProperty("Authorization", "token $token")
+            getConnection.connectTimeout = 6000
+            getConnection.readTimeout = 6000
+
+            if (getConnection.responseCode != 200) return@withContext false
+
+            val jsonResponse = getConnection.inputStream.bufferedReader().use { it.readText() }
+            val jsonObj = org.json.JSONObject(jsonResponse)
+            val sha = jsonObj.optString("sha", "")
+            val contentB64 = jsonObj.optString("content", "").replace("\n", "")
+
+            val decodedBytes = android.util.Base64.decode(contentB64, android.util.Base64.DEFAULT)
+            val remoteJson = String(decodedBytes, Charsets.UTF_8)
+            val type = object : TypeToken<List<CommittedRecord>>() {}.type
+            val remoteList: List<CommittedRecord> = gson.fromJson(remoteJson, type)
+
+            val targetBase = normalizeUrl(record.safeBaseUrl)
+            val targetUser = record.safeUser.trim()
+            val targetMac = record.safeMac.trim().uppercase()
+
+            val updatedRemote = remoteList.filterNot { rem ->
+                normalizeUrl(rem.safeBaseUrl).equals(targetBase, ignoreCase = true) &&
+                ((record.safeType == "Xtream" && rem.safeUser.trim() == targetUser) ||
+                 (record.safeType == "Stalker" && rem.safeMac.trim().equals(targetMac, ignoreCase = true)))
+            }
+
+            val cleanForCloud = updatedRemote.map { it.copy(isLocalOnly = null) }
+            val jsonContent = gson.toJson(cleanForCloud)
+            val encodedContent = android.util.Base64.encodeToString(jsonContent.toByteArray(Charsets.UTF_8), android.util.Base64.NO_WRAP)
+
+            val putUrl = java.net.URL("https://api.github.com/repos/Fragger7/personal-repo/contents/project-strong/committed.json")
+            val putConnection = putUrl.openConnection() as java.net.HttpURLConnection
+            putConnection.requestMethod = "PUT"
+            putConnection.setRequestProperty("Accept", "application/vnd.github.v3+json")
+            putConnection.setRequestProperty("Authorization", "token $token")
+            putConnection.setRequestProperty("Content-Type", "application/json")
+            putConnection.doOutput = true
+
+            val payload = org.json.JSONObject().apply {
+                put("message", "Delete ${record.safeBaseUrl} (${if (record.safeType == "Xtream") record.safeUser else record.safeMac}) via Android")
+                put("content", encodedContent)
+                put("sha", sha)
+            }
+
+            putConnection.outputStream.use { os ->
+                val input = payload.toString().toByteArray(Charsets.UTF_8)
+                os.write(input, 0, input.size)
+            }
+
+            val code = putConnection.responseCode
+            return@withContext (code == 200 || code == 201)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            return@withContext false
+        }
     }
 
     fun syncFromCloud(): List<CommittedRecord>? {
@@ -381,6 +479,23 @@ object CommittedManager {
 
             val code = putConnection.responseCode
             if (code == 200 || code == 201) {
+                // Also push any local source snapshot files to GitHub sources/
+                if (::appContext.isInitialized) {
+                    for (rec in cleanForCloud) {
+                        val archiveFile = rec.safeSourceArchiveFile
+                        if (archiveFile.isNotEmpty()) {
+                            val localContent = SourceArchiveManager.getArchiveLocally(appContext, archiveFile)
+                            if (!localContent.isNullOrBlank()) {
+                                try {
+                                    SourceArchiveManager.pushArchiveToGithub(archiveFile, localContent, token)
+                                } catch (e: Exception) {
+                                    e.printStackTrace()
+                                }
+                            }
+                        }
+                    }
+                }
+
                 // Update local records state to match the merged and synced result
                 val syncedList = cleanForCloud.map { it.copy(isLocalOnly = false) }
                 records.clear()
