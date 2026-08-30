@@ -1,5 +1,6 @@
 package com.projectstrong.iptv.ui.tabs
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -35,6 +36,10 @@ fun StalkerTab(onNextTab: (() -> Unit)? = null) {
     // Implement chunked/dynamic loading: only show nodes that have finished verifying
     val stalkerNodes = DataStore.scannedNodes.filter { it.type == "Stalker" && (!it.isVerifying && it.status.isNotEmpty()) }
     var selectedNode by remember { mutableStateOf<ParsedCredential?>(null) }
+
+    BackHandler(enabled = selectedNode != null) {
+        selectedNode = null
+    }
 
     AnimatedContent(targetState = selectedNode != null) { isDetail: Boolean ->
         if (isDetail && selectedNode != null) {
@@ -87,6 +92,7 @@ fun StalkerMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCreden
             daysLeft = node.daysLeft,
             provider = node.provider,
             serverTimezone = node.serverTimezone,
+            sourceLink = node.sourceLink,
             onDismiss = { committingNode = null },
             onCommitted = { committingNode = null }
         )
@@ -293,6 +299,7 @@ fun StalkerDetailScreen(node: ParsedCredential, onBack: () -> Unit) {
             daysLeft = node.daysLeft,
             provider = node.provider,
             serverTimezone = node.serverTimezone,
+            sourceLink = node.sourceLink,
             onDismiss = { showCommitDialog = false },
             onCommitted = { showCommitDialog = false }
         )

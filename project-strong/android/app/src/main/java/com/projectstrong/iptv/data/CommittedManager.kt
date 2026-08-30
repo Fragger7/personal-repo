@@ -39,6 +39,7 @@ data class CommittedRecord(
     @SerializedName("Server Time") val serverTime: String? = "",
     @SerializedName("M3U Link") val m3uLink: String? = "",
     @SerializedName("Source") val source: String? = "",
+    @SerializedName("Source Link") val sourceLink: String? = "Direct Ingestion",
     @SerializedName("Notes") val notes: String? = "",
     @SerializedName("Date Selected") val dateAdded: String? = null,
     @SerializedName("isLocalOnly") val isLocalOnly: Boolean? = false
@@ -55,6 +56,7 @@ data class CommittedRecord(
     val safeVods get() = vods?.toString() ?: ""
     val safeActiveConn get() = activeConn?.toString() ?: ""
     val safeMaxConn get() = maxConn?.toString() ?: ""
+    val safeSourceLink get() = if (sourceLink.isNullOrBlank()) "Direct Ingestion" else sourceLink
     val safeProvider: String
         get() {
             if (!provider.isNullOrEmpty() && provider != "Unknown") return provider
@@ -152,7 +154,8 @@ object CommittedManager {
         maxConn: String = "",
         provider: String = "Unknown",
         serverTimezone: String = "",
-        notes: String = ""
+        notes: String = "",
+        sourceLink: String = "Direct Ingestion"
     ) {
         val nowStr = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())
         val cleanBaseUrl = normalizeUrl(baseUrl)
@@ -179,6 +182,7 @@ object CommittedManager {
             serverTimezone = serverTimezone,
             m3uLink = m3u,
             source = type,
+            sourceLink = sourceLink,
             notes = notes,
             dateAdded = nowStr,
             isLocalOnly = true

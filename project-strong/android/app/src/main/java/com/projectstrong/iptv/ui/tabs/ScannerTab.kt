@@ -213,18 +213,19 @@ fun ScannerTab(onNextTab: (() -> Unit)? = null) {
                            trimmed.contains("pastebin.", ignoreCase = true) || 
                            trimmed.contains("rentry.", ignoreCase = true) || 
                            trimmed.contains("paste.sh", ignoreCase = true) || 
-                           trimmed.contains("gist.github.", ignoreCase = true) ||
+                           trimmed.contains("gist.github.", ignoreCase = true) || 
                            trimmed.contains("controlc.", ignoreCase = true)) && !trimmed.contains("\n") && !trimmed.contains(" ")
 
-        val initialParsed = Parser.parseCredentials(DataStore.scannerInput)
+        val initialParsed = Parser.parseCredentials(DataStore.scannerInput, sourceLink = DataStore.scannerSourceLink)
         if (initialParsed.isEmpty() && isSingleUrl) {
             coroutineScope.launch {
                 ToastManager.info("Fetching remote playlist from URL...")
                 val fetched = IPTVClient.fetchRemoteText(trimmed)
                 if (!fetched.isNullOrBlank()) {
+                    DataStore.scannerSourceLink = trimmed
                     localInput = fetched
                     DataStore.scannerInput = fetched
-                    val parsed = Parser.parseCredentials(fetched)
+                    val parsed = Parser.parseCredentials(fetched, sourceLink = trimmed)
                     if (parsed.isNotEmpty()) {
                         ToastManager.success("Downloaded ${parsed.size} credentials! Starting scan...")
                         executeScan(parsed)

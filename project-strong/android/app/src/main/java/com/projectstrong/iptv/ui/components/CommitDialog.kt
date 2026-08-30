@@ -34,6 +34,7 @@ fun CommitAccountDialog(
     provider: String = "Unknown",
     serverTimezone: String = "",
     initialNotes: String = "",
+    sourceLink: String = "Direct Ingestion",
     onDismiss: () -> Unit,
     onCommitted: () -> Unit
 ) {
@@ -197,7 +198,8 @@ fun CommitAccountDialog(
                                 maxConn = maxConn,
                                 provider = resolvedProvider,
                                 serverTimezone = serverTimezone,
-                                notes = notes.trim()
+                                notes = notes.trim(),
+                                sourceLink = sourceLink
                             )
                             onCommitted()
                             onDismiss()

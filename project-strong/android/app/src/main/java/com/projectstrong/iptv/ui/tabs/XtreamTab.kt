@@ -1,5 +1,6 @@
 package com.projectstrong.iptv.ui.tabs
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -49,6 +50,10 @@ fun XtreamTab(onNextTab: (() -> Unit)? = null) {
     // This prevents rendering thousands of "Connecting..." items and massively improves performance.
     val xtreamNodes = DataStore.scannedNodes.filter { it.type == "Xtream" && (!it.isVerifying && it.status.isNotEmpty()) }
     var selectedNode by remember { mutableStateOf<ParsedCredential?>(null) }
+
+    BackHandler(enabled = selectedNode != null) {
+        selectedNode = null
+    }
 
     AnimatedContent(targetState = selectedNode != null) { isDetail: Boolean ->
         if (isDetail && selectedNode != null) {
@@ -229,6 +234,7 @@ fun XtreamMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCredent
             maxConn = node.maxConn,
             provider = node.provider,
             serverTimezone = node.serverTimezone,
+            sourceLink = node.sourceLink,
             onDismiss = { committingNode = null },
             onCommitted = { committingNode = null }
         )
@@ -554,6 +560,7 @@ fun XtreamDetailScreen(node: ParsedCredential, onBack: () -> Unit) {
             maxConn = node.maxConn,
             provider = node.provider,
             serverTimezone = node.serverTimezone,
+            sourceLink = node.sourceLink,
             onDismiss = { showCommitDialog = false },
             onCommitted = { showCommitDialog = false }
         )

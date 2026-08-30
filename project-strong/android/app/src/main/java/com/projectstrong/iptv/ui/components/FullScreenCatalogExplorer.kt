@@ -1,5 +1,6 @@
 package com.projectstrong.iptv.ui.components
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -166,6 +167,18 @@ fun FullScreenCatalogExplorer(
         onDismissRequest = onDismiss,
         properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)
     ) {
+        BackHandler {
+            if (previewChannel != null) {
+                previewChannel = null
+            } else if (searchQuery.isNotEmpty()) {
+                searchQuery = ""
+            } else if (selectedCategoryId != "all") {
+                selectedCategoryId = "all"
+            } else {
+                onDismiss()
+            }
+        }
+
         Surface(
             modifier = Modifier.fillMaxSize(),
             color = Color(0xFF0D1117)

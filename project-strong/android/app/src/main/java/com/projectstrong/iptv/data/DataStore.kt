@@ -13,6 +13,7 @@ object DataStore {
     val scanScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
     val scannedNodes = mutableStateListOf<ParsedCredential>()
     var scannerInput by mutableStateOf("")
+    var scannerSourceLink by mutableStateOf("Direct Ingestion")
     var isScanning by mutableStateOf(false)
     var isScanPaused by mutableStateOf(false)
     var scanProgress by mutableStateOf(0f)

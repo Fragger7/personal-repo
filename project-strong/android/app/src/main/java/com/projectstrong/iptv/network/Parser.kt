@@ -19,7 +19,8 @@ data class ParsedCredential(
     val serverTimezone: String = "N/A",
     val serverTime: String = "N/A",
     val provider: String = "Unknown",
-    val isVerifying: Boolean = false
+    val isVerifying: Boolean = false,
+    val sourceLink: String = "Direct Ingestion"
 )
 
 object Parser {
@@ -32,7 +33,7 @@ object Parser {
         }
     }
 
-    fun parseCredentials(textBlock: String): List<ParsedCredential> {
+    fun parseCredentials(textBlock: String, sourceLink: String = "Direct Ingestion"): List<ParsedCredential> {
         if (textBlock.isBlank()) return emptyList()
         return try {
             val extracted = mutableListOf<ParsedCredential>()
@@ -46,7 +47,7 @@ object Parser {
                     val user = matcherXtream.group(2) ?: ""
                     val pass = matcherXtream.group(3) ?: ""
                     if (baseUrl.isNotEmpty() && user.isNotEmpty() && !extracted.any { it.baseUrl == baseUrl && it.user == user }) {
-                        extracted.add(ParsedCredential(baseUrl, user, pass, "", "Xtream"))
+                        extracted.add(ParsedCredential(baseUrl, user, pass, "", "Xtream", sourceLink = sourceLink))
                     }
                 }
             } catch (e: Throwable) {}
@@ -123,7 +124,8 @@ object Parser {
                                     serverTimezone = tz,
                                     activeConn = act,
                                     maxConn = max,
-                                    expires = exp
+                                    expires = exp,
+                                    sourceLink = sourceLink
                                 )
                             )
                             continue
@@ -148,7 +150,7 @@ object Parser {
                         }
 
                         if (!extracted.any { it.baseUrl == baseUrl && it.user == user }) {
-                            extracted.add(ParsedCredential(baseUrl, user, pass, "", "Xtream"))
+                            extracted.add(ParsedCredential(baseUrl, user, pass, "", "Xtream", sourceLink = sourceLink))
                             continue
                         }
                     }
@@ -204,7 +206,7 @@ object Parser {
                     
                     if (currentUrl != null && currentMac != null) {
                         if (!extracted.any { it.type == "Stalker" && it.baseUrl == currentUrl && it.mac == currentMac }) {
-                            extracted.add(ParsedCredential(currentUrl, currentMac, "MAC", currentMac, "Stalker"))
+                            extracted.add(ParsedCredential(currentUrl, currentMac, "MAC", currentMac, "Stalker", sourceLink = sourceLink))
                         }
                         currentMac = null
                     }
@@ -212,7 +214,7 @@ object Parser {
                     if (currentUrl != null && xtUser != null && xtPass != null) {
                         if (!(xtUser.matches(macRegex) && xtPass.matches(macFullRegex))) {
                             if (!extracted.any { it.type == "Xtream" && it.baseUrl == currentUrl && it.user == xtUser }) {
-                                extracted.add(ParsedCredential(currentUrl, xtUser, xtPass, "", "Xtream"))
+                                extracted.add(ParsedCredential(currentUrl, xtUser, xtPass, "", "Xtream", sourceLink = sourceLink))
                             }
                         }
                         xtUser = null

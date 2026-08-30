@@ -141,7 +141,13 @@ object ProviderIntelligenceManager {
         "4k", "fhd", "hd", "hevc", "sd", "h265", "raw", "premium", "ultra",
         "usa", "uk", "latino", "arabic", "france", "italy", "germany",
         "spain", "turkey", "canada", "brazil", "world", "general", "tv",
-        "cinema", "documentary", "music", "radio", "entertainment"
+        "cinema", "documentary", "music", "radio", "entertainment",
+        "action", "comedy", "drama", "family", "horror", "thriller",
+        "animation", "anime", "backup", "test", "demo", "stream", "server",
+        "main", "local", "regional", "national", "international", "special",
+        "event", "events", "ppv", "box office", "cinema hd", "movie",
+        "series vod", "live stream", "multi-audio", "subtitles", "season",
+        "episode", "episodes", "channel list", "favorites", "free"
     )
 
     fun init(context: Context) {

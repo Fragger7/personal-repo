@@ -167,6 +167,7 @@ fun Base64Tab(onNextTab: () -> Unit = {}) {
                 isFetchingRemote = false
 
                 if (!remoteContent.isNullOrBlank()) {
+                    DataStore.scannerSourceLink = trimmed
                     val urlPattern = Pattern.compile("https?://[^\\s\"'<>]+", Pattern.CASE_INSENSITIVE)
                     val foundUrls = mutableListOf<String>()
 

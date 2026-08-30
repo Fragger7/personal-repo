@@ -1,5 +1,6 @@
 package com.projectstrong.iptv.ui.tabs
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -57,6 +58,10 @@ fun CommittedTab() {
     var tempToken by remember { mutableStateOf(DataStore.githubToken) }
 
     val coroutineScope = rememberCoroutineScope()
+
+    BackHandler(enabled = selectedRecord != null) {
+        selectedRecord = null
+    }
 
     // Token Configuration Dialog
     if (showTokenDialog) {
@@ -799,9 +804,19 @@ fun CommittedDetailScreen(record: CommittedRecord, onBack: () -> Unit, onDelete:
                     )
                 }
 
-                if (record.safeDateAdded.isNotEmpty()) {
+                if (record.safeDateAdded.isNotEmpty() || record.safeSourceLink.isNotEmpty()) {
                     Spacer(modifier = Modifier.height(14.dp))
-                    Text("DATE ADDED: ${record.safeDateAdded}", color = AppTextMuted, style = MaterialTheme.typography.labelSmall)
+                    if (record.safeSourceLink.isNotEmpty() && record.safeSourceLink != "Direct Ingestion") {
+                        CopyableCredentialField(
+                            label = "ORIGINAL SOURCE LINK",
+                            value = record.safeSourceLink,
+                            toastMessage = "Source link copied to clipboard!"
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
+                    if (record.safeDateAdded.isNotEmpty()) {
+                        Text("DATE ADDED: ${record.safeDateAdded}", color = AppTextMuted, style = MaterialTheme.typography.labelSmall)
+                    }
                 }
             }
         }

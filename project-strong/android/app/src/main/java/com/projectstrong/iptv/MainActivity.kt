@@ -7,6 +7,7 @@ import android.net.NetworkCapabilities
 import android.net.NetworkRequest
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
@@ -171,6 +172,17 @@ fun MainDashboard() {
 
     if (showSettingsDialog) {
         SettingsDialog(onDismiss = { showSettingsDialog = false })
+    }
+
+    // Intercept back navigation: close open root dialogs, or transition back to previous tab in pipeline
+    BackHandler(enabled = showConnectionDialog || showSettingsDialog || selectedTab > 0) {
+        if (showConnectionDialog) {
+            showConnectionDialog = false
+        } else if (showSettingsDialog) {
+            showSettingsDialog = false
+        } else if (selectedTab > 0) {
+            selectedTab -= 1
+        }
     }
 
     Column(modifier = Modifier.fillMaxSize()) {
