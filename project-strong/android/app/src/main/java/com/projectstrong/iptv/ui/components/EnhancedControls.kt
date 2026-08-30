@@ -51,13 +51,13 @@ fun FilterToggleSwitch(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            // Neon pill switch track
+            // Theme-adaptive pill switch track
             Box(
                 modifier = Modifier
                     .width(42.dp)
                     .height(22.dp)
                     .clip(RoundedCornerShape(11.dp))
-                    .background(if (checked) Color(0xFF2563EB) else Color(0xFF334155))
+                    .background(if (checked) AppPrimary else AppSurfaceBorder)
                     .padding(2.dp),
                 contentAlignment = Alignment.CenterStart
             ) {
@@ -66,7 +66,7 @@ fun FilterToggleSwitch(
                         .offset(x = thumbOffset.dp)
                         .size(18.dp)
                         .clip(CircleShape)
-                        .background(if (checked) Color(0xFF67E8F9) else Color(0xFF94A3B8)),
+                        .background(if (checked) Color.White else AppTextSecondary),
                     contentAlignment = Alignment.Center
                 ) {
                     if (checked) {
@@ -74,7 +74,7 @@ fun FilterToggleSwitch(
                             modifier = Modifier
                                 .size(6.dp)
                                 .clip(CircleShape)
-                                .background(Color(0xFF0F172A))
+                                .background(AppPrimary)
                         )
                     }
                 }
@@ -84,14 +84,14 @@ fun FilterToggleSwitch(
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(
                     text = "Active Only",
-                    color = if (checked) Color(0xFF60A5FA) else AppTextSecondary,
+                    color = if (checked) AppPrimary else AppTextSecondary,
                     style = MaterialTheme.typography.labelMedium,
                     fontWeight = if (checked) FontWeight.Bold else FontWeight.Medium
                 )
                 if (activeCount > 0) {
                     Text(
                         text = if (checked) "($activeCount)" else "($activeCount/$totalCount)",
-                        color = if (checked) Color(0xFF34D399) else AppTextMuted,
+                        color = if (checked) AppSuccess else AppTextMuted,
                         style = MaterialTheme.typography.labelSmall,
                         fontWeight = FontWeight.Bold
                     )

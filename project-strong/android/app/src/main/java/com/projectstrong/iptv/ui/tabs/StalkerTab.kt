@@ -73,6 +73,7 @@ fun StalkerMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCreden
                 "Status" -> if (sortAscending) list.sortedBy { it.status } else list.sortedByDescending { it.status }
                 "Provider" -> if (sortAscending) list.sortedBy { it.provider } else list.sortedByDescending { it.provider }
                 "MAC" -> if (sortAscending) list.sortedBy { it.mac } else list.sortedByDescending { it.mac }
+                "Source Link" -> if (sortAscending) list.sortedBy { it.sourceLink } else list.sortedByDescending { it.sourceLink }
                 else -> list
             }
         }
@@ -210,6 +211,7 @@ fun StalkerMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCreden
                                 GridHeader("Timezone", 120.dp, null)
                                 GridHeader("Expires", 100.dp, null)
                                 GridHeader("Days Left", 100.dp, onClick = { headerClick("Days Left") }, isSorted = (sortColumn == "Days Left"), isAscending = sortAscending)
+                                GridHeader("Source Link", 180.dp, onClick = { headerClick("Source Link") }, isSorted = (sortColumn == "Source Link"), isAscending = sortAscending)
                                 GridHeader("Actions", 110.dp, null)
                             }
 
@@ -233,6 +235,7 @@ fun StalkerMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCreden
                                         GridCell(node.serverTimezone, 120.dp)
                                         GridCell(node.expires, 100.dp)
                                         GridCell(node.daysLeft, 100.dp)
+                                        GridCell(node.sourceLink.ifEmpty { "-" }, 180.dp, color = if (node.sourceLink.startsWith("http")) AppPrimary else AppTextMuted)
 
                                         Row(
                                             modifier = Modifier.width(110.dp),

@@ -89,8 +89,8 @@ fun StatusBadge(status: String, width: Dp) {
 
 @Composable
 fun SyncBadge(isLocal: Boolean, width: Dp) {
-    val bgColor = if (isLocal) AppWarningContainer else Color(0x1A3B82F6)
-    val textColor = if (isLocal) Color(0xFFFBBF24) else Color(0xFF60A5FA)
+    val bgColor = if (isLocal) AppWarningContainer else AppPrimaryContainer
+    val textColor = if (isLocal) AppWarning else AppPrimary
     val borderColor = if (isLocal) AppWarning.copy(alpha = 0.4f) else AppPrimary.copy(alpha = 0.4f)
     val text = if (isLocal) "🟡 Local" else "🟢 Synced"
 
@@ -206,7 +206,7 @@ fun SectionHeaderCard(
                     ) {
                         Text(
                             text = badgeText,
-                            color = Color(0xFF60A5FA),
+                            color = AppPrimary,
                             style = MaterialTheme.typography.labelSmall,
                             fontWeight = FontWeight.Bold,
                             modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)

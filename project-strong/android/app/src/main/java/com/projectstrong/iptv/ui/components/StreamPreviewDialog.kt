@@ -39,6 +39,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import com.projectstrong.iptv.ui.theme.*
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackException
@@ -346,8 +347,8 @@ fun StreamPreviewDialog(
         Surface(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color(0xFF070B0E)),
-            color = Color(0xFF070B0E)
+                .background(AppBackground),
+            color = AppBackground
         ) {
             Column(
                 modifier = Modifier
@@ -359,7 +360,7 @@ fun StreamPreviewDialog(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .background(Color(0xFF0F172A))
+                            .background(AppSurface)
                             .padding(horizontal = 16.dp, vertical = 10.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween
@@ -374,12 +375,12 @@ fun StreamPreviewDialog(
                                 modifier = Modifier
                                     .size(36.dp)
                                     .clip(CircleShape)
-                                    .background(Color(0xFF1E293B))
+                                    .background(AppSurfaceVariant)
                             ) {
                                 Icon(
                                     Icons.Default.Close,
                                     contentDescription = "Close Player",
-                                    tint = Color.White,
+                                    tint = AppTextPrimary,
                                     modifier = Modifier.size(20.dp)
                                 )
                             }
@@ -388,14 +389,14 @@ fun StreamPreviewDialog(
                                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                                     Text(
                                         text = "Stream Inspector",
-                                        color = Color(0xFF38BDF8),
+                                        color = AppPrimary,
                                         style = MaterialTheme.typography.labelMedium,
                                         fontWeight = FontWeight.Bold
                                     )
                                     if (categoryName.isNotEmpty()) {
                                         Text(
                                             text = "• $categoryName",
-                                            color = Color(0xFF94A3B8),
+                                            color = AppTextSecondary,
                                             style = MaterialTheme.typography.labelSmall,
                                             maxLines = 1,
                                             overflow = TextOverflow.Ellipsis
@@ -404,7 +405,7 @@ fun StreamPreviewDialog(
                                 }
                                 Text(
                                     text = streamName,
-                                    color = Color.White,
+                                    color = AppTextPrimary,
                                     style = MaterialTheme.typography.titleMedium,
                                     fontWeight = FontWeight.Bold,
                                     maxLines = 1,
@@ -417,18 +418,18 @@ fun StreamPreviewDialog(
                         Surface(
                             shape = RoundedCornerShape(12.dp),
                             color = when (playStatus) {
-                                StreamPlayStatus.PLAYING -> Color(0xFF065F46)
-                                StreamPlayStatus.CONNECTING, StreamPlayStatus.BUFFERING -> Color(0xFF854D0E)
-                                StreamPlayStatus.ERROR -> Color(0xFF991B1B)
-                                StreamPlayStatus.IDLE -> Color(0xFF334155)
+                                StreamPlayStatus.PLAYING -> AppSuccess.copy(alpha = 0.15f)
+                                StreamPlayStatus.CONNECTING, StreamPlayStatus.BUFFERING -> AppWarning.copy(alpha = 0.15f)
+                                StreamPlayStatus.ERROR -> AppError.copy(alpha = 0.15f)
+                                StreamPlayStatus.IDLE -> AppSurfaceBorder.copy(alpha = 0.3f)
                             },
                             border = androidx.compose.foundation.BorderStroke(
                                 1.dp,
                                 when (playStatus) {
-                                    StreamPlayStatus.PLAYING -> Color(0xFF10B981)
-                                    StreamPlayStatus.CONNECTING, StreamPlayStatus.BUFFERING -> Color(0xFFF59E0B)
-                                    StreamPlayStatus.ERROR -> Color(0xFFEF4444)
-                                    StreamPlayStatus.IDLE -> Color(0xFF64748B)
+                                    StreamPlayStatus.PLAYING -> AppSuccess
+                                    StreamPlayStatus.CONNECTING, StreamPlayStatus.BUFFERING -> AppWarning
+                                    StreamPlayStatus.ERROR -> AppError
+                                    StreamPlayStatus.IDLE -> AppSurfaceBorder
                                 }
                             )
                         ) {
@@ -443,10 +444,10 @@ fun StreamPreviewDialog(
                                         .clip(CircleShape)
                                         .background(
                                             when (playStatus) {
-                                                StreamPlayStatus.PLAYING -> Color(0xFF34D399)
-                                                StreamPlayStatus.CONNECTING, StreamPlayStatus.BUFFERING -> Color(0xFFFBBF24)
-                                                StreamPlayStatus.ERROR -> Color(0xFFF87171)
-                                                StreamPlayStatus.IDLE -> Color(0xFF94A3B8)
+                                                StreamPlayStatus.PLAYING -> AppSuccess
+                                                StreamPlayStatus.CONNECTING, StreamPlayStatus.BUFFERING -> AppWarning
+                                                StreamPlayStatus.ERROR -> AppError
+                                                StreamPlayStatus.IDLE -> AppTextMuted
                                             }
                                         )
                                 )
@@ -458,7 +459,12 @@ fun StreamPreviewDialog(
                                         StreamPlayStatus.ERROR -> "STREAM FAILED"
                                         StreamPlayStatus.IDLE -> "PAUSED"
                                     },
-                                    color = Color.White,
+                                    color = when (playStatus) {
+                                        StreamPlayStatus.PLAYING -> AppSuccess
+                                        StreamPlayStatus.CONNECTING, StreamPlayStatus.BUFFERING -> AppWarning
+                                        StreamPlayStatus.ERROR -> AppError
+                                        StreamPlayStatus.IDLE -> AppTextSecondary
+                                    },
                                     style = MaterialTheme.typography.labelSmall,
                                     fontWeight = FontWeight.Bold
                                 )
@@ -811,7 +817,7 @@ fun StreamPreviewDialog(
                     ) {
                         Text(
                             text = "REAL-TIME STREAM TELEMETRY & METRICS",
-                            color = Color(0xFF94A3B8),
+                            color = AppTextSecondary,
                             style = MaterialTheme.typography.labelSmall,
                             fontWeight = FontWeight.Bold,
                             letterSpacing = 1.sp
@@ -819,37 +825,37 @@ fun StreamPreviewDialog(
 
                         Surface(
                             shape = RoundedCornerShape(12.dp),
-                            color = Color(0xFF0F172A),
-                            border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF1E293B)),
+                            color = AppSurface,
+                            border = androidx.compose.foundation.BorderStroke(1.dp, AppSurfaceBorder),
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                                 // Live Bitrate & Speed
                                 DiagnosticMetricRow(
                                     icon = Icons.Default.Speed,
-                                    iconColor = Color(0xFF38BDF8),
+                                    iconColor = AppPrimary,
                                     label = "Live Bitrate Throughput",
                                     value = if (currentBitrateKbps > 0) "$currentBitrateKbps kbps (${String.format("%.2f", currentBitrateKbps / 1000f)} Mbps)" else "Estimating..."
                                 )
-                                Divider(color = Color(0xFF1E293B))
+                                Divider(color = AppSurfaceBorder)
 
                                 // Buffer Health
                                 DiagnosticMetricRow(
                                     icon = Icons.Default.HourglassTop,
-                                    iconColor = Color(0xFF34D399),
+                                    iconColor = AppSuccess,
                                     label = "Live Buffer Cushion",
                                     value = "${String.format("%.1f", bufferHealthSeconds)} s ahead"
                                 )
-                                Divider(color = Color(0xFF1E293B))
+                                Divider(color = AppSurfaceBorder)
 
                                 // Video Resolution
                                 DiagnosticMetricRow(
                                     icon = Icons.Default.HighQuality,
-                                    iconColor = Color(0xFFFBBF24),
+                                    iconColor = AppWarning,
                                     label = "Video Resolution",
                                     value = videoResolution
                                 )
-                                Divider(color = Color(0xFF1E293B))
+                                Divider(color = AppSurfaceBorder)
 
                                 // Codecs
                                 DiagnosticMetricRow(
@@ -858,7 +864,7 @@ fun StreamPreviewDialog(
                                     label = "Video Codec & FPS",
                                     value = videoCodec
                                 )
-                                Divider(color = Color(0xFF1E293B))
+                                Divider(color = AppSurfaceBorder)
 
                                 // Audio Encoding
                                 DiagnosticMetricRow(
@@ -867,7 +873,7 @@ fun StreamPreviewDialog(
                                     label = "Audio Encoding",
                                     value = audioCodec
                                 )
-                                Divider(color = Color(0xFF1E293B))
+                                Divider(color = AppSurfaceBorder)
 
                                 // First Frame Latency
                                 DiagnosticMetricRow(
@@ -882,8 +888,8 @@ fun StreamPreviewDialog(
                         // Direct Stream Target Endpoint
                         Surface(
                             shape = RoundedCornerShape(10.dp),
-                            color = Color(0xFF0F172A),
-                            border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF1E293B)),
+                            color = AppSurface,
+                            border = androidx.compose.foundation.BorderStroke(1.dp, AppSurfaceBorder),
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             Column(modifier = Modifier.padding(10.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -894,20 +900,20 @@ fun StreamPreviewDialog(
                                 ) {
                                     Text(
                                         text = "STREAM ENDPOINT ($streamFormat)",
-                                        color = Color(0xFF64748B),
+                                        color = AppTextSecondary,
                                         style = MaterialTheme.typography.labelSmall,
                                         fontWeight = FontWeight.Bold
                                     )
                                     Text(
                                         text = "ID: $streamId",
-                                        color = Color(0xFF38BDF8),
+                                        color = AppPrimary,
                                         style = MaterialTheme.typography.labelSmall,
                                         fontFamily = FontFamily.Monospace
                                     )
                                 }
                                 Text(
                                     text = streamUrl,
-                                    color = Color(0xFF94A3B8),
+                                    color = AppTextPrimary,
                                     style = MaterialTheme.typography.bodySmall,
                                     fontFamily = FontFamily.Monospace,
                                     maxLines = 2,

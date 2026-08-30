@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Link
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -16,6 +17,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import com.projectstrong.iptv.data.CommittedManager
+import com.projectstrong.iptv.ui.theme.*
 
 @Composable
 fun CommitAccountDialog(
@@ -39,6 +41,9 @@ fun CommitAccountDialog(
     onCommitted: () -> Unit
 ) {
     var notes by remember { mutableStateOf(initialNotes) }
+    var sourceLinkInput by remember {
+        mutableStateOf(if (sourceLink.isEmpty() || sourceLink == "Direct Ingestion") "" else sourceLink)
+    }
 
     val resolvedProvider = remember(baseUrl, provider) {
         if (provider.isNotEmpty() && provider != "Unknown" && provider != "Unbranded") {
@@ -52,7 +57,8 @@ fun CommitAccountDialog(
     Dialog(onDismissRequest = onDismiss) {
         Card(
             shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = Color(0xFF1E1E2E)),
+            colors = CardDefaults.cardColors(containerColor = AppSurface),
+            border = BorderStroke(1.dp, AppSurfaceBorder),
             modifier = Modifier.fillMaxWidth().padding(16.dp)
         ) {
             Column(modifier = Modifier.padding(20.dp)) {
@@ -64,12 +70,12 @@ fun CommitAccountDialog(
                 ) {
                     Text(
                         text = "Commit to Saved Accounts",
-                        color = Color.White,
+                        color = AppTextPrimary,
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )
                     IconButton(onClick = onDismiss, modifier = Modifier.size(24.dp)) {
-                        Icon(Icons.Default.Close, contentDescription = "Close", tint = Color.Gray)
+                        Icon(Icons.Default.Close, contentDescription = "Close", tint = AppTextSecondary)
                     }
                 }
 
@@ -77,8 +83,9 @@ fun CommitAccountDialog(
 
                 // Account Preview
                 Card(
-                    shape = RoundedCornerShape(8.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color(0xFF12121A)),
+                    shape = RoundedCornerShape(10.dp),
+                    colors = CardDefaults.cardColors(containerColor = AppSurfaceVariant),
+                    border = BorderStroke(1.dp, AppSurfaceBorder.copy(alpha = 0.6f)),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -89,7 +96,7 @@ fun CommitAccountDialog(
                         ) {
                             Text(
                                 text = "HOST: $baseUrl",
-                                color = Color(0xFF60A5FA),
+                                color = AppPrimary,
                                 style = MaterialTheme.typography.bodySmall,
                                 fontWeight = FontWeight.SemiBold,
                                 modifier = Modifier.weight(1f)
@@ -97,12 +104,12 @@ fun CommitAccountDialog(
                             if (resolvedProvider.isNotEmpty() && resolvedProvider != "Unbranded") {
                                 Surface(
                                     shape = RoundedCornerShape(6.dp),
-                                    color = Color(0xFFC084FC).copy(alpha = 0.15f),
-                                    border = BorderStroke(1.dp, Color(0xFFC084FC).copy(alpha = 0.4f))
+                                    color = AppPrimary.copy(alpha = 0.15f),
+                                    border = BorderStroke(1.dp, AppPrimary.copy(alpha = 0.4f))
                                 ) {
                                     Text(
                                         text = "🎯 $resolvedProvider",
-                                        color = Color(0xFFC084FC),
+                                        color = AppPrimary,
                                         style = MaterialTheme.typography.labelSmall,
                                         fontWeight = FontWeight.Bold,
                                         modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
@@ -113,49 +120,79 @@ fun CommitAccountDialog(
                         if (user.isNotEmpty()) {
                             Text(
                                 text = "USER: $user | PASS: $pass",
-                                color = Color.White,
+                                color = AppTextPrimary,
                                 style = MaterialTheme.typography.bodySmall
                             )
                         }
                         if (mac.isNotEmpty()) {
                             Text(
                                 text = "MAC: $mac",
-                                color = Color.White,
+                                color = AppTextPrimary,
                                 style = MaterialTheme.typography.bodySmall
                             )
                         }
                         if (expires.isNotEmpty() && expires != "N/A") {
                             Text(
                                 text = "Expires: $expires ($daysLeft days left)",
-                                color = Color.Gray,
+                                color = AppTextMuted,
                                 style = MaterialTheme.typography.labelSmall
                             )
                         }
                     }
                 }
 
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(14.dp))
+
+                // Source Link / Pastebin Field
+                Text(
+                    text = "Source Link / Pastebin URL (Optional)",
+                    color = AppTextPrimary,
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                OutlinedTextField(
+                    value = sourceLinkInput,
+                    onValueChange = { sourceLinkInput = it },
+                    placeholder = { Text("e.g. https://pastebin.com/raw/... or Telegram channel", color = AppTextMuted) },
+                    leadingIcon = {
+                        Icon(Icons.Default.Link, contentDescription = "Source", tint = AppPrimary, modifier = Modifier.size(18.dp))
+                    },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedTextColor = AppTextPrimary,
+                        unfocusedTextColor = AppTextPrimary,
+                        focusedBorderColor = AppPrimary,
+                        unfocusedBorderColor = AppSurfaceBorder,
+                        focusedContainerColor = AppSurfaceVariant,
+                        unfocusedContainerColor = AppSurfaceVariant
+                    ),
+                    shape = RoundedCornerShape(8.dp)
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
 
                 // Notes Field
                 Text(
                     text = "Notes & Annotations (Optional)",
-                    color = Color.White,
+                    color = AppTextPrimary,
                     style = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight.SemiBold
                 )
-                Spacer(modifier = Modifier.height(6.dp))
+                Spacer(modifier = Modifier.height(4.dp))
                 OutlinedTextField(
                     value = notes,
                     onValueChange = { notes = it },
-                    placeholder = { Text("e.g. Living room TV, US 4K channels, backup link...", color = Color.Gray) },
-                    modifier = Modifier.fillMaxWidth().height(100.dp),
+                    placeholder = { Text("e.g. Living room TV, US 4K channels, backup link...", color = AppTextMuted) },
+                    modifier = Modifier.fillMaxWidth().height(80.dp),
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = Color.White,
-                        unfocusedTextColor = Color.White,
-                        focusedBorderColor = Color(0xFF3B82F6),
-                        unfocusedBorderColor = Color(0xFF333344),
-                        focusedContainerColor = Color(0xFF12121A),
-                        unfocusedContainerColor = Color(0xFF12121A)
+                        focusedTextColor = AppTextPrimary,
+                        unfocusedTextColor = AppTextPrimary,
+                        focusedBorderColor = AppPrimary,
+                        unfocusedBorderColor = AppSurfaceBorder,
+                        focusedContainerColor = AppSurfaceVariant,
+                        unfocusedContainerColor = AppSurfaceVariant
                     ),
                     shape = RoundedCornerShape(8.dp)
                 )
@@ -163,11 +200,11 @@ fun CommitAccountDialog(
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     text = "💡 Saved accounts persist on this device and can be pushed to cloud via GitHub token.",
-                    color = Color.Gray,
+                    color = AppTextMuted,
                     style = MaterialTheme.typography.labelSmall
                 )
 
-                Spacer(modifier = Modifier.height(20.dp))
+                Spacer(modifier = Modifier.height(16.dp))
 
                 // Buttons
                 Row(
@@ -181,8 +218,9 @@ fun CommitAccountDialog(
                     )
                     PrimaryButton(
                         text = "Save & Commit",
-                        color = Color(0xFF10B981),
+                        color = AppSuccess,
                         onClick = {
+                            val finalSource = if (sourceLinkInput.trim().isEmpty()) "Direct Ingestion" else sourceLinkInput.trim()
                             CommittedManager.commit(
                                 type = type,
                                 baseUrl = baseUrl,
@@ -199,7 +237,7 @@ fun CommitAccountDialog(
                                 provider = resolvedProvider,
                                 serverTimezone = serverTimezone,
                                 notes = notes.trim(),
-                                sourceLink = sourceLink
+                                sourceLink = finalSource
                             )
                             onCommitted()
                             onDismiss()

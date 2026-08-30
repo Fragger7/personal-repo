@@ -42,7 +42,7 @@ import kotlinx.coroutines.sync.withPermit
 import kotlinx.coroutines.withContext
 
 enum class CommittedSortColumn {
-    DATE_ADDED, TYPE, STATUS, SYNC, HOST, PROVIDER, CHANNELS, VODS, DAYS_LEFT, EXPIRES
+    DATE_ADDED, TYPE, STATUS, SYNC, HOST, PROVIDER, CHANNELS, VODS, DAYS_LEFT, EXPIRES, SOURCE
 }
 
 @Composable
@@ -365,6 +365,9 @@ fun CommittedMasterGrid(
             CommittedSortColumn.EXPIRES -> {
                 if (sortAscending) list.sortedBy { it.safeExpires } else list.sortedByDescending { it.safeExpires }
             }
+            CommittedSortColumn.SOURCE -> {
+                if (sortAscending) list.sortedBy { it.safeSourceLink } else list.sortedByDescending { it.safeSourceLink }
+            }
         }
     }
 
@@ -552,6 +555,7 @@ fun CommittedMasterGrid(
                             GridHeader("Expires", 110.dp, onClick = { toggleSort(CommittedSortColumn.EXPIRES) }, isSorted = sortColumn == CommittedSortColumn.EXPIRES, isAscending = sortAscending)
                             GridHeader("Conns", 80.dp)
                             GridHeader("Timezone", 130.dp)
+                            GridHeader("Source Link", 180.dp, onClick = { toggleSort(CommittedSortColumn.SOURCE) }, isSorted = sortColumn == CommittedSortColumn.SOURCE, isAscending = sortAscending)
                             GridHeader("Notes", 200.dp)
                             GridHeader("Actions", 180.dp)
                         }
@@ -607,7 +611,9 @@ fun CommittedMasterGrid(
                                     GridCell(connsStr, 80.dp)
                                     // 15. Timezone
                                     GridCell(record.safeTimezone.ifEmpty { "-" }, 130.dp, color = AppTextMuted)
-                                    // 16. Notes
+                                    // 16. Source Link
+                                    GridCell(record.safeSourceLink.ifEmpty { "-" }, 180.dp, color = if (record.safeSourceLink.startsWith("http")) AppPrimary else AppTextMuted)
+                                    // 17. Notes
                                     GridCell(record.safeNotes.ifEmpty { "..." }, 200.dp, color = AppTextSecondary)
 
                                     // Actions (Push if local, Copy, Copy M3U, & Delete)

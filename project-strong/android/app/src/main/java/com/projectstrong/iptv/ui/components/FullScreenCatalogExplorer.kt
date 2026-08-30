@@ -2,6 +2,7 @@ package com.projectstrong.iptv.ui.components
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.*
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -29,6 +30,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.projectstrong.iptv.network.IPTVClient
+import com.projectstrong.iptv.ui.theme.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
@@ -181,19 +183,19 @@ fun FullScreenCatalogExplorer(
 
         Surface(
             modifier = Modifier.fillMaxSize(),
-            color = Color(0xFF0D1117)
+            color = AppBackground
         ) {
             Column(modifier = Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding()) {
                 // Top App Bar
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(Color(0xFF161B22))
+                        .background(AppSurface)
                         .padding(horizontal = 16.dp, vertical = 12.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     IconButton(onClick = onDismiss) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Close", tint = Color.White)
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Close", tint = AppTextPrimary)
                     }
                     Spacer(modifier = Modifier.width(8.dp))
                     Column(modifier = Modifier.weight(1f)) {
@@ -201,19 +203,19 @@ fun FullScreenCatalogExplorer(
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                             Text(
                                 text = "Channel Explorer",
-                                color = Color.White,
+                                color = AppTextPrimary,
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold
                             )
                             if (profile?.isIdentified == true) {
                                 Surface(
                                     shape = RoundedCornerShape(6.dp),
-                                    color = Color(0xFFA855F7).copy(alpha = 0.2f),
-                                    border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFA855F7).copy(alpha = 0.5f))
+                                    color = AppPrimary.copy(alpha = 0.15f),
+                                    border = BorderStroke(1.dp, AppPrimary.copy(alpha = 0.4f))
                                 ) {
                                     Text(
                                         text = profile.cleanBrand,
-                                        color = Color(0xFFE9D5FF),
+                                        color = AppPrimary,
                                         style = MaterialTheme.typography.labelSmall,
                                         fontWeight = FontWeight.Bold,
                                         modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
@@ -223,7 +225,7 @@ fun FullScreenCatalogExplorer(
                         }
                         Text(
                             text = baseUrl.replace("http://", "").replace("https://", ""),
-                            color = Color(0xFF60A5FA),
+                            color = AppPrimary,
                             style = MaterialTheme.typography.labelSmall,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
@@ -233,12 +235,12 @@ fun FullScreenCatalogExplorer(
                         Box(
                             modifier = Modifier
                                 .clip(RoundedCornerShape(12.dp))
-                                .background(Color(0xFF21262D))
+                                .background(AppSurfaceVariant)
                                 .padding(horizontal = 10.dp, vertical = 4.dp)
                         ) {
                             Text(
                                 text = "${allChannels.size} Channels",
-                                color = Color(0xFF34D399),
+                                color = AppSuccess,
                                 style = MaterialTheme.typography.labelSmall,
                                 fontWeight = FontWeight.Bold
                             )
@@ -249,18 +251,18 @@ fun FullScreenCatalogExplorer(
                 if (isLoading) {
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            CircularProgressIndicator(color = Color(0xFF3B82F6))
+                            CircularProgressIndicator(color = AppPrimary)
                             Spacer(modifier = Modifier.height(16.dp))
-                            Text("Loading Full Live Channel Catalog...", color = Color.White, fontWeight = FontWeight.Medium)
-                            Text("Parsing categories and streams from provider", color = Color.Gray, style = MaterialTheme.typography.bodySmall)
+                            Text("Loading Full Live Channel Catalog...", color = AppTextPrimary, fontWeight = FontWeight.Medium)
+                            Text("Parsing categories and streams from provider", color = AppTextMuted, style = MaterialTheme.typography.bodySmall)
                         }
                     }
                 } else if (errorMessage != null) {
                     Box(modifier = Modifier.fillMaxSize().padding(24.dp), contentAlignment = Alignment.Center) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Icon(Icons.Default.Warning, contentDescription = "Error", tint = Color(0xFFEF4444), modifier = Modifier.size(48.dp))
+                            Icon(Icons.Default.Warning, contentDescription = "Error", tint = AppError, modifier = Modifier.size(48.dp))
                             Spacer(modifier = Modifier.height(16.dp))
-                            Text(errorMessage!!, color = Color.White, fontWeight = FontWeight.Bold)
+                            Text(errorMessage!!, color = AppTextPrimary, fontWeight = FontWeight.Bold)
                             Spacer(modifier = Modifier.height(16.dp))
                             PrimaryButton(text = "Close", onClick = onDismiss)
                         }
@@ -270,30 +272,30 @@ fun FullScreenCatalogExplorer(
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .background(Color(0xFF161B22))
+                            .background(AppSurface)
                             .padding(horizontal = 16.dp, vertical = 8.dp)
                     ) {
                         OutlinedTextField(
                             value = searchQuery,
                             onValueChange = { searchQuery = it },
-                            placeholder = { Text("Filter ${filteredChannels.size} channels by name or ID...", color = Color.Gray) },
-                            leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search", tint = Color.Gray) },
+                            placeholder = { Text("Filter ${filteredChannels.size} channels by name or ID...", color = AppTextMuted) },
+                            leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search", tint = AppTextSecondary) },
                             trailingIcon = {
                                 if (searchQuery.isNotEmpty()) {
                                     IconButton(onClick = { searchQuery = "" }) {
-                                        Icon(Icons.Default.Clear, contentDescription = "Clear", tint = Color.Gray)
+                                        Icon(Icons.Default.Clear, contentDescription = "Clear", tint = AppTextSecondary)
                                     }
                                 }
                             },
                             modifier = Modifier.fillMaxWidth().height(52.dp),
                             shape = RoundedCornerShape(26.dp),
                             colors = OutlinedTextFieldDefaults.colors(
-                                focusedTextColor = Color.White,
-                                unfocusedTextColor = Color.White,
-                                focusedBorderColor = Color(0xFF3B82F6),
-                                unfocusedBorderColor = Color(0xFF30363D),
-                                focusedContainerColor = Color(0xFF0D1117),
-                                unfocusedContainerColor = Color(0xFF0D1117)
+                                focusedTextColor = AppTextPrimary,
+                                unfocusedTextColor = AppTextPrimary,
+                                focusedBorderColor = AppPrimary,
+                                unfocusedBorderColor = AppSurfaceBorder,
+                                focusedContainerColor = AppSurfaceVariant,
+                                unfocusedContainerColor = AppSurfaceVariant
                             ),
                             singleLine = true
                         )
@@ -303,7 +305,7 @@ fun FullScreenCatalogExplorer(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .background(Color(0xFF161B22))
+                            .background(AppSurface)
                             .horizontalScroll(rememberScrollState())
                             .padding(horizontal = 16.dp, vertical = 8.dp),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -323,10 +325,10 @@ fun FullScreenCatalogExplorer(
                                     )
                                 },
                                 colors = FilterChipDefaults.filterChipColors(
-                                    selectedContainerColor = Color(0xFF3B82F6),
-                                    selectedLabelColor = Color.White,
-                                    containerColor = Color(0xFF21262D),
-                                    labelColor = Color(0xFF8B949E)
+                                    selectedContainerColor = AppPrimary,
+                                    selectedLabelColor = MaterialTheme.colorScheme.onPrimary,
+                                    containerColor = AppSurfaceVariant,
+                                    labelColor = AppTextSecondary
                                 ),
                                 border = null,
                                 shape = RoundedCornerShape(16.dp)
@@ -338,7 +340,7 @@ fun FullScreenCatalogExplorer(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .background(Color(0xFF0D1117))
+                            .background(AppBackground)
                             .padding(horizontal = 16.dp, vertical = 8.dp),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
@@ -346,7 +348,7 @@ fun FullScreenCatalogExplorer(
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Text(
                                 text = "$selectedCategoryName • ${filteredChannels.size} results (${groupedChannels.size} groups)",
-                                color = Color(0xFF8B949E),
+                                color = AppTextSecondary,
                                 style = MaterialTheme.typography.labelMedium
                             )
                         }
@@ -356,7 +358,7 @@ fun FullScreenCatalogExplorer(
                                 val allCollapsed = groupedChannels.all { collapsedGroupIds.contains(it.first) }
                                 Text(
                                     text = if (allCollapsed) "Expand All" else "Collapse All",
-                                    color = Color(0xFF60A5FA),
+                                    color = AppPrimary,
                                     style = MaterialTheme.typography.labelSmall,
                                     fontWeight = FontWeight.Bold,
                                     modifier = Modifier
@@ -368,28 +370,28 @@ fun FullScreenCatalogExplorer(
                                             }
                                         }
                                         .padding(4.dp)
-                                )
+                                    )
                             }
                             if (searchQuery.isNotEmpty()) {
                                 Text(
                                     text = "Filtered by \"$searchQuery\"",
-                                    color = Color(0xFFFBBF24),
+                                    color = AppWarning,
                                     style = MaterialTheme.typography.labelSmall
                                 )
                             }
                         }
                     }
 
-                    Divider(color = Color(0xFF21262D), thickness = 1.dp)
+                    Divider(color = AppSurfaceBorder, thickness = 1.dp)
 
                     // Channels List with Group Headers
                     Box(modifier = Modifier.fillMaxSize().weight(1f)) {
                         if (filteredChannels.isEmpty()) {
                             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                    Icon(Icons.Default.TvOff, contentDescription = "No channels", tint = Color.Gray, modifier = Modifier.size(40.dp))
+                                    Icon(Icons.Default.TvOff, contentDescription = "No channels", tint = AppTextMuted, modifier = Modifier.size(40.dp))
                                     Spacer(modifier = Modifier.height(12.dp))
-                                    Text("No channels match your search or filter", color = Color.Gray)
+                                    Text("No channels match your search or filter", color = AppTextMuted)
                                 }
                             }
                         } else {
@@ -404,7 +406,8 @@ fun FullScreenCatalogExplorer(
                                     item(key = "header_$catId") {
                                         Card(
                                             shape = RoundedCornerShape(8.dp),
-                                            colors = CardDefaults.cardColors(containerColor = Color(0xFF1F2937)),
+                                            colors = CardDefaults.cardColors(containerColor = AppSurfaceVariant),
+                                            border = BorderStroke(1.dp, AppSurfaceBorder.copy(alpha = 0.6f)),
                                             modifier = Modifier
                                                 .fillMaxWidth()
                                                 .padding(top = 8.dp, bottom = 4.dp)
@@ -427,20 +430,20 @@ fun FullScreenCatalogExplorer(
                                                     Icon(
                                                         imageVector = if (isCollapsed) Icons.Default.KeyboardArrowRight else Icons.Default.KeyboardArrowDown,
                                                         contentDescription = if (isCollapsed) "Expand" else "Collapse",
-                                                        tint = Color(0xFF60A5FA),
+                                                        tint = AppPrimary,
                                                         modifier = Modifier.size(20.dp)
                                                     )
                                                     Spacer(modifier = Modifier.width(8.dp))
                                                     Icon(
                                                         Icons.Default.Folder,
                                                         contentDescription = null,
-                                                        tint = Color(0xFFFBBF24),
+                                                        tint = AppWarning,
                                                         modifier = Modifier.size(18.dp)
                                                     )
                                                     Spacer(modifier = Modifier.width(8.dp))
                                                     Text(
                                                         text = catName,
-                                                        color = Color.White,
+                                                        color = AppTextPrimary,
                                                         style = MaterialTheme.typography.titleSmall,
                                                         fontWeight = FontWeight.Bold,
                                                         maxLines = 1,
@@ -450,12 +453,12 @@ fun FullScreenCatalogExplorer(
                                                 Box(
                                                     modifier = Modifier
                                                         .clip(RoundedCornerShape(10.dp))
-                                                        .background(Color(0xFF374151))
+                                                        .background(AppSurface)
                                                         .padding(horizontal = 8.dp, vertical = 2.dp)
                                                 ) {
                                                     Text(
                                                         text = "${channelsInCat.size} ${if (channelsInCat.size == 1) "channel" else "channels"}",
-                                                        color = Color(0xFF34D399),
+                                                        color = AppSuccess,
                                                         style = MaterialTheme.typography.labelSmall,
                                                         fontWeight = FontWeight.SemiBold
                                                     )
@@ -469,7 +472,8 @@ fun FullScreenCatalogExplorer(
                                         items(channelsInCat, key = { it.streamId + it.name + catId }) { channel ->
                                             Card(
                                                 shape = RoundedCornerShape(10.dp),
-                                                colors = CardDefaults.cardColors(containerColor = Color(0xFF161B22)),
+                                                colors = CardDefaults.cardColors(containerColor = AppSurface),
+                                                border = BorderStroke(1.dp, AppSurfaceBorder.copy(alpha = 0.5f)),
                                                 modifier = Modifier
                                                     .fillMaxWidth()
                                                     .padding(vertical = 3.dp)
@@ -491,13 +495,13 @@ fun FullScreenCatalogExplorer(
                                                             modifier = Modifier
                                                                 .size(36.dp)
                                                                 .clip(CircleShape)
-                                                                .background(Color(0xFF21262D)),
+                                                                .background(AppSurfaceVariant),
                                                             contentAlignment = Alignment.Center
                                                         ) {
                                                             Icon(
                                                                 Icons.Default.LiveTv,
                                                                 contentDescription = "Live",
-                                                                tint = Color(0xFF60A5FA),
+                                                                tint = AppPrimary,
                                                                 modifier = Modifier.size(18.dp)
                                                             )
                                                         }
@@ -505,7 +509,7 @@ fun FullScreenCatalogExplorer(
                                                         Column(modifier = Modifier.weight(1f, fill = false)) {
                                                             Text(
                                                                 text = channel.name,
-                                                                color = Color.White,
+                                                                color = AppTextPrimary,
                                                                 style = MaterialTheme.typography.bodyMedium,
                                                                 fontWeight = FontWeight.SemiBold,
                                                                 maxLines = 1,
@@ -516,12 +520,12 @@ fun FullScreenCatalogExplorer(
                                                                 Box(
                                                                     modifier = Modifier
                                                                         .clip(RoundedCornerShape(4.dp))
-                                                                        .background(Color(0xFF30363D))
+                                                                        .background(AppSurfaceVariant)
                                                                         .padding(horizontal = 4.dp, vertical = 1.dp)
                                                                 ) {
                                                                     Text(
                                                                         text = "ID: ${channel.streamId}",
-                                                                        color = Color(0xFF8B949E),
+                                                                        color = AppTextMuted,
                                                                         style = MaterialTheme.typography.labelSmall
                                                                     )
                                                                 }
@@ -529,7 +533,7 @@ fun FullScreenCatalogExplorer(
                                                                 Box(
                                                                     modifier = Modifier
                                                                         .clip(RoundedCornerShape(4.dp))
-                                                                        .background(Color(0xFF1E3A8A).copy(alpha = 0.5f))
+                                                                        .background(AppPrimary.copy(alpha = 0.15f))
                                                                         .clickable {
                                                                             selectedCategoryId = channel.categoryId
                                                                         }
@@ -537,7 +541,7 @@ fun FullScreenCatalogExplorer(
                                                                 ) {
                                                                     Text(
                                                                         text = "📁 $catName",
-                                                                        color = Color(0xFF93C5FD),
+                                                                        color = AppPrimary,
                                                                         style = MaterialTheme.typography.labelSmall,
                                                                         maxLines = 1,
                                                                         overflow = TextOverflow.Ellipsis
@@ -559,12 +563,12 @@ fun FullScreenCatalogExplorer(
                                                             modifier = Modifier
                                                                 .size(36.dp)
                                                                 .clip(CircleShape)
-                                                                .background(Color(0xFF0F766E).copy(alpha = 0.3f))
+                                                                .background(AppSuccessContainer)
                                                         ) {
                                                             Icon(
                                                                 Icons.Default.PlayArrow,
                                                                 contentDescription = "Test Stream",
-                                                                tint = Color(0xFF34D399),
+                                                                tint = AppSuccess,
                                                                 modifier = Modifier.size(20.dp)
                                                             )
                                                         }
@@ -582,7 +586,7 @@ fun FullScreenCatalogExplorer(
                                                             Icon(
                                                                 Icons.Default.ContentCopy,
                                                                 contentDescription = "Copy Name",
-                                                                tint = Color(0xFF8B949E),
+                                                                tint = AppTextSecondary,
                                                                 modifier = Modifier.size(16.dp)
                                                             )
                                                         }
@@ -599,7 +603,7 @@ fun FullScreenCatalogExplorer(
                                                             Icon(
                                                                 Icons.Default.Link,
                                                                 contentDescription = "Copy Link",
-                                                                tint = Color(0xFF60A5FA),
+                                                                tint = AppPrimary,
                                                                 modifier = Modifier.size(18.dp)
                                                             )
                                                         }
@@ -616,7 +620,6 @@ fun FullScreenCatalogExplorer(
                         }
 
                         // Floating scroll buttons
-                        // Context-aware floating scroller
                         SmartLazyListScroller(
                             listState = listState,
                             itemCount = filteredChannels.size,
@@ -643,7 +646,7 @@ fun FullScreenCatalogExplorer(
                                 }
                                 Card(
                                     shape = RoundedCornerShape(20.dp),
-                                    colors = CardDefaults.cardColors(containerColor = Color(0xFF10B981))
+                                    colors = CardDefaults.cardColors(containerColor = AppSuccess)
                                 ) {
                                     Row(
                                         modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),

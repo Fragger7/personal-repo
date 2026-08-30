@@ -88,6 +88,7 @@ fun XtreamMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCredent
                 "Status" -> if (sortAscending) list.sortedBy { it.status } else list.sortedByDescending { it.status }
                 "Provider" -> if (sortAscending) list.sortedBy { it.provider } else list.sortedByDescending { it.provider }
                 "Username" -> if (sortAscending) list.sortedBy { it.user } else list.sortedByDescending { it.user }
+                "Source Link" -> if (sortAscending) list.sortedBy { it.sourceLink } else list.sortedByDescending { it.sourceLink }
                 else -> list
             }
         }
@@ -430,6 +431,7 @@ fun XtreamMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCredent
                                 GridHeader("Active", 80.dp, onClick = { headerClick("Active") }, isSorted = (sortColumn == "Active"), isAscending = sortAscending)
                                 GridHeader("Max", 80.dp, null)
                                 GridHeader("Expires", 100.dp, null)
+                                GridHeader("Source Link", 180.dp, onClick = { headerClick("Source Link") }, isSorted = (sortColumn == "Source Link"), isAscending = sortAscending)
                                 GridHeader("Actions", 140.dp, null)
                             }
 
@@ -457,6 +459,7 @@ fun XtreamMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCredent
                                         GridCell(node.activeConn, 80.dp)
                                         GridCell(node.maxConn, 80.dp)
                                         GridCell(node.expires, 100.dp)
+                                        GridCell(node.sourceLink.ifEmpty { "-" }, 180.dp, color = if (node.sourceLink.startsWith("http")) AppPrimary else AppTextMuted)
 
                                         Row(
                                             modifier = Modifier.width(140.dp),
