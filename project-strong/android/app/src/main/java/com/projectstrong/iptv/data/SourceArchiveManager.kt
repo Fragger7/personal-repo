@@ -157,8 +157,8 @@ object SourceArchiveManager {
         }
     }
 
-    suspend fun pushArchiveToGithub(fileName: String, content: String, token: String): Boolean = withContext(Dispatchers.IO) {
-        if (token.isBlank() || fileName.isBlank() || content.isBlank()) return@withContext false
+    fun pushArchiveToGithubSync(fileName: String, content: String, token: String): Boolean {
+        if (token.isBlank() || fileName.isBlank() || content.isBlank()) return false
         try {
             val cleanName = fileName.replace("sources/", "").trim()
             val getUrl = URL("https://api.github.com/repos/$GITHUB_REPO/contents/$SOURCES_SUBDIR/$cleanName")
@@ -196,10 +196,14 @@ object SourceArchiveManager {
             }
 
             val code = putConn.responseCode
-            return@withContext (code == 200 || code == 201)
+            return (code == 200 || code == 201)
         } catch (e: Exception) {
             e.printStackTrace()
-            return@withContext false
+            return false
         }
+    }
+
+    suspend fun pushArchiveToGithub(fileName: String, content: String, token: String): Boolean = withContext(Dispatchers.IO) {
+        pushArchiveToGithubSync(fileName, content, token)
     }
 }

@@ -213,7 +213,7 @@ fun CommittedTab() {
             onDismiss = { sourceArchiveViewerData = null },
             onSendToScanner = { text ->
                 sourceArchiveViewerData = null
-                DataStore.rawInputText = text
+                DataStore.scannerInput = text
                 ToastManager.success("Loaded source snapshot into Multi-Payload Scanner!")
             }
         )

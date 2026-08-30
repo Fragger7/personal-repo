@@ -9,10 +9,12 @@ import com.google.gson.annotations.SerializedName
 import com.projectstrong.iptv.network.IPTVClient
 import com.projectstrong.iptv.network.VerificationResult
 import com.projectstrong.iptv.ui.components.ToastManager
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
 import kotlinx.coroutines.withContext
@@ -487,7 +489,7 @@ object CommittedManager {
                             val localContent = SourceArchiveManager.getArchiveLocally(appContext, archiveFile)
                             if (!localContent.isNullOrBlank()) {
                                 try {
-                                    SourceArchiveManager.pushArchiveToGithub(archiveFile, localContent, token)
+                                    SourceArchiveManager.pushArchiveToGithubSync(archiveFile, localContent, token)
                                 } catch (e: Exception) {
                                     e.printStackTrace()
                                 }

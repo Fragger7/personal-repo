@@ -207,8 +207,14 @@ fun SourceArchiveViewerDialog(
                     IconButton(
                         onClick = {
                             if (contentText.isNotBlank()) {
-                                ClipboardHelper.copyText(context, contentText, "Source Snapshot")
-                                ToastManager.success("Copied snapshot (${lines.size} lines) to clipboard!")
+                                try {
+                                    val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+                                    val clip = android.content.ClipData.newPlainText("Source Snapshot", contentText)
+                                    clipboard.setPrimaryClip(clip)
+                                    ToastManager.success("Copied snapshot (${lines.size} lines) to clipboard!")
+                                } catch (e: Exception) {
+                                    ToastManager.error("Could not copy: ${e.message}")
+                                }
                             }
                         },
                         modifier = Modifier.size(32.dp),
