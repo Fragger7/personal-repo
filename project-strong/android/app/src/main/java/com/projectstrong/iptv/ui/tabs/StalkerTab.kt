@@ -22,6 +22,7 @@ import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.projectstrong.iptv.data.CommittedManager
 import com.projectstrong.iptv.data.DataStore
 import com.projectstrong.iptv.network.ParsedCredential
