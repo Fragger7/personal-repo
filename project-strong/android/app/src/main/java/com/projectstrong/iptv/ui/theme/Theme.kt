@@ -15,7 +15,7 @@ import com.projectstrong.iptv.data.SettingsManager
 val AppBackground: Color @Composable get() = MaterialTheme.colorScheme.background
 val AppSurface: Color @Composable get() = MaterialTheme.colorScheme.surface
 val AppSurfaceVariant: Color @Composable get() = MaterialTheme.colorScheme.surfaceVariant
-val AppSurfaceBorder: Color @Composable get() = MaterialTheme.colorScheme.outlineVariant.takeOrElse { MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.8f) }
+val AppSurfaceBorder: Color @Composable get() = MaterialTheme.colorScheme.outlineVariant
 
 val AppPrimary: Color @Composable get() = MaterialTheme.colorScheme.primary
 val AppPrimaryVariant: Color @Composable get() = MaterialTheme.colorScheme.secondary
