@@ -1,6 +1,6 @@
 # 🕵️‍♂️ Sherlock Streams (IPTV Playlist Analytics & Forensic Dashboard)
 
-A dual-platform forensic analytics engine and IPTV stream management dashboard designed to parse, validate, categorize, and stream-inspect IPTV credentials (Xtream Codes API & Stalker Portals) from unstructured raw text pastes.
+A dual-platform forensic analytics engine and IPTV stream management dashboard designed to parse, validate, categorize, hardware stream-inspect, and archive IPTV credentials (Xtream Codes API & Stalker Portals) from unstructured raw text pastes.
 
 ---
 
@@ -9,21 +9,29 @@ A dual-platform forensic analytics engine and IPTV stream management dashboard d
 The native Android app (`/android`) runs directly on mobile/residential IP connections to completely bypass cloud hosting IP blocks (HTTP 403) encountered on web deployments.
 
 ### ✨ Key Features
+* **🏛️ "Forever Source" Git Snapshot & Archive Engine**:
+  * Automatically captures raw pastebin/pastetext dumps and saves them as versioned text files directly in the Git repository (`project-strong/sources/{filename}.txt`).
+  * In-app monospace source reader with line numbering, text search, raw copy, upstream URL launcher, and 1-click **"⚡ Send to Scanner"** recall pipeline.
 * **Media3 / ExoPlayer In-App Stream Inspector**:
-  * Hardware-accelerated direct stream playback with software fallback decoders.
+  * Hardware-accelerated direct stream playback with custom evasion user-agent (`IPTVSmartersPro/1.1.1`) and software decoder fallback.
   * True full-screen mode linked with sensor landscape orientation (`SCREEN_ORIENTATION_SENSOR_LANDSCAPE`).
   * Live forensic telemetry HUD: Bitrate throughput (`kbps` / `Mbps`), buffer health cushion (`seconds ahead`), video resolution, video/audio codecs, and socket latency.
   * Clear labeled controls: Play/Pause, Mute/Unmute, Aspect Ratio (Fit/Fill/Zoom), Live Re-Sync, Copy URL, and Open in External Player (VLC / MX Player).
   * Scrub slider with dynamic time formatting (`mm:ss` / `hh:mm:ss`) for non-live and catchup streams.
 * **16-Column Enterprise Master Grid & Detail Snapping**:
-  * High-density horizontal `LazyColumn` grids with multi-column sorting (Date Added, Status, Type, Host, Provider, Channels, VODs, Days Left, Conns, Timezone, Notes).
+  * High-density horizontal `LazyColumn` grids with multi-column sorting (Date Added, Status, Type, Sync Status, Host, Provider, Username, Password, MAC, Channels, VODs, Days Left, Expires, Connections, Timezone, Notes).
   * Master-Detail navigation with auto-scrolling to the deep-dive inspector drawer.
+  * Discrete login credential copy widgets (Host, Username, Password, M3U URL).
+* **Provider Intelligence & Brand Forensics**:
+  * Bundles 2,127+ offline provider forensic profiles for instant brand detection.
+  * Delimiter scraper (Telegram, Discord, WhatsApp, banner channels) with 99% consensus verification.
 * **Hierarchical Channel & VOD Catalog Explorer**:
   * Collapsible categorized channel lists with fast search filtering, individual category counters, and 1-tap stream testing.
 * **Settings & Intelligence Hub**:
   * Real-time zero-latency hardware VPN detector (`NetworkCapabilities.TRANSPORT_VPN`).
   * Outbound IP geolocation shield and public cloud firewall warning indicator.
   * Live concurrency & timeout sliders with instant preference auto-save.
+  * Multi-theme switcher (*Cyber Sherlock Amber/Navy*, *Midnight Purple*, *Ocean Blue*, *Crimson Dark*, *System Monet*).
   * Safe GitHub Personal Access Token (PAT) cloud synchronization and cache clearing tools.
 * **Universal Toast System & Multi-Orientation Layouts**:
   * Non-intrusive auto-dismissing visual toasts across foreground and background coroutine events.
@@ -36,22 +44,13 @@ The native Android app (`/android`) runs directly on mobile/residential IP conne
 A lightweight web application featuring multi-tiered async validation, automated provider intelligence fingerprinting, and GitHub cloud persistence.
 
 * **Multi-Tier Handshake Scanner**: Fast async evaluation of Xtream Codes and Stalker portals using HTTPX with custom evasion headers.
-* **Dynamic Multi-Theming**: 4 visual themes (*Midnight Purple*, *Ocean Blue*, *Crimson Dark*, *Clean Light*).
+* **Dynamic Multi-Theming**: Visual themes (*Midnight Purple*, *Ocean Blue*, *Crimson Dark*, *Clean Light*).
 * **Committed Vault**: Bidirectional GitHub REST API sync with conflict avoidance and SHA validation.
 
 ---
 
-## 🎯 Active Backlog & Next Session Implementation Plan
+## 🚀 CI/CD & Automated APK Build Pipeline
 
-1. **Ultra-Scale Performance Tuning & ANR Prevention (3,000+ Node Payloads)**:
-   * Throttled 250ms batch state emits to decouple background HTTP coroutines from the Compose render thread.
-   * Concurrency limiting with `Dispatchers.IO.limitedParallelism(24..32)`.
-2. **Base64 Tab Power Actions & Ingestion Pipeline**:
-   * Rich URL action chips and batch external browser/M3U launch.
-   * 1-click "Send Decoded URLs to Scanner" direct routing.
-3. **Provider Intelligence Engine (Android Port)**:
-   * Port regex brand-fingerprinting, community link detector (Telegram, Discord, WhatsApp), and dummy banner stream detector to Android.
-4. **Dynamic Theme Engine (Multi-Palette Switcher)**:
-   * Dynamic theme selector supporting *Cyber Sherlock Amber/Navy (Default)*, *Midnight Purple*, *Ocean Blue*, *Crimson Dark*, and *System Monet*.
-5. **Landscape Split-Pane Master-Detail Tablet/Foldable View**:
-   * Side-by-side master list + live detail inspector pane on wide screens.
+* **Workflow (`.github/workflows/android-build.yml`)**:
+  * Automatically compiles a debug APK (`app-debug.apk`) on every push to `main` modifying Android files.
+  * Artifacts are published as `project-strong-debug-apk` on GitHub Actions.
