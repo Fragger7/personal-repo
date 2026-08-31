@@ -124,6 +124,31 @@ fun Base64Tab(onNextTab: () -> Unit = {}) {
 
             extractedUrls = foundUrls
             if (output.isNotBlank()) {
+                // Auto-detect Origin Link (Reddit/Telegram/Forum) in rawInput or output
+                val originPattern = Pattern.compile(
+                    "https?://(?:www\\.|old\\.|new\\.|np\\.)?(?:reddit\\.com/(?:r/[^\\s\"'<>]+|user/[^\\s\"'<>]+|comments/[^\\s\"'<>]+)|redd\\.it/[^\\s\"'<>]+|t\\.me/[^\\s\"'<>]+|telegram\\.me/[^\\s\"'<>]+|discord\\.gg/[^\\s\"'<>]+)",
+                    Pattern.CASE_INSENSITIVE
+                )
+                val oMatcherInput = originPattern.matcher(rawInput)
+                if (oMatcherInput.find()) {
+                    DataStore.scannerOriginLink = oMatcherInput.group(0) ?: ""
+                } else {
+                    val oMatcherOut = originPattern.matcher(output)
+                    if (oMatcherOut.find()) {
+                        DataStore.scannerOriginLink = oMatcherOut.group(0) ?: ""
+                    }
+                }
+
+                // Auto-detect Source Link (Pastebin/Rentry/Paste.sh)
+                val pastebinPattern = Pattern.compile(
+                    "https?://(?:www\\.)?(?:pastebin\\.com/(?:raw/)?[a-zA-Z0-9]+|paste\\.sh/[a-zA-Z0-9#]+|rentry\\.(?:co|org)/(?:raw/)?[a-zA-Z0-9]+|pastetext\\.net/[a-zA-Z0-9]+|controlc\\.com/[a-zA-Z0-9]+|dpaste\\.(?:org|com)/[a-zA-Z0-9]+(?:\\.txt)?|paste\\.ee/(?:p|r)/[a-zA-Z0-9]+|gist\\.github\\.com/[^\\s\"'<>]+)",
+                    Pattern.CASE_INSENSITIVE
+                )
+                val pMatcher = pastebinPattern.matcher(rawInput)
+                if (pMatcher.find()) {
+                    DataStore.scannerSourceLink = pMatcher.group(0) ?: "Direct Ingestion"
+                }
+
                 ToastManager.success("Base64 payload processed successfully!")
             } else {
                 ToastManager.warning("No valid Base64 patterns found in text")
@@ -385,6 +410,127 @@ fun Base64Tab(onNextTab: () -> Unit = {}) {
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(44.dp)
+                )
+            }
+        }
+
+        // Traceability Metadata Card (Source & Origin Context)
+        Surface(
+            shape = RoundedCornerShape(16.dp),
+            color = AppSurface,
+            border = BorderStroke(1.dp, AppSurfaceBorder),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Icon(Icons.Default.Share, contentDescription = null, tint = Color(0xFFF59E0B), modifier = Modifier.size(18.dp))
+                        Text(
+                            text = "Source & Origin Traceability",
+                            color = AppTextPrimary,
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                    if (DataStore.scannerOriginLink.isNotBlank() || (DataStore.scannerSourceLink.isNotBlank() && DataStore.scannerSourceLink != "Direct Ingestion")) {
+                        Surface(
+                            shape = RoundedCornerShape(6.dp),
+                            color = Color(0xFF10B981).copy(alpha = 0.15f),
+                            border = BorderStroke(1.dp, Color(0xFF10B981).copy(alpha = 0.4f))
+                        ) {
+                            Text(
+                                text = "Attached",
+                                color = Color(0xFF34D399),
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                            )
+                        }
+                    }
+                }
+
+                Text(
+                    text = "Origin thread (Reddit/Telegram) and payload link (Pastebin) auto-attach to all scanned credentials.",
+                    color = AppTextSecondary,
+                    style = MaterialTheme.typography.bodySmall
+                )
+
+                // Source Link Field
+                OutlinedTextField(
+                    value = if (DataStore.scannerSourceLink == "Direct Ingestion") "" else DataStore.scannerSourceLink,
+                    onValueChange = { DataStore.scannerSourceLink = it },
+                    placeholder = { Text("Source Link (e.g. Pastebin / Paste.sh URL)", color = AppTextMuted, style = MaterialTheme.typography.bodySmall) },
+                    leadingIcon = {
+                        Icon(Icons.Default.Link, contentDescription = "Source", tint = AppPrimary, modifier = Modifier.size(16.dp))
+                    },
+                    trailingIcon = {
+                        IconButton(
+                            onClick = {
+                                val clip = ClipboardHelper.getSafeClipboardText(context, clipboardManager)
+                                if (!clip.isNullOrBlank()) {
+                                    DataStore.scannerSourceLink = clip.trim()
+                                    ToastManager.info("Pasted Source Link from clipboard")
+                                } else {
+                                    ToastManager.warning("Clipboard is empty")
+                                }
+                            },
+                            modifier = Modifier.size(24.dp)
+                        ) {
+                            Icon(Icons.Default.ContentPaste, contentDescription = "Paste", tint = AppPrimary, modifier = Modifier.size(16.dp))
+                        }
+                    },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedTextColor = AppTextPrimary,
+                        unfocusedTextColor = AppTextPrimary,
+                        focusedBorderColor = AppPrimary,
+                        unfocusedBorderColor = AppSurfaceBorder,
+                        focusedContainerColor = AppSurfaceVariant,
+                        unfocusedContainerColor = AppSurfaceVariant
+                    ),
+                    shape = RoundedCornerShape(8.dp)
+                )
+
+                // Origin Link Field
+                OutlinedTextField(
+                    value = DataStore.scannerOriginLink,
+                    onValueChange = { DataStore.scannerOriginLink = it },
+                    placeholder = { Text("Origin Thread (e.g. Reddit discussion URL)", color = AppTextMuted, style = MaterialTheme.typography.bodySmall) },
+                    leadingIcon = {
+                        Icon(Icons.Default.Share, contentDescription = "Origin", tint = Color(0xFFF59E0B), modifier = Modifier.size(16.dp))
+                    },
+                    trailingIcon = {
+                        IconButton(
+                            onClick = {
+                                val clip = ClipboardHelper.getSafeClipboardText(context, clipboardManager)
+                                if (!clip.isNullOrBlank()) {
+                                    DataStore.scannerOriginLink = clip.trim()
+                                    ToastManager.info("Pasted Origin Link from clipboard")
+                                } else {
+                                    ToastManager.warning("Clipboard is empty")
+                                }
+                            },
+                            modifier = Modifier.size(24.dp)
+                        ) {
+                            Icon(Icons.Default.ContentPaste, contentDescription = "Paste", tint = Color(0xFFF59E0B), modifier = Modifier.size(16.dp))
+                        }
+                    },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedTextColor = AppTextPrimary,
+                        unfocusedTextColor = AppTextPrimary,
+                        focusedBorderColor = Color(0xFFF59E0B),
+                        unfocusedBorderColor = AppSurfaceBorder,
+                        focusedContainerColor = AppSurfaceVariant,
+                        unfocusedContainerColor = AppSurfaceVariant
+                    ),
+                    shape = RoundedCornerShape(8.dp)
                 )
             }
         }

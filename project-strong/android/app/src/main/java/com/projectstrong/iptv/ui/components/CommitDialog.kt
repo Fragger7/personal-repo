@@ -2,6 +2,7 @@ package com.projectstrong.iptv.ui.components
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -11,12 +12,16 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import com.projectstrong.iptv.data.CommittedManager
+import com.projectstrong.iptv.data.DataStore
 import com.projectstrong.iptv.ui.theme.*
+import com.projectstrong.iptv.utils.ClipboardHelper
 
 @Composable
 fun CommitAccountDialog(
@@ -40,12 +45,29 @@ fun CommitAccountDialog(
     onDismiss: () -> Unit,
     onCommitted: () -> Unit
 ) {
+    val context = LocalContext.current
+    val clipboardManager = LocalClipboardManager.current
+
     var notes by remember { mutableStateOf(initialNotes) }
+    
+    // Auto-populate Source Link: check node sourceLink first, fallback to DataStore.scannerSourceLink
     var sourceLinkInput by remember {
-        mutableStateOf(if (sourceLink.isEmpty() || sourceLink == "Direct Ingestion") "" else sourceLink)
+        val candidate = if (sourceLink.isNotBlank() && sourceLink != "Direct Ingestion") {
+            sourceLink
+        } else if (DataStore.scannerSourceLink.isNotBlank() && DataStore.scannerSourceLink != "Direct Ingestion") {
+            DataStore.scannerSourceLink
+        } else ""
+        mutableStateOf(candidate)
     }
+
+    // Auto-populate Origin Link: check node originLink first, fallback to DataStore.scannerOriginLink
     var originLinkInput by remember {
-        mutableStateOf(originLink)
+        val candidate = if (originLink.isNotBlank()) {
+            originLink
+        } else if (DataStore.scannerOriginLink.isNotBlank()) {
+            DataStore.scannerOriginLink
+        } else ""
+        mutableStateOf(candidate)
     }
 
     val resolvedProvider = remember(baseUrl, provider) {
@@ -147,12 +169,26 @@ fun CommitAccountDialog(
                 Spacer(modifier = Modifier.height(14.dp))
 
                 // Source Link / Pastebin Field
-                Text(
-                    text = "Source Link / Pastebin URL (Optional)",
-                    color = AppTextPrimary,
-                    style = MaterialTheme.typography.labelMedium,
-                    fontWeight = FontWeight.SemiBold
-                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Source Link / Payload URL",
+                        color = AppTextPrimary,
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    if (sourceLinkInput.isNotEmpty()) {
+                        Text(
+                            text = "Auto-Filled",
+                            color = Color(0xFF34D399),
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
                 Spacer(modifier = Modifier.height(4.dp))
                 OutlinedTextField(
                     value = sourceLinkInput,
@@ -160,6 +196,22 @@ fun CommitAccountDialog(
                     placeholder = { Text("e.g. https://pastebin.com/raw/... or https://paste.sh/...", color = AppTextMuted) },
                     leadingIcon = {
                         Icon(Icons.Default.Link, contentDescription = "Source", tint = AppPrimary, modifier = Modifier.size(18.dp))
+                    },
+                    trailingIcon = {
+                        IconButton(
+                            onClick = {
+                                val clip = ClipboardHelper.getSafeClipboardText(context, clipboardManager)
+                                if (!clip.isNullOrBlank()) {
+                                    sourceLinkInput = clip.trim()
+                                    ToastManager.info("Pasted Source Link from clipboard")
+                                } else {
+                                    ToastManager.warning("Clipboard is empty")
+                                }
+                            },
+                            modifier = Modifier.size(24.dp)
+                        ) {
+                            Icon(Icons.Default.ContentPaste, contentDescription = "Paste", tint = AppPrimary, modifier = Modifier.size(16.dp))
+                        }
                     },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
@@ -177,19 +229,49 @@ fun CommitAccountDialog(
                 Spacer(modifier = Modifier.height(10.dp))
 
                 // Origin / Forum Thread Link Field
-                Text(
-                    text = "Origin / Forum Thread Link (Optional)",
-                    color = AppTextPrimary,
-                    style = MaterialTheme.typography.labelMedium,
-                    fontWeight = FontWeight.SemiBold
-                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Origin / Forum Thread Link",
+                        color = AppTextPrimary,
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    if (originLinkInput.isNotEmpty()) {
+                        Text(
+                            text = "Auto-Filled",
+                            color = Color(0xFFF59E0B),
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
                 Spacer(modifier = Modifier.height(4.dp))
                 OutlinedTextField(
                     value = originLinkInput,
                     onValueChange = { originLinkInput = it },
-                    placeholder = { Text("e.g. https://reddit.com/r/IPTV/comments/... or Telegram", color = AppTextMuted) },
+                    placeholder = { Text("e.g. https://reddit.com/r/... or Telegram thread", color = AppTextMuted) },
                     leadingIcon = {
                         Icon(Icons.Default.Share, contentDescription = "Origin", tint = Color(0xFFF59E0B), modifier = Modifier.size(18.dp))
+                    },
+                    trailingIcon = {
+                        IconButton(
+                            onClick = {
+                                val clip = ClipboardHelper.getSafeClipboardText(context, clipboardManager)
+                                if (!clip.isNullOrBlank()) {
+                                    originLinkInput = clip.trim()
+                                    ToastManager.info("Pasted Origin Link from clipboard")
+                                } else {
+                                    ToastManager.warning("Clipboard is empty")
+                                }
+                            },
+                            modifier = Modifier.size(24.dp)
+                        ) {
+                            Icon(Icons.Default.ContentPaste, contentDescription = "Paste", tint = Color(0xFFF59E0B), modifier = Modifier.size(16.dp))
+                        }
                     },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),

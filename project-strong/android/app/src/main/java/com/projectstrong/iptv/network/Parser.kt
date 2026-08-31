@@ -1,5 +1,6 @@
 package com.projectstrong.iptv.network
 
+import com.projectstrong.iptv.data.DataStore
 import java.util.regex.Pattern
 
 data class ParsedCredential(
@@ -68,22 +69,42 @@ object Parser {
 
             // Auto-discover Origin Link (Reddit/Forum/Social) if not explicitly set
             val originUrlPattern = Pattern.compile(
-                "https?://(?:www\\.|old\\.)?(?:reddit\\.com/r/[^\\s\"'<>]+|redd\\.it/[^\\s\"'<>]+|t\\.me/[^\\s\"'<>]+|discord\\.gg/[^\\s\"'<>]+)",
+                "https?://(?:www\\.|old\\.|new\\.|np\\.)?(?:reddit\\.com/(?:r/[^\\s\"'<>]+|user/[^\\s\"'<>]+|comments/[^\\s\"'<>]+)|redd\\.it/[^\\s\"'<>]+|t\\.me/[^\\s\"'<>]+|telegram\\.me/[^\\s\"'<>]+|discord\\.gg/[^\\s\"'<>]+)",
                 Pattern.CASE_INSENSITIVE
             )
-            val discoveredOrigin = if (originLink.isNotBlank()) originLink else {
+            val effectiveOrigin = if (originLink.isNotBlank()) {
+                originLink
+            } else if (DataStore.scannerOriginLink.isNotBlank()) {
+                DataStore.scannerOriginLink
+            } else {
                 val m = originUrlPattern.matcher(textBlock)
-                if (m.find()) m.group(0) ?: "" else ""
+                if (m.find()) {
+                    val found = m.group(0) ?: ""
+                    if (found.isNotBlank() && DataStore.scannerOriginLink.isBlank()) {
+                        DataStore.scannerOriginLink = found
+                    }
+                    found
+                } else ""
             }
 
-            // Auto-discover Source Link (Pastebin / Rentry / Paste.sh) if not explicitly set
+            // Auto-discover Source Link (Pastebin / Rentry / Paste.sh / etc) if not explicitly set
             val pastebinUrlPattern = Pattern.compile(
-                "https?://(?:www\\.)?(?:pastebin\\.com/(?:raw/)?[a-zA-Z0-9]+|paste\\.sh/[a-zA-Z0-9#]+|rentry\\.(?:co|org)/[a-zA-Z0-9]+|pastetext\\.net/[a-zA-Z0-9]+|controlc\\.com/[a-zA-Z0-9]+)",
+                "https?://(?:www\\.)?(?:pastebin\\.com/(?:raw/)?[a-zA-Z0-9]+|paste\\.sh/[a-zA-Z0-9#]+|rentry\\.(?:co|org)/(?:raw/)?[a-zA-Z0-9]+|pastetext\\.net/[a-zA-Z0-9]+|controlc\\.com/[a-zA-Z0-9]+|dpaste\\.(?:org|com)/[a-zA-Z0-9]+(?:\\.txt)?|paste\\.ee/(?:p|r)/[a-zA-Z0-9]+|gist\\.github\\.com/[^\\s\"'<>]+)",
                 Pattern.CASE_INSENSITIVE
             )
-            val discoveredSource = if (sourceLink.isNotBlank() && sourceLink != "Direct Ingestion") sourceLink else {
+            val effectiveSource = if (sourceLink.isNotBlank() && sourceLink != "Direct Ingestion") {
+                sourceLink
+            } else if (DataStore.scannerSourceLink.isNotBlank() && DataStore.scannerSourceLink != "Direct Ingestion") {
+                DataStore.scannerSourceLink
+            } else {
                 val m = pastebinUrlPattern.matcher(textBlock)
-                if (m.find()) m.group(0) ?: "Direct Ingestion" else "Direct Ingestion"
+                if (m.find()) {
+                    val found = m.group(0) ?: "Direct Ingestion"
+                    if (found != "Direct Ingestion" && (DataStore.scannerSourceLink.isBlank() || DataStore.scannerSourceLink == "Direct Ingestion")) {
+                        DataStore.scannerSourceLink = found
+                    }
+                    found
+                } else "Direct Ingestion"
             }
             
             // 1. Standard Xtream API patterns
@@ -95,7 +116,7 @@ object Parser {
                     val user = matcherXtream.group(2) ?: ""
                     val pass = matcherXtream.group(3) ?: ""
                     if (baseUrl.isNotEmpty() && !isBlacklistedHost(baseUrl) && user.isNotEmpty() && !extracted.any { it.baseUrl == baseUrl && it.user == user }) {
-                        extracted.add(ParsedCredential(baseUrl, user, pass, "", "Xtream", sourceLink = discoveredSource, originLink = discoveredOrigin))
+                        extracted.add(ParsedCredential(baseUrl, user, pass, "", "Xtream", sourceLink = effectiveSource, originLink = effectiveOrigin))
                     }
                 }
             } catch (e: Throwable) {}
@@ -175,8 +196,8 @@ object Parser {
                                     activeConn = act,
                                     maxConn = max,
                                     expires = exp,
-                                    sourceLink = discoveredSource,
-                                    originLink = discoveredOrigin
+                                    sourceLink = effectiveSource,
+                                    originLink = effectiveOrigin
                                 )
                             )
                             continue
@@ -203,7 +224,7 @@ object Parser {
                         }
 
                         if (!extracted.any { it.baseUrl == baseUrl && it.user == user }) {
-                            extracted.add(ParsedCredential(baseUrl, user, pass, "", "Xtream", sourceLink = discoveredSource, originLink = discoveredOrigin))
+                            extracted.add(ParsedCredential(baseUrl, user, pass, "", "Xtream", sourceLink = effectiveSource, originLink = effectiveOrigin))
                             continue
                         }
                     }
@@ -262,7 +283,7 @@ object Parser {
                     
                     if (currentUrl != null && currentMac != null && !isBlacklistedHost(currentUrl)) {
                         if (!extracted.any { it.type == "Stalker" && it.baseUrl == currentUrl && it.mac == currentMac }) {
-                            extracted.add(ParsedCredential(currentUrl, currentMac, "MAC", currentMac, "Stalker", sourceLink = discoveredSource, originLink = discoveredOrigin))
+                            extracted.add(ParsedCredential(currentUrl, currentMac, "MAC", currentMac, "Stalker", sourceLink = effectiveSource, originLink = effectiveOrigin))
                         }
                         currentMac = null
                     }
@@ -270,7 +291,7 @@ object Parser {
                     if (currentUrl != null && xtUser != null && xtPass != null && !isBlacklistedHost(currentUrl)) {
                         if (!(xtUser.matches(macRegex) && xtPass.matches(macFullRegex))) {
                             if (!extracted.any { it.type == "Xtream" && it.baseUrl == currentUrl && it.user == xtUser }) {
-                                extracted.add(ParsedCredential(currentUrl, xtUser, xtPass, "", "Xtream", sourceLink = discoveredSource, originLink = discoveredOrigin))
+                                extracted.add(ParsedCredential(currentUrl, xtUser, xtPass, "", "Xtream", sourceLink = effectiveSource, originLink = effectiveOrigin))
                             }
                         }
                         xtUser = null

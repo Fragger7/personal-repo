@@ -22,6 +22,15 @@ The native Android app (`/android`) runs directly on mobile/residential IP conne
   * High-density horizontal `LazyColumn` grids with multi-column sorting (Date Added, Status, Type, Sync Status, Host, Provider, Username, Password, MAC, Channels, VODs, Days Left, Expires, Connections, Timezone, Notes).
   * Master-Detail navigation with auto-scrolling to the deep-dive inspector drawer.
   * Discrete login credential copy widgets (Host, Username, Password, M3U URL).
+* **Dual Traceability (Source & Origin) & Forensic Domain Shield**:
+  * Separates payload URLs (`sourceLink`) from discussion/forum URLs (`originLink`).
+  * Hardened blacklist filtering prevents Reddit, Telegram, Discord, and Pastebin URLs from being mistaken for IPTV host endpoints.
+  * Dedicated Traceability cards with 1-tap clipboard paste and automatic regex extraction across input texts.
+* **Base64 De-obfuscation & Deep Payload Extraction**:
+  * Multi-layer recursive Base64 decoder with URL unwrapping and Unicode normalization.
+  * 1-click batch routing to Multi-Payload Scanner with attached source/origin context.
+* **Paste.sh AES-256-CBC Decryption & Remote Playlist Retrieval**:
+  * On-the-fly decryption of encrypted Paste.sh URLs and hashes.
 * **Provider Intelligence & Brand Forensics**:
   * Bundles 2,127+ offline provider forensic profiles for instant brand detection.
   * Delimiter scraper (Telegram, Discord, WhatsApp, banner channels) with 99% consensus verification.

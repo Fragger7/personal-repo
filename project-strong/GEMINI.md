@@ -211,6 +211,7 @@ Remove-Item -Recurse -Force "C:\Development\Apps\Project Strong\personal-repo-te
 | **CI/CD Automated APK Compilation** | `.github/workflows/android-build.yml`, Gradle 8.7, AGP 8.4.0 | 🟢 **Verified & Live** |
 | **Paste.sh Decryption & Large-Buffer Layout Shield** | `IPTVClient.kt`, `ScannerTab.kt`, `app.py`, AES-256-CBC multi-line/single-line payload parser & bounded Compose text field | 🟢 **Verified & Live** |
 | **Dual Traceability (Source & Origin) & Domain Shield** | `CommittedManager.kt`, `CommitDialog.kt`, `XtreamTab.kt`, `StalkerTab.kt`, `CommittedTab.kt`, `app.py` | 🟢 **Verified & Live** |
+| **Base64 De-obfuscation & Auto-Traceability Extraction** | `Base64Tab.kt`, `ScannerTab.kt`, `Parser.kt`, Regex auto-link capture & 1-tap clipboard paste | 🟢 **Verified & Live** |
 
 ---
 
