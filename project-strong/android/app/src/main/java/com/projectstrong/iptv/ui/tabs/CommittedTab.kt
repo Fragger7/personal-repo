@@ -1013,13 +1013,23 @@ fun CommittedDetailScreen(
                 }
 
                 val hasSource = record.safeSourceLink.isNotEmpty() && record.safeSourceLink != "Direct Ingestion"
-                if (record.safeDateAdded.isNotEmpty() || hasSource || record.safeSourceArchiveFile.isNotEmpty()) {
+                val hasOrigin = !record.originLink.isNullOrBlank()
+                if (record.safeDateAdded.isNotEmpty() || hasSource || hasOrigin || record.safeSourceArchiveFile.isNotEmpty()) {
                     Spacer(modifier = Modifier.height(14.dp))
                     if (hasSource) {
                         CopyableCredentialField(
-                            label = "ORIGINAL SOURCE LINK",
+                            label = "ORIGINAL SOURCE LINK (PASTEBIN / PAYLOAD)",
                             value = record.safeSourceLink,
                             toastMessage = "Source link copied to clipboard!"
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
+
+                    if (hasOrigin) {
+                        CopyableCredentialField(
+                            label = "ORIGIN FORUM THREAD (REDDIT / CONTEXT)",
+                            value = record.originLink ?: "",
+                            toastMessage = "Origin thread URL copied to clipboard!"
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                     }

@@ -203,6 +203,7 @@ Remove-Item -Recurse -Force "C:\Development\Apps\Project Strong\personal-repo-te
 | **Permanent Deletion & Git Synchronization** | `CommittedManager.kt`, SHA-aware GitHub API commit/delete pipeline | 🟢 **Verified & Live** |
 | **Sherlock Streams Visual Branding & Mascot** | `ic_launcher_foreground.xml`, `ic_sherlock_brand.xml`, top bar emblem | 🟢 **Verified & Live** |
 | **CI/CD Automated APK Compilation** | `.github/workflows/android-build.yml`, Gradle 8.7, AGP 8.4.0 | 🟢 **Verified & Live** |
+| **Paste.sh Decryption & Large-Buffer Layout Shield** | `IPTVClient.kt`, `ScannerTab.kt`, `app.py`, AES-256-CBC multi-line/single-line payload parser & bounded Compose text field | 🟢 **Verified & Live** |
 
 ---
 

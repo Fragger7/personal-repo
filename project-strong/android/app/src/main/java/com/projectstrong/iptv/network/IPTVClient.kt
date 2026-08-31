@@ -857,9 +857,30 @@ object IPTVClient {
                 return responseBody!!.trim()
             }
 
-            val lines = responseBody!!.lines()
-            val serverKey = if (lines.isNotEmpty()) lines[0].trim() else ""
-            val cipherB64 = if (lines.size > 1) lines.drop(1).joinToString("").trim() else ""
+            val trimmedBody = responseBody!!.trim()
+            val lines = trimmedBody.lines().map { it.trim() }.filter { it.isNotEmpty() }
+            if (lines.isEmpty()) return responseBody!!.trim()
+
+            var serverKey = ""
+            var cipherB64 = ""
+
+            // Check if line 0 is already base64 ciphertext with Salted__ header
+            var line0Bytes: ByteArray? = null
+            try {
+                line0Bytes = Base64.decode(lines[0], Base64.DEFAULT)
+            } catch (e: Exception) {
+                line0Bytes = null
+            }
+
+            if (line0Bytes != null && line0Bytes.size >= 16 && String(line0Bytes.copyOfRange(0, 8), Charsets.US_ASCII) == "Salted__") {
+                serverKey = ""
+                cipherB64 = lines.joinToString("")
+            } else if (lines.size > 1) {
+                serverKey = lines[0]
+                cipherB64 = lines.drop(1).joinToString("")
+            } else {
+                cipherB64 = lines[0]
+            }
 
             if (cipherB64.isBlank()) {
                 return responseBody!!.trim()

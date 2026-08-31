@@ -487,8 +487,10 @@ fun ScannerTab(onNextTab: (() -> Unit)? = null) {
                     ),
                     shape = RoundedCornerShape(10.dp),
                     minLines = 6,
+                    maxLines = 14,
                     modifier = Modifier
                         .fillMaxWidth()
+                        .heightIn(min = 140.dp, max = 260.dp)
                 )
             }
         }

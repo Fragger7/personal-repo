@@ -48,13 +48,19 @@ This document contains the complete system architecture, operational decisions, 
 
 ---
 
-### C. 🏛️ "Forever Source" Snapshot & Git Archive Engine
-* **The Problem**: Public pastebins, pastetext links, and ephemeral scrape dumps are frequently deleted, banned, or wiped by upstream hosts, resulting in lost context for discovered IPTV nodes.
-* **The Solution (Forever Source Engine)**:
-  1. **Snapshot Capture**: Upon scanning any text payload or pastebin URL, the ingestion engine captures a complete raw snapshot of the text block.
-  2. **Git Repository Archive**: When an account is committed, the engine saves the raw text snapshot directly to the GitHub repository under **`project-strong/sources/{filename}.txt`** (e.g. `pastebin_com_xyz123.txt` or `raw_snapshot_hash.txt`) via the GitHub REST API.
-  3. **Schema Association**: The snapshot filename is permanently stored in `committed.json` under `source_archive_file` and mapped into Kotlin's `CommittedRecord.sourceArchiveFile`.
-  4. **In-App Monospace Source Viewer (`SourceArchiveViewerDialog.kt`)**:
+### C. 🏛️ "Forever Source" Snapshot, Dual Traceability & Git Archive Engine
+* **The Problem**: 
+  1. Public pastebins, pastetext links, and ephemeral scrape dumps are frequently deleted or banned, resulting in lost context for discovered IPTV nodes.
+  2. Ingesting threads (e.g. Reddit posts referencing Pastebin links) previously blurred the line between the thread link and the raw playlist link, occasionally mistaking the forum or paste host for an IPTV server host.
+* **The Solution (Forever Source & Dual Traceability)**:
+  1. **Dual Traceability Separation**:
+     * **`source_link` (`sourceLink`)**: The direct raw IPTV payload URL (Pastebin, Paste.sh, Rentry, Dpaste, raw M3U).
+     * **`origin_link` (`originLink`)**: The parent context, forum thread, or discussion URL where the payload was discovered (e.g. `reddit.com/r/...`, `t.me/...`, forum thread).
+     * **Domain Blacklist Filter (`isBlacklistedHost`)**: Hardened regex and domain checks prevent non-IPTV domains (Reddit, Pastebin, Paste.sh, Telegram, Discord, GitHub, etc.) from ever being parsed or assigned as an IPTV `base_url`.
+  2. **Snapshot Capture**: Upon scanning any text payload or pastebin URL, the ingestion engine captures a complete raw snapshot of the text block.
+  3. **Git Repository Archive**: When an account is committed, the engine saves the raw text snapshot directly to the GitHub repository under **`project-strong/sources/{filename}.txt`** (e.g. `pastebin_com_xyz123.txt` or `raw_snapshot_hash.txt`) via the GitHub REST API.
+  4. **Schema Association**: The snapshot filename is permanently stored in `committed.json` under `source_archive_file` (mapped to Kotlin's `CommittedRecord.sourceArchiveFile`) alongside `origin_link` (mapped to `CommittedRecord.originLink`).
+  5. **In-App Monospace Source Viewer (`SourceArchiveViewerDialog.kt`)**:
      * Streams the cached snapshot directly from Git/local storage.
      * Monospace code viewer with line numbers, text filter/search, and word-wrap toggle.
      * **1-Click Actions**:
@@ -203,6 +209,8 @@ Remove-Item -Recurse -Force "C:\Development\Apps\Project Strong\personal-repo-te
 | **Permanent Deletion & Git Synchronization** | `CommittedManager.kt`, SHA-aware GitHub API commit/delete pipeline | 🟢 **Verified & Live** |
 | **Sherlock Streams Visual Branding & Mascot** | `ic_launcher_foreground.xml`, `ic_sherlock_brand.xml`, top bar emblem | 🟢 **Verified & Live** |
 | **CI/CD Automated APK Compilation** | `.github/workflows/android-build.yml`, Gradle 8.7, AGP 8.4.0 | 🟢 **Verified & Live** |
+| **Paste.sh Decryption & Large-Buffer Layout Shield** | `IPTVClient.kt`, `ScannerTab.kt`, `app.py`, AES-256-CBC multi-line/single-line payload parser & bounded Compose text field | 🟢 **Verified & Live** |
+| **Dual Traceability (Source & Origin) & Domain Shield** | `CommittedManager.kt`, `CommitDialog.kt`, `XtreamTab.kt`, `StalkerTab.kt`, `CommittedTab.kt`, `app.py` | 🟢 **Verified & Live** |
 
 ---
 

@@ -14,6 +14,7 @@ object DataStore {
     val scannedNodes = mutableStateListOf<ParsedCredential>()
     var scannerInput by mutableStateOf("")
     var scannerSourceLink by mutableStateOf("Direct Ingestion")
+    var scannerOriginLink by mutableStateOf("")
     var isScanning by mutableStateOf(false)
     var isScanPaused by mutableStateOf(false)
     var scanProgress by mutableStateOf(0f)

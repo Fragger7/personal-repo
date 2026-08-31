@@ -37,12 +37,16 @@ fun CommitAccountDialog(
     serverTimezone: String = "",
     initialNotes: String = "",
     sourceLink: String = "Direct Ingestion",
+    originLink: String = "",
     onDismiss: () -> Unit,
     onCommitted: () -> Unit
 ) {
     var notes by remember { mutableStateOf(initialNotes) }
     var sourceLinkInput by remember {
         mutableStateOf(if (sourceLink.isEmpty() || sourceLink == "Direct Ingestion") "" else sourceLink)
+    }
+    var originLinkInput by remember {
+        mutableStateOf(originLink)
     }
 
     val resolvedProvider = remember(baseUrl, provider) {
@@ -154,7 +158,7 @@ fun CommitAccountDialog(
                 OutlinedTextField(
                     value = sourceLinkInput,
                     onValueChange = { sourceLinkInput = it },
-                    placeholder = { Text("e.g. https://pastebin.com/raw/... or Telegram channel", color = AppTextMuted) },
+                    placeholder = { Text("e.g. https://pastebin.com/raw/... or https://paste.sh/...", color = AppTextMuted) },
                     leadingIcon = {
                         Icon(Icons.Default.Link, contentDescription = "Source", tint = AppPrimary, modifier = Modifier.size(18.dp))
                     },
@@ -171,7 +175,37 @@ fun CommitAccountDialog(
                     shape = RoundedCornerShape(8.dp)
                 )
 
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(10.dp))
+
+                // Origin / Forum Thread Link Field
+                Text(
+                    text = "Origin / Forum Thread Link (Optional)",
+                    color = AppTextPrimary,
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                OutlinedTextField(
+                    value = originLinkInput,
+                    onValueChange = { originLinkInput = it },
+                    placeholder = { Text("e.g. https://reddit.com/r/IPTV/comments/... or Telegram", color = AppTextMuted) },
+                    leadingIcon = {
+                        Icon(Icons.Default.Share, contentDescription = "Origin", tint = Color(0xFFF59E0B), modifier = Modifier.size(18.dp))
+                    },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedTextColor = AppTextPrimary,
+                        unfocusedTextColor = AppTextPrimary,
+                        focusedBorderColor = Color(0xFFF59E0B),
+                        unfocusedBorderColor = AppSurfaceBorder,
+                        focusedContainerColor = AppSurfaceVariant,
+                        unfocusedContainerColor = AppSurfaceVariant
+                    ),
+                    shape = RoundedCornerShape(8.dp)
+                )
+
+                Spacer(modifier = Modifier.height(10.dp))
 
                 // Notes Field
                 Text(
@@ -221,6 +255,7 @@ fun CommitAccountDialog(
                         color = AppSuccess,
                         onClick = {
                             val finalSource = if (sourceLinkInput.trim().isEmpty()) "Direct Ingestion" else sourceLinkInput.trim()
+                            val finalOrigin = originLinkInput.trim().ifEmpty { null }
                             CommittedManager.commit(
                                 type = type,
                                 baseUrl = baseUrl,
@@ -237,7 +272,8 @@ fun CommitAccountDialog(
                                 provider = resolvedProvider,
                                 serverTimezone = serverTimezone,
                                 notes = notes.trim(),
-                                sourceLink = finalSource
+                                sourceLink = finalSource,
+                                originLink = finalOrigin
                             )
                             onCommitted()
                             onDismiss()

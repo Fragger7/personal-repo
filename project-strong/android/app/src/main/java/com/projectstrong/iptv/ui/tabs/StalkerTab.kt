@@ -94,6 +94,7 @@ fun StalkerMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCreden
             provider = node.provider,
             serverTimezone = node.serverTimezone,
             sourceLink = node.sourceLink,
+            originLink = node.originLink,
             onDismiss = { committingNode = null },
             onCommitted = { committingNode = null }
         )
@@ -303,6 +304,7 @@ fun StalkerDetailScreen(node: ParsedCredential, onBack: () -> Unit) {
             provider = node.provider,
             serverTimezone = node.serverTimezone,
             sourceLink = node.sourceLink,
+            originLink = node.originLink,
             onDismiss = { showCommitDialog = false },
             onCommitted = { showCommitDialog = false }
         )
@@ -360,11 +362,19 @@ fun StalkerDetailScreen(node: ParsedCredential, onBack: () -> Unit) {
                     isMonospaceOrPrimary = true
                 )
 
-                if (node.sourceLink.isNotEmpty()) {
+                if (node.sourceLink.isNotEmpty() && node.sourceLink != "Direct Ingestion") {
                     CopyableCredentialField(
-                        label = "Source URL",
+                        label = "Source URL (Pastebin / Payload)",
                         value = node.sourceLink,
                         toastMessage = "Copied Source URL to clipboard!"
+                    )
+                }
+
+                if (node.originLink.isNotEmpty()) {
+                    CopyableCredentialField(
+                        label = "Origin Thread (Reddit / Context)",
+                        value = node.originLink,
+                        toastMessage = "Copied Origin URL to clipboard!"
                     )
                 }
 

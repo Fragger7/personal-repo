@@ -42,6 +42,7 @@ data class CommittedRecord(
     @SerializedName("M3U Link") val m3uLink: String? = "",
     @SerializedName("Source") val source: String? = "",
     @SerializedName("Source Link") val sourceLink: String? = "Direct Ingestion",
+    @SerializedName("Origin Link", alternate = ["origin_link", "Origin", "origin", "Origin URL", "origin_url"]) val originLink: String? = null,
     @SerializedName("source_archive_file") val sourceArchiveFile: String? = null,
     @SerializedName("Notes") val notes: String? = "",
     @SerializedName("Date Selected") val dateAdded: String? = null,
@@ -60,6 +61,8 @@ data class CommittedRecord(
     val safeActiveConn get() = activeConn?.toString() ?: ""
     val safeMaxConn get() = maxConn?.toString() ?: ""
     val safeSourceLink get() = if (sourceLink.isNullOrBlank()) "Direct Ingestion" else sourceLink
+    val safeOriginLink get() = originLink ?: ""
+    val hasOrigin get() = safeOriginLink.isNotBlank() && (safeOriginLink.startsWith("http://") || safeOriginLink.startsWith("https://"))
     val safeSourceArchiveFile get() = sourceArchiveFile ?: ""
     val safeProvider: String
         get() {
@@ -162,12 +165,14 @@ object CommittedManager {
         serverTimezone: String = "",
         notes: String = "",
         sourceLink: String = "Direct Ingestion",
+        originLink: String? = null,
         sourceArchiveFile: String? = null
     ) {
         val nowStr = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())
         val cleanBaseUrl = normalizeUrl(baseUrl)
         val cleanUser = user.trim()
         val cleanMac = mac.trim().uppercase()
+        val cleanOrigin = originLink?.trim()?.ifEmpty { null }
         val m3u = if (type.contains("Xtream", ignoreCase = true) && cleanUser.isNotEmpty()) {
             "$cleanBaseUrl/get.php?username=$cleanUser&password=$pass&type=m3u_plus&output=ts"
         } else ""
@@ -201,6 +206,7 @@ object CommittedManager {
             m3uLink = m3u,
             source = type,
             sourceLink = sourceLink,
+            originLink = cleanOrigin,
             sourceArchiveFile = finalArchiveFile,
             notes = notes,
             dateAdded = nowStr,
@@ -219,6 +225,7 @@ object CommittedManager {
             records[existingIndex] = newRecord.copy(
                 dateAdded = if (existing.safeDateAdded.isNotEmpty()) existing.safeDateAdded else nowStr,
                 notes = if (notes.isNotEmpty()) notes else existing.safeNotes,
+                originLink = cleanOrigin ?: existing.originLink,
                 sourceArchiveFile = finalArchiveFile ?: existing.sourceArchiveFile
             )
             ToastManager.success("Updated existing record in Saved Accounts")

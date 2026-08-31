@@ -234,9 +234,30 @@ def fetch_and_decrypt_paste_sh(url: str) -> str:
         if not client_key:
             return body.strip()
             
-        lines = body.splitlines()
-        server_key = lines[0].strip() if lines else ""
-        cipher_b64 = "".join(lines[1:]).strip() if len(lines) > 1 else ""
+        lines = [l.strip() for l in body.splitlines() if l.strip()]
+        if not lines:
+            return body.strip()
+            
+        server_key = ""
+        cipher_b64 = ""
+        
+        try:
+            line0_bytes = base64.b64decode(lines[0])
+            if len(line0_bytes) >= 16 and line0_bytes.startswith(b"Salted__"):
+                server_key = ""
+                cipher_b64 = "".join(lines)
+            elif len(lines) > 1:
+                server_key = lines[0]
+                cipher_b64 = "".join(lines[1:])
+            else:
+                cipher_b64 = lines[0]
+        except Exception:
+            if len(lines) > 1:
+                server_key = lines[0]
+                cipher_b64 = "".join(lines[1:])
+            else:
+                cipher_b64 = "".join(lines)
+                
         if not cipher_b64:
             return body.strip()
             
@@ -930,6 +951,20 @@ async def check_network_shield(client):
             "status": "failed"
         }
 
+NON_IPTV_DOMAINS = [
+    "reddit.com", "redd.it", "pastebin.com", "paste.sh", "rentry.co", "rentry.org",
+    "dpaste.org", "dpaste.com", "paste.ee", "pastery.net", "hastebin.com", "gist.github.com",
+    "github.com", "raw.githubusercontent.com", "t.me", "telegram.me", "discord.gg", "discord.com",
+    "twitter.com", "x.com", "facebook.com", "google.com", "youtube.com", "youtu.be",
+    "ip-api.com", "api.github.com", "mega.nz", "mediafire.com", "anonfiles.com", "krakenfiles.com"
+]
+
+def is_blacklisted_host(url: str) -> bool:
+    if not url:
+        return True
+    u_lower = url.lower()
+    return any(d in u_lower for d in NON_IPTV_DOMAINS)
+
 def parse_credentials(text_block):
     """Uses regex to isolate Host, Port, Username, and Password for Xtream and Stalker from messy strings."""
     logger.info("Scanning ingested block for Xtream Codes and Stalker Portal layouts...")
@@ -938,7 +973,7 @@ def parse_credentials(text_block):
     # 1. Standard Xtream API patterns
     pattern_xtream = r'(https?://[^/:]+(?::\d+)?)/(?:player_api|get)\.php\?username=([^&\s]+)&password=([^&\s]+)'
     for match in re.findall(pattern_xtream, text_block):
-        if not any(a["base_url"] == match[0] and a["username"] == match[1] for a in extracted):
+        if not is_blacklisted_host(match[0]) and not any(a["base_url"] == match[0] and a["username"] == match[1] for a in extracted):
             extracted.append({"type": "Xtream", "base_url": match[0], "username": match[1], "password": match[2]})
 
     # 2. Line-by-line Tabular & Formatted Combos
@@ -953,6 +988,8 @@ def parse_credentials(text_block):
             b = m_tab.group(1)
             if not b.startswith("http"):
                 b = "http://" + b
+            if is_blacklisted_host(b):
+                continue
             u = m_tab.group(2)
             p = m_tab.group(3)
             rest = m_tab.group(4) or ""
@@ -983,6 +1020,8 @@ def parse_credentials(text_block):
             b = m_combo.group(1)
             if not b.startswith("http"):
                 b = "http://" + b
+            if is_blacklisted_host(b):
+                continue
             u = m_combo.group(2)
             p = m_combo.group(3)
             if re.match(r"^[0-9a-fA-F]{2}$", u) and re.match(r"^(?:[0-9a-fA-F]{2}:){4}[0-9a-fA-F]{2}$", p):
@@ -1017,7 +1056,7 @@ def parse_credentials(text_block):
         url_match = re.search(r'(https?://[^/\s]+(?:/[^/\s]*)?)', line)
         if url_match:
             base_match = re.match(r'(https?://[^/:]+(?::\d+)?)', url_match.group(1))
-            if base_match:
+            if base_match and not is_blacklisted_host(base_match.group(1)):
                 current_url = base_match.group(1)
         
         mac_match = re.search(r'([0-9a-fA-F]{2}(?::[0-9a-fA-F]{2}){5})', line, re.IGNORECASE)
