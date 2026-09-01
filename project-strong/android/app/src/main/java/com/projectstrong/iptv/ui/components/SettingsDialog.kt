@@ -524,6 +524,9 @@ fun SettingsDialog(
                                     AppThemeMode.MIDNIGHT_PURPLE -> Pair(Color(0xFFA78BFA), Color(0xFFC084FC))
                                     AppThemeMode.OCEAN_BLUE -> Pair(Color(0xFF38BDF8), Color(0xFF06B6D4))
                                     AppThemeMode.CRIMSON_DARK -> Pair(Color(0xFFEF4444), Color(0xFFF43F5E))
+                                    AppThemeMode.MACOS_LIQUID_GLASS -> Pair(Color(0xFF38BDF8), Color(0xFF818CF8))
+                                    AppThemeMode.ROBINHOOD_NEON -> Pair(Color(0xFF00C805), Color(0xFF10B981))
+                                    AppThemeMode.CINEMATIC_DARK -> Pair(Color(0xFFE50914), Color(0xFFFACC15))
                                     AppThemeMode.SYSTEM_MONET -> Pair(Color(0xFF60A5FA), Color(0xFF34D399))
                                 }
 
