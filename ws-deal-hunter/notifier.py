@@ -98,6 +98,7 @@ class PushoverNotifier:
         priority = 1 if deal.deal_score < 9.5 else 2
 
         # Format Rich Notification Message
+        ai_commentary = f"\n\n🤖 <b>AI Analysis:</b> <i>{deal.summary}</i>" if deal.summary else ""
         message_body = (
             f"<b>💻 {deal.title}</b>\n\n"
             f"• <b>Asking:</b> ${deal.price:.2f} (Est. FMV: ${deal.fair_market_value:.2f})\n"
@@ -109,6 +110,7 @@ class PushoverNotifier:
             f"• <b>Screen:</b> {deal.specs.screen}\n"
             f"• <b>Source:</b> {deal.source.upper()} ({deal.seller})\n\n"
             f"<i>{deal.actionable_recommendation}</i>"
+            + ai_commentary
         )
 
         payload = {
@@ -250,6 +252,7 @@ class TelegramNotifier:
             f"• <b>GPU:</b> {deal.specs.gpu}\n"
             f"• <b>Display:</b> {deal.specs.screen}\n\n"
             f"🎯 <b>Action:</b> {deal.actionable_recommendation}\n"
+            f"🤖 <b>AI Analysis:</b> <i>{deal.summary}</i>\n\n"
             f"📍 <b>Source:</b> {deal.source.upper()} ({deal.seller})\n\n"
             + ai_line
             + f"👉 <a href=\"{deal.url}\"><b>[BUY NOW ON {deal.source.upper()} ↗]</b></a>\n"
