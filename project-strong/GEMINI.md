@@ -116,13 +116,9 @@ This document contains the complete system architecture, operational decisions, 
 
 ## 🎨 3. World-Class UI/UX Design Standards
 
-* **`Sherlock` Global UI Engine (`SherlockComponents.kt`)**: Bypasses standard flat Material 3 components in favor of a dynamic, theme-aware wrapper system.
-  * **OS-Level Glassmorphism (`SherlockCard`)**: On Android 12+, applies actual GPU-accelerated `RenderEffect.createBlurEffect(40f, 40f)` to distort and frost UI layers sitting behind macOS Liquid Glass cards.
-  * **Physical Interactions (`SherlockButton`)**: Intercepts standard Google ripples, replacing them with a 400Hz physical `scale(0.95f)` spring-bounce animation for Cinematic and macOS themes.
-  * **Adaptive Progress (`SherlockProgress`)**: Cinematic Dark loaders emit aggressive glowing drop-shadows, while Robinhood Neon uses sharp, segmented square stroke caps.
-* **Global Typography Override**: Centralized engine in `Theme.kt` dynamically swaps entire typefaces based on the theme (e.g., forcing `FontFamily.Monospace` globally for Robinhood Neon to mimic a precision stock ticker).
-* **Top-Down Dynamic Notifications (`ToastManager.kt`)**: Custom toast host sliding gracefully from the top of the screen. Fully theme-aware (frosted blur for macOS, pitch black with sharp 2px neon borders for Robinhood).
+* **Typography Scale**: Pairing geometric display headers (`titleMedium`, `labelLarge`) with refined body fonts (`bodyMedium`, `bodySmall` in `#A0A0B0`). No amateur oversized fonts.
 * **Card & Elevation Hierarchy**: Flat borders with mathematically calculated inner corner radii (`Inner Radius = Outer Radius - Padding`).
+* **Visual Polish & Feedback**: Material 3 non-intrusive auto-dismissing toast notifications via `ToastManager.kt`, skeleton loaders during fetch, and pulsing status badges for active connections.
 
 ---
 
@@ -208,7 +204,7 @@ Remove-Item -Recurse -Force "C:\Development\Apps\Project Strong\personal-repo-te
 | **16-Column Enterprise Data Grids** | `CommittedTab.kt`, `XtreamTab.kt`, `StalkerTab.kt`, `JsonReader` streaming | 🟢 **Verified & Live** |
 | **Hierarchical Collapsible Channel Explorer** | `FullScreenCatalogExplorer.kt`, Category group badges, search filter | 🟢 **Verified & Live** |
 | **Hardware VPN & Geolocation Shield** | `NetworkMonitor.kt`, `ConnectionStateDialog.kt`, `ip-api.com` caching | 🟢 **Verified & Live** |
-| **Multi-Palette Dynamic Theme Engine & Sherlock UI** | `SherlockComponents.kt`, `Theme.kt`, `ToastManager.kt`, OS-level RenderEffect Blurs | 🟢 **Verified & Live (v1.0.0-stable)** |
+| **Multi-Palette Dynamic Theme Switcher** | `Theme.kt`, `SettingsTab.kt`, `SharedPreferences` persistence | 🟢 **Verified & Live** |
 | **Source Link Traceability** | Discovered URL cards, discrete copy, source link columns across all tabs | 🟢 **Verified & Live** |
 | **Permanent Deletion & Git Synchronization** | `CommittedManager.kt`, SHA-aware GitHub API commit/delete pipeline | 🟢 **Verified & Live** |
 | **Sherlock Streams Visual Branding & Mascot** | `ic_launcher_foreground.xml`, `ic_sherlock_brand.xml`, top bar emblem | 🟢 **Verified & Live** |
@@ -227,28 +223,3 @@ Remove-Item -Recurse -Force "C:\Development\Apps\Project Strong\personal-repo-te
    * Scheduled workflow (`.github/workflows/scrape-provider-intel.yml`) to scrape new upstream provider delimiters and sync `provider_intelligence.json`.
 3. **Advanced Stream Output Formats & TLS Evasion**:
    * Add options for custom TLS cipher suites and alternative stream format switching (`/live/{u}/{p}/{id}.ts` vs `.m3u8` vs `/play/`).
-
-
-## ☠️ 9. Buried Skeletons & Deep Engineering Constraints (AI Context)
-
-**CRITICAL**: Any AI agent or developer modifying this codebase MUST read this section to prevent introducing regressions into highly tuned, fragile subsystems.
-
-*   **The OOM (Out Of Memory) JSON Trap (`IPTVClient.kt`)**: 
-    *   *The Skeleton*: Calling `get_live_streams` or `get_vod_streams` on an Xtream API can return a 50MB - 100MB+ JSON array containing 100,000+ media objects. Using standard `Gson`, `Moshi`, or `kotlinx.serialization` to parse this into memory will instantly crash Android devices with an OOM (Out of Memory) exception.
-    *   *The Fix*: We use Android's low-level `android.util.JsonReader` to stream-parse the response token-by-token directly from the OkHttp network socket buffer, maintaining a near-zero memory footprint. Do **NOT** attempt to refactor the catalog explorer back to standard object mapping.
-*   **Garbage Collection (GC) Thrashing (`Parser.kt`)**:
-    *   *The Skeleton*: Scanning a 10,000-line paste dump by dynamically instantiating Regex objects inside loops causes massive JVM GC thrashing, completely freezing the Android UI thread for 10+ seconds.
-    *   *The Fix*: All 15+ complex regex patterns (Xtream, MAC, Tabs, URLs, Timezones) are pre-compiled as top-level singletons in `Parser.kt`. Do not declare new Regex objects inside the `parse()` loop.
-*   **Anti-Bot Network Evasion**: 
-    *   *The Skeleton*: Many providers actively block default HTTP clients (like OkHttp default UA or Python's `requests`).
-    *   *The Fix*: `IPTVClient.kt` hardcodes `User-Agent: IPTVSmartersPro/1.1.1` for Xtream endpoints. Stalker portal endpoints are even stricter—they require injecting the MAC address into cookies (`mac=00:1A:79...`) and using older Set-Top Box user-agents (e.g., MAG250/200). 
-*   **Thread-Safe Git Syncing (`CommittedManager.kt`)**: 
-    *   *The Skeleton*: The database (`committed.json`) is essentially a flat JSON file. Rapid consecutive UI clicks (like deleting 5 records fast) used to cause race conditions, resulting in empty/corrupted JSON file writes.
-    *   *The Fix*: The file is now backed by a Kotlin `Mutex` lock during local `save()` operations on `Dispatchers.IO`. Cloud pushes (`pushToCloud()`) happen asynchronously and gracefully fail without interrupting the UI. Never write to `committed.json` outside of this Mutex.
-*   **The Custom UI Engine (`SherlockComponents.kt`)**:
-    *   *The Skeleton*: Material 3 default components (`Button`, `Card`, `LinearProgressIndicator`) cannot support the dynamic macOS frosted glass or Robinhood sharp-neon requirements out of the box.
-    *   *The Fix*: We completely bypass them. If you add a new UI element, you **MUST** use `SherlockButton`, `SherlockTextField`, `SherlockCard`, or `SherlockLinearProgressIndicator`. Using standard Compose components will instantly break the application's unified design system.
-*   **Mono-Repo Git Constraint (`git_push.cjs`)**:
-    *   *The Skeleton*: The target GitHub repository contains other sister projects at its root. 
-    *   *The Fix*: You must only push using the `node git_push.cjs` script. It strictly isolates modifications to the `project-strong/` sub-directory. Running standard `git push` manually from the AI Studio root will overwrite or delete the user's other repository contents.
-

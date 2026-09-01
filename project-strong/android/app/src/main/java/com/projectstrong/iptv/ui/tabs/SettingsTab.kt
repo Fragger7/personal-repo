@@ -1,5 +1,4 @@
 package com.projectstrong.iptv.ui.tabs
-import com.projectstrong.iptv.ui.components.core.*
 
 import android.content.Context
 import android.os.Build
@@ -56,7 +55,7 @@ fun SettingsTab() {
                         color = AppTextSecondary,
                         style = MaterialTheme.typography.bodySmall
                     )
-                    SherlockTextField(
+                    OutlinedTextField(
                         value = tokenInput,
                         onValueChange = { tokenInput = it },
                         placeholder = { Text("ghp_xxxxxxxxxxxx", color = AppTextMuted) },
@@ -72,7 +71,7 @@ fun SettingsTab() {
                 }
             },
             confirmButton = {
-                SherlockButton(
+                Button(
                     onClick = {
                         val cleanToken = tokenInput.trim()
                         if (cleanToken.isEmpty()) {
@@ -98,7 +97,7 @@ fun SettingsTab() {
                     colors = ButtonDefaults.buttonColors(containerColor = AppPrimary)
                 ) {
                     if (isVerifyingToken) {
-                        SherlockCircularProgressIndicator(modifier = Modifier.size(16.dp), color = Color.White, strokeWidth = 2.dp)
+                        CircularProgressIndicator(modifier = Modifier.size(16.dp), color = Color.White, strokeWidth = 2.dp)
                         Spacer(modifier = Modifier.width(6.dp))
                         Text("Verifying...")
                     } else {
@@ -133,7 +132,7 @@ fun SettingsTab() {
                 )
             },
             confirmButton = {
-                SherlockButton(
+                Button(
                     onClick = {
                         val purged = SettingsManager.purgeVolatileCache()
                         ToastManager.info("Purged $purged cached discovery nodes.")
@@ -305,7 +304,7 @@ fun SettingsTab() {
                         )
                     }
 
-                    SherlockButton(
+                    Button(
                         onClick = {
                             tokenInput = DataStore.githubToken
                             showTokenDialog = true
@@ -694,7 +693,7 @@ fun SettingsTab() {
                         )
                     }
 
-                    SherlockButton(
+                    Button(
                         onClick = { showPurgeConfirmDialog = true },
                         enabled = DataStore.scannedNodes.isNotEmpty(),
                         colors = ButtonDefaults.buttonColors(containerColor = AppWarningContainer),

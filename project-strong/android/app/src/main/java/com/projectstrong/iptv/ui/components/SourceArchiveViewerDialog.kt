@@ -1,5 +1,4 @@
 package com.projectstrong.iptv.ui.components
-import com.projectstrong.iptv.ui.components.core.*
 
 import android.content.Context
 import android.content.Intent
@@ -245,7 +244,7 @@ fun SourceArchiveViewerDialog(
                 Spacer(modifier = Modifier.height(8.dp))
 
                 // Search Box
-                SherlockTextField(
+                OutlinedTextField(
                     value = searchQuery,
                     onValueChange = { searchQuery = it },
                     placeholder = { Text("Filter snapshot text...", color = AppTextSecondary.copy(alpha = 0.6f), style = MaterialTheme.typography.bodySmall) },
@@ -288,7 +287,7 @@ fun SourceArchiveViewerDialog(
                                     horizontalAlignment = Alignment.CenterHorizontally,
                                     verticalArrangement = Arrangement.spacedBy(10.dp)
                                 ) {
-                                    SherlockCircularProgressIndicator(color = AppPrimary, modifier = Modifier.size(32.dp), strokeWidth = 3.dp)
+                                    CircularProgressIndicator(color = AppPrimary, modifier = Modifier.size(32.dp), strokeWidth = 3.dp)
                                     Text("Loading snapshot archive...", color = AppTextSecondary, style = MaterialTheme.typography.bodySmall)
                                 }
                             }
@@ -302,7 +301,7 @@ fun SourceArchiveViewerDialog(
                                     Icon(Icons.Default.WarningAmber, contentDescription = null, tint = AppWarning, modifier = Modifier.size(36.dp))
                                     Text(errorMessage ?: "", color = AppTextSecondary, style = MaterialTheme.typography.bodySmall)
                                     if (sourceLink.startsWith("http://", ignoreCase = true) || sourceLink.startsWith("https://", ignoreCase = true)) {
-                                        SherlockButton(
+                                        Button(
                                             onClick = {
                                                 coroutineScope.launch {
                                                     isLoading = true
@@ -406,7 +405,7 @@ fun SourceArchiveViewerDialog(
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     if (contentText.isNotBlank()) {
-                        SherlockButton(
+                        Button(
                             onClick = {
                                 DataStore.scannerInput = contentText
                                 DataStore.scannerSourceLink = sourceLink
@@ -427,7 +426,7 @@ fun SourceArchiveViewerDialog(
                         Spacer(modifier = Modifier.width(1.dp))
                     }
 
-                    SherlockButton(
+                    Button(
                         onClick = onDismiss,
                         colors = ButtonDefaults.buttonColors(containerColor = AppSurfaceVariant),
                         border = androidx.compose.foundation.BorderStroke(1.dp, AppSurfaceBorder),

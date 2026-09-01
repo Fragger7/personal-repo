@@ -1,5 +1,4 @@
 package com.projectstrong.iptv.ui.components
-import com.projectstrong.iptv.ui.components.core.*
 
 import android.app.Activity
 import android.content.Context
@@ -523,7 +522,7 @@ fun StreamPreviewDialog(
                                 horizontalAlignment = Alignment.CenterHorizontally,
                                 verticalArrangement = Arrangement.spacedBy(12.dp)
                             ) {
-                                SherlockCircularProgressIndicator(
+                                CircularProgressIndicator(
                                     color = Color(0xFF38BDF8),
                                     strokeWidth = 3.dp,
                                     modifier = Modifier.size(36.dp)
@@ -571,7 +570,7 @@ fun StreamPreviewDialog(
                                     textAlign = androidx.compose.ui.text.style.TextAlign.Center
                                 )
                                 Spacer(modifier = Modifier.height(4.dp))
-                                SherlockButton(
+                                Button(
                                     onClick = {
                                         errorMessage = null
                                         playStatus = StreamPlayStatus.CONNECTING

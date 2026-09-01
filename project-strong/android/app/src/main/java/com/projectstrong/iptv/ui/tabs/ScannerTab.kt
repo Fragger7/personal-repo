@@ -1,5 +1,4 @@
 package com.projectstrong.iptv.ui.tabs
-import com.projectstrong.iptv.ui.components.core.*
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -468,7 +467,7 @@ fun ScannerTab(onNextTab: (() -> Unit)? = null) {
 
                 Spacer(modifier = Modifier.height(10.dp))
 
-                SherlockTextField(
+                OutlinedTextField(
                     value = localInput,
                     onValueChange = { localInput = it },
                     placeholder = {
@@ -544,7 +543,7 @@ fun ScannerTab(onNextTab: (() -> Unit)? = null) {
                 )
 
                 // Source Link Field
-                SherlockTextField(
+                OutlinedTextField(
                     value = if (DataStore.scannerSourceLink == "Direct Ingestion") "" else DataStore.scannerSourceLink,
                     onValueChange = { DataStore.scannerSourceLink = it },
                     placeholder = { Text("Source Link (e.g. Pastebin / Paste.sh URL)", color = AppTextMuted, style = MaterialTheme.typography.bodySmall) },
@@ -581,7 +580,7 @@ fun ScannerTab(onNextTab: (() -> Unit)? = null) {
                 )
 
                 // Origin Link Field
-                SherlockTextField(
+                OutlinedTextField(
                     value = DataStore.scannerOriginLink,
                     onValueChange = { DataStore.scannerOriginLink = it },
                     placeholder = { Text("Origin Thread (e.g. Reddit discussion URL)", color = AppTextMuted, style = MaterialTheme.typography.bodySmall) },
@@ -688,7 +687,7 @@ fun ScannerTab(onNextTab: (() -> Unit)? = null) {
                     )
                     if (DataStore.isScanning) {
                         Spacer(modifier = Modifier.height(8.dp))
-                        SherlockLinearProgressIndicator(
+                        LinearProgressIndicator(
                             progress = { DataStore.scanProgress },
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -729,7 +728,7 @@ fun ScannerTab(onNextTab: (() -> Unit)? = null) {
                             style = MaterialTheme.typography.labelSmall
                         )
                     }
-                    SherlockButton(
+                    Button(
                         onClick = {
                             DataStore.isScanning = false
                             DataStore.isScanPaused = false

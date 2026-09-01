@@ -1,5 +1,4 @@
 package com.projectstrong.iptv.ui.tabs
-import com.projectstrong.iptv.ui.components.core.*
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.*
@@ -368,7 +367,7 @@ fun XtreamMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCredent
                     )
                     if (DataStore.isQueryingCatalogs) {
                         Spacer(modifier = Modifier.height(6.dp))
-                        SherlockLinearProgressIndicator(
+                        LinearProgressIndicator(
                             progress = { DataStore.catalogQueryProgress },
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -689,7 +688,7 @@ fun XtreamDetailScreen(node: ParsedCredential, onBack: () -> Unit) {
 
         // Full Screen Catalog Button & Commit Action
         Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            SherlockButton(
+            Button(
                 onClick = { showCatalogExplorer = true },
                 colors = ButtonDefaults.buttonColors(containerColor = AppPrimary),
                 shape = RoundedCornerShape(12.dp),

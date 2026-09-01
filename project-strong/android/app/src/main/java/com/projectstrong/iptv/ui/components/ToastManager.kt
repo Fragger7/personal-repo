@@ -22,17 +22,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.asComposeRenderEffect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-
-import com.projectstrong.iptv.data.SettingsManager
-import com.projectstrong.iptv.data.AppThemeMode
-import android.os.Build
-import androidx.compose.ui.graphics.graphicsLayer
-
 import kotlinx.coroutines.delay
 
 enum class ToastType {
@@ -74,11 +67,9 @@ object ToastManager {
     fun error(message: String) = show(message, ToastType.ERROR)
 }
 
-
 @Composable
 fun ToastHost(modifier: Modifier = Modifier) {
     val currentToast = ToastManager.currentToastState
-    val theme = SettingsManager.currentTheme
 
     LaunchedEffect(currentToast) {
         if (currentToast != null) {
@@ -91,56 +82,44 @@ fun ToastHost(modifier: Modifier = Modifier) {
 
     AnimatedVisibility(
         visible = currentToast != null,
-        enter = fadeIn() + slideInVertically(initialOffsetY = { -60 }) + scaleIn(initialScale = 0.92f),
-        exit = fadeOut() + slideOutVertically(targetOffsetY = { -60 }) + scaleOut(targetScale = 0.92f),
-        modifier = modifier.padding(top = 16.dp)
+        enter = fadeIn() + slideInVertically(initialOffsetY = { 60 }) + scaleIn(initialScale = 0.92f),
+        exit = fadeOut() + slideOutVertically(targetOffsetY = { 60 }) + scaleOut(targetScale = 0.92f),
+        modifier = modifier
     ) {
         currentToast?.let { toast ->
             val (bgColor, borderColor, iconTint, icon) = when (toast.type) {
                 ToastType.SUCCESS -> Quadruple(
-                    if (theme == AppThemeMode.ROBINHOOD_NEON) Color.Black else Color(0xFF064E3B).copy(alpha = 0.95f),
-                    if (theme == AppThemeMode.ROBINHOOD_NEON) Color(0xFF00C805) else Color(0xFF34D399).copy(alpha = 0.6f),
-                    if (theme == AppThemeMode.ROBINHOOD_NEON) Color(0xFF00C805) else Color(0xFF34D399),
+                    Color(0xFF064E3B).copy(alpha = 0.95f),
+                    Color(0xFF34D399).copy(alpha = 0.6f),
+                    Color(0xFF34D399),
                     Icons.Default.CheckCircle
                 )
                 ToastType.WARNING -> Quadruple(
-                    if (theme == AppThemeMode.ROBINHOOD_NEON) Color.Black else Color(0xFF78350F).copy(alpha = 0.95f),
-                    if (theme == AppThemeMode.ROBINHOOD_NEON) Color(0xFFFACC15) else Color(0xFFFBBF24).copy(alpha = 0.6f),
-                    if (theme == AppThemeMode.ROBINHOOD_NEON) Color(0xFFFACC15) else Color(0xFFFBBF24),
+                    Color(0xFF78350F).copy(alpha = 0.95f),
+                    Color(0xFFFBBF24).copy(alpha = 0.6f),
+                    Color(0xFFFBBF24),
                     Icons.Default.Warning
                 )
                 ToastType.ERROR -> Quadruple(
-                    if (theme == AppThemeMode.ROBINHOOD_NEON) Color.Black else Color(0xFF7F1D1D).copy(alpha = 0.95f),
-                    if (theme == AppThemeMode.ROBINHOOD_NEON) Color(0xFFEF4444) else Color(0xFFF87171).copy(alpha = 0.6f),
-                    if (theme == AppThemeMode.ROBINHOOD_NEON) Color(0xFFEF4444) else Color(0xFFF87171),
+                    Color(0xFF7F1D1D).copy(alpha = 0.95f),
+                    Color(0xFFF87171).copy(alpha = 0.6f),
+                    Color(0xFFF87171),
                     Icons.Default.ErrorOutline
                 )
                 ToastType.INFO -> Quadruple(
-                    if (theme == AppThemeMode.ROBINHOOD_NEON) Color.Black else Color(0xFF0F172A).copy(alpha = 0.95f),
-                    if (theme == AppThemeMode.ROBINHOOD_NEON) Color(0xFF06B6D4) else Color(0xFF38BDF8).copy(alpha = 0.6f),
-                    if (theme == AppThemeMode.ROBINHOOD_NEON) Color(0xFF06B6D4) else Color(0xFF38BDF8),
+                    Color(0xFF0F172A).copy(alpha = 0.95f),
+                    Color(0xFF38BDF8).copy(alpha = 0.6f),
+                    Color(0xFF38BDF8),
                     Icons.Default.Info
                 )
             }
-            
-            val blurModifier = if (theme == AppThemeMode.MACOS_LIQUID_GLASS && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                Modifier.graphicsLayer {
-                    renderEffect = android.graphics.RenderEffect.createBlurEffect(
-                        30f, 30f, android.graphics.Shader.TileMode.CLAMP
-                    ).asComposeRenderEffect()
-                    alpha = 0.9f
-                }
-            } else Modifier
-            
-            val shape = if (theme == AppThemeMode.ROBINHOOD_NEON || theme == AppThemeMode.CINEMATIC_DARK) RoundedCornerShape(4.dp) else RoundedCornerShape(16.dp)
 
             Box(
                 modifier = Modifier
-                    .shadow(if (theme == AppThemeMode.CINEMATIC_DARK) 16.dp else 8.dp, shape)
-                    .clip(shape)
-                    .then(blurModifier)
-                    .background(if (theme == AppThemeMode.MACOS_LIQUID_GLASS) Color(0xFF1E1E24).copy(alpha = 0.7f) else bgColor)
-                    .border(if (theme == AppThemeMode.ROBINHOOD_NEON) 2.dp else 1.dp, borderColor, shape)
+                    .shadow(8.dp, RoundedCornerShape(16.dp))
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(bgColor)
+                    .border(1.dp, borderColor, RoundedCornerShape(16.dp))
                     .padding(horizontal = 18.dp, vertical = 12.dp)
             ) {
                 Row(
@@ -158,8 +137,7 @@ fun ToastHost(modifier: Modifier = Modifier) {
                         color = Color.White,
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.SemiBold,
-                        fontSize = 13.5.sp,
-                        fontFamily = if (theme == AppThemeMode.ROBINHOOD_NEON) androidx.compose.ui.text.font.FontFamily.Monospace else androidx.compose.ui.text.font.FontFamily.Default
+                        fontSize = 13.5.sp
                     )
                 }
             }

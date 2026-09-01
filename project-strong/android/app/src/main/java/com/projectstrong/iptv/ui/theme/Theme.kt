@@ -9,13 +9,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-
-import androidx.compose.material3.Typography
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.sp
-
 import com.projectstrong.iptv.data.AppThemeMode
 import com.projectstrong.iptv.data.SettingsManager
 
@@ -166,7 +159,6 @@ private val CinematicDarkColorScheme = darkColorScheme(
     error = AppError
 )
 
-
 @Composable
 fun AppTheme(
     themeMode: AppThemeMode = SettingsManager.currentTheme,
@@ -214,29 +206,9 @@ fun AppTheme(
         )
     }
 
-    val defaultTypography = androidx.compose.material3.Typography()
-    
-    val typography = when (themeMode) {
-        AppThemeMode.ROBINHOOD_NEON -> Typography(
-            bodyLarge = TextStyle(fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Normal, fontSize = 16.sp, lineHeight = 24.sp, letterSpacing = 0.5.sp),
-            bodyMedium = TextStyle(fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Normal, fontSize = 14.sp, lineHeight = 20.sp, letterSpacing = 0.25.sp),
-            bodySmall = TextStyle(fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Normal, fontSize = 12.sp, lineHeight = 16.sp, letterSpacing = 0.4.sp),
-            labelLarge = TextStyle(fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Medium, fontSize = 14.sp, lineHeight = 20.sp, letterSpacing = 0.1.sp),
-            titleLarge = TextStyle(fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Bold, fontSize = 22.sp, lineHeight = 28.sp, letterSpacing = 0.sp),
-            titleMedium = TextStyle(fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Bold, fontSize = 16.sp, lineHeight = 24.sp, letterSpacing = 0.15.sp)
-        )
-        AppThemeMode.CINEMATIC_DARK -> Typography(
-            titleLarge = defaultTypography.titleLarge.copy(fontWeight = FontWeight.Black, letterSpacing = 1.sp),
-            titleMedium = defaultTypography.titleMedium.copy(fontWeight = FontWeight.ExtraBold, letterSpacing = 0.5.sp),
-            labelLarge = defaultTypography.labelLarge.copy(fontWeight = FontWeight.Bold, letterSpacing = 0.5.sp),
-        )
-        else -> defaultTypography
-    }
-
     MaterialTheme(
         colorScheme = colorScheme,
         shapes = shapes,
-        typography = typography,
         content = content
     )
 }
@@ -248,3 +220,4 @@ fun GlassTheme(
 ) {
     AppTheme(content = content)
 }
+

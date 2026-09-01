@@ -1,5 +1,4 @@
 package com.projectstrong.iptv.ui.tabs
-import com.projectstrong.iptv.ui.components.core.*
 
 import android.content.Intent
 import android.net.Uri
@@ -386,7 +385,7 @@ fun Base64Tab(onNextTab: () -> Unit = {}) {
 
                 Spacer(modifier = Modifier.height(10.dp))
 
-                SherlockTextField(
+                OutlinedTextField(
                     value = input,
                     onValueChange = { input = it },
                     placeholder = { Text("Paste Base64 encoded payload or messy text with embedded Base64 strings...", color = AppTextMuted) },
@@ -461,7 +460,7 @@ fun Base64Tab(onNextTab: () -> Unit = {}) {
                 )
 
                 // Source Link Field
-                SherlockTextField(
+                OutlinedTextField(
                     value = if (DataStore.scannerSourceLink == "Direct Ingestion") "" else DataStore.scannerSourceLink,
                     onValueChange = { DataStore.scannerSourceLink = it },
                     placeholder = { Text("Source Link (e.g. Pastebin / Paste.sh URL)", color = AppTextMuted, style = MaterialTheme.typography.bodySmall) },
@@ -498,7 +497,7 @@ fun Base64Tab(onNextTab: () -> Unit = {}) {
                 )
 
                 // Origin Link Field
-                SherlockTextField(
+                OutlinedTextField(
                     value = DataStore.scannerOriginLink,
                     onValueChange = { DataStore.scannerOriginLink = it },
                     placeholder = { Text("Origin Thread (e.g. Reddit discussion URL)", color = AppTextMuted, style = MaterialTheme.typography.bodySmall) },
@@ -585,7 +584,7 @@ fun Base64Tab(onNextTab: () -> Unit = {}) {
                         }
                     }
 
-                    SherlockTextField(
+                    OutlinedTextField(
                         value = output,
                         onValueChange = {},
                         readOnly = true,
