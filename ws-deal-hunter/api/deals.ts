@@ -133,7 +133,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Method 1: Fetch live from GitHub if GITHUB_TOKEN is configured
     if (GITHUB_TOKEN) {
       try {
-        const url = `https://api.github.com/repos/${GITHUB_REPO}/contents/deals.json`;
+        const url = `https://api.github.com/repos/${GITHUB_REPO}/contents/ws-deal-hunter/deals.json`;
         const getRes = await fetch(url, {
           headers: {
             Authorization: `Bearer ${GITHUB_TOKEN}`,
@@ -204,7 +204,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // If GITHUB_TOKEN is available, try fetching live deals.json from GitHub
     if (GITHUB_TOKEN) {
       try {
-        const url = `https://api.github.com/repos/${GITHUB_REPO}/contents/deals.json`;
+        const url = `https://api.github.com/repos/${GITHUB_REPO}/contents/ws-deal-hunter/deals.json`;
         const getRes = await fetch(url, {
           headers: {
             Authorization: `Bearer ${GITHUB_TOKEN}`,

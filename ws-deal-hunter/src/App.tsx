@@ -67,10 +67,9 @@ export function App() {
     try {
       const now = Date.now();
       const endpoints = [
+        `https://raw.githubusercontent.com/Fragger7/personal-repo/main/ws-deal-hunter/deals.json?t=${now}`,
         `/api/deals?t=${now}`,
         `/deals.json?t=${now}`,
-        `https://raw.githubusercontent.com/Fragger7/personal-repo/main/deals.json?t=${now}`,
-        `https://raw.githubusercontent.com/Fragger7/personal-repo/main/ws-deal-hunter/deals.json?t=${now}`,
       ];
 
       let fetchedData: DealRecord[] | null = null;

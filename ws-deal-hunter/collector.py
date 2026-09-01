@@ -58,6 +58,7 @@ HARD_EXCLUSION_REGEX = re.compile(
     r"(?i)(for\s*parts|not\s*working|as\s*is\b|untested|repair\s*only|needs\s*repair|needs\s*fix|needs\s*fixing|for\s*repair|read\s*desc\b|read\s*description|broken\s*screen|bad\s*screen|liquid\s*damage|"
     r"cracked\s*(?:screen|display|glass|panel|lcd)|crack\s*(?:on|in)\s*(?:screen|display|glass)|hairline\s*crack|"
     r"screen\s*(?:defect|issue|blemish|burn|line)|lines?\s*(?:on|in)\s*(?:screen|display)|dead\s*pixels?|delaminat\w+|staingate|backlight\s*bleed|"
+    r"battery\s*(?:issue|problem|defect|warning|service|dead|bad|swollen|expanded)|service\s*battery|replace\s*battery|bad\s*battery|no\s*battery|"
     r"water\s*damage|icp\b|mdm\b|icloud\s*lock|activation\s*lock|managed\s*profile|profile\s*lock|bios\s*lock|computrace|"
     r"bad\s*gpu|dead\s*gpu|no\s*nvidia|iris\s*only|iris\s*xe\s*only|intel\s*graphics\s*only|uhd\s*graphics\s*only|touch\s*bar|"
     r"frame\s*separating|frame\s*is\s*separating|hinge\s*separated|broken\s*hinge|loose\s*hinge|cracked\s*palmrest|keyboard\s*imprints|"
@@ -624,15 +625,18 @@ class SwappaCollector:
                 "Referer": "https://swappa.com/laptops",
             }
 
-            for model in self.models:
+            lock = threading.Lock()
+
+            def scrape_swappa_model(model: Dict[str, str]) -> List[RawListing]:
                 slug = model["slug"]
                 model_name = model["name"]
                 url = f"https://swappa.com/listings/{slug}"
+                model_listings: List[RawListing] = []
 
                 try:
-                    res = requests.get(url, impersonate="chrome120", headers=headers, timeout=8.0)
+                    res = requests.get(url, impersonate="chrome120", headers=headers, timeout=5.0)
                     if res.status_code != 200:
-                        continue
+                        return []
 
                     soup = BeautifulSoup(res.text, "html.parser")
                     listing_links = soup.find_all("a", href=lambda h: h and "/listing/view/" in h)
@@ -643,9 +647,10 @@ class SwappaCollector:
                         if not code_m:
                             continue
                         code = code_m.group(1)
-                        if code in seen_codes:
-                            continue
-                        seen_codes.add(code)
+                        with lock:
+                            if code in seen_codes:
+                                continue
+                            seen_codes.add(code)
 
                         # Find the parent card/block with spec metadata
                         card = a.find_parent("div", class_="card") or a.parent.parent.parent.parent
@@ -675,7 +680,6 @@ class SwappaCollector:
                         elif "Fair" in raw_text:
                             condition = "Fair"
 
-                        # Extract RAM / Storage snippet if visible
                         specs_snips = []
                         ram_m = re.search(r"\b(16GB|18GB|24GB|32GB|36GB|48GB|64GB|96GB|128GB)\b", raw_text, re.IGNORECASE)
                         if ram_m:
@@ -691,7 +695,7 @@ class SwappaCollector:
 
                         listing_url = f"https://swappa.com/listing/view/{code}"
 
-                        all_listings.append(
+                        model_listings.append(
                             RawListing(
                                 id=f"swappa_{code}",
                                 source="swappa",
@@ -705,8 +709,15 @@ class SwappaCollector:
                                 created_utc=datetime.now(timezone.utc).isoformat(),
                             )
                         )
+                    return model_listings
                 except Exception as err:
                     print(f"[SwappaCollector] Model scrape error for {slug}: {err}")
+                    return []
+
+            with ThreadPoolExecutor(max_workers=8) as executor:
+                futures = [executor.submit(scrape_swappa_model, m) for m in self.models]
+                for f in as_completed(futures):
+                    all_listings.extend(f.result())
 
             if all_listings:
                 print(f"[SwappaCollector] Successfully fetched {len(all_listings)} live targeted listings directly from Swappa!")
