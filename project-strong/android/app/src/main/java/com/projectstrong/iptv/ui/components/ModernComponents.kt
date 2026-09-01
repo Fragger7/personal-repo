@@ -1,4 +1,5 @@
 package com.projectstrong.iptv.ui.components
+import com.projectstrong.iptv.ui.components.core.*
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -137,7 +138,7 @@ fun PrimaryButton(
     enabled: Boolean = true,
     color: Color = AppPrimary
 ) {
-    Button(
+    SherlockButton(
         onClick = onClick,
         enabled = enabled,
         colors = ButtonDefaults.buttonColors(containerColor = color, disabledContainerColor = color.copy(alpha = 0.4f)),

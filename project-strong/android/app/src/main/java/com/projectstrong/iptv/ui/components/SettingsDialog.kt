@@ -1,4 +1,5 @@
 package com.projectstrong.iptv.ui.components
+import com.projectstrong.iptv.ui.components.core.*
 
 import android.content.Context
 import android.os.Build
@@ -63,7 +64,7 @@ fun SettingsDialog(
                         color = AppTextSecondary,
                         style = MaterialTheme.typography.bodySmall
                     )
-                    OutlinedTextField(
+                    SherlockTextField(
                         value = tokenInput,
                         onValueChange = { tokenInput = it },
                         placeholder = { Text("ghp_xxxxxxxxxxxx", color = AppTextMuted) },
@@ -81,7 +82,7 @@ fun SettingsDialog(
                 }
             },
             confirmButton = {
-                Button(
+                SherlockButton(
                     onClick = {
                         val trimmed = tokenInput.trim()
                         CommittedManager.saveGithubToken(trimmed)
@@ -120,7 +121,7 @@ fun SettingsDialog(
                 )
             },
             confirmButton = {
-                Button(
+                SherlockButton(
                     onClick = {
                         val cleared = SettingsManager.purgeVolatileCache()
                         showPurgeConfirmDialog = false
@@ -342,7 +343,7 @@ fun SettingsDialog(
                                         style = MaterialTheme.typography.bodySmall
                                     )
                                 }
-                                Button(
+                                SherlockButton(
                                     onClick = {
                                         tokenInput = DataStore.githubToken
                                         showTokenDialog = true
@@ -388,7 +389,7 @@ fun SettingsDialog(
                                     contentPadding = PaddingValues(vertical = 10.dp)
                                 ) {
                                     if (isVerifyingToken) {
-                                        CircularProgressIndicator(modifier = Modifier.size(16.dp), color = AppPrimary, strokeWidth = 2.dp)
+                                        SherlockCircularProgressIndicator(modifier = Modifier.size(16.dp), color = AppPrimary, strokeWidth = 2.dp)
                                     } else {
                                         Icon(Icons.Default.CloudDownload, contentDescription = null, modifier = Modifier.size(16.dp))
                                         Spacer(modifier = Modifier.width(6.dp))
@@ -396,7 +397,7 @@ fun SettingsDialog(
                                     }
                                 }
 
-                                Button(
+                                SherlockButton(
                                     onClick = {
                                         scope.launch {
                                             isVerifyingToken = true

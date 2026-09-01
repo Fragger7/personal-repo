@@ -1,4 +1,5 @@
 package com.projectstrong.iptv.ui.tabs
+import com.projectstrong.iptv.ui.components.core.*
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.*
@@ -76,7 +77,7 @@ fun CommittedTab() {
                         style = MaterialTheme.typography.bodySmall
                     )
                     Spacer(modifier = Modifier.height(14.dp))
-                    OutlinedTextField(
+                    SherlockTextField(
                         value = tempToken,
                         onValueChange = { tempToken = it },
                         label = { Text("GITHUB_TOKEN") },
@@ -269,7 +270,7 @@ fun CommittedTab() {
                 }
             },
             confirmButton = {
-                Button(
+                SherlockButton(
                     onClick = {
                         val toDel = recordToDelete!!
                         recordToDelete = null
@@ -486,7 +487,7 @@ fun CommittedMasterGrid(
                 }
             },
             confirmButton = {
-                Button(
+                SherlockButton(
                     onClick = {
                         val toDel = recordToDelete!!
                         recordToDelete = null
@@ -672,7 +673,7 @@ fun CommittedMasterGrid(
         }
 
         if (isBusy) {
-            LinearProgressIndicator(
+            SherlockLinearProgressIndicator(
                 modifier = Modifier.fillMaxWidth().height(4.dp).clip(RoundedCornerShape(2.dp)),
                 color = AppSuccess,
                 trackColor = AppSurfaceVariant
@@ -1090,7 +1091,7 @@ fun CommittedDetailScreen(
 
         // Full-screen Channel Explorer if Xtream
         if (record.safeType == "Xtream") {
-            Button(
+            SherlockButton(
                 onClick = { showCatalogExplorer = true },
                 colors = ButtonDefaults.buttonColors(containerColor = AppPrimary),
                 shape = RoundedCornerShape(12.dp),
@@ -1104,7 +1105,7 @@ fun CommittedDetailScreen(
 
         // Notes Area
         Text("NOTES & ANNOTATIONS", color = AppTextSecondary, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, modifier = Modifier.padding(bottom = 6.dp))
-        OutlinedTextField(
+        SherlockTextField(
             value = currentNotes,
             onValueChange = { currentNotes = it },
             placeholder = { Text("Add notes for this account...", color = AppTextMuted) },

@@ -1,4 +1,5 @@
 package com.projectstrong.iptv.ui.components
+import com.projectstrong.iptv.ui.components.core.*
 
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.BorderStroke
@@ -129,7 +130,7 @@ fun GridActionIconButton(
     ) {
         Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
             if (isLoading) {
-                CircularProgressIndicator(
+                SherlockCircularProgressIndicator(
                     modifier = Modifier.size(iconSize),
                     strokeWidth = 2.dp,
                     color = color

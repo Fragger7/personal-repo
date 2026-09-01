@@ -1,4 +1,5 @@
 package com.projectstrong.iptv.ui.components
+import com.projectstrong.iptv.ui.components.core.*
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.*
@@ -251,7 +252,7 @@ fun FullScreenCatalogExplorer(
                 if (isLoading) {
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            CircularProgressIndicator(color = AppPrimary)
+                            SherlockCircularProgressIndicator(color = AppPrimary)
                             Spacer(modifier = Modifier.height(16.dp))
                             Text("Loading Full Live Channel Catalog...", color = AppTextPrimary, fontWeight = FontWeight.Medium)
                             Text("Parsing categories and streams from provider", color = AppTextMuted, style = MaterialTheme.typography.bodySmall)
@@ -275,7 +276,7 @@ fun FullScreenCatalogExplorer(
                             .background(AppSurface)
                             .padding(horizontal = 16.dp, vertical = 8.dp)
                     ) {
-                        OutlinedTextField(
+                        SherlockTextField(
                             value = searchQuery,
                             onValueChange = { searchQuery = it },
                             placeholder = { Text("Filter ${filteredChannels.size} channels by name or ID...", color = AppTextMuted) },
@@ -404,7 +405,7 @@ fun FullScreenCatalogExplorer(
 
                                     // Section Header for Category Group
                                     item(key = "header_$catId") {
-                                        Card(
+                                        SherlockCard(
                                             shape = RoundedCornerShape(8.dp),
                                             colors = CardDefaults.cardColors(containerColor = AppSurfaceVariant),
                                             border = BorderStroke(1.dp, AppSurfaceBorder.copy(alpha = 0.6f)),
@@ -470,7 +471,7 @@ fun FullScreenCatalogExplorer(
                                     // Category items when expanded
                                     if (!isCollapsed) {
                                         items(channelsInCat, key = { it.streamId + it.name + catId }) { channel ->
-                                            Card(
+                                            SherlockCard(
                                                 shape = RoundedCornerShape(10.dp),
                                                 colors = CardDefaults.cardColors(containerColor = AppSurface),
                                                 border = BorderStroke(1.dp, AppSurfaceBorder.copy(alpha = 0.5f)),
@@ -644,7 +645,7 @@ fun FullScreenCatalogExplorer(
                                         showCopiedToast = false
                                     }
                                 }
-                                Card(
+                                SherlockCard(
                                     shape = RoundedCornerShape(20.dp),
                                     colors = CardDefaults.cardColors(containerColor = AppSuccess)
                                 ) {

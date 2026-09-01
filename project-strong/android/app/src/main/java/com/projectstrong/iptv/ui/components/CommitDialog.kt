@@ -1,4 +1,5 @@
 package com.projectstrong.iptv.ui.components
+import com.projectstrong.iptv.ui.components.core.*
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -80,7 +81,7 @@ fun CommitAccountDialog(
     }
 
     Dialog(onDismissRequest = onDismiss) {
-        Card(
+        SherlockCard(
             shape = RoundedCornerShape(16.dp),
             colors = CardDefaults.cardColors(containerColor = AppSurface),
             border = BorderStroke(1.dp, AppSurfaceBorder),
@@ -107,7 +108,7 @@ fun CommitAccountDialog(
                 Spacer(modifier = Modifier.height(14.dp))
 
                 // Account Preview
-                Card(
+                SherlockCard(
                     shape = RoundedCornerShape(10.dp),
                     colors = CardDefaults.cardColors(containerColor = AppSurfaceVariant),
                     border = BorderStroke(1.dp, AppSurfaceBorder.copy(alpha = 0.6f)),
@@ -190,7 +191,7 @@ fun CommitAccountDialog(
                     }
                 }
                 Spacer(modifier = Modifier.height(4.dp))
-                OutlinedTextField(
+                SherlockTextField(
                     value = sourceLinkInput,
                     onValueChange = { sourceLinkInput = it },
                     placeholder = { Text("e.g. https://pastebin.com/raw/... or https://paste.sh/...", color = AppTextMuted) },
@@ -250,7 +251,7 @@ fun CommitAccountDialog(
                     }
                 }
                 Spacer(modifier = Modifier.height(4.dp))
-                OutlinedTextField(
+                SherlockTextField(
                     value = originLinkInput,
                     onValueChange = { originLinkInput = it },
                     placeholder = { Text("e.g. https://reddit.com/r/... or Telegram thread", color = AppTextMuted) },
@@ -296,7 +297,7 @@ fun CommitAccountDialog(
                     fontWeight = FontWeight.SemiBold
                 )
                 Spacer(modifier = Modifier.height(4.dp))
-                OutlinedTextField(
+                SherlockTextField(
                     value = notes,
                     onValueChange = { notes = it },
                     placeholder = { Text("e.g. Living room TV, US 4K channels, backup link...", color = AppTextMuted) },
