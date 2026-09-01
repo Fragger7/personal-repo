@@ -116,9 +116,13 @@ This document contains the complete system architecture, operational decisions, 
 
 ## 🎨 3. World-Class UI/UX Design Standards
 
-* **Typography Scale**: Pairing geometric display headers (`titleMedium`, `labelLarge`) with refined body fonts (`bodyMedium`, `bodySmall` in `#A0A0B0`). No amateur oversized fonts.
+* **`Sherlock` Global UI Engine (`SherlockComponents.kt`)**: Bypasses standard flat Material 3 components in favor of a dynamic, theme-aware wrapper system.
+  * **OS-Level Glassmorphism (`SherlockCard`)**: On Android 12+, applies actual GPU-accelerated `RenderEffect.createBlurEffect(40f, 40f)` to distort and frost UI layers sitting behind macOS Liquid Glass cards.
+  * **Physical Interactions (`SherlockButton`)**: Intercepts standard Google ripples, replacing them with a 400Hz physical `scale(0.95f)` spring-bounce animation for Cinematic and macOS themes.
+  * **Adaptive Progress (`SherlockProgress`)**: Cinematic Dark loaders emit aggressive glowing drop-shadows, while Robinhood Neon uses sharp, segmented square stroke caps.
+* **Global Typography Override**: Centralized engine in `Theme.kt` dynamically swaps entire typefaces based on the theme (e.g., forcing `FontFamily.Monospace` globally for Robinhood Neon to mimic a precision stock ticker).
+* **Top-Down Dynamic Notifications (`ToastManager.kt`)**: Custom toast host sliding gracefully from the top of the screen. Fully theme-aware (frosted blur for macOS, pitch black with sharp 2px neon borders for Robinhood).
 * **Card & Elevation Hierarchy**: Flat borders with mathematically calculated inner corner radii (`Inner Radius = Outer Radius - Padding`).
-* **Visual Polish & Feedback**: Material 3 non-intrusive auto-dismissing toast notifications via `ToastManager.kt`, skeleton loaders during fetch, and pulsing status badges for active connections.
 
 ---
 
@@ -204,7 +208,7 @@ Remove-Item -Recurse -Force "C:\Development\Apps\Project Strong\personal-repo-te
 | **16-Column Enterprise Data Grids** | `CommittedTab.kt`, `XtreamTab.kt`, `StalkerTab.kt`, `JsonReader` streaming | 🟢 **Verified & Live** |
 | **Hierarchical Collapsible Channel Explorer** | `FullScreenCatalogExplorer.kt`, Category group badges, search filter | 🟢 **Verified & Live** |
 | **Hardware VPN & Geolocation Shield** | `NetworkMonitor.kt`, `ConnectionStateDialog.kt`, `ip-api.com` caching | 🟢 **Verified & Live** |
-| **Multi-Palette Dynamic Theme Switcher** | `Theme.kt`, `SettingsTab.kt`, `SharedPreferences` persistence | 🟢 **Verified & Live** |
+| **Multi-Palette Dynamic Theme Engine & Sherlock UI** | `SherlockComponents.kt`, `Theme.kt`, `ToastManager.kt`, OS-level RenderEffect Blurs | 🟢 **Verified & Live (v1.0.0-stable)** |
 | **Source Link Traceability** | Discovered URL cards, discrete copy, source link columns across all tabs | 🟢 **Verified & Live** |
 | **Permanent Deletion & Git Synchronization** | `CommittedManager.kt`, SHA-aware GitHub API commit/delete pipeline | 🟢 **Verified & Live** |
 | **Sherlock Streams Visual Branding & Mascot** | `ic_launcher_foreground.xml`, `ic_sherlock_brand.xml`, top bar emblem | 🟢 **Verified & Live** |
