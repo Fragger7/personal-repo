@@ -159,8 +159,6 @@ fun SherlockTextField(
         onValueChange = onValueChange,
         modifier = modifier,
         enabled = enabled,
-        border = border,
-        contentPadding = contentPadding,
         readOnly = readOnly,
         textStyle = textStyle,
         label = label,
