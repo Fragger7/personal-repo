@@ -17,6 +17,7 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.text.SimpleDateFormat
@@ -139,12 +140,19 @@ object CommittedManager {
         }
     }
 
+    private val saveMutex = kotlinx.coroutines.sync.Mutex()
+    
     private fun save() {
-        try {
-            val json = gson.toJson(records.toList())
-            file.writeText(json)
-        } catch (e: Exception) {
-            e.printStackTrace()
+        val snapshot = records.toList()
+        CoroutineScope(Dispatchers.IO).launch {
+            saveMutex.withLock {
+                try {
+                    val json = gson.toJson(snapshot)
+                    file.writeText(json)
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
         }
     }
 
@@ -598,9 +606,23 @@ object CommittedManager {
     fun updateNotes(record: CommittedRecord, newNotes: String) {
         val index = records.indexOf(record)
         if (index != -1) {
-            records[index] = record.copy(notes = newNotes)
+            records[index] = record.copy(notes = newNotes, isLocalOnly = true)
             save()
-            ToastManager.success("Notes saved successfully!")
+            ToastManager.success("Notes saved locally")
+            
+            val token = DataStore.githubToken
+            if (token.isNotEmpty()) {
+                CoroutineScope(Dispatchers.IO).launch {
+                    val success = pushToCloud(token)
+                    withContext(Dispatchers.Main) {
+                        if (success) {
+                            ToastManager.success("Notes saved & synced to Git!")
+                        } else {
+                            ToastManager.warning("Saved locally, but cloud push failed")
+                        }
+                    }
+                }
+            }
         }
     }
 }

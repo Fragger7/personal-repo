@@ -38,6 +38,35 @@ object Parser {
         "mega.nz", "mediafire.com", "dropbox.com", "t.co", "bit.ly", "tinyurl.com", "is.gd"
     )
 
+    private val originUrlPattern = Pattern.compile(
+        "https?://(?:www\\.|old\\.|new\\.|np\\.)?(?:reddit\\.com/(?:r/[^\\s\"'<>]+|user/[^\\s\"'<>]+|comments/[^\\s\"'<>]+)|redd\\.it/[^\\s\"'<>]+|t\\.me/[^\\s\"'<>]+|telegram\\.me/[^\\s\"'<>]+|discord\\.gg/[^\\s\"'<>]+)",
+        Pattern.CASE_INSENSITIVE
+    )
+
+    private val pastebinUrlPattern = Pattern.compile(
+        "https?://(?:www\\.)?(?:pastebin\\.com/(?:raw/)?[a-zA-Z0-9]+|paste\\.sh/[a-zA-Z0-9#]+|rentry\\.(?:co|org)/(?:raw/)?[a-zA-Z0-9]+|pastetext\\.net/[a-zA-Z0-9]+|controlc\\.com/[a-zA-Z0-9]+|dpaste\\.(?:org|com)/[a-zA-Z0-9]+(?:\\.txt)?|paste\\.ee/(?:p|r)/[a-zA-Z0-9]+|gist\\.github\\.com/[^\\s\"'<>]+)",
+        Pattern.CASE_INSENSITIVE
+    )
+
+    private val patternXtream = Pattern.compile("(https?://[^/:]+(?::\\d+)?)/(?:player_api|get)\\.php\\?username=([^&\\s]+)&password=([^&\\s]+)")
+    private val tabPattern = Pattern.compile("^((?:https?://)?[^\\s/:]+(?::\\d+)?(?:/[^\\s:]*)?)\\s+([^\\s:]+)\\s*:\\s*([^\\s]+)(?:\\s+(.*))?$")
+    private val comboPattern = Pattern.compile("^((?:https?://)?[^\\s/:]+(?::\\d+)?(?:/[^\\s:]*)?)[\\s:]([^\\s:]+)[\\s:]([^\\s:]+)$")
+    
+    private val macRegex = Regex("^[0-9a-fA-F]{2}$")
+    private val macFullRegex = Regex("^(?:[0-9a-fA-F]{2}:){4}[0-9a-fA-F]{2}$")
+    private val skipKeywords = setOf("mac", "active", "activa", "expired", "http", "https", "user", "pass", "username", "password", "ᴜꜱᴇʀ", "ᴩᴀꜱꜱ")
+    
+    private val tzPattern = Pattern.compile("\\b([A-Z]{3,4}|GMT[+-]\\d+)\\b")
+    private val connPattern = Pattern.compile("(\\d+)\\s*/\\s*(\\d+)")
+    private val datePattern = Pattern.compile("(\\d{1,2}\\s+[a-zA-Z]{3,}\\s+(?:de\\s+)?\\d{4}|\\d{4}-\\d{2}-\\d{2}|\\d{2}/\\d{2}/\\d{4})")
+
+    private val urlExtractPattern = Pattern.compile("(https?://[^/\\s]+(?:/[^/\\s]*)?)")
+    private val baseExtractPattern = Pattern.compile("(https?://[^/:]+(?::\\d+)?)")
+    private val macExtractPattern = Pattern.compile("([0-9a-fA-F]{2}(?::[0-9a-fA-F]{2}){5})", Pattern.CASE_INSENSITIVE)
+    private val userExtractPattern = Pattern.compile("(?i)(?:user|usr|username|ᴜꜱᴇʀ)[\\s:=]+([^\\s]+)")
+    private val passExtractPattern = Pattern.compile("(?i)(?:pass|password|ᴩᴀꜱꜱ)[\\s:=]+([^\\s]+)")
+    private val resetSeparatorRegex = Regex("[-=_*#]{4,}|╰─|╭─|┌─|└─|\\|")
+
     fun isBlacklistedHost(url: String): Boolean {
         return try {
             val uri = java.net.URI(if (!url.startsWith("http")) "http://$url" else url)
@@ -68,10 +97,6 @@ object Parser {
             val extracted = mutableListOf<ParsedCredential>()
 
             // Auto-discover Origin Link (Reddit/Forum/Social) if not explicitly set
-            val originUrlPattern = Pattern.compile(
-                "https?://(?:www\\.|old\\.|new\\.|np\\.)?(?:reddit\\.com/(?:r/[^\\s\"'<>]+|user/[^\\s\"'<>]+|comments/[^\\s\"'<>]+)|redd\\.it/[^\\s\"'<>]+|t\\.me/[^\\s\"'<>]+|telegram\\.me/[^\\s\"'<>]+|discord\\.gg/[^\\s\"'<>]+)",
-                Pattern.CASE_INSENSITIVE
-            )
             val effectiveOrigin = if (originLink.isNotBlank()) {
                 originLink
             } else if (DataStore.scannerOriginLink.isNotBlank()) {
@@ -88,10 +113,6 @@ object Parser {
             }
 
             // Auto-discover Source Link (Pastebin / Rentry / Paste.sh / etc) if not explicitly set
-            val pastebinUrlPattern = Pattern.compile(
-                "https?://(?:www\\.)?(?:pastebin\\.com/(?:raw/)?[a-zA-Z0-9]+|paste\\.sh/[a-zA-Z0-9#]+|rentry\\.(?:co|org)/(?:raw/)?[a-zA-Z0-9]+|pastetext\\.net/[a-zA-Z0-9]+|controlc\\.com/[a-zA-Z0-9]+|dpaste\\.(?:org|com)/[a-zA-Z0-9]+(?:\\.txt)?|paste\\.ee/(?:p|r)/[a-zA-Z0-9]+|gist\\.github\\.com/[^\\s\"'<>]+)",
-                Pattern.CASE_INSENSITIVE
-            )
             val effectiveSource = if (sourceLink.isNotBlank() && sourceLink != "Direct Ingestion") {
                 sourceLink
             } else if (DataStore.scannerSourceLink.isNotBlank() && DataStore.scannerSourceLink != "Direct Ingestion") {
@@ -109,7 +130,6 @@ object Parser {
             
             // 1. Standard Xtream API patterns
             try {
-                val patternXtream = Pattern.compile("(https?://[^/:]+(?::\\d+)?)/(?:player_api|get)\\.php\\?username=([^&\\s]+)&password=([^&\\s]+)")
                 val matcherXtream = patternXtream.matcher(textBlock)
                 while (matcherXtream.find()) {
                     val baseUrl = matcherXtream.group(1) ?: ""
@@ -122,15 +142,6 @@ object Parser {
             } catch (e: Throwable) {}
 
             // 2. Line-by-line Tabular & Formatted Combos
-            val tabPattern = Pattern.compile("^((?:https?://)?[^\\s/:]+(?::\\d+)?(?:/[^\\s:]*)?)\\s+([^\\s:]+)\\s*:\\s*([^\\s]+)(?:\\s+(.*))?$")
-            val comboPattern = Pattern.compile("^((?:https?://)?[^\\s/:]+(?::\\d+)?(?:/[^\\s:]*)?)[\\s:]([^\\s:]+)[\\s:]([^\\s:]+)$")
-            val macRegex = Regex("^[0-9a-fA-F]{2}$")
-            val macFullRegex = Regex("^(?:[0-9a-fA-F]{2}:){4}[0-9a-fA-F]{2}$")
-            val skipKeywords = setOf("mac", "active", "activa", "expired", "http", "https", "user", "pass", "username", "password", "ᴜꜱᴇʀ", "ᴩᴀꜱꜱ")
-            
-            val tzPattern = Pattern.compile("\\b([A-Z]{3,4}|GMT[+-]\\d+)\\b")
-            val connPattern = Pattern.compile("(\\d+)\\s*/\\s*(\\d+)")
-            val datePattern = Pattern.compile("(\\d{1,2}\\s+[a-zA-Z]{3,}\\s+(?:de\\s+)?\\d{4}|\\d{4}-\\d{2}-\\d{2}|\\d{2}/\\d{2}/\\d{4})")
 
             for (line in textBlock.lines()) {
                 val lineClean = line.trim()
@@ -237,13 +248,6 @@ object Parser {
             var xtUser: String? = null
             var xtPass: String? = null
             
-            val urlExtractPattern = Pattern.compile("(https?://[^/\\s]+(?:/[^/\\s]*)?)")
-            val baseExtractPattern = Pattern.compile("(https?://[^/:]+(?::\\d+)?)")
-            val macExtractPattern = Pattern.compile("([0-9a-fA-F]{2}(?::[0-9a-fA-F]{2}){5})", Pattern.CASE_INSENSITIVE)
-            val userExtractPattern = Pattern.compile("(?i)(?:user|usr|username|ᴜꜱᴇʀ)[\\s:=]+([^\\s]+)")
-            val passExtractPattern = Pattern.compile("(?i)(?:pass|password|ᴩᴀꜱꜱ)[\\s:=]+([^\\s]+)")
-            val resetSeparatorRegex = Regex("[-=_*#]{4,}|╰─|╭─|┌─|└─|\\|")
-
             for (line in textBlock.lines()) {
                 val lineTrim = line.trim()
                 if (lineTrim.isEmpty() || lineTrim.length > 800 || lineTrim.contains(resetSeparatorRegex) || lineTrim.contains("player_api.php") || lineTrim.contains("get.php")) {

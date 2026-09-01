@@ -567,6 +567,9 @@ fun SettingsTab() {
                         AppThemeMode.MIDNIGHT_PURPLE -> Triple(Color(0xFFA78BFA), Color(0xFFC084FC), Color(0xFF18132B))
                         AppThemeMode.OCEAN_BLUE -> Triple(Color(0xFF38BDF8), Color(0xFF06B6D4), Color(0xFF132034))
                         AppThemeMode.CRIMSON_DARK -> Triple(Color(0xFFEF4444), Color(0xFFF43F5E), Color(0xFF1E1014))
+                        AppThemeMode.MACOS_LIQUID_GLASS -> Triple(Color(0xFF38BDF8), Color(0xFF818CF8), Color(0xFF1E1E24))
+                        AppThemeMode.ROBINHOOD_NEON -> Triple(Color(0xFF00C805), Color(0xFF10B981), Color(0xFF000000))
+                        AppThemeMode.CINEMATIC_DARK -> Triple(Color(0xFFE50914), Color(0xFFFACC15), Color(0xFF141414))
                         AppThemeMode.SYSTEM_MONET -> Triple(Color(0xFF60A5FA), Color(0xFF34D399), Color(0xFF1E293B))
                     }
 

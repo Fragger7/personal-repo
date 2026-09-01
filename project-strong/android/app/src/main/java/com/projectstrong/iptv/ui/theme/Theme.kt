@@ -8,6 +8,7 @@ import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
 import com.projectstrong.iptv.data.AppThemeMode
 import com.projectstrong.iptv.data.SettingsManager
 
@@ -104,6 +105,60 @@ private val CrimsonDarkColorScheme = darkColorScheme(
     error = AppError
 )
 
+// Palette 5: macOS Liquid Glass
+private val MacOsLiquidGlassColorScheme = darkColorScheme(
+    primary = Color(0xFF38BDF8),
+    secondary = Color(0xFF818CF8),
+    tertiary = Color(0xFF34D399),
+    background = Color(0xFF1E1E24), // Frosted graphite
+    surface = Color(0xFF2A2A35),
+    surfaceVariant = Color(0xFF373746),
+    outline = Color(0xFFFFFFFF).copy(alpha = 0.15f), // 1px crisp frosted border
+    outlineVariant = Color(0xFFFFFFFF).copy(alpha = 0.08f),
+    onPrimary = Color.Black,
+    onSecondary = Color.Black,
+    onBackground = AppTextPrimary,
+    onSurface = AppTextPrimary,
+    onSurfaceVariant = Color(0xFFE2E8F0),
+    error = AppError
+)
+
+// Palette 6: Robinhood Neon Dark
+private val RobinhoodNeonColorScheme = darkColorScheme(
+    primary = Color(0xFF00C805), // High-contrast matrix green
+    secondary = Color(0xFF10B981),
+    tertiary = Color(0xFF06B6D4), // Electric cyan
+    background = Color(0xFF000000), // OLED black
+    surface = Color(0xFF111111),
+    surfaceVariant = Color(0xFF1A1A1A),
+    outline = Color(0xFF00C805).copy(alpha = 0.3f), // Neon border
+    outlineVariant = Color(0xFF333333),
+    onPrimary = Color.Black,
+    onSecondary = Color.Black,
+    onBackground = AppTextPrimary,
+    onSurface = AppTextPrimary,
+    onSurfaceVariant = Color(0xFFD1D5DB),
+    error = AppError
+)
+
+// Palette 7: Cinematic Netflix Dark
+private val CinematicDarkColorScheme = darkColorScheme(
+    primary = Color(0xFFE50914), // Netflix Red
+    secondary = Color(0xFFFACC15), // Gold rating badges
+    tertiary = Color(0xFFB91C1C),
+    background = Color(0xFF141414), // Deep theatrical charcoal
+    surface = Color(0xFF1F1F1F),
+    surfaceVariant = Color(0xFF2B2B2B),
+    outline = Color(0xFFE50914).copy(alpha = 0.4f),
+    outlineVariant = Color(0xFF3F3F3F),
+    onPrimary = Color.White,
+    onSecondary = Color.Black,
+    onBackground = AppTextPrimary,
+    onSurface = AppTextPrimary,
+    onSurfaceVariant = Color(0xFFD4D4D8),
+    error = AppError
+)
+
 @Composable
 fun AppTheme(
     themeMode: AppThemeMode = SettingsManager.currentTheme,
@@ -115,6 +170,9 @@ fun AppTheme(
         AppThemeMode.MIDNIGHT_PURPLE -> MidnightPurpleColorScheme
         AppThemeMode.OCEAN_BLUE -> OceanBlueColorScheme
         AppThemeMode.CRIMSON_DARK -> CrimsonDarkColorScheme
+        AppThemeMode.MACOS_LIQUID_GLASS -> MacOsLiquidGlassColorScheme
+        AppThemeMode.ROBINHOOD_NEON -> RobinhoodNeonColorScheme
+        AppThemeMode.CINEMATIC_DARK -> CinematicDarkColorScheme
         AppThemeMode.SYSTEM_MONET -> {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                 dynamicDarkColorScheme(context)
@@ -124,8 +182,33 @@ fun AppTheme(
         }
     }
 
+    // Dynamic Shape Language based on Theme
+    val shapes = when (themeMode) {
+        AppThemeMode.ROBINHOOD_NEON -> androidx.compose.material3.Shapes(
+            small = androidx.compose.foundation.shape.RoundedCornerShape(4.dp),
+            medium = androidx.compose.foundation.shape.RoundedCornerShape(4.dp),
+            large = androidx.compose.foundation.shape.RoundedCornerShape(8.dp)
+        )
+        AppThemeMode.MACOS_LIQUID_GLASS -> androidx.compose.material3.Shapes(
+            small = androidx.compose.foundation.shape.RoundedCornerShape(8.dp),
+            medium = androidx.compose.foundation.shape.RoundedCornerShape(16.dp),
+            large = androidx.compose.foundation.shape.RoundedCornerShape(24.dp)
+        )
+        AppThemeMode.CINEMATIC_DARK -> androidx.compose.material3.Shapes(
+            small = androidx.compose.foundation.shape.RoundedCornerShape(2.dp),
+            medium = androidx.compose.foundation.shape.RoundedCornerShape(6.dp),
+            large = androidx.compose.foundation.shape.RoundedCornerShape(12.dp)
+        )
+        else -> androidx.compose.material3.Shapes( // Default Cyber / Rounded
+            small = androidx.compose.foundation.shape.RoundedCornerShape(6.dp),
+            medium = androidx.compose.foundation.shape.RoundedCornerShape(12.dp),
+            large = androidx.compose.foundation.shape.RoundedCornerShape(16.dp)
+        )
+    }
+
     MaterialTheme(
         colorScheme = colorScheme,
+        shapes = shapes,
         content = content
     )
 }

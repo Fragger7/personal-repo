@@ -12,6 +12,9 @@ enum class AppThemeMode(val title: String, val description: String) {
     MIDNIGHT_PURPLE("Midnight Purple", "Neon violet glow & deep twilight dark"),
     OCEAN_BLUE("Ocean Blue", "Electric cyan & deep abyss navy"),
     CRIMSON_DARK("Crimson Dark", "Vibrant crimson & pitch dark OLED"),
+    MACOS_LIQUID_GLASS("macOS Liquid Glass", "Frosted graphite & icy electric blue"),
+    ROBINHOOD_NEON("Robinhood Neon", "OLED black & high-contrast matrix green"),
+    CINEMATIC_DARK("Nuvio Cinematic", "Theatrical charcoal & Netflix red"),
     SYSTEM_MONET("System Monet", "Dynamic Material You colors from your Android wallpaper")
 }
 
