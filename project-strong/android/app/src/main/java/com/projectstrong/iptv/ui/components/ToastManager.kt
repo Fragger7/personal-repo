@@ -22,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.asComposeRenderEffect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -126,7 +127,7 @@ fun ToastHost(modifier: Modifier = Modifier) {
                 Modifier.graphicsLayer {
                     renderEffect = android.graphics.RenderEffect.createBlurEffect(
                         30f, 30f, android.graphics.Shader.TileMode.CLAMP
-                    ).let { androidx.compose.ui.graphics.asComposeRenderEffect(it) }
+                    ).asComposeRenderEffect()
                     alpha = 0.9f
                 }
             } else Modifier

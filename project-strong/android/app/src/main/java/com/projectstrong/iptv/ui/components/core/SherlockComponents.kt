@@ -25,6 +25,9 @@ import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.TextFieldColors
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.graphics.asComposeRenderEffect
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
@@ -39,6 +42,8 @@ import com.projectstrong.iptv.data.SettingsManager
 
 @Composable
 fun SherlockButton(
+    border: BorderStroke? = null,
+    contentPadding: PaddingValues = ButtonDefaults.ContentPadding,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
@@ -62,6 +67,8 @@ fun SherlockButton(
         onClick = onClick,
         modifier = if (applyScale) modifier.scale(scale) else modifier,
         enabled = enabled,
+        border = border,
+        contentPadding = contentPadding,
         shape = shape,
         colors = colors,
         interactionSource = if (applyScale) interactionSource else remember { MutableInteractionSource() },
@@ -72,6 +79,7 @@ fun SherlockButton(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SherlockCard(
+    border: BorderStroke? = null,
     modifier: Modifier = Modifier,
     shape: Shape = MaterialTheme.shapes.medium,
     colors: CardColors = CardDefaults.cardColors(),
@@ -85,7 +93,7 @@ fun SherlockCard(
         Modifier.graphicsLayer {
             renderEffect = android.graphics.RenderEffect.createBlurEffect(
                 40f, 40f, android.graphics.Shader.TileMode.CLAMP
-            ).let { androidx.compose.ui.graphics.asComposeRenderEffect(it) }
+            ).asComposeRenderEffect()
             alpha = 0.9f
         }
     } else {
@@ -99,6 +107,7 @@ fun SherlockCard(
             shape = shape,
             colors = colors,
             elevation = elevation,
+            border = border,
             content = content
         )
     } else {
@@ -107,6 +116,7 @@ fun SherlockCard(
             shape = shape,
             colors = colors,
             elevation = elevation,
+            border = border,
             content = content
         )
     }
@@ -149,6 +159,8 @@ fun SherlockTextField(
         onValueChange = onValueChange,
         modifier = modifier,
         enabled = enabled,
+        border = border,
+        contentPadding = contentPadding,
         readOnly = readOnly,
         textStyle = textStyle,
         label = label,
