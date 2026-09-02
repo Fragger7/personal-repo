@@ -139,14 +139,19 @@ fun XtreamMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCredent
                         if (idx >= total) break
 
                         val node = activeNodes[idx]
+                        val maxTimeout = (com.projectstrong.iptv.data.SettingsManager.httpTimeoutSeconds * 1000L).coerceIn(2500L, 5000L)
                         val liveAsync = async { 
-                            kotlinx.coroutines.withTimeoutOrNull(com.projectstrong.iptv.data.SettingsManager.httpTimeoutSeconds * 1000L + 2500L) {
-                                IPTVClient.getLiveStreamCount(node.baseUrl, node.user, node.pass)
+                            kotlinx.coroutines.withTimeoutOrNull(maxTimeout) {
+                                try {
+                                    IPTVClient.getLiveStreamCount(node.baseUrl, node.user, node.pass)
+                                } catch (e: Exception) { -1 }
                             } ?: -1
                         }
                         val vodAsync = async { 
-                            kotlinx.coroutines.withTimeoutOrNull(com.projectstrong.iptv.data.SettingsManager.httpTimeoutSeconds * 1000L + 2500L) {
-                                IPTVClient.getVodStreamCount(node.baseUrl, node.user, node.pass)
+                            kotlinx.coroutines.withTimeoutOrNull(maxTimeout) {
+                                try {
+                                    IPTVClient.getVodStreamCount(node.baseUrl, node.user, node.pass)
+                                } catch (e: Exception) { -1 }
                             } ?: -1
                         }
                         val liveCount = liveAsync.await()
@@ -159,8 +164,8 @@ fun XtreamMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCredent
             }
 
             // Throttled UI batch loop
-            while (DataStore.isQueryingCatalogs && completedCount.get() < total) {
-                delay(500)
+            while (DataStore.isQueryingCatalogs && completedCount.get() < total && !workers.all { it.isCompleted }) {
+                delay(300)
                 val batch = mutableListOf<Triple<String, String, Pair<Int, Int>>>()
                 while (true) {
                     val item = updateQueue.poll() ?: break

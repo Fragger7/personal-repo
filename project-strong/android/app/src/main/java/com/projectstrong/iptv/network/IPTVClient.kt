@@ -90,9 +90,9 @@ object IPTVClient {
     private fun getDeepQueryClient(): OkHttpClient {
         val timeout = com.projectstrong.iptv.data.SettingsManager.httpTimeoutSeconds.toLong()
         return baseClient.newBuilder()
-            .connectTimeout(minOf(timeout, 5L), TimeUnit.SECONDS)
-            .readTimeout(minOf(timeout * 2, 12L), TimeUnit.SECONDS)
-            .writeTimeout(5L, TimeUnit.SECONDS)
+            .connectTimeout(minOf(timeout, 3L), TimeUnit.SECONDS)
+            .readTimeout(minOf(timeout, 5L), TimeUnit.SECONDS)
+            .writeTimeout(3L, TimeUnit.SECONDS)
             .build()
     }
 
@@ -100,7 +100,7 @@ object IPTVClient {
         val timeout = com.projectstrong.iptv.data.SettingsManager.egressTimeoutSeconds.toLong()
         return baseClient.newBuilder()
             .connectTimeout(minOf(timeout, 3L), TimeUnit.SECONDS)
-            .readTimeout(timeout, TimeUnit.SECONDS)
+            .readTimeout(minOf(timeout, 4L), TimeUnit.SECONDS)
             .writeTimeout(3L, TimeUnit.SECONDS)
             .build()
     }
@@ -640,11 +640,16 @@ object IPTVClient {
                 response.close()
             }
         } catch (e: Exception) {
-            // Fall through to M3U count
+            if (com.projectstrong.iptv.data.SettingsManager.fastFailHedgingEnabled) {
+                return@withContext 0
+            }
         }
 
-        // Tier 2: Fast M3U stream count fallback
-        return@withContext fastCountM3UStreams(normalizedUrl, encodedUser, encodedPass)
+        // Tier 2: Fast M3U stream count fallback only if not fast-fail hedging
+        if (!com.projectstrong.iptv.data.SettingsManager.fastFailHedgingEnabled) {
+            return@withContext fastCountM3UStreams(normalizedUrl, encodedUser, encodedPass)
+        }
+        return@withContext 0
     }
 
     suspend fun getVodStreamCount(baseUrl: String, user: String, pass: String): Int = withContext(Dispatchers.IO) {
@@ -670,32 +675,27 @@ object IPTVClient {
      * Fast M3U line stream counter that parses #EXTINF headers on-the-fly without allocating memory.
      */
     private fun fastCountM3UStreams(baseUrl: String, encodedUser: String, encodedPass: String): Int {
-        val m3uUrls = listOf(
-            "$baseUrl/get.php?username=$encodedUser&password=$encodedPass&type=m3u_plus&output=ts",
-            "$baseUrl/get.php?username=$encodedUser&password=$encodedPass"
-        )
-        for (m3uUrl in m3uUrls) {
-            try {
-                val response = executeWithAdaptiveHeaders(getDeepQueryClient(), m3uUrl)
-                if (response.code == 200) {
-                    val body = response.body
-                    if (body != null) {
-                        val reader = BufferedReader(InputStreamReader(body.byteStream(), "UTF-8"), 32768)
-                        var count = 0
-                        var line: String?
-                        while (reader.readLine().also { line = it } != null) {
-                            if (line?.startsWith("#EXTINF") == true) {
-                                count++
-                            }
+        val m3uUrl = "$baseUrl/get.php?username=$encodedUser&password=$encodedPass&type=m3u_plus&output=ts"
+        try {
+            val response = executeWithAdaptiveHeaders(getDeepQueryClient(), m3uUrl)
+            if (response.code == 200) {
+                val body = response.body
+                if (body != null) {
+                    val reader = BufferedReader(InputStreamReader(body.byteStream(), "UTF-8"), 32768)
+                    var count = 0
+                    var line: String?
+                    while (reader.readLine().also { line = it } != null) {
+                        if (line?.startsWith("#EXTINF") == true) {
+                            count++
                         }
-                        reader.close()
-                        response.close()
-                        if (count > 0) return count
                     }
+                    reader.close()
+                    response.close()
+                    if (count > 0) return count
                 }
-                response.close()
-            } catch (e: Exception) { }
-        }
+            }
+            response.close()
+        } catch (e: Exception) { }
         return 0
     }
 
@@ -1211,15 +1211,19 @@ object IPTVClient {
                         val contentType = streamRes.header("Content-Type")
 
                         if (code in 200..206) {
-                            val bytes = streamRes.body?.byteStream()?.readBytes()
-                            if (bytes != null && bytes.isNotEmpty()) {
-                                onProgress?.invoke("Stream verified! 200 OK ($latency ms)", totalSteps, totalSteps)
-                                return@withContext StreamEgressResult.Verified(
-                                    streamId = streamId,
-                                    contentType = contentType,
-                                    latencyMs = latency,
-                                    sampleCount = sampleCodes.size + 1
-                                )
+                            val inputStream = streamRes.body?.byteStream()
+                            if (inputStream != null) {
+                                val buffer = ByteArray(4096)
+                                val bytesRead = inputStream.read(buffer)
+                                if (bytesRead > 0) {
+                                    onProgress?.invoke("Stream verified! 200 OK ($latency ms)", totalSteps, totalSteps)
+                                    return@withContext StreamEgressResult.Verified(
+                                        streamId = streamId,
+                                        contentType = contentType,
+                                        latencyMs = latency,
+                                        sampleCount = sampleCodes.size + 1
+                                    )
+                                }
                             }
                         } else {
                             sampleCodes.add(code)
@@ -1246,13 +1250,20 @@ object IPTVClient {
                             val contentType = m3u8Res.header("Content-Type")
 
                             if (code in 200..206) {
-                                onProgress?.invoke("Stream verified via HLS! ($latency ms)", totalSteps, totalSteps)
-                                return@withContext StreamEgressResult.Verified(
-                                    streamId = streamId,
-                                    contentType = contentType,
-                                    latencyMs = latency,
-                                    sampleCount = sampleCodes.size + 1
-                                )
+                                val inputStream = m3u8Res.body?.byteStream()
+                                if (inputStream != null) {
+                                    val buffer = ByteArray(4096)
+                                    val bytesRead = inputStream.read(buffer)
+                                    if (bytesRead > 0) {
+                                        onProgress?.invoke("Stream verified via HLS! ($latency ms)", totalSteps, totalSteps)
+                                        return@withContext StreamEgressResult.Verified(
+                                            streamId = streamId,
+                                            contentType = contentType,
+                                            latencyMs = latency,
+                                            sampleCount = sampleCodes.size + 1
+                                        )
+                                    }
+                                }
                             } else {
                                 if (!sampleCodes.contains(code)) {
                                     sampleCodes.add(code)
