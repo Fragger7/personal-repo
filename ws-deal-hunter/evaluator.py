@@ -422,6 +422,7 @@ class GeminiHardwareEvaluator:
             "needs repair", "needs fix", "needs fixing", "for repair", "read desc", "read description", "as-is", "as is", "untested", "parts only",
             "display issue", "damaged screen", "no power", "bad logic board",
             "broken hinge", "loose hinge", "hinge separated", "hinge screw", "frame separating", "frame is separating",
+            "keyboard issue", "bad keyboard", "broken keyboard", "keys not working", "missing key", "missing keys",
             "cracked palm rest", "cracked palmrest", "keyboard imprints", "deep screen marks", "bent corner", "dropped impact"
         ]
         if any(w in text for w in structural_damage_keywords):
@@ -430,6 +431,17 @@ class GeminiHardwareEvaluator:
         # B.2. No RAM / Barebones
         if any(w in text for w in ["no ram", "without ram", "barebones", "missing ram", "no memory"]):
             return self._reject_dict("Hard Excluded: Barebones / No RAM workstation.")
+
+        # B.3. Legacy Workstation Models (Precision 7510-7550, 5510-5550, 3510-3560 with <= 10th Gen)
+        if any(w in text for w in [
+            "precision 7510", "precision 7520", "precision 7530", "precision 7540", "precision 7550",
+            "precision 7710", "precision 7720", "precision 7730", "precision 7740", "precision 7750",
+            "precision 5510", "precision 5520", "precision 5530", "precision 5540", "precision 5550",
+            "precision 3510", "precision 3520", "precision 3530", "precision 3540", "precision 3550", "precision 3560",
+            "thinkpad p50", "thinkpad p51", "thinkpad p52", "thinkpad p53", "thinkpad p70", "thinkpad p71", "thinkpad p72", "thinkpad p73",
+            "zbook 15 g3", "zbook 15 g4", "zbook 15 g5", "zbook 15 g6", "zbook 17 g3", "zbook 17 g4", "zbook 17 g5"
+        ]):
+            return self._reject_dict("Hard Excluded: Legacy workstation model (< 11th/12th Gen Intel) outruled per system specification.")
 
         # C. Blown-dGPU Failure Trap (Workstations listed with "Intel Iris Xe only" or dead dGPU)
         if any(w in text for w in ["iris xe only", "intel graphics only", "uhd graphics only", "dgpu not working", "gpu disabled", "gpu code 43", "no dedicated gpu"]):
@@ -442,7 +454,7 @@ class GeminiHardwareEvaluator:
             return self._reject_dict(f"Hard Excluded: Older Intel/Xeon CPU ({intel_old_gen.group(0)}) rejected. Minimum 12th-Gen Intel required.")
 
         # E. Intel Core i5 & Low-Tier Silicon Blacklist (All i5s rejected for developer workstation tier)
-        intel_i5_match = re.search(r'\b(i5-\d{4,5}[a-z]*|core i5|intel i5)\b', text)
+        intel_i5_match = re.search(r'\b(i5-\d{4,5}[a-z]*|core\s*i5|intel\s*i5|\bi5\b)\b', text)
         if intel_i5_match:
             return self._reject_dict(f"Hard Excluded: Intel Core i5 processor ({intel_i5_match.group(0)}) lacks 14-core workstation baseline.")
 
@@ -461,9 +473,9 @@ class GeminiHardwareEvaluator:
         if amd_old_gen:
             return self._reject_dict(f"Hard Excluded: Legacy AMD Zen 2/3 CPU ({amd_old_gen.group(0)}) rejected. Minimum Zen 4 (7840HS/8840HS) required.")
 
-        # I. Consumer & Budget Lines (Latitude 3000/5000, Inspiron, IdeaPad, Yoga, Pavilion, Envy, OmniBook)
-        if any(w in text for w in ["latitude 3", "latitude 5", "inspiron", "vostro", "ideapad", "yoga", "thinkbook", "flex 5", "chromebook", "pavilion", "envy", "omnibook", "stream 14", "victus"]):
-            if not any(w in text for w in ["precision", "xps 15", "xps 17", "thinkpad p", "p1 gen", "p16", "x1 extreme", "zbook"]):
+        # I. Consumer & Budget Lines (Latitude 3000/5000, Inspiron, IdeaPad, Yoga, Pavilion, Envy, OmniBook, Precision 3000 series)
+        if any(w in text for w in ["latitude 3", "latitude 5", "inspiron", "vostro", "ideapad", "yoga", "thinkbook", "flex 5", "chromebook", "pavilion", "envy", "omnibook", "stream 14", "victus", "precision 3580", "precision 3581", "precision 3571"]):
+            if not any(w in text for w in ["precision 55", "precision 56", "precision 76", "precision 77", "xps 15", "xps 17", "thinkpad p1", "p16", "x1 extreme", "zbook"]):
                 return self._reject_dict("Hard Excluded: Budget consumer / entry business chassis lacks workstation thermal envelope.")
 
         # J. Absolute Budget Hard Ceiling ($1,700)
@@ -474,8 +486,11 @@ class GeminiHardwareEvaluator:
         is_desktop = any(w in text for w in ["mini pc", "desktop", "bundle", "micro center clearance", "ms-01", "ser8", "ser7", "optiplex", "motherboard"])
         if not is_desktop:
             small_screen_m = re.search(r'\b(11[\.0-9]*|12[\.0-9]*|13[\.0-9]*|14[\.0-9]*)(?:["”\']|\s*inch|\s*in\b)', text)
-            is_compact_model = any(w in text for w in ["14\"", "14-inch", "14 inch", "14.0", "14.1", "13\"", "13-inch", "blade 14", "zephyrus g14", "p14s", "macbook pro 14", "t14", "x1 carbon", "x13"])
+            is_compact_model = any(w in text for w in ["14\"", "14-inch", "14 inch", "14.0", "14.1", "13\"", "13-inch", "blade 14", "zephyrus g14", "p14s", "5470", "5480", "5490", "macbook pro 14", "t14", "x1 carbon", "x13"])
             has_large_screen = any(w in text for w in ["15.6", "15\"", "15-inch", "16\"", "16-inch", "16 inch", "16.0", "16.2", "17.3", "17\"", "17-inch", "17.0"])
+            if (small_screen_m or is_compact_model) and not has_large_screen:
+                tag = small_screen_m.group(0) if small_screen_m else "compact chassis"
+                return self._reject_dict(f"Hard Excluded: Screen size ({tag}) is smaller than required 15.0\"-16\" developer workstation display.")
             if (small_screen_m or is_compact_model) and not has_large_screen:
                 tag = small_screen_m.group(0) if small_screen_m else "compact chassis"
                 return self._reject_dict(f"Hard Excluded: Screen size ({tag}) is smaller than required 15.0\"-16\" developer workstation display.")

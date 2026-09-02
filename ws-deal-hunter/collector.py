@@ -58,6 +58,7 @@ HARD_EXCLUSION_REGEX = re.compile(
     r"(?i)(for\s*parts|not\s*working|as\s*is\b|untested|repair\s*only|needs\s*repair|needs\s*fix|needs\s*fixing|for\s*repair|read\s*desc\b|read\s*description|broken\s*screen|bad\s*screen|liquid\s*damage|"
     r"cracked\s*(?:screen|display|glass|panel|lcd)|crack\s*(?:on|in)\s*(?:screen|display|glass)|hairline\s*crack|"
     r"screen\s*(?:defect|issue|blemish|burn|line)|lines?\s*(?:on|in)\s*(?:screen|display)|dead\s*pixels?|delaminat\w+|staingate|backlight\s*bleed|"
+    r"keyboard\s*(?:issue|problem|defect|warning|broken|bad)|bad\s*keyboard|broken\s*keyboard|keys?\s*not\s*working|missing\s*keys?|"
     r"battery\s*(?:issue|problem|defect|warning|service|dead|bad|swollen|expanded)|service\s*battery|replace\s*battery|bad\s*battery|no\s*battery|"
     r"water\s*damage|icp\b|mdm\b|icloud\s*lock|activation\s*lock|managed\s*profile|profile\s*lock|bios\s*lock|computrace|"
     r"bad\s*gpu|dead\s*gpu|no\s*nvidia|iris\s*only|iris\s*xe\s*only|intel\s*graphics\s*only|uhd\s*graphics\s*only|touch\s*bar|"
@@ -65,6 +66,7 @@ HARD_EXCLUSION_REGEX = re.compile(
     r"i5-\d{4,5}[a-z]*|core\s*i5|intel\s*i5|"
     r"i[3579][\s-]11\d{3}|i[3579][\s-]11th(?:\s*gen)?|i[3579]\s*11gen|11th\s*gen|i[3579][\s-]10\d{3}|i[3579][\s-]10th(?:\s*gen)?|i[3579][\s-][89]\d{3}|11850h|11950h|11800h|11400h|11980hk|10885h|10750h|11955m|w-11\d{3}|xeon.*11\d{3}|"
     r"1260p|1360p|1370p|1240p|1250p|1340p|1350p|1355u|1335u|1235u|1245u|1255u|"
+    r"precision\s*(?:35[1-6]0|75[1-5]0|77[1-5]0|55[1-5]0)|"
     r"latitude\s*(?:3[0-9]{3}|5[0-9]{3}|7[0-3][0-9]{2}|e[0-9]{4})|inspiron|vostro|ideapad|thinkbook|flex\s*5|chromebook|pavilion|envy|omnibook|stream\s*14|victus|vivobook|katana|gf63|thin\s*15|sony\s*vaio)"
 )
 
@@ -157,6 +159,25 @@ class EBayCollector:
             from bs4 import BeautifulSoup
             from curl_cffi import requests
 
+            session = requests.Session(impersonate="chrome124")
+            base_headers = {
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+                "Accept-Language": "en-US,en;q=0.9",
+                "Sec-Ch-Ua": "\"Not A(Brand\";v=\"8\", \"Chromium\";v=\"124\", \"Google Chrome\";v=\"124\"",
+                "Sec-Ch-Ua-Mobile": "?0",
+                "Sec-Ch-Ua-Platform": "\"macOS\"",
+                "Sec-Fetch-Dest": "document",
+                "Sec-Fetch-Mode": "navigate",
+                "Sec-Fetch-Site": "none",
+                "Sec-Fetch-User": "?1",
+                "Upgrade-Insecure-Requests": "1",
+                "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+            }
+            try:
+                session.get("https://www.ebay.com/", headers=base_headers, timeout=6.0)
+            except Exception:
+                pass
+
             def scrape_query_target(target: Dict[str, str]) -> List[RawListing]:
                 q = target["query"]
                 sacat = target.get("sacat", "177")
@@ -166,18 +187,14 @@ class EBayCollector:
                     url = (
                         f"https://www.ebay.com/sch/i.html?"
                         f"_nkw={urllib.parse.quote(q)}&_sacat={sacat}&LH_BIN=1"
-                        f"&_sop=10&_udlo=300&_udhi=2500&_pgn={page}"
+                        f"&_sop=10&_udlo=300&_udhi=1700&_pgn={page}"
                     )
 
-                    headers = {
-                        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
-                        "Accept-Language": "en-US,en;q=0.9",
-                        "Referer": "https://www.ebay.com/",
-                        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-                    }
+                    headers = dict(base_headers)
+                    headers["Referer"] = "https://www.ebay.com/"
 
                     try:
-                        res = requests.get(url, impersonate="chrome124", headers=headers, timeout=6.0)
+                        res = session.get(url, headers=headers, timeout=8.0)
                         if res.status_code == 200:
                             soup = BeautifulSoup(res.text, "html.parser")
                             items = soup.select(".s-item, .s-card, li.s-item")
