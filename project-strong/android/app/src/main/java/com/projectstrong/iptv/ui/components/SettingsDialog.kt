@@ -496,6 +496,257 @@ fun SettingsDialog(
                                     )
                                 )
                             }
+
+                            Divider(color = AppSurfaceBorder.copy(alpha = 0.5f))
+
+                            // Fast-Fail Tail-Latency Hedging
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                    ) {
+                                        Text(
+                                            text = "Fast-Fail Hedging",
+                                            color = AppTextPrimary,
+                                            fontWeight = FontWeight.SemiBold,
+                                            style = MaterialTheme.typography.bodyMedium
+                                        )
+                                        Surface(
+                                            shape = RoundedCornerShape(6.dp),
+                                            color = Color(0xFF34D399).copy(alpha = 0.18f),
+                                            border = BorderStroke(1.dp, Color(0xFF34D399).copy(alpha = 0.4f))
+                                        ) {
+                                            Text(
+                                                text = "Zero Tail-Latency",
+                                                color = Color(0xFF34D399),
+                                                style = MaterialTheme.typography.labelSmall,
+                                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                                                fontWeight = FontWeight.Bold
+                                            )
+                                        }
+                                    }
+                                    Text(
+                                        text = "Skips redundant User-Agent retries on socket timeouts and connection refusals to prevent stalling worker pool.",
+                                        color = AppTextMuted,
+                                        style = MaterialTheme.typography.bodySmall
+                                    )
+                                }
+                                Switch(
+                                    checked = SettingsManager.fastFailHedgingEnabled,
+                                    onCheckedChange = { SettingsManager.saveFastFailHedging(it) },
+                                    colors = SwitchDefaults.colors(
+                                        checkedThumbColor = Color.White,
+                                        checkedTrackColor = Color(0xFF34D399),
+                                        uncheckedThumbColor = AppTextSecondary,
+                                        uncheckedTrackColor = AppSurfaceBorder
+                                    )
+                                )
+                            }
+
+                            Divider(color = AppSurfaceBorder.copy(alpha = 0.5f))
+
+                            // Stream Egress & Ghost Line Verification Option
+                            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically, 
+                                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                            modifier = Modifier.fillMaxWidth()
+                                        ) {
+                                            Text(
+                                                text = "Stream Egress Verification",
+                                                color = AppTextPrimary,
+                                                fontWeight = FontWeight.SemiBold,
+                                                style = MaterialTheme.typography.bodyMedium
+                                            )
+                                            Surface(
+                                                shape = RoundedCornerShape(6.dp),
+                                                color = AppPrimary.copy(alpha = 0.2f),
+                                                border = BorderStroke(1.dp, AppPrimary.copy(alpha = 0.5f))
+                                            ) {
+                                                Text(
+                                                    text = "Ghost Line Shield",
+                                                    color = AppPrimary,
+                                                    style = MaterialTheme.typography.labelSmall,
+                                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                                                    fontWeight = FontWeight.Bold
+                                                )
+                                            }
+                                        }
+                                        Text(
+                                            text = "Enables stream channel byte egress testing to detect HTTP 456/884 ghost lines and stream-level blocks.",
+                                            color = AppTextMuted,
+                                            style = MaterialTheme.typography.bodySmall
+                                        )
+                                    }
+                                    Switch(
+                                        checked = SettingsManager.egressVerificationEnabled,
+                                        onCheckedChange = { SettingsManager.saveEgressVerification(it) },
+                                        colors = SwitchDefaults.colors(
+                                            checkedThumbColor = Color.White,
+                                            checkedTrackColor = AppPrimary,
+                                            uncheckedThumbColor = AppTextSecondary,
+                                            uncheckedTrackColor = AppSurfaceBorder
+                                        )
+                                    )
+                                }
+
+                                if (SettingsManager.egressVerificationEnabled) {
+                                    Surface(
+                                        shape = RoundedCornerShape(12.dp),
+                                        color = AppSurfaceVariant.copy(alpha = 0.5f),
+                                        border = BorderStroke(1.dp, AppSurfaceBorder),
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) {
+                                        Column(
+                                            modifier = Modifier.padding(12.dp),
+                                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                                        ) {
+                                            // Auto Egress on Deep Scan toggle
+                                            Row(
+                                                modifier = Modifier.fillMaxWidth(),
+                                                horizontalArrangement = Arrangement.SpaceBetween,
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                Column(modifier = Modifier.weight(1f)) {
+                                                    Text(
+                                                        text = "Auto-Probe During Deep Scan",
+                                                        color = AppTextPrimary,
+                                                        fontWeight = FontWeight.Medium,
+                                                        style = MaterialTheme.typography.bodySmall
+                                                    )
+                                                    Text(
+                                                        text = "Automatically test stream egress when performing account deep queries.",
+                                                        color = AppTextMuted,
+                                                        style = MaterialTheme.typography.labelSmall
+                                                    )
+                                                }
+                                                Switch(
+                                                    checked = SettingsManager.autoEgressOnDeepScan,
+                                                    onCheckedChange = { SettingsManager.saveAutoEgressOnDeepScan(it) },
+                                                    colors = SwitchDefaults.colors(
+                                                        checkedThumbColor = Color.White,
+                                                        checkedTrackColor = AppPrimary,
+                                                        uncheckedThumbColor = AppTextSecondary,
+                                                        uncheckedTrackColor = AppSurfaceBorder
+                                                    )
+                                                )
+                                            }
+
+                                            Divider(color = AppSurfaceBorder.copy(alpha = 0.4f))
+
+                                            // Egress Timeout Slider
+                                            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                                Row(
+                                                    modifier = Modifier.fillMaxWidth(),
+                                                    horizontalArrangement = Arrangement.SpaceBetween
+                                                ) {
+                                                    Text(
+                                                        text = "Egress Socket Timeout",
+                                                        color = AppTextPrimary,
+                                                        style = MaterialTheme.typography.bodySmall,
+                                                        fontWeight = FontWeight.Medium
+                                                    )
+                                                    Text(
+                                                        text = "${SettingsManager.egressTimeoutSeconds}s",
+                                                        color = AppPrimary,
+                                                        fontWeight = FontWeight.Bold,
+                                                        style = MaterialTheme.typography.bodySmall
+                                                    )
+                                                }
+                                                Slider(
+                                                    value = SettingsManager.egressTimeoutSeconds.toFloat(),
+                                                    onValueChange = { SettingsManager.saveEgressTimeoutSeconds(it.toInt()) },
+                                                    valueRange = 2f..10f,
+                                                    steps = 7,
+                                                    colors = SliderDefaults.colors(
+                                                        thumbColor = AppPrimary,
+                                                        activeTrackColor = AppPrimary,
+                                                        inactiveTrackColor = AppSurfaceBorder
+                                                    )
+                                                )
+                                            }
+
+                                            Divider(color = AppSurfaceBorder.copy(alpha = 0.4f))
+
+                                            // Egress Sample Count Slider
+                                            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                                Row(
+                                                    modifier = Modifier.fillMaxWidth(),
+                                                    horizontalArrangement = Arrangement.SpaceBetween
+                                                ) {
+                                                    Text(
+                                                        text = "Sample Streams to Probe",
+                                                        color = AppTextPrimary,
+                                                        style = MaterialTheme.typography.bodySmall,
+                                                        fontWeight = FontWeight.Medium
+                                                    )
+                                                    Text(
+                                                        text = "${SettingsManager.egressSampleCount} channels",
+                                                        color = Color(0xFF34D399),
+                                                        fontWeight = FontWeight.Bold,
+                                                        style = MaterialTheme.typography.bodySmall
+                                                    )
+                                                }
+                                                Slider(
+                                                    value = SettingsManager.egressSampleCount.toFloat(),
+                                                    onValueChange = { SettingsManager.saveEgressSampleCount(it.toInt()) },
+                                                    valueRange = 1f..3f,
+                                                    steps = 1,
+                                                    colors = SliderDefaults.colors(
+                                                        thumbColor = Color(0xFF34D399),
+                                                        activeTrackColor = Color(0xFF34D399),
+                                                        inactiveTrackColor = AppSurfaceBorder
+                                                    )
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            Divider(color = AppSurfaceBorder.copy(alpha = 0.5f))
+
+                            // Screen Wake Lock Option
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = "Keep Screen On During Scans",
+                                        color = AppTextPrimary,
+                                        fontWeight = FontWeight.SemiBold,
+                                        style = MaterialTheme.typography.bodyMedium
+                                    )
+                                    Text(
+                                        text = "Prevents device sleep and background throttling while parsing thousands of nodes.",
+                                        color = AppTextMuted,
+                                        style = MaterialTheme.typography.bodySmall
+                                    )
+                                }
+                                Switch(
+                                    checked = SettingsManager.keepScreenOnDuringScans,
+                                    onCheckedChange = { SettingsManager.saveKeepScreenOn(it) },
+                                    colors = SwitchDefaults.colors(
+                                        checkedThumbColor = Color.White,
+                                        checkedTrackColor = AppPrimary,
+                                        uncheckedThumbColor = AppTextSecondary,
+                                        uncheckedTrackColor = AppSurfaceBorder
+                                    )
+                                )
+                            }
                         }
                     }
 
