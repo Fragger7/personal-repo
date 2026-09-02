@@ -481,72 +481,71 @@ fun FullScreenCatalogExplorer(
                                                 Row(
                                                     modifier = Modifier
                                                         .fillMaxWidth()
-                                                        .padding(horizontal = 14.dp, vertical = 10.dp),
-                                                    verticalAlignment = Alignment.CenterVertically,
-                                                    horizontalArrangement = Arrangement.SpaceBetween
+                                                        .padding(horizontal = 12.dp, vertical = 10.dp),
+                                                    verticalAlignment = Alignment.CenterVertically
                                                 ) {
-                                                    Row(
+                                                    Box(
                                                         modifier = Modifier
-                                                            .weight(1f, fill = false)
-                                                            .padding(end = 8.dp),
-                                                        verticalAlignment = Alignment.CenterVertically
+                                                            .size(36.dp)
+                                                            .clip(CircleShape)
+                                                            .background(AppSurfaceVariant),
+                                                        contentAlignment = Alignment.Center
                                                     ) {
-                                                        Box(
-                                                            modifier = Modifier
-                                                                .size(36.dp)
-                                                                .clip(CircleShape)
-                                                                .background(AppSurfaceVariant),
-                                                            contentAlignment = Alignment.Center
+                                                        Icon(
+                                                            Icons.Default.LiveTv,
+                                                            contentDescription = "Live",
+                                                            tint = AppPrimary,
+                                                            modifier = Modifier.size(18.dp)
+                                                        )
+                                                    }
+                                                    Spacer(modifier = Modifier.width(10.dp))
+                                                    Column(
+                                                        modifier = Modifier
+                                                            .weight(1f)
+                                                            .padding(end = 8.dp),
+                                                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                                                    ) {
+                                                        Text(
+                                                            text = channel.name,
+                                                            color = AppTextPrimary,
+                                                            style = MaterialTheme.typography.bodyMedium,
+                                                            fontWeight = FontWeight.SemiBold,
+                                                            maxLines = 2,
+                                                            overflow = TextOverflow.Ellipsis
+                                                        )
+                                                        Row(
+                                                            verticalAlignment = Alignment.CenterVertically, 
+                                                            horizontalArrangement = Arrangement.spacedBy(6.dp)
                                                         ) {
-                                                            Icon(
-                                                                Icons.Default.LiveTv,
-                                                                contentDescription = "Live",
-                                                                tint = AppPrimary,
-                                                                modifier = Modifier.size(18.dp)
-                                                            )
-                                                        }
-                                                        Spacer(modifier = Modifier.width(12.dp))
-                                                        Column(modifier = Modifier.weight(1f, fill = false)) {
-                                                            Text(
-                                                                text = channel.name,
-                                                                color = AppTextPrimary,
-                                                                style = MaterialTheme.typography.bodyMedium,
-                                                                fontWeight = FontWeight.SemiBold,
-                                                                maxLines = 1,
-                                                                overflow = TextOverflow.Ellipsis
-                                                            )
-                                                            Spacer(modifier = Modifier.height(2.dp))
-                                                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                                                                Box(
-                                                                    modifier = Modifier
-                                                                        .clip(RoundedCornerShape(4.dp))
-                                                                        .background(AppSurfaceVariant)
-                                                                        .padding(horizontal = 4.dp, vertical = 1.dp)
-                                                                ) {
-                                                                    Text(
-                                                                        text = "ID: ${channel.streamId}",
-                                                                        color = AppTextMuted,
-                                                                        style = MaterialTheme.typography.labelSmall
-                                                                    )
-                                                                }
-                                                                // Parent Category Pill
-                                                                Box(
-                                                                    modifier = Modifier
-                                                                        .clip(RoundedCornerShape(4.dp))
-                                                                        .background(AppPrimary.copy(alpha = 0.15f))
-                                                                        .clickable {
-                                                                            selectedCategoryId = channel.categoryId
-                                                                        }
-                                                                        .padding(horizontal = 6.dp, vertical = 1.dp)
-                                                                ) {
-                                                                    Text(
-                                                                        text = "📁 $catName",
-                                                                        color = AppPrimary,
-                                                                        style = MaterialTheme.typography.labelSmall,
-                                                                        maxLines = 1,
-                                                                        overflow = TextOverflow.Ellipsis
-                                                                    )
-                                                                }
+                                                            Box(
+                                                                modifier = Modifier
+                                                                    .clip(RoundedCornerShape(4.dp))
+                                                                    .background(AppSurfaceVariant)
+                                                                    .padding(horizontal = 5.dp, vertical = 2.dp)
+                                                            ) {
+                                                                Text(
+                                                                    text = "ID: ${channel.streamId}",
+                                                                    color = AppTextMuted,
+                                                                    style = MaterialTheme.typography.labelSmall
+                                                                )
+                                                            }
+                                                            // Parent Category Pill
+                                                            Box(
+                                                                modifier = Modifier
+                                                                    .clip(RoundedCornerShape(4.dp))
+                                                                    .background(AppPrimary.copy(alpha = 0.15f))
+                                                                    .clickable {
+                                                                        selectedCategoryId = channel.categoryId
+                                                                    }
+                                                                    .padding(horizontal = 6.dp, vertical = 2.dp)
+                                                            ) {
+                                                                Text(
+                                                                    text = "📁 $catName",
+                                                                    color = AppPrimary,
+                                                                    style = MaterialTheme.typography.labelSmall,
+                                                                    maxLines = 1,
+                                                                    overflow = TextOverflow.Ellipsis
+                                                                )
                                                             }
                                                         }
                                                     }
@@ -581,7 +580,7 @@ fun FullScreenCatalogExplorer(
                                                                 showCopiedToast = true
                                                                 ToastManager.success("Copied: ${channel.name}")
                                                             },
-                                                            modifier = Modifier.size(36.dp)
+                                                            modifier = Modifier.size(34.dp)
                                                         ) {
                                                             Icon(
                                                                 Icons.Default.ContentCopy,
@@ -598,13 +597,13 @@ fun FullScreenCatalogExplorer(
                                                                 showCopiedToast = true
                                                                 ToastManager.success("Copied Direct Stream URL (.ts)")
                                                             },
-                                                            modifier = Modifier.size(36.dp)
+                                                            modifier = Modifier.size(34.dp)
                                                         ) {
                                                             Icon(
                                                                 Icons.Default.Link,
-                                                                contentDescription = "Copy Link",
-                                                                tint = AppPrimary,
-                                                                modifier = Modifier.size(18.dp)
+                                                                contentDescription = "Copy URL",
+                                                                tint = AppTextSecondary,
+                                                                modifier = Modifier.size(16.dp)
                                                             )
                                                         }
                                                     }

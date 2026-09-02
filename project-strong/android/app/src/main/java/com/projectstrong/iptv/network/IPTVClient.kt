@@ -88,11 +88,20 @@ object IPTVClient {
     }
 
     private fun getDeepQueryClient(): OkHttpClient {
-        val timeout = maxOf(com.projectstrong.iptv.data.SettingsManager.httpTimeoutSeconds.toLong(), 20L)
+        val timeout = com.projectstrong.iptv.data.SettingsManager.httpTimeoutSeconds.toLong()
         return baseClient.newBuilder()
-            .connectTimeout(timeout, TimeUnit.SECONDS)
-            .readTimeout(30L, TimeUnit.SECONDS)
-            .writeTimeout(20L, TimeUnit.SECONDS)
+            .connectTimeout(minOf(timeout, 5L), TimeUnit.SECONDS)
+            .readTimeout(minOf(timeout * 2, 12L), TimeUnit.SECONDS)
+            .writeTimeout(5L, TimeUnit.SECONDS)
+            .build()
+    }
+
+    private fun getEgressClient(): OkHttpClient {
+        val timeout = com.projectstrong.iptv.data.SettingsManager.egressTimeoutSeconds.toLong()
+        return baseClient.newBuilder()
+            .connectTimeout(minOf(timeout, 3L), TimeUnit.SECONDS)
+            .readTimeout(timeout, TimeUnit.SECONDS)
+            .writeTimeout(3L, TimeUnit.SECONDS)
             .build()
     }
 
@@ -111,7 +120,7 @@ object IPTVClient {
 
     /**
      * Executes an HTTP request with evasion headers and automatic user-agent fallback on 403 / 401 blocks.
-     * Note: Does NOT manually set Accept-Encoding so OkHttp handles transparent GZIP compression and decompression automatically.
+     * Fast-fails on socket timeouts and connection errors to eliminate tail latency and scanning stalls.
      */
     private fun executeWithAdaptiveHeaders(
         client: OkHttpClient, 
@@ -134,16 +143,26 @@ object IPTVClient {
                 if (response.code in 200..299) {
                     return response
                 }
-                // If 404, stopping immediately since path is wrong, not user-agent
-                if (response.code == 404) {
+                // If 404, 521, or 500, path or server is dead/missing, not a User-Agent issue
+                if (response.code == 404 || response.code == 521 || response.code == 500) {
+                    return response
+                }
+                // Only retry next User-Agent if server explicitly rejected our User-Agent with 401, 403, or 503
+                if (response.code != 401 && response.code != 403 && response.code != 503) {
                     return response
                 }
                 lastResponse?.close()
                 lastResponse = response
             } catch (e: Throwable) {
-                // If the very first request failed due to an unreachable host (DNS or Connect failure),
-                // do not waste time retrying 5 different user agents on a non-existent/dead host.
-                if (index == 0 && (e is java.net.UnknownHostException || e is java.net.ConnectException || e is java.net.NoRouteToHostException)) {
+                // If fast-fail hedging is enabled or network socket failure occurred, do not waste
+                // time retrying alternative user agents on a non-existent/dead/timeout host.
+                if (e is java.net.SocketTimeoutException || 
+                    e is java.io.InterruptedIOException || 
+                    e is java.net.UnknownHostException || 
+                    e is java.net.ConnectException || 
+                    e is java.net.NoRouteToHostException || 
+                    e is javax.net.ssl.SSLException ||
+                    com.projectstrong.iptv.data.SettingsManager.fastFailHedgingEnabled) {
                     throw e
                 }
             }
@@ -1047,15 +1066,24 @@ object IPTVClient {
      * 2. Dual container testing: Tests both .ts and .m3u8 endpoints.
      * 3. Zero False Negatives: Timeouts or temporary 5xx errors return Inconclusive without penalizing active status.
      * 4. Ghost Line identification: Flags HTTP 456 (Stream Egress Disabled) and HTTP 884 (Anti-Dump Lockout).
+     * 5. Real-time visual progress callbacks for responsive UI updates.
      */
-    suspend fun probeStreamEgress(baseUrl: String, user: String, pass: String): StreamEgressResult = withContext(Dispatchers.IO) {
+    suspend fun probeStreamEgress(
+        baseUrl: String, 
+        user: String, 
+        pass: String,
+        onProgress: ((step: String, current: Int, total: Int) -> Unit)? = null
+    ): StreamEgressResult = withContext(Dispatchers.IO) {
         try {
             val normalizedUrl = normalizeBaseUrl(baseUrl)
             val encodedUser = URLEncoder.encode(user, "UTF-8")
             val encodedPass = URLEncoder.encode(pass, "UTF-8")
-            val client = getClient()
+            val client = getEgressClient()
+            val maxSamples = com.projectstrong.iptv.data.SettingsManager.egressSampleCount.coerceIn(1, 3)
 
-            // 1. Sample up to 3 stream IDs from player_api.php using streaming JsonReader (zero OOM memory overhead)
+            onProgress?.invoke("Sampling active channel stream IDs...", 1, maxSamples + 2)
+
+            // 1. Sample up to N stream IDs from player_api.php using streaming JsonReader (zero OOM memory overhead)
             val streamsApiUrl = "$normalizedUrl/player_api.php?username=$encodedUser&password=$encodedPass&action=get_live_streams"
             val sampledStreamIds = mutableListOf<String>()
 
@@ -1070,7 +1098,7 @@ object IPTVClient {
                         val reader = android.util.JsonReader(BufferedReader(InputStreamReader(res.body!!.byteStream(), "UTF-8"), 8192))
                         if (reader.peek() == android.util.JsonToken.BEGIN_ARRAY) {
                             reader.beginArray()
-                            while (reader.hasNext() && sampledStreamIds.size < 3) {
+                            while (reader.hasNext() && sampledStreamIds.size < maxSamples) {
                                 if (reader.peek() == android.util.JsonToken.BEGIN_OBJECT) {
                                     reader.beginObject()
                                     var currentStreamId = ""
@@ -1104,6 +1132,7 @@ object IPTVClient {
             // 2. Fallback: If no stream IDs extracted via JSON, check get.php M3U endpoint
             val directStreamUrls = mutableListOf<String>()
             if (sampledStreamIds.isEmpty()) {
+                onProgress?.invoke("Probing fallback M3U playlist headers...", 1, maxSamples + 2)
                 val m3uUrl = "$normalizedUrl/get.php?username=$encodedUser&password=$encodedPass&type=m3u_plus&output=ts"
                 try {
                     val m3uReq = Request.Builder()
@@ -1133,7 +1162,7 @@ object IPTVClient {
                                 val trimmed = line.trim()
                                 if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
                                     directStreamUrls.add(trimmed)
-                                    if (directStreamUrls.size >= 2) break
+                                    if (directStreamUrls.size >= maxSamples) break
                                 }
                             }
                         }
@@ -1161,7 +1190,11 @@ object IPTVClient {
                 }
             }
 
-            for ((streamId, url) in candidateUrls) {
+            val totalSteps = candidateUrls.size + 2
+            candidateUrls.forEachIndexed { sampleIdx, (streamId, url) ->
+                val stepNum = sampleIdx + 2
+                onProgress?.invoke("Probing stream #$streamId (testing byte egress)...", stepNum, totalSteps)
+
                 var streamSuccess = false
                 val startTime = System.currentTimeMillis()
 
@@ -1180,6 +1213,7 @@ object IPTVClient {
                         if (code in 200..206) {
                             val bytes = streamRes.body?.byteStream()?.readBytes()
                             if (bytes != null && bytes.isNotEmpty()) {
+                                onProgress?.invoke("Stream verified! 200 OK ($latency ms)", totalSteps, totalSteps)
                                 return@withContext StreamEgressResult.Verified(
                                     streamId = streamId,
                                     contentType = contentType,
@@ -1199,6 +1233,7 @@ object IPTVClient {
                 // If .ts returned 456 or failed, test .m3u8 alternative
                 if (!streamSuccess && sampledStreamIds.isNotEmpty()) {
                     try {
+                        onProgress?.invoke("Testing stream #$streamId (.m3u8 index fallback)...", stepNum, totalSteps)
                         val m3u8Url = "$normalizedUrl/live/$user/$pass/$streamId.m3u8"
                         val m3u8Req = Request.Builder()
                             .url(m3u8Url)
@@ -1211,6 +1246,7 @@ object IPTVClient {
                             val contentType = m3u8Res.header("Content-Type")
 
                             if (code in 200..206) {
+                                onProgress?.invoke("Stream verified via HLS! ($latency ms)", totalSteps, totalSteps)
                                 return@withContext StreamEgressResult.Verified(
                                     streamId = streamId,
                                     contentType = contentType,
@@ -1229,6 +1265,8 @@ object IPTVClient {
                     }
                 }
             }
+
+            onProgress?.invoke("Analyzing consensus results...", totalSteps, totalSteps)
 
             // 4. Consensus Decision with Guardrails
             if (sampleCodes.isNotEmpty() && sampleCodes.all { it == 456 }) {

@@ -139,8 +139,16 @@ fun XtreamMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCredent
                         if (idx >= total) break
 
                         val node = activeNodes[idx]
-                        val liveAsync = async { IPTVClient.getLiveStreamCount(node.baseUrl, node.user, node.pass) }
-                        val vodAsync = async { IPTVClient.getVodStreamCount(node.baseUrl, node.user, node.pass) }
+                        val liveAsync = async { 
+                            kotlinx.coroutines.withTimeoutOrNull(com.projectstrong.iptv.data.SettingsManager.httpTimeoutSeconds * 1000L + 2500L) {
+                                IPTVClient.getLiveStreamCount(node.baseUrl, node.user, node.pass)
+                            } ?: -1
+                        }
+                        val vodAsync = async { 
+                            kotlinx.coroutines.withTimeoutOrNull(com.projectstrong.iptv.data.SettingsManager.httpTimeoutSeconds * 1000L + 2500L) {
+                                IPTVClient.getVodStreamCount(node.baseUrl, node.user, node.pass)
+                            } ?: -1
+                        }
                         val liveCount = liveAsync.await()
                         val vodCount = vodAsync.await()
 
@@ -553,6 +561,9 @@ fun XtreamDetailScreen(node: ParsedCredential, onBack: () -> Unit) {
     var egressState by remember(node) { mutableStateOf(node.egressStatus) }
     var egressDetailsState by remember(node) { mutableStateOf(node.egressDetails) }
     var isProbingEgress by remember { mutableStateOf(false) }
+    var egressProgressStep by remember { mutableStateOf("") }
+    var egressProgressCurrent by remember { mutableIntStateOf(0) }
+    var egressProgressTotal by remember { mutableIntStateOf(1) }
 
     if (showCommitDialog) {
         CommitAccountDialog(
@@ -706,12 +717,14 @@ fun XtreamDetailScreen(node: ParsedCredential, onBack: () -> Unit) {
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(
-                        "Stream Egress & Ghost Line Check",
-                        color = AppTextPrimary,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
-                    )
+                    Column(modifier = Modifier.weight(1f, fill = false)) {
+                        Text(
+                            "Stream Egress & Ghost Line Check",
+                            color = AppTextPrimary,
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
                     
                     val badgeColor = when {
                         egressState.contains("Verified", ignoreCase = true) -> AppSuccess
@@ -734,6 +747,63 @@ fun XtreamDetailScreen(node: ParsedCredential, onBack: () -> Unit) {
                     }
                 }
 
+                // Live Visual Progress Feedback Container
+                if (isProbingEgress) {
+                    Surface(
+                        shape = RoundedCornerShape(10.dp),
+                        color = AppSurfaceVariant.copy(alpha = 0.7f),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, AppPrimary.copy(alpha = 0.4f)),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(12.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    CircularProgressIndicator(
+                                        modifier = Modifier.size(14.dp),
+                                        color = AppPrimary,
+                                        strokeWidth = 2.dp
+                                    )
+                                    Text(
+                                        text = "Probing Stream Egress...",
+                                        color = AppPrimary,
+                                        style = MaterialTheme.typography.labelMedium,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                                Text(
+                                    text = "$egressProgressCurrent / $egressProgressTotal",
+                                    color = AppTextSecondary,
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+
+                            LinearProgressIndicator(
+                                progress = { if (egressProgressTotal > 0) egressProgressCurrent.toFloat() / egressProgressTotal.toFloat() else 0.5f },
+                                modifier = Modifier.fillMaxWidth().height(6.dp),
+                                color = AppPrimary,
+                                trackColor = AppSurfaceBorder
+                            )
+
+                            if (egressProgressStep.isNotBlank()) {
+                                Text(
+                                    text = egressProgressStep,
+                                    color = AppTextPrimary,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    fontWeight = FontWeight.Medium
+                                )
+                            }
+                        }
+                    }
+                }
+
                 if (egressDetailsState.isNotBlank()) {
                     Text(
                         text = egressDetailsState,
@@ -747,8 +817,20 @@ fun XtreamDetailScreen(node: ParsedCredential, onBack: () -> Unit) {
                         onClick = {
                             if (!isProbingEgress) {
                                 isProbingEgress = true
+                                egressProgressStep = "Initiating multi-sample stream probe..."
+                                egressProgressCurrent = 0
+                                egressProgressTotal = 3
                                 coroutineScope.launch {
-                                    val result = com.projectstrong.iptv.network.IPTVClient.probeStreamEgress(node.baseUrl, node.user, node.pass)
+                                    val result = com.projectstrong.iptv.network.IPTVClient.probeStreamEgress(
+                                        baseUrl = node.baseUrl,
+                                        user = node.user,
+                                        pass = node.pass,
+                                        onProgress = { step, curr, total ->
+                                            egressProgressStep = step
+                                            egressProgressCurrent = curr
+                                            egressProgressTotal = total
+                                        }
+                                    )
                                     when (result) {
                                         is com.projectstrong.iptv.network.StreamEgressResult.Verified -> {
                                             egressState = "🟢 Verified (${result.latencyMs}ms)"
@@ -774,7 +856,7 @@ fun XtreamDetailScreen(node: ParsedCredential, onBack: () -> Unit) {
                         enabled = !isProbingEgress,
                         colors = ButtonDefaults.buttonColors(containerColor = AppPrimary.copy(alpha = 0.85f)),
                         shape = RoundedCornerShape(10.dp),
-                        modifier = Modifier.weight(1f).height(42.dp)
+                        modifier = Modifier.fillMaxWidth().height(44.dp)
                     ) {
                         if (isProbingEgress) {
                             CircularProgressIndicator(modifier = Modifier.size(16.dp), color = Color.White, strokeWidth = 2.dp)

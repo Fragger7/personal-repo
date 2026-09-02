@@ -27,6 +27,9 @@ object SettingsManager {
     private const val KEY_THEME_MODE = "theme_mode"
     private const val KEY_FAST_FAIL_HEDGING = "fast_fail_hedging"
     private const val KEY_EGRESS_VERIFICATION = "egress_verification_enabled"
+    private const val KEY_AUTO_EGRESS_DEEP_SCAN = "auto_egress_deep_scan"
+    private const val KEY_EGRESS_TIMEOUT = "egress_timeout_sec"
+    private const val KEY_EGRESS_SAMPLE_COUNT = "egress_sample_count"
 
     private lateinit var prefs: SharedPreferences
 
@@ -37,6 +40,9 @@ object SettingsManager {
     var currentTheme by mutableStateOf(AppThemeMode.SHERLOCK_AMBER)
     var fastFailHedgingEnabled by mutableStateOf(true)
     var egressVerificationEnabled by mutableStateOf(false)
+    var autoEgressOnDeepScan by mutableStateOf(false)
+    var egressTimeoutSeconds by mutableIntStateOf(4)
+    var egressSampleCount by mutableIntStateOf(2)
 
     fun init(context: Context) {
         prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -46,6 +52,9 @@ object SettingsManager {
         keepScreenOnDuringScans = prefs.getBoolean(KEY_KEEP_SCREEN_ON, true)
         fastFailHedgingEnabled = prefs.getBoolean(KEY_FAST_FAIL_HEDGING, true)
         egressVerificationEnabled = prefs.getBoolean(KEY_EGRESS_VERIFICATION, false)
+        autoEgressOnDeepScan = prefs.getBoolean(KEY_AUTO_EGRESS_DEEP_SCAN, false)
+        egressTimeoutSeconds = prefs.getInt(KEY_EGRESS_TIMEOUT, 4)
+        egressSampleCount = prefs.getInt(KEY_EGRESS_SAMPLE_COUNT, 2)
         
         val savedThemeName = prefs.getString(KEY_THEME_MODE, AppThemeMode.SHERLOCK_AMBER.name)
         currentTheme = try {
@@ -66,6 +75,27 @@ object SettingsManager {
         egressVerificationEnabled = enabled
         if (::prefs.isInitialized) {
             prefs.edit().putBoolean(KEY_EGRESS_VERIFICATION, enabled).apply()
+        }
+    }
+
+    fun saveAutoEgressOnDeepScan(enabled: Boolean) {
+        autoEgressOnDeepScan = enabled
+        if (::prefs.isInitialized) {
+            prefs.edit().putBoolean(KEY_AUTO_EGRESS_DEEP_SCAN, enabled).apply()
+        }
+    }
+
+    fun saveEgressTimeoutSeconds(seconds: Int) {
+        egressTimeoutSeconds = seconds.coerceIn(2, 15)
+        if (::prefs.isInitialized) {
+            prefs.edit().putInt(KEY_EGRESS_TIMEOUT, egressTimeoutSeconds).apply()
+        }
+    }
+
+    fun saveEgressSampleCount(count: Int) {
+        egressSampleCount = count.coerceIn(1, 5)
+        if (::prefs.isInitialized) {
+            prefs.edit().putInt(KEY_EGRESS_SAMPLE_COUNT, egressSampleCount).apply()
         }
     }
 
