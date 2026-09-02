@@ -1190,6 +1190,7 @@ object IPTVClient {
                         } else {
                             sampleCodes.add(code)
                         }
+                        Unit
                     }
                 } catch (e: Exception) {
                     anyTimeoutOrNetworkError = true
@@ -1221,6 +1222,7 @@ object IPTVClient {
                                     sampleCodes.add(code)
                                 }
                             }
+                            Unit
                         }
                     } catch (e: Exception) {
                         anyTimeoutOrNetworkError = true
