@@ -212,6 +212,7 @@ Remove-Item -Recurse -Force "C:\Development\Apps\Project Strong\personal-repo-te
 | **Paste.sh Decryption & Large-Buffer Layout Shield** | `IPTVClient.kt`, `ScannerTab.kt`, `app.py`, AES-256-CBC multi-line/single-line payload parser & bounded Compose text field | 🟢 **Verified & Live** |
 | **Dual Traceability (Source & Origin) & Domain Shield** | `CommittedManager.kt`, `CommitDialog.kt`, `XtreamTab.kt`, `StalkerTab.kt`, `CommittedTab.kt`, `app.py` | 🟢 **Verified & Live** |
 | **Base64 De-obfuscation & Auto-Traceability Extraction** | `Base64Tab.kt`, `ScannerTab.kt`, `Parser.kt`, Regex auto-link capture & 1-tap clipboard paste | 🟢 **Verified & Live** |
+| **Stream Egress & Ghost Line Verification Engine** | `IPTVClient.kt`, `CommittedManager.kt`, `XtreamTab.kt`, `CommittedTab.kt`, `SettingsTab.kt`, `StreamPreviewDialog.kt`, `app.py`, HTTP 456/884 consensus probing | 🟢 **Verified & Live** |
 
 ---
 

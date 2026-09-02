@@ -548,6 +548,11 @@ fun XtreamDetailScreen(node: ParsedCredential, onBack: () -> Unit) {
     var showCatalogExplorer by remember { mutableStateOf(false) }
     var showCommitDialog by remember { mutableStateOf(false) }
     val detailScrollState = rememberScrollState()
+    val coroutineScope = rememberCoroutineScope()
+
+    var egressState by remember(node) { mutableStateOf(node.egressStatus) }
+    var egressDetailsState by remember(node) { mutableStateOf(node.egressDetails) }
+    var isProbingEgress by remember { mutableStateOf(false) }
 
     if (showCommitDialog) {
         CommitAccountDialog(
@@ -566,6 +571,8 @@ fun XtreamDetailScreen(node: ParsedCredential, onBack: () -> Unit) {
             serverTimezone = node.serverTimezone,
             sourceLink = node.sourceLink,
             originLink = node.originLink,
+            egressStatus = egressState,
+            egressDetails = egressDetailsState,
             onDismiss = { showCommitDialog = false },
             onCommitted = { showCommitDialog = false }
         )
@@ -681,6 +688,103 @@ fun XtreamDetailScreen(node: ParsedCredential, onBack: () -> Unit) {
                         Text("ACTIVE CONNS", color = AppTextSecondary, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
                         Spacer(modifier = Modifier.height(2.dp))
                         Text("${node.activeConn} / ${node.maxConn}", color = AppTextPrimary, style = MaterialTheme.typography.bodySmall)
+                    }
+                }
+            }
+        }
+
+        // Stream Egress & Ghost Line Inspector Card
+        Surface(
+            shape = RoundedCornerShape(16.dp),
+            color = AppSurface,
+            border = androidx.compose.foundation.BorderStroke(1.dp, AppSurfaceBorder),
+            modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)
+        ) {
+            Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        "Stream Egress & Ghost Line Check",
+                        color = AppTextPrimary,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                    
+                    val badgeColor = when {
+                        egressState.contains("Verified", ignoreCase = true) -> AppSuccess
+                        egressState.contains("Ghost", ignoreCase = true) || egressState.contains("456") || egressState.contains("884") -> AppError
+                        egressState.contains("Inconclusive", ignoreCase = true) -> AppWarning
+                        else -> AppTextSecondary
+                    }
+                    Surface(
+                        color = badgeColor.copy(alpha = 0.15f),
+                        shape = RoundedCornerShape(8.dp),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, badgeColor.copy(alpha = 0.4f))
+                    ) {
+                        Text(
+                            text = egressState,
+                            color = badgeColor,
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                        )
+                    }
+                }
+
+                if (egressDetailsState.isNotBlank()) {
+                    Text(
+                        text = egressDetailsState,
+                        color = if (egressState.contains("Ghost") || egressState.contains("456") || egressState.contains("884")) AppError else AppTextSecondary,
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
+
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Button(
+                        onClick = {
+                            if (!isProbingEgress) {
+                                isProbingEgress = true
+                                coroutineScope.launch {
+                                    val result = com.projectstrong.iptv.network.IPTVClient.probeStreamEgress(node.baseUrl, node.user, node.pass)
+                                    when (result) {
+                                        is com.projectstrong.iptv.network.StreamEgressResult.Verified -> {
+                                            egressState = "🟢 Verified (${result.latencyMs}ms)"
+                                            egressDetailsState = "Stream #${result.streamId} responded with HTTP 200 OK (${result.contentType ?: "video/mp2t"}) in ${result.latencyMs}ms"
+                                            ToastManager.success("Stream egress verified! Channel #${result.streamId} active.")
+                                        }
+                                        is com.projectstrong.iptv.network.StreamEgressResult.GhostBlocked -> {
+                                            val label = if (result.code == 456) "👻 Ghost (456)" else if (result.code == 884) "🔒 Dump Lock (884)" else "🛡️ Blocked (${result.code})"
+                                            egressState = label
+                                            egressDetailsState = result.technicalDetails
+                                            ToastManager.warning("Ghost Line: ${result.description}")
+                                        }
+                                        is com.projectstrong.iptv.network.StreamEgressResult.Inconclusive -> {
+                                            egressState = "❓ Inconclusive"
+                                            egressDetailsState = result.reason
+                                            ToastManager.info("Egress probe: ${result.reason}")
+                                        }
+                                    }
+                                    isProbingEgress = false
+                                }
+                            }
+                        },
+                        enabled = !isProbingEgress,
+                        colors = ButtonDefaults.buttonColors(containerColor = AppPrimary.copy(alpha = 0.85f)),
+                        shape = RoundedCornerShape(10.dp),
+                        modifier = Modifier.weight(1f).height(42.dp)
+                    ) {
+                        if (isProbingEgress) {
+                            CircularProgressIndicator(modifier = Modifier.size(16.dp), color = Color.White, strokeWidth = 2.dp)
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Probing Egress...", color = Color.White, style = MaterialTheme.typography.bodySmall)
+                        } else {
+                            Icon(Icons.Default.NetworkCheck, contentDescription = null, tint = Color.White, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text("Probe Stream Egress", color = Color.White, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.SemiBold)
+                        }
                     }
                 }
             }

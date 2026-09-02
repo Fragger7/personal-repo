@@ -33,6 +33,26 @@ sealed class VerificationResult {
     data class Failed(val reason: String) : VerificationResult()
 }
 
+sealed class StreamEgressResult {
+    data class Verified(
+        val streamId: String,
+        val contentType: String?,
+        val latencyMs: Long,
+        val sampleCount: Int = 1
+    ) : StreamEgressResult()
+
+    data class GhostBlocked(
+        val code: Int,
+        val description: String,
+        val technicalDetails: String,
+        val testedSamples: Int = 1
+    ) : StreamEgressResult()
+
+    data class Inconclusive(
+        val reason: String
+    ) : StreamEgressResult()
+}
+
 object IPTVClient {
     private val USER_AGENTS = listOf(
         "IPTVSmartersPro/3.1.5.1 (Linux; Android 12; Build/SQ1D.220205.004)",
@@ -1016,6 +1036,227 @@ object IPTVClient {
             if (cleanedBody.isNotBlank()) cleanedBody else rawBody
         } catch (e: Exception) {
             null
+        }
+    }
+
+    /**
+     * Non-blocking, low-latency stream egress probe (Ghost Line & Anti-Dump detector).
+     *
+     * Strict Guardrails:
+     * 1. Multi-stream consensus: Samples up to 2-3 distinct streams.
+     * 2. Dual container testing: Tests both .ts and .m3u8 endpoints.
+     * 3. Zero False Negatives: Timeouts or temporary 5xx errors return Inconclusive without penalizing active status.
+     * 4. Ghost Line identification: Flags HTTP 456 (Stream Egress Disabled) and HTTP 884 (Anti-Dump Lockout).
+     */
+    suspend fun probeStreamEgress(baseUrl: String, user: String, pass: String): StreamEgressResult = withContext(Dispatchers.IO) {
+        try {
+            val normalizedUrl = normalizeBaseUrl(baseUrl)
+            val encodedUser = URLEncoder.encode(user, "UTF-8")
+            val encodedPass = URLEncoder.encode(pass, "UTF-8")
+            val client = getClient()
+
+            // 1. Sample up to 3 stream IDs from player_api.php using streaming JsonReader (zero OOM memory overhead)
+            val streamsApiUrl = "$normalizedUrl/player_api.php?username=$encodedUser&password=$encodedPass&action=get_live_streams"
+            val sampledStreamIds = mutableListOf<String>()
+
+            try {
+                val req = Request.Builder()
+                    .url(streamsApiUrl)
+                    .header("User-Agent", USER_AGENTS[0])
+                    .header("Accept", "application/json, */*")
+                    .build()
+                client.newCall(req).execute().use { res ->
+                    if (res.isSuccessful && res.body != null) {
+                        val reader = android.util.JsonReader(BufferedReader(InputStreamReader(res.body!!.byteStream(), "UTF-8"), 8192))
+                        if (reader.peek() == android.util.JsonToken.BEGIN_ARRAY) {
+                            reader.beginArray()
+                            while (reader.hasNext() && sampledStreamIds.size < 3) {
+                                if (reader.peek() == android.util.JsonToken.BEGIN_OBJECT) {
+                                    reader.beginObject()
+                                    var currentStreamId = ""
+                                    while (reader.hasNext()) {
+                                        val name = reader.nextName()
+                                        if (name == "stream_id") {
+                                            val token = reader.peek()
+                                            currentStreamId = when (token) {
+                                                android.util.JsonToken.STRING -> reader.nextString()
+                                                android.util.JsonToken.NUMBER -> reader.nextInt().toString()
+                                                else -> { reader.skipValue(); "" }
+                                            }
+                                        } else {
+                                            reader.skipValue()
+                                        }
+                                    }
+                                    reader.endObject()
+                                    if (currentStreamId.isNotBlank()) {
+                                        sampledStreamIds.add(currentStreamId)
+                                    }
+                                } else {
+                                    reader.skipValue()
+                                }
+                            }
+                        }
+                        reader.close()
+                    }
+                }
+            } catch (_: Exception) {}
+
+            // 2. Fallback: If no stream IDs extracted via JSON, check get.php M3U endpoint
+            val directStreamUrls = mutableListOf<String>()
+            if (sampledStreamIds.isEmpty()) {
+                val m3uUrl = "$normalizedUrl/get.php?username=$encodedUser&password=$encodedPass&type=m3u_plus&output=ts"
+                try {
+                    val m3uReq = Request.Builder()
+                        .url(m3uUrl)
+                        .header("User-Agent", USER_AGENTS[0])
+                        .build()
+                    client.newCall(m3uReq).execute().use { m3uRes ->
+                        val code = m3uRes.code
+                        if (code == 884) {
+                            return@withContext StreamEgressResult.GhostBlocked(
+                                code = 884,
+                                description = "Anti-Dump Lockout (HTTP 884)",
+                                technicalDetails = "Provider active, but playlist and stream dumping are blocked by server security (HTTP 884).",
+                                testedSamples = 1
+                            )
+                        } else if (code == 456) {
+                            return@withContext StreamEgressResult.GhostBlocked(
+                                code = 456,
+                                description = "Ghost Line (Stream Blocked 456)",
+                                technicalDetails = "Provider authenticated credentials, but stream delivery is disabled with HTTP 456.",
+                                testedSamples = 1
+                            )
+                        } else if (code == 200) {
+                            val body = m3uRes.body?.string() ?: ""
+                            val lines = body.lines()
+                            for (line in lines) {
+                                val trimmed = line.trim()
+                                if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
+                                    directStreamUrls.add(trimmed)
+                                    if (directStreamUrls.size >= 2) break
+                                }
+                            }
+                        }
+                    }
+                } catch (_: Exception) {}
+            }
+
+            // If still no samples available to test, return Inconclusive safely
+            if (sampledStreamIds.isEmpty() && directStreamUrls.isEmpty()) {
+                return@withContext StreamEgressResult.Inconclusive("No media channels available to sample.")
+            }
+
+            // 3. Multi-sample Stream Testing
+            val sampleCodes = mutableListOf<Int>()
+            var anyTimeoutOrNetworkError = false
+
+            // Test sampled stream IDs or direct URLs
+            val candidateUrls = if (sampledStreamIds.isNotEmpty()) {
+                sampledStreamIds.map { sId ->
+                    Pair(sId, "$normalizedUrl/live/$user/$pass/$sId.ts")
+                }
+            } else {
+                directStreamUrls.mapIndexed { idx, url ->
+                    Pair("M3U-Line-${idx + 1}", url)
+                }
+            }
+
+            for ((streamId, url) in candidateUrls) {
+                var streamSuccess = false
+                val startTime = System.currentTimeMillis()
+
+                // Try .ts first
+                try {
+                    val streamReq = Request.Builder()
+                        .url(url)
+                        .header("User-Agent", USER_AGENTS[0])
+                        .header("Range", "bytes=0-2048")
+                        .build()
+                    client.newCall(streamReq).execute().use { streamRes ->
+                        val code = streamRes.code
+                        val latency = System.currentTimeMillis() - startTime
+                        val contentType = streamRes.header("Content-Type")
+
+                        if (code in 200..206) {
+                            val bytes = streamRes.body?.byteStream()?.readBytes()
+                            if (bytes != null && bytes.isNotEmpty()) {
+                                return@withContext StreamEgressResult.Verified(
+                                    streamId = streamId,
+                                    contentType = contentType,
+                                    latencyMs = latency,
+                                    sampleCount = sampleCodes.size + 1
+                                )
+                            }
+                        } else {
+                            sampleCodes.add(code)
+                        }
+                    }
+                } catch (e: Exception) {
+                    anyTimeoutOrNetworkError = true
+                }
+
+                // If .ts returned 456 or failed, test .m3u8 alternative
+                if (!streamSuccess && sampledStreamIds.isNotEmpty()) {
+                    try {
+                        val m3u8Url = "$normalizedUrl/live/$user/$pass/$streamId.m3u8"
+                        val m3u8Req = Request.Builder()
+                            .url(m3u8Url)
+                            .header("User-Agent", USER_AGENTS[0])
+                            .header("Range", "bytes=0-2048")
+                            .build()
+                        client.newCall(m3u8Req).execute().use { m3u8Res ->
+                            val code = m3u8Res.code
+                            val latency = System.currentTimeMillis() - startTime
+                            val contentType = m3u8Res.header("Content-Type")
+
+                            if (code in 200..206) {
+                                return@withContext StreamEgressResult.Verified(
+                                    streamId = streamId,
+                                    contentType = contentType,
+                                    latencyMs = latency,
+                                    sampleCount = sampleCodes.size + 1
+                                )
+                            } else {
+                                if (!sampleCodes.contains(code)) {
+                                    sampleCodes.add(code)
+                                }
+                            }
+                        }
+                    } catch (e: Exception) {
+                        anyTimeoutOrNetworkError = true
+                    }
+                }
+            }
+
+            // 4. Consensus Decision with Guardrails
+            if (sampleCodes.isNotEmpty() && sampleCodes.all { it == 456 }) {
+                return@withContext StreamEgressResult.GhostBlocked(
+                    code = 456,
+                    description = "Ghost Line (Stream Blocked 456)",
+                    technicalDetails = "Account passes API handshake, but streaming egress is disabled (HTTP 456).",
+                    testedSamples = sampleCodes.size
+                )
+            } else if (sampleCodes.isNotEmpty() && sampleCodes.all { it == 884 }) {
+                return@withContext StreamEgressResult.GhostBlocked(
+                    code = 884,
+                    description = "Anti-Dump Lockout (HTTP 884)",
+                    technicalDetails = "Provider blocks playlist exports and stream egress with HTTP 884.",
+                    testedSamples = sampleCodes.size
+                )
+            } else if (sampleCodes.isNotEmpty() && sampleCodes.all { it == 403 }) {
+                return@withContext StreamEgressResult.GhostBlocked(
+                    code = 403,
+                    description = "Stream Delivery Forbidden (HTTP 403)",
+                    technicalDetails = "API handshake valid, but media delivery server rejects requests with HTTP 403.",
+                    testedSamples = sampleCodes.size
+                )
+            } else if (anyTimeoutOrNetworkError) {
+                return@withContext StreamEgressResult.Inconclusive("Network latency or timeout during stream probe (Retaining handshake status)")
+            } else {
+                return@withContext StreamEgressResult.Inconclusive("HTTP ${sampleCodes.joinToString(", ")} returned on sample channels.")
+            }
+        } catch (e: Exception) {
+            return@withContext StreamEgressResult.Inconclusive("Probe error: ${e.localizedMessage ?: "Unknown"}")
         }
     }
 }

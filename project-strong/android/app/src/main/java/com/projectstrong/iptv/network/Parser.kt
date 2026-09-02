@@ -22,7 +22,9 @@ data class ParsedCredential(
     val provider: String = "Unknown",
     val isVerifying: Boolean = false,
     val sourceLink: String = "Direct Ingestion",
-    val originLink: String = ""
+    val originLink: String = "",
+    val egressStatus: String = "Unchecked",
+    val egressDetails: String = ""
 )
 
 object Parser {

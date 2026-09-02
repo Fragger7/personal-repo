@@ -45,6 +45,8 @@ data class CommittedRecord(
     @SerializedName("Source Link") val sourceLink: String? = "Direct Ingestion",
     @SerializedName("Origin Link", alternate = ["origin_link", "Origin", "origin", "Origin URL", "origin_url"]) val originLink: String? = null,
     @SerializedName("source_archive_file") val sourceArchiveFile: String? = null,
+    @SerializedName("egress_status", alternate = ["Egress Status", "egressStatus", "stream_status", "Stream Status"]) val egressStatus: String? = null,
+    @SerializedName("egress_details", alternate = ["Egress Details", "egressDetails", "stream_details"]) val egressDetails: String? = null,
     @SerializedName("Notes") val notes: String? = "",
     @SerializedName("Date Selected") val dateAdded: String? = null,
     @SerializedName("isLocalOnly") val isLocalOnly: Boolean? = false
@@ -65,6 +67,8 @@ data class CommittedRecord(
     val safeOriginLink get() = originLink ?: ""
     val hasOrigin get() = safeOriginLink.isNotBlank() && (safeOriginLink.startsWith("http://") || safeOriginLink.startsWith("https://"))
     val safeSourceArchiveFile get() = sourceArchiveFile ?: ""
+    val safeEgressStatus get() = egressStatus ?: "Unchecked"
+    val safeEgressDetails get() = egressDetails ?: ""
     val safeProvider: String
         get() {
             if (!provider.isNullOrEmpty() && provider != "Unknown") return provider
@@ -174,7 +178,9 @@ object CommittedManager {
         notes: String = "",
         sourceLink: String = "Direct Ingestion",
         originLink: String? = null,
-        sourceArchiveFile: String? = null
+        sourceArchiveFile: String? = null,
+        egressStatus: String? = null,
+        egressDetails: String? = null
     ) {
         val nowStr = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())
         val cleanBaseUrl = normalizeUrl(baseUrl)
@@ -216,6 +222,8 @@ object CommittedManager {
             sourceLink = sourceLink,
             originLink = cleanOrigin,
             sourceArchiveFile = finalArchiveFile,
+            egressStatus = egressStatus,
+            egressDetails = egressDetails,
             notes = notes,
             dateAdded = nowStr,
             isLocalOnly = true
@@ -234,7 +242,9 @@ object CommittedManager {
                 dateAdded = if (existing.safeDateAdded.isNotEmpty()) existing.safeDateAdded else nowStr,
                 notes = if (notes.isNotEmpty()) notes else existing.safeNotes,
                 originLink = cleanOrigin ?: existing.originLink,
-                sourceArchiveFile = finalArchiveFile ?: existing.sourceArchiveFile
+                sourceArchiveFile = finalArchiveFile ?: existing.sourceArchiveFile,
+                egressStatus = egressStatus ?: existing.egressStatus,
+                egressDetails = egressDetails ?: existing.egressDetails
             )
             ToastManager.success("Updated existing record in Saved Accounts")
         } else {
@@ -243,6 +253,46 @@ object CommittedManager {
         }
         sortByDateAddedDescending()
         save()
+    }
+
+    suspend fun probeEgressForRecord(record: CommittedRecord): CommittedRecord = withContext(Dispatchers.IO) {
+        if (record.safeType != "Xtream" || record.safeUser.isBlank() || record.safePass.isBlank()) {
+            return@withContext record
+        }
+        val egressResult = IPTVClient.probeStreamEgress(record.safeBaseUrl, record.safeUser, record.safePass)
+        val updated = when (egressResult) {
+            is com.projectstrong.iptv.network.StreamEgressResult.Verified -> {
+                record.copy(
+                    egressStatus = "🟢 Verified (${egressResult.latencyMs}ms)",
+                    egressDetails = "Stream #${egressResult.streamId} responded with HTTP 200 OK (${egressResult.contentType ?: "video/mp2t"}) in ${egressResult.latencyMs}ms"
+                )
+            }
+            is com.projectstrong.iptv.network.StreamEgressResult.GhostBlocked -> {
+                val label = if (egressResult.code == 456) "👻 Ghost (456)" else if (egressResult.code == 884) "🔒 Dump Lock (884)" else "🛡️ Blocked (${egressResult.code})"
+                record.copy(
+                    egressStatus = label,
+                    egressDetails = egressResult.technicalDetails
+                )
+            }
+            is com.projectstrong.iptv.network.StreamEgressResult.Inconclusive -> {
+                record.copy(
+                    egressStatus = "❓ Inconclusive",
+                    egressDetails = egressResult.reason
+                )
+            }
+        }
+        val idx = records.indexOfFirst {
+            normalizeUrl(it.safeBaseUrl).equals(normalizeUrl(record.safeBaseUrl), ignoreCase = true) &&
+            it.safeUser.trim() == record.safeUser.trim() &&
+            it.safePass == record.safePass
+        }
+        if (idx >= 0) {
+            withContext(Dispatchers.Main) {
+                records[idx] = updated
+            }
+            save()
+        }
+        updated
     }
 
     fun delete(record: CommittedRecord, token: String = DataStore.githubToken, onComplete: ((Boolean) -> Unit)? = null) {

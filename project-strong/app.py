@@ -1338,6 +1338,70 @@ async def fetch_lazy_details(base_url, user, password, action):
         logger.error(f"Lazy loading query failed for host {base_url} [Action: {action}]: {str(e)}")
         return []
 
+async def probe_stream_egress_async(base_url: str, user: str, password: str) -> dict:
+    """Probes stream channel egress to detect Ghost Lines (HTTP 456 / 884)."""
+    clean_base = base_url.rstrip("/")
+    try:
+        async with httpx.AsyncClient(headers=EVASION_HEADERS, verify=False, follow_redirects=True) as client:
+            cat_url = f"{clean_base}/player_api.php?username={user}&password={password}&action=get_live_streams"
+            res = await client.get(cat_url, timeout=6.0)
+            stream_ids = []
+            if res.status_code == 200:
+                try:
+                    data = res.json()
+                    if isinstance(data, list):
+                        for item in data:
+                            sid = item.get("stream_id")
+                            if sid:
+                                stream_ids.append(str(sid))
+                            if len(stream_ids) >= 5:
+                                break
+                except Exception:
+                    pass
+            
+            if not stream_ids:
+                m3u_url = f"{clean_base}/get.php?username={user}&password={password}&type=m3u_plus"
+                m_res = await client.get(m3u_url, timeout=8.0)
+                if m_res.status_code == 200:
+                    for m in re.finditer(r'/live/[^/]+/[^/]+/(\d+)\.(?:ts|m3u8)', m_res.text):
+                        stream_ids.append(m.group(1))
+                        if len(stream_ids) >= 5:
+                            break
+
+            if not stream_ids:
+                return {"status": "❓ Inconclusive", "details": "Could not extract sample stream IDs to probe egress."}
+
+            ghost_count = 0
+            ghost_code = 0
+
+            for sid in stream_ids[:3]:
+                for ext in ["ts", "m3u8"]:
+                    stream_url = f"{clean_base}/live/{user}/{password}/{sid}.{ext}"
+                    try:
+                        start_t = datetime.now()
+                        s_res = await client.get(stream_url, headers={"Range": "bytes=0-4096", **EVASION_HEADERS}, timeout=4.0)
+                        latency = int((datetime.now() - start_t).total_seconds() * 1000)
+                        
+                        if s_res.status_code in [200, 206]:
+                            return {
+                                "status": f"🟢 Verified ({latency}ms)",
+                                "details": f"Channel #{sid} responded with HTTP {s_res.status_code} in {latency}ms ({s_res.headers.get('content-type', 'video/mp2t')})"
+                            }
+                        elif s_res.status_code in [456, 884, 401, 403, 521]:
+                            ghost_count += 1
+                            ghost_code = s_res.status_code
+                    except Exception:
+                        pass
+
+            if ghost_count > 0:
+                label = f"👻 Ghost ({ghost_code})" if ghost_code in [456, 884] else f"🛡️ Blocked ({ghost_code})"
+                desc = f"Ghost Line: Server authenticated via API, but streaming egress is locked/blocked with HTTP {ghost_code}"
+                return {"status": label, "details": desc}
+
+            return {"status": "❓ Inconclusive", "details": "Stream egress probe timed out or returned ambiguous responses across sampled channels."}
+    except Exception as e:
+        return {"status": "❓ Inconclusive", "details": f"Egress probe error: {str(e)}"}
+
 # Setup active asynchronous network client block
 @st.cache_data(ttl=300, show_spinner=False)
 def get_network_info():
@@ -1414,6 +1478,31 @@ def render_xtream_details(row, key_idx, show_commit_button=True):
         st.markdown("**🔗 M3U Playlist URL**")
         m3u_url = f"{row['base_url']}/get.php?username={row['username']}&password={row['password']}&type=m3u_plus&output=ts"
         st.code(m3u_url, language="text")
+
+        # Stream Egress & Ghost Line Inspector
+        egress_key = f"egress_{row['base_url']}_{row['username']}"
+        st.markdown("**📡 Stream Egress & Ghost Line Inspector**")
+        
+        if egress_key in st.session_state:
+            egress_res = st.session_state[egress_key]
+            e_status = egress_res.get("status", "")
+            e_details = egress_res.get("details", "")
+            if "Verified" in e_status:
+                st.success(f"**{e_status}**: {e_details}")
+            elif "Ghost" in e_status or "Blocked" in e_status:
+                st.error(f"**{e_status}**: {e_details}")
+            else:
+                st.warning(f"**{e_status}**: {e_details}")
+            
+            if st.button("🔄 Re-probe Egress", key=f"re_egress_{key_idx}"):
+                del st.session_state[egress_key]
+                st.rerun()
+        else:
+            if st.button("🧪 Probe Stream Egress (Ghost Line Test)", key=f"egress_btn_{key_idx}", use_container_width=True):
+                with st.spinner("Probing stream egress across sample live channels..."):
+                    probe_res = asyncio.run(probe_stream_egress_async(row['base_url'], row['username'], row['password']))
+                    st.session_state[egress_key] = probe_res
+                    st.rerun()
         
         st.write("---")
         st.write("📡 **Query Target Asset Classifications**")

@@ -1090,6 +1090,90 @@ fun CommittedDetailScreen(
 
         // Full-screen Channel Explorer if Xtream
         if (record.safeType == "Xtream") {
+            // Stream Egress & Ghost Line Inspector Card
+            var egressState by remember(record) { mutableStateOf(record.safeEgressStatus) }
+            var egressDetailsState by remember(record) { mutableStateOf(record.safeEgressDetails) }
+            var isProbingEgress by remember { mutableStateOf(false) }
+            val detailScope = rememberCoroutineScope()
+
+            Surface(
+                shape = RoundedCornerShape(16.dp),
+                color = AppSurface,
+                border = androidx.compose.foundation.BorderStroke(1.dp, AppSurfaceBorder),
+                modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp)
+            ) {
+                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            "Stream Egress & Ghost Line Check",
+                            color = AppTextPrimary,
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold
+                        )
+                        
+                        val badgeColor = when {
+                            egressState.contains("Verified", ignoreCase = true) -> AppSuccess
+                            egressState.contains("Ghost", ignoreCase = true) || egressState.contains("456") || egressState.contains("884") -> AppError
+                            egressState.contains("Inconclusive", ignoreCase = true) -> AppWarning
+                            else -> AppTextSecondary
+                        }
+                        Surface(
+                            color = badgeColor.copy(alpha = 0.15f),
+                            shape = RoundedCornerShape(8.dp),
+                            border = androidx.compose.foundation.BorderStroke(1.dp, badgeColor.copy(alpha = 0.4f))
+                        ) {
+                            Text(
+                                text = egressState,
+                                color = badgeColor,
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                            )
+                        }
+                    }
+
+                    if (egressDetailsState.isNotBlank()) {
+                        Text(
+                            text = egressDetailsState,
+                            color = if (egressState.contains("Ghost") || egressState.contains("456") || egressState.contains("884")) AppError else AppTextSecondary,
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
+
+                    Button(
+                        onClick = {
+                            if (!isProbingEgress) {
+                                isProbingEgress = true
+                                detailScope.launch {
+                                    val updated = CommittedManager.probeEgressForRecord(record)
+                                    egressState = updated.safeEgressStatus
+                                    egressDetailsState = updated.safeEgressDetails
+                                    isProbingEgress = false
+                                }
+                            }
+                        },
+                        enabled = !isProbingEgress,
+                        colors = ButtonDefaults.buttonColors(containerColor = AppPrimary.copy(alpha = 0.85f)),
+                        shape = RoundedCornerShape(10.dp),
+                        modifier = Modifier.fillMaxWidth().height(40.dp)
+                    ) {
+                        if (isProbingEgress) {
+                            CircularProgressIndicator(modifier = Modifier.size(16.dp), color = Color.White, strokeWidth = 2.dp)
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Probing Stream Channels...", color = Color.White, style = MaterialTheme.typography.bodySmall)
+                        } else {
+                            Icon(Icons.Default.NetworkCheck, contentDescription = null, tint = Color.White, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text("Probe Stream Egress", color = Color.White, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.SemiBold)
+                        }
+                    }
+                }
+            }
+
             Button(
                 onClick = { showCatalogExplorer = true },
                 colors = ButtonDefaults.buttonColors(containerColor = AppPrimary),

@@ -42,6 +42,8 @@ fun CommitAccountDialog(
     initialNotes: String = "",
     sourceLink: String = "Direct Ingestion",
     originLink: String = "",
+    egressStatus: String? = null,
+    egressDetails: String? = null,
     onDismiss: () -> Unit,
     onCommitted: () -> Unit
 ) {
@@ -354,7 +356,9 @@ fun CommitAccountDialog(
                                 serverTimezone = serverTimezone,
                                 notes = notes.trim(),
                                 sourceLink = finalSource,
-                                originLink = finalOrigin
+                                originLink = finalOrigin,
+                                egressStatus = egressStatus,
+                                egressDetails = egressDetails
                             )
                             onCommitted()
                             onDismiss()

@@ -509,6 +509,54 @@ fun SettingsTab() {
 
                 Divider(color = AppSurfaceBorder.copy(alpha = 0.6f))
 
+                // Stream Egress & Ghost Line Verification Option
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            Text(
+                                text = "Stream Egress Verification",
+                                color = AppTextPrimary,
+                                fontWeight = FontWeight.SemiBold,
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                            Surface(
+                                shape = RoundedCornerShape(6.dp),
+                                color = AppPrimary.copy(alpha = 0.2f),
+                                border = BorderStroke(1.dp, AppPrimary.copy(alpha = 0.5f))
+                            ) {
+                                Text(
+                                    text = "Ghost Line Shield",
+                                    color = AppPrimary,
+                                    style = MaterialTheme.typography.labelSmall,
+                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        }
+                        Text(
+                            text = "Enables stream channel egress testing to detect HTTP 456/884 ghost lines and stream-level blocks.",
+                            color = AppTextMuted,
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
+                    Switch(
+                        checked = SettingsManager.egressVerificationEnabled,
+                        onCheckedChange = { SettingsManager.saveEgressVerification(it) },
+                        colors = SwitchDefaults.colors(
+                            checkedThumbColor = Color.White,
+                            checkedTrackColor = AppPrimary,
+                            uncheckedThumbColor = AppTextSecondary,
+                            uncheckedTrackColor = AppSurfaceBorder
+                        )
+                    )
+                }
+
+                Divider(color = AppSurfaceBorder.copy(alpha = 0.6f))
+
                 // Screen Wake Lock Option
                 Row(
                     modifier = Modifier.fillMaxWidth(),

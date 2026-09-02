@@ -26,6 +26,7 @@ object SettingsManager {
     private const val KEY_KEEP_SCREEN_ON = "keep_screen_on"
     private const val KEY_THEME_MODE = "theme_mode"
     private const val KEY_FAST_FAIL_HEDGING = "fast_fail_hedging"
+    private const val KEY_EGRESS_VERIFICATION = "egress_verification_enabled"
 
     private lateinit var prefs: SharedPreferences
 
@@ -35,6 +36,7 @@ object SettingsManager {
     var keepScreenOnDuringScans by mutableStateOf(true)
     var currentTheme by mutableStateOf(AppThemeMode.SHERLOCK_AMBER)
     var fastFailHedgingEnabled by mutableStateOf(true)
+    var egressVerificationEnabled by mutableStateOf(false)
 
     fun init(context: Context) {
         prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -43,6 +45,7 @@ object SettingsManager {
         autoRefreshNetwork = prefs.getBoolean(KEY_AUTO_REFRESH_NET, true)
         keepScreenOnDuringScans = prefs.getBoolean(KEY_KEEP_SCREEN_ON, true)
         fastFailHedgingEnabled = prefs.getBoolean(KEY_FAST_FAIL_HEDGING, true)
+        egressVerificationEnabled = prefs.getBoolean(KEY_EGRESS_VERIFICATION, false)
         
         val savedThemeName = prefs.getString(KEY_THEME_MODE, AppThemeMode.SHERLOCK_AMBER.name)
         currentTheme = try {
@@ -56,6 +59,13 @@ object SettingsManager {
         currentTheme = theme
         if (::prefs.isInitialized) {
             prefs.edit().putString(KEY_THEME_MODE, theme.name).apply()
+        }
+    }
+
+    fun saveEgressVerification(enabled: Boolean) {
+        egressVerificationEnabled = enabled
+        if (::prefs.isInitialized) {
+            prefs.edit().putBoolean(KEY_EGRESS_VERIFICATION, enabled).apply()
         }
     }
 

@@ -268,7 +268,20 @@ fun StreamPreviewDialog(
 
             override fun onPlayerError(error: PlaybackException) {
                 playStatus = StreamPlayStatus.ERROR
-                errorMessage = error.localizedMessage ?: "Stream unreachable or codec unsupported (Error ${error.errorCodeName})"
+                val cause = error.cause
+                val message = when {
+                    cause is androidx.media3.datasource.HttpDataSource.InvalidResponseCodeException -> {
+                        when (cause.responseCode) {
+                            456 -> "👻 Ghost Line (HTTP 456): Account authenticated via API, but provider blocked stream playback."
+                            884 -> "🔒 Anti-Dump Lockout (HTTP 884): Provider blocks playlist and stream dumping."
+                            403 -> "🛡️ Stream Forbidden (HTTP 403): Streaming server rejected access."
+                            521 -> "🔴 Server Dead (HTTP 521): Stream delivery server is down."
+                            else -> "HTTP ${cause.responseCode}: ${error.localizedMessage ?: "Stream request failed"}"
+                        }
+                    }
+                    else -> error.localizedMessage ?: "Stream unreachable or codec unsupported (Error ${error.errorCodeName})"
+                }
+                errorMessage = message
             }
 
             override fun onVideoSizeChanged(videoSize: VideoSize) {
