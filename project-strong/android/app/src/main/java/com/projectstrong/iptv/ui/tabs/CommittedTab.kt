@@ -307,10 +307,10 @@ fun CommittedTab() {
             actionMessage = "Syncing with cloud..."
             ToastManager.info("Syncing records from GitHub...")
             coroutineScope.launch {
-                val success = withContext(Dispatchers.IO) {
-                    CommittedManager.syncWithCloud()
+                val results = withContext(Dispatchers.IO) {
+                    CommittedManager.syncFromCloud()
                 }
-                if (success) {
+                if (results != null) {
                     actionMessage = "Sync successful."
                     ToastManager.success("Cloud sync complete.")
                 } else {
@@ -347,7 +347,7 @@ fun CommittedTab() {
                 ToastManager.info("Starting background status check...")
                 coroutineScope.launch {
                     withContext(Dispatchers.IO) {
-                        CommittedManager.recheckAllStatuses()
+                        CommittedManager.recheckAllStatus()
                     }
                     actionMessage = "Check complete."
                     ToastManager.success("All accounts verified!")
@@ -908,8 +908,6 @@ fun CommittedMasterGrid(
             }
         }
     }
-}
-
 }
 @Composable
 fun CommittedDetailScreen(
