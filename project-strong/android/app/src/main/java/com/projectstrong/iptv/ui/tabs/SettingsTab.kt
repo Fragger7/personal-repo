@@ -372,7 +372,7 @@ fun SettingsTab() {
         }
 
         // Section 2: Scanning & Networking Parameters
-        SettingsSectionHeader(title = "Engine Parameters", icon = Icons.Default.Tune)
+        SettingsSectionHeader(title = "Network & Engine Parameters", icon = Icons.Default.Tune)
         Surface(
             shape = RoundedCornerShape(16.dp),
             color = AppSurface,

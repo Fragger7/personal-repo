@@ -965,19 +965,38 @@ def is_blacklisted_host(url: str) -> bool:
     u_lower = url.lower()
     return any(d in u_lower for d in NON_IPTV_DOMAINS)
 
+import unicodedata
+
+SMALL_CAPS_MAP = {
+    'ᴜ': 'u', 'ꜱ': 's', 'ᴇ': 'e', 'ʀ': 'r', 'ᴩ': 'p', 'ᴀ': 'a',
+    'ʜ': 'h', 'ᴏ': 'o', 'ᴛ': 't', 'ᴍ': 'm', 'ᴄ': 'c', 'ᴅ': 'd',
+    'ɪ': 'i', 'ᴊ': 'j', 'ᴋ': 'k', 'ʟ': 'l', 'ɴ': 'n', 'ɢ': 'g',
+    'ᴠ': 'v', 'ᴡ': 'w', 'ʏ': 'y', 'ᴢ': 'z', 'ʙ': 'b', 'ꜰ': 'f'
+}
+
+def normalize_text(raw: str) -> str:
+    if not raw:
+        return ""
+    norm = unicodedata.normalize('NFKD', raw)
+    return "".join(SMALL_CAPS_MAP.get(ch, ch) for ch in norm)
+
 def parse_credentials(text_block):
     """Uses regex to isolate Host, Port, Username, and Password for Xtream and Stalker from messy strings."""
     logger.info("Scanning ingested block for Xtream Codes and Stalker Portal layouts...")
+    if not text_block or not text_block.strip():
+        return []
+    
+    clean_text = normalize_text(text_block)
     extracted = []
     
     # 1. Standard Xtream API patterns
     pattern_xtream = r'(https?://[^/:]+(?::\d+)?)/(?:player_api|get)\.php\?username=([^&\s]+)&password=([^&\s]+)'
-    for match in re.findall(pattern_xtream, text_block):
+    for match in re.findall(pattern_xtream, clean_text):
         if not is_blacklisted_host(match[0]) and not any(a["base_url"] == match[0] and a["username"] == match[1] for a in extracted):
             extracted.append({"type": "Xtream", "base_url": match[0], "username": match[1], "password": match[2]})
 
     # 2. Line-by-line Tabular & Formatted Combos
-    for line in text_block.splitlines():
+    for line in clean_text.splitlines():
         line_clean = line.strip()
         if not line_clean or "player_api.php" in line_clean or "get.php" in line_clean:
             continue
@@ -996,7 +1015,7 @@ def parse_credentials(text_block):
             
             if re.match(r"^[0-9a-fA-F]{2}$", u) and re.match(r"^(?:[0-9a-fA-F]{2}:){4}[0-9a-fA-F]{2}$", p):
                 continue
-            skip = ["mac", "active", "activa", "expired", "http", "https", "user", "pass", "username", "password", "ᴜꜱᴇʀ", "ᴩᴀꜱꜱ"]
+            skip = ["mac", "active", "activa", "expired", "http", "https", "user", "pass", "username", "password"]
             if u.lower() in skip or p.lower() in skip:
                 continue
             if not any(a.get("base_url") == b and a.get("username") == u for a in extracted):
@@ -1008,7 +1027,7 @@ def parse_credentials(text_block):
                 if conn_match:
                     rec["activeConn"] = conn_match.group(1)
                     rec["maxConn"] = conn_match.group(2)
-                dates = re.findall(r"(\d{1,2}\s+[a-zA-Z]{3,}\s+(?:de\s+)?\d{4}|\d{4}-\d{2}-\d{2}|\d{2}/\d{2}/\d{4})", rest)
+                dates = re.findall(r"(\d{1,2}\s+[a-zA-Z]{3,}\s+(?:de\s+)?\d{4}|\d{4}-\\d{2}-\\d{2}|\\d{2}/\\d{2}/\\d{4})", rest)
                 if dates:
                     rec["expires"] = dates[-1]
                 extracted.append(rec)
@@ -1026,71 +1045,159 @@ def parse_credentials(text_block):
             p = m_combo.group(3)
             if re.match(r"^[0-9a-fA-F]{2}$", u) and re.match(r"^(?:[0-9a-fA-F]{2}:){4}[0-9a-fA-F]{2}$", p):
                 continue
-            skip = ["mac", "active", "activa", "expired", "http", "https", "user", "pass", "username", "password", "ᴜꜱᴇʀ", "ᴩᴀꜱꜱ"]
+            skip = ["mac", "active", "activa", "expired", "http", "https", "user", "pass", "username", "password"]
             if u.lower() in skip or p.lower() in skip:
                 continue
             if not any(a.get("base_url") == b and a.get("username") == u for a in extracted):
                 extracted.append({"type": "Xtream", "base_url": b, "username": u, "password": p})
                 continue
 
-    # 3. Unified State-Machine Parser for Multi-line Free Text (Stalker & Xtream)
-    current_url = None
-    current_mac = None
-    xt_user = None
-    xt_pass = None
-    for line in text_block.splitlines():
-        # Reset state on empty lines or explicit custom text block separators
-        if not line.strip() or re.search(r'[-=_*#]{4,}|╰─|╭─|┌─|└─|\|', line):
-            current_url = None
-            current_mac = None
-            xt_user = None
-            xt_pass = None
-            
-        if "player_api.php" in line or "get.php" in line:
-            current_url = None
-            current_mac = None
-            xt_user = None
-            xt_pass = None
-            continue
+    # 3. Unified Multi-line State Machine for Free Text (with Port, Exp, Conn, Status support)
+    curr_url = None
+    curr_port = None
+    curr_user = None
+    curr_pass = None
+    curr_mac = None
+    curr_exp = None
+    curr_act = None
+    curr_max = None
+
+    def flush_block():
+        nonlocal curr_url, curr_port, curr_user, curr_pass, curr_mac, curr_exp, curr_act, curr_max
+        if not curr_url:
+            return
+        base = curr_url.strip()
+        if not base.startswith("http"):
+            base = "http://" + base
         
-        url_match = re.search(r'(https?://[^/\s]+(?:/[^/\s]*)?)', line)
+        if curr_port:
+            port = curr_port.strip()
+            # If no port exists in hostname
+            host_part = base.split("://", 1)[-1].split("/", 1)[0]
+            if ":" not in host_part:
+                scheme = "https://" if base.startswith("https://") else "http://"
+                after_scheme = base[len(scheme):]
+                path = ("/" + after_scheme.split("/", 1)[1]) if "/" in after_scheme else ""
+                host = after_scheme.split("/", 1)[0]
+                base = f"{scheme}{host}:{port}{path}"
+                
+        base = base.rstrip('/')
+        if is_blacklisted_host(base):
+            curr_url = None
+            curr_port = None
+            curr_user = None
+            curr_pass = None
+            curr_mac = None
+            curr_exp = None
+            curr_act = None
+            curr_max = None
+            return
+
+        if curr_mac:
+            if not any(a.get("type") == "Stalker" and a["base_url"] == base and a.get("mac") == curr_mac for a in extracted):
+                extracted.append({
+                    "type": "Stalker",
+                    "base_url": base,
+                    "mac": curr_mac,
+                    "username": curr_mac,
+                    "password": "MAC",
+                    "expires": curr_exp or "N/A",
+                    "activeConn": curr_act or "N/A",
+                    "maxConn": curr_max or "N/A"
+                })
+        elif curr_user and curr_pass:
+            if not (re.match(r'^[0-9a-fA-F]{2}$', curr_user) and re.match(r'^(?:[0-9a-fA-F]{2}:){4}[0-9a-fA-F]{2}$', curr_pass)):
+                if not any(a.get("type") == "Xtream" and a["base_url"] == base and a["username"] == curr_user for a in extracted):
+                    extracted.append({
+                        "type": "Xtream",
+                        "base_url": base,
+                        "username": curr_user,
+                        "password": curr_pass,
+                        "expires": curr_exp or "N/A",
+                        "activeConn": curr_act or "N/A",
+                        "maxConn": curr_max or "N/A"
+                    })
+        
+        curr_url = None
+        curr_port = None
+        curr_user = None
+        curr_pass = None
+        curr_mac = None
+        curr_exp = None
+        curr_act = None
+        curr_max = None
+
+    portal_header_pat = re.compile(r'(?i)^(?:portal|host|server|url|domain)[\s:=]+(?:https?://|www\.|[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})')
+    port_pat = re.compile(r'(?i)\bport[\s:=]+(\d{2,5})\b')
+    mac_pat = re.compile(r'([0-9a-fA-F]{2}(?::[0-9a-fA-F]{2}){5})', re.IGNORECASE)
+    user_pat = re.compile(r'(?i)(?:user|usr|username)[\s:=]+([^\s]+)')
+    pass_pat = re.compile(r'(?i)(?:pass|password)[\s:=]+([^\s]+)')
+    exp_pat = re.compile(r'(?i)(?:exp|expire|expires|expiry)[\s:=]+([^\s]+)')
+    conn_pat = re.compile(r'(?i)\b(?:conn|active)[\s:=]+(\d+)\b')
+    max_conn_pat = re.compile(r'(?i)\b(?:maxconn|max_conn|max)[\s:=]+(\d+)\b')
+    status_end_pat = re.compile(r'(?i)status[\s:=]+.*(?:ok|active|valid|✅)')
+
+    for line in clean_text.splitlines():
+        line_trim = line.strip()
+        if not line_trim or re.search(r'[-=_*#]{4,}|[━─╭╰┌└\|]{2,}', line_trim) or "player_api.php" in line_trim or "get.php" in line_trim:
+            flush_block()
+            continue
+
+        is_new_portal = bool(portal_header_pat.search(line_trim))
+        if is_new_portal and curr_url and (curr_user or curr_mac):
+            flush_block()
+
+        url_match = re.search(r'(https?://[^/\s]+(?:/[^/\s]*)?)', line_trim)
         if url_match:
             base_match = re.match(r'(https?://[^/:]+(?::\d+)?)', url_match.group(1))
             if base_match and not is_blacklisted_host(base_match.group(1)):
-                current_url = base_match.group(1)
-        
-        mac_match = re.search(r'([0-9a-fA-F]{2}(?::[0-9a-fA-F]{2}){5})', line, re.IGNORECASE)
-        if mac_match:
-            current_mac = mac_match.group(1).upper()
-            
-        user_match = re.search(r'(?i)(?:user|usr|username|ᴜꜱᴇʀ)[\s:=]+([^\s]+)', line)
-        if user_match:
-            xt_user = user_match.group(1)
-            
-        pass_match = re.search(r'(?i)(?:pass|password|ᴩᴀꜱꜱ)[\s:=]+([^\s]+)', line)
+                if curr_url is None or is_new_portal:
+                    curr_url = base_match.group(1)
+        elif is_new_portal:
+            host_part = line_trim.split(":", 1)[-1].strip()
+            if host_part and not is_blacklisted_host(host_part):
+                curr_url = "http://" + host_part
+
+        p_match = port_pat.search(line_trim)
+        if p_match:
+            curr_port = p_match.group(1)
+
+        m_match = mac_pat.search(line_trim)
+        if m_match:
+            curr_mac = m_match.group(1).upper()
+
+        u_match = user_pat.search(line_trim)
+        if u_match:
+            u_val = u_match.group(1).strip()
+            if u_val.lower() not in ["mac", "active", "activa", "expired", "http", "https", "user", "pass", "username", "password"]:
+                curr_user = u_val
+
+        pass_match = pass_pat.search(line_trim)
         if pass_match:
-            xt_pass = pass_match.group(1)
-            
-        if current_url and current_mac:
-            if not any(a.get("type") == "Stalker" and a["base_url"] == current_url and a.get("mac") == current_mac for a in extracted):
-                extracted.append({
-                    "type": "Stalker", 
-                    "base_url": current_url, 
-                    "mac": current_mac, 
-                    "username": current_mac, 
-                    "password": "MAC"
-                })
-            current_mac = None # Clear mac to allow next mac to pair with the same portal
-            
-        if current_url and xt_user and xt_pass:
-            if not (re.match(r'^[0-9a-fA-F]{2}$', xt_user) and re.match(r'^(?:[0-9a-fA-F]{2}:){4}[0-9a-fA-F]{2}$', xt_pass)):
-                if not any(a.get("type") == "Xtream" and a["base_url"] == current_url and a["username"] == xt_user for a in extracted):
-                    extracted.append({"type": "Xtream", "base_url": current_url, "username": xt_user, "password": xt_pass})
-            xt_user = None
-            xt_pass = None
+            p_val = pass_match.group(1).strip()
+            if p_val.lower() not in ["mac", "active", "activa", "expired", "http", "https", "user", "pass", "username", "password"]:
+                curr_pass = p_val
+
+        e_match = exp_pat.search(line_trim)
+        if e_match:
+            curr_exp = e_match.group(1).strip()
+
+        c_match = conn_pat.search(line_trim)
+        if c_match:
+            curr_act = c_match.group(1)
+
+        mc_match = max_conn_pat.search(line_trim)
+        if mc_match:
+            curr_max = mc_match.group(1)
+
+        if status_end_pat.search(line_trim):
+            flush_block()
+
+    flush_block()
 
     logger.info(f"Parsing complete. Extracted {len(extracted)} account configurations.")
     return extracted
+
 
 async def evaluate_account(client, account):
     """Tier 1: High-speed handshake verification workflow with Provider Intelligence Extraction."""

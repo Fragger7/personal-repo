@@ -1,6 +1,7 @@
 package com.projectstrong.iptv.network
 
 import com.projectstrong.iptv.data.DataStore
+import java.text.Normalizer
 import java.util.regex.Pattern
 
 data class ParsedCredential(
@@ -40,6 +41,13 @@ object Parser {
         "mega.nz", "mediafire.com", "dropbox.com", "t.co", "bit.ly", "tinyurl.com", "is.gd"
     )
 
+    private val SMALL_CAPS_MAP = mapOf(
+        'ᴜ' to 'u', 'ꜱ' to 's', 'ᴇ' to 'e', 'ʀ' to 'r', 'ᴩ' to 'p', 'ᴀ' to 'a',
+        'ʜ' to 'h', 'ᴏ' to 'o', 'ᴛ' to 't', 'ᴍ' to 'm', 'ᴄ' to 'c', 'ᴅ' to 'd',
+        'ɪ' to 'i', 'ᴊ' to 'j', 'ᴋ' to 'k', 'ʟ' to 'l', 'ɴ' to 'n', 'ɢ' to 'g',
+        'ᴠ' to 'v', 'ᴡ' to 'w', 'ʏ' to 'y', 'ᴢ' to 'z', 'ʙ' to 'b', 'ꜰ' to 'f'
+    )
+
     private val originUrlPattern = Pattern.compile(
         "https?://(?:www\\.|old\\.|new\\.|np\\.)?(?:reddit\\.com/(?:r/[^\\s\"'<>]+|user/[^\\s\"'<>]+|comments/[^\\s\"'<>]+)|redd\\.it/[^\\s\"'<>]+|t\\.me/[^\\s\"'<>]+|telegram\\.me/[^\\s\"'<>]+|discord\\.gg/[^\\s\"'<>]+)",
         Pattern.CASE_INSENSITIVE
@@ -56,7 +64,7 @@ object Parser {
     
     private val macRegex = Regex("^[0-9a-fA-F]{2}$")
     private val macFullRegex = Regex("^(?:[0-9a-fA-F]{2}:){4}[0-9a-fA-F]{2}$")
-    private val skipKeywords = setOf("mac", "active", "activa", "expired", "http", "https", "user", "pass", "username", "password", "ᴜꜱᴇʀ", "ᴩᴀꜱꜱ")
+    private val skipKeywords = setOf("mac", "active", "activa", "expired", "http", "https", "user", "pass", "username", "password")
     
     private val tzPattern = Pattern.compile("\\b([A-Z]{3,4}|GMT[+-]\\d+)\\b")
     private val connPattern = Pattern.compile("(\\d+)\\s*/\\s*(\\d+)")
@@ -64,10 +72,31 @@ object Parser {
 
     private val urlExtractPattern = Pattern.compile("(https?://[^/\\s]+(?:/[^/\\s]*)?)")
     private val baseExtractPattern = Pattern.compile("(https?://[^/:]+(?::\\d+)?)")
+    private val portalHeaderPattern = Pattern.compile("(?i)^(?:portal|host|server|url|domain)[\\s:=]+(?:https?://|www\\.|[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,})")
+    private val portExtractPattern = Pattern.compile("(?i)\\bport[\\s:=]+(\\d{2,5})\\b")
     private val macExtractPattern = Pattern.compile("([0-9a-fA-F]{2}(?::[0-9a-fA-F]{2}){5})", Pattern.CASE_INSENSITIVE)
-    private val userExtractPattern = Pattern.compile("(?i)(?:user|usr|username|ᴜꜱᴇʀ)[\\s:=]+([^\\s]+)")
-    private val passExtractPattern = Pattern.compile("(?i)(?:pass|password|ᴩᴀꜱꜱ)[\\s:=]+([^\\s]+)")
-    private val resetSeparatorRegex = Regex("[-=_*#]{4,}|╰─|╭─|┌─|└─|\\|")
+    private val userExtractPattern = Pattern.compile("(?i)(?:user|usr|username)[\\s:=]+([^\\s]+)")
+    private val passExtractPattern = Pattern.compile("(?i)(?:pass|password)[\\s:=]+([^\\s]+)")
+    private val expExtractPattern = Pattern.compile("(?i)(?:exp|expire|expires|expiry)[\\s:=]+([^\\s]+)")
+    private val singleConnExtractPattern = Pattern.compile("(?i)\\b(?:conn|active)[\\s:=]+(\\d+)\\b")
+    private val singleMaxConnExtractPattern = Pattern.compile("(?i)\\b(?:maxconn|max_conn|max)[\\s:=]+(\\d+)\\b")
+    private val statusEndPattern = Pattern.compile("(?i)status[\\s:=]+.*(?:ok|active|valid|✅)")
+    private val resetSeparatorRegex = Regex("[-=_*#]{4,}|[━─╭╰┌└\\|]{2,}")
+
+    fun normalizeText(raw: String): String {
+        if (raw.isEmpty()) return raw
+        val normalized = Normalizer.normalize(raw, Normalizer.Form.NFKD)
+        val sb = StringBuilder(normalized.length)
+        for (ch in normalized) {
+            val mapped = SMALL_CAPS_MAP[ch]
+            if (mapped != null) {
+                sb.append(mapped)
+            } else {
+                sb.append(ch)
+            }
+        }
+        return sb.toString()
+    }
 
     fun isBlacklistedHost(url: String): Boolean {
         return try {
@@ -80,15 +109,6 @@ object Parser {
         }
     }
 
-    private fun extractDomain(url: String): String {
-        return try {
-            val uri = java.net.URI(url)
-            uri.host ?: "Unknown"
-        } catch (e: Exception) {
-            "Unknown"
-        }
-    }
-
     fun parseCredentials(
         textBlock: String,
         sourceLink: String = "Direct Ingestion",
@@ -96,6 +116,7 @@ object Parser {
     ): List<ParsedCredential> {
         if (textBlock.isBlank()) return emptyList()
         return try {
+            val cleanText = normalizeText(textBlock)
             val extracted = mutableListOf<ParsedCredential>()
 
             // Auto-discover Origin Link (Reddit/Forum/Social) if not explicitly set
@@ -104,7 +125,7 @@ object Parser {
             } else if (DataStore.scannerOriginLink.isNotBlank()) {
                 DataStore.scannerOriginLink
             } else {
-                val m = originUrlPattern.matcher(textBlock)
+                val m = originUrlPattern.matcher(cleanText)
                 if (m.find()) {
                     val found = m.group(0) ?: ""
                     if (found.isNotBlank() && DataStore.scannerOriginLink.isBlank()) {
@@ -120,7 +141,7 @@ object Parser {
             } else if (DataStore.scannerSourceLink.isNotBlank() && DataStore.scannerSourceLink != "Direct Ingestion") {
                 DataStore.scannerSourceLink
             } else {
-                val m = pastebinUrlPattern.matcher(textBlock)
+                val m = pastebinUrlPattern.matcher(cleanText)
                 if (m.find()) {
                     val found = m.group(0) ?: "Direct Ingestion"
                     if (found != "Direct Ingestion" && (DataStore.scannerSourceLink.isBlank() || DataStore.scannerSourceLink == "Direct Ingestion")) {
@@ -130,9 +151,9 @@ object Parser {
                 } else "Direct Ingestion"
             }
             
-            // 1. Standard Xtream API patterns
+            // 1. Standard Xtream API player_api URL patterns
             try {
-                val matcherXtream = patternXtream.matcher(textBlock)
+                val matcherXtream = patternXtream.matcher(cleanText)
                 while (matcherXtream.find()) {
                     val baseUrl = matcherXtream.group(1) ?: ""
                     val user = matcherXtream.group(2) ?: ""
@@ -144,8 +165,7 @@ object Parser {
             } catch (e: Throwable) {}
 
             // 2. Line-by-line Tabular & Formatted Combos
-
-            for (line in textBlock.lines()) {
+            for (line in cleanText.lines()) {
                 val lineClean = line.trim()
                 if (lineClean.isEmpty() || lineClean.length > 800 || lineClean.contains("player_api.php") || lineClean.contains("get.php")) {
                     continue
@@ -244,70 +264,193 @@ object Parser {
                 } catch (e: Throwable) {}
             }
 
-            // 3. Multi-line and Stalker Free-Text State Machine
-            var currentUrl: String? = null
-            var currentMac: String? = null
-            var xtUser: String? = null
-            var xtPass: String? = null
-            
-            for (line in textBlock.lines()) {
-                val lineTrim = line.trim()
-                if (lineTrim.isEmpty() || lineTrim.length > 800 || lineTrim.contains(resetSeparatorRegex) || lineTrim.contains("player_api.php") || lineTrim.contains("get.php")) {
-                    currentUrl = null
-                    currentMac = null
-                    xtUser = null
-                    xtPass = null
-                    continue
+            // 3. Multi-line Block & Stalker/Xtream State Machine (with Port & Unicode Support)
+            var currUrl: String? = null
+            var currPort: String? = null
+            var currUser: String? = null
+            var currPass: String? = null
+            var currMac: String? = null
+            var currExp: String? = null
+            var currAct: String? = null
+            var currMax: String? = null
+
+            fun flushCurrentBlock() {
+                val u = currUrl?.trim() ?: return
+                var base = if (!u.startsWith("http")) "http://$u" else u
+                
+                // If a separate port was declared and base doesn't already have one
+                val port = currPort?.trim()
+                if (!port.isNullOrEmpty()) {
+                    val scheme = if (base.startsWith("https://")) "https://" else "http://"
+                    val afterScheme = base.removePrefix(scheme)
+                    val hostPart = afterScheme.substringBefore("/")
+                    if (!hostPart.contains(":")) {
+                        val path = if (afterScheme.contains("/")) "/" + afterScheme.substringAfter("/") else ""
+                        base = "$scheme$hostPart:$port$path"
+                    }
                 }
                 
+                base = base.trimEnd('/')
+                if (isBlacklistedHost(base)) {
+                    currUrl = null
+                    currPort = null
+                    currUser = null
+                    currPass = null
+                    currMac = null
+                    currExp = null
+                    currAct = null
+                    currMax = null
+                    return
+                }
+
+                val mac = currMac
+                val user = currUser
+                val pass = currPass
+
+                if (!mac.isNullOrEmpty()) {
+                    if (!extracted.any { it.type == "Stalker" && it.baseUrl == base && it.mac == mac }) {
+                        extracted.add(
+                            ParsedCredential(
+                                baseUrl = base,
+                                user = mac,
+                                pass = "MAC",
+                                mac = mac,
+                                type = "Stalker",
+                                expires = currExp ?: "N/A",
+                                activeConn = currAct ?: "N/A",
+                                maxConn = currMax ?: "N/A",
+                                sourceLink = effectiveSource,
+                                originLink = effectiveOrigin
+                            )
+                        )
+                    }
+                } else if (!user.isNullOrEmpty() && !pass.isNullOrEmpty()) {
+                    if (!(user.matches(macRegex) && pass.matches(macFullRegex))) {
+                        if (!extracted.any { it.type == "Xtream" && it.baseUrl == base && it.user == user }) {
+                            extracted.add(
+                                ParsedCredential(
+                                    baseUrl = base,
+                                    user = user,
+                                    pass = pass,
+                                    mac = "",
+                                    type = "Xtream",
+                                    expires = currExp ?: "N/A",
+                                    activeConn = currAct ?: "N/A",
+                                    maxConn = currMax ?: "N/A",
+                                    sourceLink = effectiveSource,
+                                    originLink = effectiveOrigin
+                                )
+                            )
+                        }
+                    }
+                }
+
+                currUrl = null
+                currPort = null
+                currUser = null
+                currPass = null
+                currMac = null
+                currExp = null
+                currAct = null
+                currMax = null
+            }
+
+            for (line in cleanText.lines()) {
+                val lineTrim = line.trim()
+                if (lineTrim.isEmpty() || lineTrim.length > 800 || lineTrim.contains(resetSeparatorRegex) || lineTrim.contains("player_api.php") || lineTrim.contains("get.php")) {
+                    flushCurrentBlock()
+                    continue
+                }
+
                 try {
+                    // Check if this line starts a new Portal / Host block
+                    val isNewPortalLine = portalHeaderPattern.matcher(lineTrim).find()
+                    if (isNewPortalLine && currUrl != null && (currUser != null || currMac != null)) {
+                        flushCurrentBlock()
+                    }
+
+                    // Extract URL
                     val urlMatch = urlExtractPattern.matcher(lineTrim)
                     if (urlMatch.find()) {
                         val baseMatch = baseExtractPattern.matcher(urlMatch.group(1) ?: "")
                         if (baseMatch.find()) {
                             val candidate = baseMatch.group(1) ?: ""
                             if (candidate.isNotEmpty() && !isBlacklistedHost(candidate)) {
-                                currentUrl = candidate
+                                if (currUrl == null || isNewPortalLine) {
+                                    currUrl = candidate
+                                }
                             }
                         }
+                    } else if (isNewPortalLine) {
+                        // Portal without http prefix (e.g. Portal : fx2727.com)
+                        val hostPart = lineTrim.substringAfter(":").trim()
+                        if (hostPart.isNotEmpty() && !isBlacklistedHost(hostPart)) {
+                            currUrl = "http://$hostPart"
+                        }
                     }
-                    
+
+                    // Extract Port
+                    val portMatch = portExtractPattern.matcher(lineTrim)
+                    if (portMatch.find()) {
+                        currPort = portMatch.group(1)
+                    }
+
+                    // Extract MAC
                     val macMatch = macExtractPattern.matcher(lineTrim)
                     if (macMatch.find()) {
-                        currentMac = macMatch.group(1)?.uppercase()
+                        currMac = macMatch.group(1)?.uppercase()
                     }
-                    
+
+                    // Extract User
                     val userMatch = userExtractPattern.matcher(lineTrim)
                     if (userMatch.find()) {
-                        xtUser = userMatch.group(1)
+                        val uVal = userMatch.group(1)?.trim() ?: ""
+                        if (!skipKeywords.contains(uVal.lowercase())) {
+                            currUser = uVal
+                        }
                     }
-                    
+
+                    // Extract Pass
                     val passMatch = passExtractPattern.matcher(lineTrim)
                     if (passMatch.find()) {
-                        xtPass = passMatch.group(1)
-                    }
-                    
-                    if (currentUrl != null && currentMac != null && !isBlacklistedHost(currentUrl)) {
-                        if (!extracted.any { it.type == "Stalker" && it.baseUrl == currentUrl && it.mac == currentMac }) {
-                            extracted.add(ParsedCredential(currentUrl, currentMac, "MAC", currentMac, "Stalker", sourceLink = effectiveSource, originLink = effectiveOrigin))
+                        val pVal = passMatch.group(1)?.trim() ?: ""
+                        if (!skipKeywords.contains(pVal.lowercase())) {
+                            currPass = pVal
                         }
-                        currentMac = null
                     }
-                    
-                    if (currentUrl != null && xtUser != null && xtPass != null && !isBlacklistedHost(currentUrl)) {
-                        if (!(xtUser.matches(macRegex) && xtPass.matches(macFullRegex))) {
-                            if (!extracted.any { it.type == "Xtream" && it.baseUrl == currentUrl && it.user == xtUser }) {
-                                extracted.add(ParsedCredential(currentUrl, xtUser, xtPass, "", "Xtream", sourceLink = effectiveSource, originLink = effectiveOrigin))
-                            }
-                        }
-                        xtUser = null
-                        xtPass = null
+
+                    // Extract Exp
+                    val expMatch = expExtractPattern.matcher(lineTrim)
+                    if (expMatch.find()) {
+                        currExp = expMatch.group(1)?.trim()
+                    }
+
+                    // Extract Conn
+                    val connMatch = singleConnExtractPattern.matcher(lineTrim)
+                    if (connMatch.find()) {
+                        currAct = connMatch.group(1)
+                    }
+
+                    // Extract MaxConn
+                    val maxConnMatch = singleMaxConnExtractPattern.matcher(lineTrim)
+                    if (maxConnMatch.find()) {
+                        currMax = maxConnMatch.group(1)
+                    }
+
+                    // Check if line indicates status / block completion
+                    if (statusEndPattern.matcher(lineTrim).find()) {
+                        flushCurrentBlock()
                     }
                 } catch (e: Throwable) {}
             }
+
+            // Final flush for remaining block
+            flushCurrentBlock()
+
             extracted
         } catch (e: Throwable) {
             emptyList()
         }
     }
 }
+
