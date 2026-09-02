@@ -57,48 +57,18 @@ fun XtreamTab(onNextTab: (() -> Unit)? = null) {
         selectedNode = null
     }
 
-    val configuration = LocalConfiguration.current
-    val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
-    
-    if (isLandscape) {
-        Row(modifier = Modifier.fillMaxSize()) {
-            Box(modifier = Modifier.weight(0.45f).fillMaxHeight()) {
-                XtreamMasterGrid(
-                    nodes = xtreamNodes,
-                    onSelectNode = { selectedNode = it },
-                    onNextTab = onNextTab
-                )
-            }
-            Box(modifier = Modifier.width(1.dp).fillMaxHeight().background(AppSurfaceBorder))
-            Box(modifier = Modifier.weight(0.55f).fillMaxHeight()) {
-                AnimatedContent(targetState = selectedNode != null) { isDetail: Boolean ->
-                    if (isDetail && selectedNode != null) {
-                        XtreamDetailScreen(
-                            node = selectedNode!!,
-                            onBack = { selectedNode = null }
-                        )
-                    } else {
-                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                            Text("Select an account from the grid to view details", color = AppTextSecondary, style = MaterialTheme.typography.bodyLarge)
-                        }
-                    }
-                }
-            }
-        }
-    } else {
-        AnimatedContent(targetState = selectedNode != null) { isDetail: Boolean ->
-            if (isDetail && selectedNode != null) {
-                XtreamDetailScreen(
-                    node = selectedNode!!,
-                    onBack = { selectedNode = null }
-                )
-            } else {
-                XtreamMasterGrid(
-                    nodes = xtreamNodes,
-                    onSelectNode = { selectedNode = it },
-                    onNextTab = onNextTab
-                )
-            }
+    AnimatedContent(targetState = selectedNode != null) { isDetail: Boolean ->
+        if (isDetail && selectedNode != null) {
+            XtreamDetailScreen(
+                node = selectedNode!!,
+                onBack = { selectedNode = null }
+            )
+        } else {
+            XtreamMasterGrid(
+                nodes = xtreamNodes,
+                onSelectNode = { selectedNode = it },
+                onNextTab = onNextTab
+            )
         }
     }
 }
@@ -287,123 +257,225 @@ fun XtreamMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCredent
         )
     }
 
+    val configuration = LocalConfiguration.current
+    val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+
     Column(modifier = Modifier.fillMaxSize()) {
         Surface(
             shape = RoundedCornerShape(14.dp),
             color = AppSurface,
             border = androidx.compose.foundation.BorderStroke(1.dp, AppSurfaceBorder),
-            modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp)
+            modifier = Modifier.fillMaxWidth().padding(bottom = if (isLandscape) 6.dp else 12.dp)
         ) {
-            Column(modifier = Modifier.padding(14.dp)) {
+            Column(modifier = Modifier.padding(horizontal = 14.dp, vertical = if (isLandscape) 8.dp else 14.dp)) {
                 val activeCount = nodes.count { it.status.contains("Active", ignoreCase = true) }
                 
-                // Tier 1: Title and Active Count Pill
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = "Xtream Codes",
-                            color = AppTextPrimary,
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Spacer(modifier = Modifier.height(2.dp))
-                        Text(
-                            text = "Discovered ${nodes.size} connections • Showing ${filteredNodes.size} records",
-                            color = AppTextSecondary,
-                            style = MaterialTheme.typography.bodySmall
-                        )
-                    }
-
-                    if (activeCount > 0) {
-                        Surface(
-                            shape = RoundedCornerShape(8.dp),
-                            color = AppSuccess.copy(alpha = 0.15f),
-                            border = androidx.compose.foundation.BorderStroke(1.dp, AppSuccess.copy(alpha = 0.4f))
+                if (isLandscape) {
+                    // Landscape Compact Single Row: Title + Active count on left, Filter & Actions on right
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
                             Text(
-                                text = "⚡ $activeCount Active",
-                                color = Color(0xFF34D399),
-                                style = MaterialTheme.typography.labelSmall,
-                                fontWeight = FontWeight.Bold,
-                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                text = "Xtream Codes (${filteredNodes.size}/${nodes.size})",
+                                color = AppTextPrimary,
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold
                             )
+
+                            if (activeCount > 0) {
+                                Surface(
+                                    shape = RoundedCornerShape(8.dp),
+                                    color = AppSuccess.copy(alpha = 0.15f),
+                                    border = androidx.compose.foundation.BorderStroke(1.dp, AppSuccess.copy(alpha = 0.4f))
+                                ) {
+                                    Text(
+                                        text = "⚡ $activeCount Active",
+                                        color = Color(0xFF34D399),
+                                        style = MaterialTheme.typography.labelSmall,
+                                        fontWeight = FontWeight.Bold,
+                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                                    )
+                                }
+                            }
                         }
-                    }
-                }
 
-                Spacer(modifier = Modifier.height(12.dp))
-
-                // Tier 2: Sub-toolbar containing Active Only switch filter & Query actions
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    // Modern Active Filter Switch
-                    FilterToggleSwitch(
-                        checked = DataStore.activeOnlyXtream,
-                        onCheckedChange = { DataStore.activeOnlyXtream = it },
-                        activeCount = activeCount,
-                        totalCount = nodes.size
-                    )
-
-                    // Query Catalogs / Progress Controls
-                    if (nodes.isNotEmpty()) {
-                        if (!DataStore.isQueryingCatalogs) {
-                            PrimaryButton(
-                                text = "Query Catalogs ($activeCount Active)",
-                                onClick = { startOrResumeCatalogQuery() },
-                                modifier = Modifier.weight(1f).height(38.dp)
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            FilterToggleSwitch(
+                                checked = DataStore.activeOnlyXtream,
+                                onCheckedChange = { DataStore.activeOnlyXtream = it },
+                                activeCount = activeCount,
+                                totalCount = nodes.size
                             )
-                        } else {
-                            Row(
-                                modifier = Modifier.weight(1f),
-                                horizontalArrangement = Arrangement.spacedBy(6.dp)
-                            ) {
-                                if (!DataStore.isCatalogQueryPaused) {
+
+                            if (nodes.isNotEmpty()) {
+                                if (!DataStore.isQueryingCatalogs) {
                                     PrimaryButton(
-                                        text = "⏸️ Pause",
-                                        color = AppWarning,
-                                        onClick = {
-                                            DataStore.isCatalogQueryPaused = true
-                                            ToastManager.warning("Catalog query paused")
-                                        },
-                                        modifier = Modifier.weight(1f).height(38.dp)
+                                        text = "Query Catalogs ($activeCount)",
+                                        onClick = { startOrResumeCatalogQuery() },
+                                        modifier = Modifier.height(34.dp)
                                     )
                                 } else {
+                                    Row(
+                                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        if (!DataStore.isCatalogQueryPaused) {
+                                            PrimaryButton(
+                                                text = "⏸️ Pause",
+                                                color = AppWarning,
+                                                onClick = {
+                                                    DataStore.isCatalogQueryPaused = true
+                                                    ToastManager.warning("Catalog query paused")
+                                                },
+                                                modifier = Modifier.height(34.dp)
+                                            )
+                                        } else {
+                                            PrimaryButton(
+                                                text = "▶️ Resume",
+                                                color = AppSuccess,
+                                                onClick = {
+                                                    DataStore.isCatalogQueryPaused = false
+                                                    ToastManager.success("Catalog query resumed")
+                                                },
+                                                modifier = Modifier.height(34.dp)
+                                            )
+                                        }
+                                        PrimaryButton(
+                                            text = "⏹️ Stop",
+                                            color = AppError,
+                                            onClick = {
+                                                DataStore.isQueryingCatalogs = false
+                                                DataStore.isCatalogQueryPaused = false
+                                                catalogJob?.cancel()
+                                                DataStore.catalogQueryStatusText = "Catalog query stopped by user."
+                                                ToastManager.error("Catalog query stopped")
+                                            },
+                                            modifier = Modifier.height(34.dp)
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    // Portrait 2-Tier Layout
+                    // Tier 1: Title and Active Count Pill
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "Xtream Codes",
+                                color = AppTextPrimary,
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(
+                                text = "Discovered ${nodes.size} connections • Showing ${filteredNodes.size} records",
+                                color = AppTextSecondary,
+                                style = MaterialTheme.typography.bodySmall
+                            )
+                        }
+
+                        if (activeCount > 0) {
+                            Surface(
+                                shape = RoundedCornerShape(8.dp),
+                                color = AppSuccess.copy(alpha = 0.15f),
+                                border = androidx.compose.foundation.BorderStroke(1.dp, AppSuccess.copy(alpha = 0.4f))
+                            ) {
+                                Text(
+                                    text = "⚡ $activeCount Active",
+                                    color = Color(0xFF34D399),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                )
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    // Tier 2: Sub-toolbar containing Active Only switch filter & Query actions
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        // Modern Active Filter Switch
+                        FilterToggleSwitch(
+                            checked = DataStore.activeOnlyXtream,
+                            onCheckedChange = { DataStore.activeOnlyXtream = it },
+                            activeCount = activeCount,
+                            totalCount = nodes.size
+                        )
+
+                        // Query Catalogs / Progress Controls
+                        if (nodes.isNotEmpty()) {
+                            if (!DataStore.isQueryingCatalogs) {
+                                PrimaryButton(
+                                    text = "Query Catalogs ($activeCount Active)",
+                                    onClick = { startOrResumeCatalogQuery() },
+                                    modifier = Modifier.weight(1f).height(38.dp)
+                                )
+                            } else {
+                                Row(
+                                    modifier = Modifier.weight(1f),
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                ) {
+                                    if (!DataStore.isCatalogQueryPaused) {
+                                        PrimaryButton(
+                                            text = "⏸️ Pause",
+                                            color = AppWarning,
+                                            onClick = {
+                                                DataStore.isCatalogQueryPaused = true
+                                                ToastManager.warning("Catalog query paused")
+                                            },
+                                            modifier = Modifier.weight(1f).height(38.dp)
+                                        )
+                                    } else {
+                                        PrimaryButton(
+                                            text = "▶️ Resume",
+                                            color = AppSuccess,
+                                            onClick = {
+                                                DataStore.isCatalogQueryPaused = false
+                                                ToastManager.success("Catalog query resumed")
+                                            },
+                                            modifier = Modifier.weight(1f).height(38.dp)
+                                        )
+                                    }
                                     PrimaryButton(
-                                        text = "▶️ Resume",
-                                        color = AppSuccess,
+                                        text = "⏹️ Stop",
+                                        color = AppError,
                                         onClick = {
+                                            DataStore.isQueryingCatalogs = false
                                             DataStore.isCatalogQueryPaused = false
-                                            ToastManager.success("Catalog query resumed")
+                                            catalogJob?.cancel()
+                                            DataStore.catalogQueryStatusText = "Catalog query stopped by user."
+                                            ToastManager.error("Catalog query stopped")
                                         },
                                         modifier = Modifier.weight(1f).height(38.dp)
                                     )
                                 }
-                                PrimaryButton(
-                                    text = "⏹️ Stop",
-                                    color = AppError,
-                                    onClick = {
-                                        DataStore.isQueryingCatalogs = false
-                                        DataStore.isCatalogQueryPaused = false
-                                        catalogJob?.cancel()
-                                        DataStore.catalogQueryStatusText = "Catalog query stopped by user."
-                                        ToastManager.error("Catalog query stopped")
-                                    },
-                                    modifier = Modifier.weight(1f).height(38.dp)
-                                )
                             }
                         }
                     }
                 }
 
                 if (DataStore.catalogQueryStatusText.isNotEmpty()) {
-                    Spacer(modifier = Modifier.height(10.dp))
+                    Spacer(modifier = Modifier.height(if (isLandscape) 4.dp else 10.dp))
                     Text(
                         text = DataStore.catalogQueryStatusText,
                         color = if (DataStore.isCatalogQueryPaused) Color(0xFFFBBF24) else Color(0xFF38BDF8),
@@ -411,13 +483,13 @@ fun XtreamMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCredent
                         fontWeight = FontWeight.SemiBold
                     )
                     if (DataStore.isQueryingCatalogs) {
-                        Spacer(modifier = Modifier.height(6.dp))
+                        Spacer(modifier = Modifier.height(4.dp))
                         LinearProgressIndicator(
                             progress = { DataStore.catalogQueryProgress },
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(5.dp)
-                                .clip(RoundedCornerShape(3.dp)),
+                                .height(4.dp)
+                                .clip(RoundedCornerShape(2.dp)),
                             color = if (DataStore.isCatalogQueryPaused) AppWarning else AppSuccess,
                             trackColor = AppSurfaceVariant
                         )
@@ -450,7 +522,7 @@ fun XtreamMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCredent
                             .fillMaxSize()
                             .horizontalScroll(scrollState)
                     ) {
-                        Column {
+                        Column(modifier = Modifier.fillMaxHeight()) {
                             // Header Row with Sort Indicators
                             Row(
                                 modifier = Modifier
@@ -483,7 +555,7 @@ fun XtreamMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCredent
 
                             Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(AppSurfaceBorder))
 
-                            LazyColumn(modifier = Modifier.fillMaxSize(), state = listState) {
+                            LazyColumn(modifier = Modifier.fillMaxWidth().weight(1f), state = listState) {
                                 items(filteredNodes) { node: ParsedCredential ->
                                     val profile = com.projectstrong.iptv.data.ProviderIntelligenceManager.getProfile(node.baseUrl)
                                     val displayBrand = if (profile?.isIdentified == true) profile.cleanBrand else node.provider.ifEmpty { "Unbranded" }

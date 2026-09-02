@@ -365,73 +365,32 @@ fun CommittedTab() {
     }
 
     
-    if (isLandscape) {
-        Row(modifier = Modifier.fillMaxSize()) {
-            Box(modifier = Modifier.weight(0.45f).fillMaxHeight()) {
-                CommittedMasterGrid(
-                    records = records,
-                    isBusy = isReloading || isPushing || isRechecking,
-                    statusMessage = actionMessage,
-                    onSelectRecord = { selectedRecord = it },
-                    onViewSourceSnapshot = { link, file -> sourceArchiveViewerData = Pair(link, file) },
-                    onRefresh = { loadRecords() },
-                    onPush = onPushAction,
-                    onRecheckStatus = onRecheckStatusAction,
-                    onDeleteRecord = { recordToDelete = it },
-                    onOpenTokenSettings = onOpenTokenSettingsAction
-                )
-            }
-            Box(modifier = Modifier.width(1.dp).fillMaxHeight().background(AppSurfaceBorder))
-            Box(modifier = Modifier.weight(0.55f).fillMaxHeight()) {
-                AnimatedContent(
-                    targetState = selectedRecord,
-                    modifier = Modifier.fillMaxSize(),
-                    label = "CommittedScreenTransition"
-                ) { activeRecord ->
-                    if (activeRecord != null) {
-                        CommittedDetailScreen(
-                            record = activeRecord,
-                            onBack = { selectedRecord = null },
-                            onDelete = { recordToDelete = activeRecord },
-                            onViewSourceSnapshot = { link, file -> sourceArchiveViewerData = Pair(link, file) },
-onPush = onPushAction
-                        )
-                    } else {
-                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                            Text("Select a record from the grid to view details", color = AppTextSecondary, style = MaterialTheme.typography.bodyLarge)
-                        }
-                    }
-                }
-            }
-        }
-    } else {
-        AnimatedContent(
-            targetState = selectedRecord,
-            modifier = Modifier.fillMaxSize(),
-            label = "CommittedScreenTransition"
-        ) { activeRecord ->
-            if (activeRecord != null) {
-                CommittedDetailScreen(
-                    record = activeRecord,
-                    onBack = { selectedRecord = null },
-                    onDelete = { recordToDelete = activeRecord },
-                    onViewSourceSnapshot = { link, file -> sourceArchiveViewerData = Pair(link, file) },
-onPush = onPushAction
-                )
-            } else {
-                CommittedMasterGrid(
-                    records = records,
-                    isBusy = isReloading || isPushing || isRechecking,
-                    statusMessage = actionMessage,
-                    onSelectRecord = { selectedRecord = it },
-                    onViewSourceSnapshot = { link, file -> sourceArchiveViewerData = Pair(link, file) },
-                    onRefresh = { loadRecords() },
-                    onPush = onPushAction,
-                    onRecheckStatus = onRecheckStatusAction,
-                    onDeleteRecord = { recordToDelete = it },
-                    onOpenTokenSettings = onOpenTokenSettingsAction
-                )
-            }
+    AnimatedContent(
+        targetState = selectedRecord,
+        modifier = Modifier.fillMaxSize(),
+        label = "CommittedScreenTransition"
+    ) { activeRecord ->
+        if (activeRecord != null) {
+            CommittedDetailScreen(
+                record = activeRecord,
+                onBack = { selectedRecord = null },
+                onDelete = { recordToDelete = activeRecord },
+                onViewSourceSnapshot = { link, file -> sourceArchiveViewerData = Pair(link, file) },
+                onPush = onPushAction
+            )
+        } else {
+            CommittedMasterGrid(
+                records = records,
+                isBusy = isReloading || isPushing || isRechecking,
+                statusMessage = actionMessage,
+                onSelectRecord = { selectedRecord = it },
+                onViewSourceSnapshot = { link, file -> sourceArchiveViewerData = Pair(link, file) },
+                onRefresh = { loadRecords() },
+                onPush = onPushAction,
+                onRecheckStatus = onRecheckStatusAction,
+                onDeleteRecord = { recordToDelete = it },
+                onOpenTokenSettings = onOpenTokenSettingsAction
+            )
         }
     }
 
@@ -580,6 +539,8 @@ fun CommittedMasterGrid(
     }
 
     val localCount = records.count { it.isLocal }
+    val configuration = LocalConfiguration.current
+    val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
 
     Column(modifier = Modifier.fillMaxSize()) {
         // Control Bar
@@ -587,104 +548,198 @@ fun CommittedMasterGrid(
             shape = RoundedCornerShape(14.dp),
             color = AppSurface,
             border = androidx.compose.foundation.BorderStroke(1.dp, AppSurfaceBorder),
-            modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp)
+            modifier = Modifier.fillMaxWidth().padding(bottom = if (isLandscape) 6.dp else 12.dp)
         ) {
-            Column(modifier = Modifier.padding(14.dp)) {
-                // Tier 1: Title and Cloud/Sync Status Badges
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = "Committed Accounts",
-                            color = AppTextPrimary,
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Spacer(modifier = Modifier.height(2.dp))
-                        Text(
-                            text = "Permanent Vault • Showing ${records.size} records",
-                            color = AppTextSecondary,
-                            style = MaterialTheme.typography.bodySmall
-                        )
-                    }
-
-                    if (localCount > 0) {
-                        Surface(
-                            shape = RoundedCornerShape(8.dp),
-                            color = AppWarning.copy(alpha = 0.15f),
-                            border = androidx.compose.foundation.BorderStroke(1.dp, AppWarning.copy(alpha = 0.4f))
-                        ) {
-                            Text(
-                                text = "⚠️ $localCount Unpushed",
-                                color = Color(0xFFFBBF24),
-                                style = MaterialTheme.typography.labelSmall,
-                                fontWeight = FontWeight.Bold,
-                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                            )
-                        }
-                    } else if (records.isNotEmpty()) {
-                        Surface(
-                            shape = RoundedCornerShape(8.dp),
-                            color = AppSuccess.copy(alpha = 0.12f),
-                            border = androidx.compose.foundation.BorderStroke(1.dp, AppSuccess.copy(alpha = 0.35f))
-                        ) {
-                            Text(
-                                text = "☁️ Synced",
-                                color = Color(0xFF34D399),
-                                style = MaterialTheme.typography.labelSmall,
-                                fontWeight = FontWeight.Bold,
-                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                            )
-                        }
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                // Tier 2: Action Buttons Row with equal balance
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    SecondaryButton(
-                        text = "⚡ Check",
-                        onClick = onRecheckStatus,
-                        modifier = Modifier.weight(1f).height(38.dp)
-                    )
-                    SecondaryButton(
-                        text = "🔄 Sync",
-                        onClick = onRefresh,
-                        modifier = Modifier.weight(1f).height(38.dp)
-                    )
-                    PrimaryButton(
-                        text = if (localCount > 0) "☁️ Push ($localCount)" else "☁️ Push",
-                        color = if (records.isEmpty()) AppTextMuted else AppSuccess,
-                        onClick = onPush,
-                        modifier = Modifier.weight(1.2f).height(38.dp)
-                    )
-                    Surface(
-                        shape = RoundedCornerShape(8.dp),
-                        color = if (DataStore.githubToken.isNotEmpty()) AppPrimary.copy(alpha = 0.15f) else AppSurfaceVariant,
-                        border = androidx.compose.foundation.BorderStroke(
-                            1.dp, 
-                            if (DataStore.githubToken.isNotEmpty()) AppPrimary.copy(alpha = 0.4f) else AppSurfaceBorder
-                        ),
-                        modifier = Modifier.clickable { onOpenTokenSettings() }
+            Column(modifier = Modifier.padding(horizontal = 14.dp, vertical = if (isLandscape) 8.dp else 14.dp)) {
+                if (isLandscape) {
+                    // Landscape Compact Single Row: Title + Status Badge on left, Actions on right
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Box(
-                            modifier = Modifier.size(38.dp),
-                            contentAlignment = Alignment.Center
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
-                            Icon(
-                                Icons.Default.Key,
-                                contentDescription = "Token Settings",
-                                tint = if (DataStore.githubToken.isNotEmpty()) Color(0xFF60A5FA) else AppTextMuted,
-                                modifier = Modifier.size(18.dp)
+                            Text(
+                                text = "Committed Accounts (${records.size})",
+                                color = AppTextPrimary,
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold
                             )
+                            if (localCount > 0) {
+                                Surface(
+                                    shape = RoundedCornerShape(8.dp),
+                                    color = AppWarning.copy(alpha = 0.15f),
+                                    border = androidx.compose.foundation.BorderStroke(1.dp, AppWarning.copy(alpha = 0.4f))
+                                ) {
+                                    Text(
+                                        text = "⚠️ $localCount Unpushed",
+                                        color = Color(0xFFFBBF24),
+                                        style = MaterialTheme.typography.labelSmall,
+                                        fontWeight = FontWeight.Bold,
+                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                                    )
+                                }
+                            } else if (records.isNotEmpty()) {
+                                Surface(
+                                    shape = RoundedCornerShape(8.dp),
+                                    color = AppSuccess.copy(alpha = 0.12f),
+                                    border = androidx.compose.foundation.BorderStroke(1.dp, AppSuccess.copy(alpha = 0.35f))
+                                ) {
+                                    Text(
+                                        text = "☁️ Synced",
+                                        color = Color(0xFF34D399),
+                                        style = MaterialTheme.typography.labelSmall,
+                                        fontWeight = FontWeight.Bold,
+                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                                    )
+                                }
+                            }
+                        }
+
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            SecondaryButton(
+                                text = "⚡ Check",
+                                onClick = onRecheckStatus,
+                                modifier = Modifier.height(34.dp)
+                            )
+                            SecondaryButton(
+                                text = "🔄 Sync",
+                                onClick = onRefresh,
+                                modifier = Modifier.height(34.dp)
+                            )
+                            PrimaryButton(
+                                text = if (localCount > 0) "☁️ Push ($localCount)" else "☁️ Push",
+                                color = if (records.isEmpty()) AppTextMuted else AppSuccess,
+                                onClick = onPush,
+                                modifier = Modifier.height(34.dp)
+                            )
+                            Surface(
+                                shape = RoundedCornerShape(8.dp),
+                                color = if (DataStore.githubToken.isNotEmpty()) AppPrimary.copy(alpha = 0.15f) else AppSurfaceVariant,
+                                border = androidx.compose.foundation.BorderStroke(
+                                    1.dp, 
+                                    if (DataStore.githubToken.isNotEmpty()) AppPrimary.copy(alpha = 0.4f) else AppSurfaceBorder
+                                ),
+                                modifier = Modifier.clickable { onOpenTokenSettings() }
+                            ) {
+                                Box(
+                                    modifier = Modifier.size(34.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        Icons.Default.Key,
+                                        contentDescription = "Token Settings",
+                                        tint = if (DataStore.githubToken.isNotEmpty()) Color(0xFF60A5FA) else AppTextMuted,
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    // Portrait 2-Tier Layout
+                    // Tier 1: Title and Cloud/Sync Status Badges
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "Committed Accounts",
+                                color = AppTextPrimary,
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(
+                                text = "Permanent Vault • Showing ${records.size} records",
+                                color = AppTextSecondary,
+                                style = MaterialTheme.typography.bodySmall
+                            )
+                        }
+
+                        if (localCount > 0) {
+                            Surface(
+                                shape = RoundedCornerShape(8.dp),
+                                color = AppWarning.copy(alpha = 0.15f),
+                                border = androidx.compose.foundation.BorderStroke(1.dp, AppWarning.copy(alpha = 0.4f))
+                            ) {
+                                Text(
+                                    text = "⚠️ $localCount Unpushed",
+                                    color = Color(0xFFFBBF24),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                )
+                            }
+                        } else if (records.isNotEmpty()) {
+                            Surface(
+                                shape = RoundedCornerShape(8.dp),
+                                color = AppSuccess.copy(alpha = 0.12f),
+                                border = androidx.compose.foundation.BorderStroke(1.dp, AppSuccess.copy(alpha = 0.35f))
+                            ) {
+                                Text(
+                                    text = "☁️ Synced",
+                                    color = Color(0xFF34D399),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                )
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    // Tier 2: Action Buttons Row with equal balance
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        SecondaryButton(
+                            text = "⚡ Check",
+                            onClick = onRecheckStatus,
+                            modifier = Modifier.weight(1f).height(38.dp)
+                        )
+                        SecondaryButton(
+                            text = "🔄 Sync",
+                            onClick = onRefresh,
+                            modifier = Modifier.weight(1f).height(38.dp)
+                        )
+                        PrimaryButton(
+                            text = if (localCount > 0) "☁️ Push ($localCount)" else "☁️ Push",
+                            color = if (records.isEmpty()) AppTextMuted else AppSuccess,
+                            onClick = onPush,
+                            modifier = Modifier.weight(1.2f).height(38.dp)
+                        )
+                        Surface(
+                            shape = RoundedCornerShape(8.dp),
+                            color = if (DataStore.githubToken.isNotEmpty()) AppPrimary.copy(alpha = 0.15f) else AppSurfaceVariant,
+                            border = androidx.compose.foundation.BorderStroke(
+                                1.dp, 
+                                if (DataStore.githubToken.isNotEmpty()) AppPrimary.copy(alpha = 0.4f) else AppSurfaceBorder
+                            ),
+                            modifier = Modifier.clickable { onOpenTokenSettings() }
+                        ) {
+                            Box(
+                                modifier = Modifier.size(38.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    Icons.Default.Key,
+                                    contentDescription = "Token Settings",
+                                    tint = if (DataStore.githubToken.isNotEmpty()) Color(0xFF60A5FA) else AppTextMuted,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
                         }
                     }
                 }

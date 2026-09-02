@@ -43,48 +43,18 @@ fun StalkerTab(onNextTab: (() -> Unit)? = null) {
         selectedNode = null
     }
 
-    val configuration = LocalConfiguration.current
-    val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
-    
-    if (isLandscape) {
-        Row(modifier = Modifier.fillMaxSize()) {
-            Box(modifier = Modifier.weight(0.45f).fillMaxHeight()) {
-                StalkerMasterGrid(
-                    nodes = stalkerNodes,
-                    onSelectNode = { selectedNode = it },
-                    onNextTab = onNextTab
-                )
-            }
-            Box(modifier = Modifier.width(1.dp).fillMaxHeight().background(AppSurfaceBorder))
-            Box(modifier = Modifier.weight(0.55f).fillMaxHeight()) {
-                AnimatedContent(targetState = selectedNode != null) { isDetail: Boolean ->
-                    if (isDetail && selectedNode != null) {
-                        StalkerDetailScreen(
-                            node = selectedNode!!,
-                            onBack = { selectedNode = null }
-                        )
-                    } else {
-                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                            Text("Select a portal from the grid to view details", color = AppTextSecondary, style = MaterialTheme.typography.bodyLarge)
-                        }
-                    }
-                }
-            }
-        }
-    } else {
-        AnimatedContent(targetState = selectedNode != null) { isDetail: Boolean ->
-            if (isDetail && selectedNode != null) {
-                StalkerDetailScreen(
-                    node = selectedNode!!,
-                    onBack = { selectedNode = null }
-                )
-            } else {
-                StalkerMasterGrid(
-                    nodes = stalkerNodes,
-                    onSelectNode = { selectedNode = it },
-                    onNextTab = onNextTab
-                )
-            }
+    AnimatedContent(targetState = selectedNode != null) { isDetail: Boolean ->
+        if (isDetail && selectedNode != null) {
+            StalkerDetailScreen(
+                node = selectedNode!!,
+                onBack = { selectedNode = null }
+            )
+        } else {
+            StalkerMasterGrid(
+                nodes = stalkerNodes,
+                onSelectNode = { selectedNode = it },
+                onNextTab = onNextTab
+            )
         }
     }
 }
@@ -132,68 +102,116 @@ fun StalkerMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCreden
         )
     }
 
+    val configuration = LocalConfiguration.current
+    val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+
     Column(modifier = Modifier.fillMaxSize()) {
         Surface(
             shape = RoundedCornerShape(14.dp),
             color = AppSurface,
             border = androidx.compose.foundation.BorderStroke(1.dp, AppSurfaceBorder),
-            modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp)
+            modifier = Modifier.fillMaxWidth().padding(bottom = if (isLandscape) 6.dp else 12.dp)
         ) {
-            Column(modifier = Modifier.padding(14.dp)) {
+            Column(modifier = Modifier.padding(horizontal = 14.dp, vertical = if (isLandscape) 8.dp else 14.dp)) {
                 val activeCount = nodes.count { it.status.contains("Active", ignoreCase = true) }
 
-                // Tier 1: Title and Active Count Badge
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = "Stalker Portals",
-                            color = AppTextPrimary,
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Spacer(modifier = Modifier.height(2.dp))
-                        Text(
-                            text = "Discovered ${nodes.size} connections • Showing ${filteredNodes.size} records",
-                            color = AppTextSecondary,
-                            style = MaterialTheme.typography.bodySmall
-                        )
-                    }
-
-                    if (activeCount > 0) {
-                        Surface(
-                            shape = RoundedCornerShape(8.dp),
-                            color = AppSuccess.copy(alpha = 0.15f),
-                            border = androidx.compose.foundation.BorderStroke(1.dp, AppSuccess.copy(alpha = 0.4f))
+                if (isLandscape) {
+                    // Landscape Compact Single Row: Title + Active badge on left, Filter on right
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
                             Text(
-                                text = "⚡ $activeCount Active",
-                                color = Color(0xFF34D399),
-                                style = MaterialTheme.typography.labelSmall,
-                                fontWeight = FontWeight.Bold,
-                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                text = "Stalker Portals (${filteredNodes.size}/${nodes.size})",
+                                color = AppTextPrimary,
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold
+                            )
+
+                            if (activeCount > 0) {
+                                Surface(
+                                    shape = RoundedCornerShape(8.dp),
+                                    color = AppSuccess.copy(alpha = 0.15f),
+                                    border = androidx.compose.foundation.BorderStroke(1.dp, AppSuccess.copy(alpha = 0.4f))
+                                ) {
+                                    Text(
+                                        text = "⚡ $activeCount Active",
+                                        color = Color(0xFF34D399),
+                                        style = MaterialTheme.typography.labelSmall,
+                                        fontWeight = FontWeight.Bold,
+                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                                    )
+                                }
+                            }
+                        }
+
+                        FilterToggleSwitch(
+                            checked = DataStore.activeOnlyStalker,
+                            onCheckedChange = { DataStore.activeOnlyStalker = it },
+                            activeCount = activeCount,
+                            totalCount = nodes.size
+                        )
+                    }
+                } else {
+                    // Portrait 2-Tier Layout
+                    // Tier 1: Title and Active Count Badge
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "Stalker Portals",
+                                color = AppTextPrimary,
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(
+                                text = "Discovered ${nodes.size} connections • Showing ${filteredNodes.size} records",
+                                color = AppTextSecondary,
+                                style = MaterialTheme.typography.bodySmall
                             )
                         }
+
+                        if (activeCount > 0) {
+                            Surface(
+                                shape = RoundedCornerShape(8.dp),
+                                color = AppSuccess.copy(alpha = 0.15f),
+                                border = androidx.compose.foundation.BorderStroke(1.dp, AppSuccess.copy(alpha = 0.4f))
+                            ) {
+                                Text(
+                                    text = "⚡ $activeCount Active",
+                                    color = Color(0xFF34D399),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                )
+                            }
+                        }
                     }
-                }
 
-                Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(12.dp))
 
-                // Tier 2: Filter Toolbar with FilterToggleSwitch
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.Start,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    FilterToggleSwitch(
-                        checked = DataStore.activeOnlyStalker,
-                        onCheckedChange = { DataStore.activeOnlyStalker = it },
-                        activeCount = activeCount,
-                        totalCount = nodes.size
-                    )
+                    // Tier 2: Filter Toolbar with FilterToggleSwitch
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.Start,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        FilterToggleSwitch(
+                            checked = DataStore.activeOnlyStalker,
+                            onCheckedChange = { DataStore.activeOnlyStalker = it },
+                            activeCount = activeCount,
+                            totalCount = nodes.size
+                        )
+                    }
                 }
             }
         }
@@ -222,7 +240,7 @@ fun StalkerMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCreden
                             .fillMaxSize()
                             .horizontalScroll(scrollState)
                     ) {
-                        Column {
+                        Column(modifier = Modifier.fillMaxHeight()) {
                             Row(
                                 modifier = Modifier
                                     .background(AppSurfaceVariant)
@@ -250,7 +268,7 @@ fun StalkerMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCreden
 
                             Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(AppSurfaceBorder))
 
-                            LazyColumn(modifier = Modifier.fillMaxSize(), state = listState) {
+                            LazyColumn(modifier = Modifier.fillMaxWidth().weight(1f), state = listState) {
                                 items(filteredNodes) { node: ParsedCredential ->
                                     val profile = com.projectstrong.iptv.data.ProviderIntelligenceManager.getProfile(node.baseUrl)
                                     val displayBrand = if (profile?.isIdentified == true) profile.cleanBrand else node.provider.ifEmpty { "Unbranded" }
