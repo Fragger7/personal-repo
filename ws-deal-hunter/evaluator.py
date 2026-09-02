@@ -432,19 +432,22 @@ class GeminiHardwareEvaluator:
         if any(w in text for w in ["no ram", "without ram", "barebones", "missing ram", "no memory"]):
             return self._reject_dict("Hard Excluded: Barebones / No RAM workstation.")
 
-        # B.3. Legacy Workstation Models (Precision 7510-7550, 5510-5550, 3510-3560 with <= 10th Gen)
+        # B.3. Legacy Workstation & XPS Models (< 12th Gen Intel)
         if any(w in text for w in [
-            "precision 7510", "precision 7520", "precision 7530", "precision 7540", "precision 7550",
-            "precision 7710", "precision 7720", "precision 7730", "precision 7740", "precision 7750",
-            "precision 5510", "precision 5520", "precision 5530", "precision 5540", "precision 5550",
-            "precision 3510", "precision 3520", "precision 3530", "precision 3540", "precision 3550", "precision 3560",
-            "thinkpad p50", "thinkpad p51", "thinkpad p52", "thinkpad p53", "thinkpad p70", "thinkpad p71", "thinkpad p72", "thinkpad p73",
-            "zbook 15 g3", "zbook 15 g4", "zbook 15 g5", "zbook 15 g6", "zbook 17 g3", "zbook 17 g4", "zbook 17 g5"
+            "9560", "9570", "7590", "9500", "9510", "9700", "9710",
+            "precision 7510", "precision 7520", "precision 7530", "precision 7540", "precision 7550", "precision 7560",
+            "precision 7710", "precision 7720", "precision 7730", "precision 7740", "precision 7750", "precision 7760",
+            "precision 5510", "precision 5520", "precision 5530", "precision 5540", "precision 5550", "precision 5560",
+            "precision 3510", "precision 3520", "precision 3530", "precision 3540", "precision 3550", "precision 3560", "precision 3570",
+            "p1 gen 1", "p1 gen 2", "p1 gen 3", "p1 gen 4",
+            "p15 gen 1", "p15 gen 2", "p15s gen 1", "p15s gen 2",
+            "p17 gen 1", "p17 gen 2", "thinkpad p50", "thinkpad p51", "thinkpad p52", "thinkpad p53", "thinkpad p70", "thinkpad p71", "thinkpad p72", "thinkpad p73",
+            "zbook 15 g3", "zbook 15 g4", "zbook 15 g5", "zbook 15 g6", "zbook 15 g7", "zbook 15 g8", "zbook 17 g3", "zbook 17 g4", "zbook 17 g5", "zbook 17 g6"
         ]):
-            return self._reject_dict("Hard Excluded: Legacy workstation model (< 11th/12th Gen Intel) outruled per system specification.")
+            return self._reject_dict("Hard Excluded: Legacy workstation model (< 12th Gen Intel) outruled per system specification.")
 
         # C. Blown-dGPU Failure Trap (Workstations listed with "Intel Iris Xe only" or dead dGPU)
-        if any(w in text for w in ["iris xe only", "intel graphics only", "uhd graphics only", "dgpu not working", "gpu disabled", "gpu code 43", "no dedicated gpu"]):
+        if any(w in text for w in ["iris xe only", "iris xe graphics", "intel graphics only", "uhd graphics only", "dgpu not working", "gpu disabled", "gpu code 43", "no dedicated gpu"]):
             return self._reject_dict("Hard Excluded: Workstation dGPU failure / disabled discrete graphics.")
 
         # D. Intel 11th-Gen & Older Silicon Blacklist (Tiger Lake, Ice Lake, Comet Lake, Xeons)
