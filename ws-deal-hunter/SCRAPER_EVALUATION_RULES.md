@@ -45,6 +45,22 @@ al fatigue or a power-rail short, and the seller disabled it in BIOS or Device M
 * Chips like the `i7-13620H` or `i7-12650H` are cut-down dies with fewer E-cores (10 cores total vs. 14 cores on standard i7s) and smaller caches.
 * Modern ultrabooks (XPS 16 9640, Zephyrus G16 2024, Galaxy Book Ultra, LG Gram) frequently feature **100% soldered LPDDR5X RAM**. A 16GB soldered unit can never be upgraded to 32GB or 64GB.
 * **Rule:** Enforce a strict **32GB RAM minimum floor** and restrict CPU models to verified 14-core+ H/HX series, Zen 4 HS series, or Apple Pro/Max silicon.
+
+### Trap 6: The 13"–14" Compact Display Distraction
+* **The Illusion:** Sleek 14" machines (MacBook Pro 14", Razer Blade 14, Zephyrus G14, ThinkPad P14s, Precision 5470) appear at $500–$700.
+* **The Reality:** For developer workstation ergonomics, 14" screens lack the visual real-estate for multi-window IDEs, terminal splits, and Docker tooling without external monitors.
+* **Rule:** Hard-reject all laptops with screen size < 15.0" (strictly require 15"–16"+ display; Mini-PCs exempted).
+
+### Trap 7: The Legacy Model Disguise
+* **The Illusion:** Sellers title older laptops as "XPS 15" or "Precision 15" with 32GB RAM at attractive prices ($320–$450).
+* **The Reality:** Older generations (XPS 9560/7590, Precision 5510–5560, Precision 7510–7550, ThinkPad P1 Gen 1–4, ThinkPad P15s Gen 1–2) run on 7th–11th Gen quad/octa-core silicon.
+* **Rule:** Hard-blacklist all legacy model series numbers: `9560`, `9570`, `7590`, `9500`, `9510`, `5510-5560`, `7510-7560`, `p1 gen 1-4`, `p15s gen 1-2`.
+
+### Trap 8: The Keyboard Defect & Blown-Hardware Unit
+* **The Illusion:** Enterprise workstations listed as "Good" or "Used" at a $100 discount.
+* **The Reality:** Descriptions state *"keyboard issue... 2 keys not working... bad keyboard"*. Workstation keyboard replacement requires complete motherboard teardown.
+* **Rule:** Hard-reject any listing mentioning keyboard defects or broken keys.
+
 ---
 ## 3. Target Hardware Taxonomy & Silicon Gatekeeper
 ### Target Machine Tiers

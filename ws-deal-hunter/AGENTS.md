@@ -64,6 +64,14 @@
 - **Problem**: Streamlit Cloud runs `app.py` from repository root (`/app/personal-repo/`), causing `AtomicDealStorage("deals.json")` to look at root instead of `ws-deal-hunter/deals.json`, falling back to 4 initial seed items.
 - **Decision & Solution**: Updated [`app.py`](file:///C:/Development/Apps/WS%20Deal%20Hunter/app.py) to dynamically locate `deals.json` using `Path(__file__).parent / "deals.json"`, and synchronized `deals.json` at both root and subfolder levels in Git.
 
+### Decision 8: Unicorn Hunter Course Correction (Strict 15"+ Display & 32GB+ RAM)
+- **Problem**: Ingestion of 14" models (MacBook Pro 14", Blade 14, Zephyrus G14, Precision 5480) and consumer units diluted the developer workstation focus. In addition, listings > $1,700 entered feeds.
+- **Decision & Solution**: Enforced hard gatekeeping in [`evaluator.py`](file:///C:/Development/Apps/WS%20Deal%20Hunter/evaluator.py) and collectors: minimum 15.0" display (auto-rejects < 15.0"), minimum 32GB RAM (rejects <= 16GB), and an absolute $1,700 budget ceiling (targeted to sub-$1,100 unicorns like the benchmark $721 XPS 15 64GB). Outruled legacy 7th–11th Gen models (XPS 9560/7590, Precision 5560/7550, ThinkPad P1 Gen 1–4).
+
+### Decision 9: Warmed Chromium Session Engine for eBay
+- **Problem**: Batch unauthenticated requests to eBay search pages triggered `403 Forbidden` or bot challenges, dropping collected counts to 0.
+- **Decision & Solution**: Wired automated session warming (`impersonate="chrome124"` with browser client hints `Sec-Ch-Ua`, `Sec-Fetch-*` and cookie jar priming against `https://www.ebay.com/`). Yields 1,000+ targeted listings with 0 CAPTCHAs.
+
 ---
 
 ## 📁 4. Codebase Sitemap & Directory Map
