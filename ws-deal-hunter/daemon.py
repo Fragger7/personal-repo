@@ -315,18 +315,19 @@ class DealHunterDaemon:
                             return deal.id
 
                         if resp_text:
-                            if BeautifulSoup:
-                                soup = BeautifulSoup(resp_text, "html.parser")
-                                items = soup.select(".s-item, .s-card, li.s-item")
-                                found_active = any(
-                                    item_id in (item.select_one("a.s-item__link, a[href*='/itm/']") or {}).get("href", "")
-                                    for item in items
-                                )
-                                if not found_active:
-                                    return deal.id
-                            else:
-                                if item_id not in resp_text or "0 results found" in resp_text.lower() or "no exact matches found" in resp_text.lower():
-                                    return deal.id
+                            text_lower = resp_text.lower()
+                            # Never reap on CAPTCHA / bot challenge
+                            if "pardon our interruption" in text_lower or "security measure" in text_lower:
+                                return None
+                            # Explicitly ended / sold indicators on eBay
+                            if (
+                                "this listing was ended" in text_lower
+                                or "this listing has ended" in text_lower
+                                or "the listing you're looking for has ended" in text_lower
+                                or "this item is out of stock" in text_lower
+                                or "0 results found" in text_lower
+                            ):
+                                return deal.id
 
                 # 2. Reddit Liveness Check (JSON and HTML inspection)
                 elif "reddit.com" in url:
