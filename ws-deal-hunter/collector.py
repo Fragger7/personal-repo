@@ -102,38 +102,38 @@ class EBayCollector:
     }
 
     TARGET_QUERIES = [
-        # 1. Dell Precision Enterprise Workstations
-        {"query": "Dell Precision 5570", "sacat": "177"},
-        {"query": "Dell Precision 5680", "sacat": "177"},
+        # 1. Dell Precision Enterprise Workstations (15" - 16" - 17")
+        {"query": "Dell Precision 5570 64GB", "sacat": "177"},
+        {"query": "Dell Precision 5570 32GB", "sacat": "177"},
+        {"query": "Dell Precision 5680 64GB", "sacat": "177"},
+        {"query": "Dell Precision 5680 32GB", "sacat": "177"},
         {"query": "Dell Precision 7670", "sacat": "177"},
         {"query": "Dell Precision 7680", "sacat": "177"},
-        {"query": "Dell Precision 5480", "sacat": "177"},
+        {"query": "Dell XPS 15 9520 64GB", "sacat": "177"},
+        {"query": "Dell XPS 15 9530 64GB", "sacat": "177"},
         {"query": "Dell XPS 15 9530 32GB", "sacat": "177"},
         {"query": "Dell XPS 17 9730", "sacat": "177"},
-        # 2. Lenovo ThinkPad P-Series Workstations
+        # 2. Lenovo ThinkPad P-Series Workstations (15" - 16")
         {"query": "Lenovo ThinkPad P1 Gen 5", "sacat": "177"},
         {"query": "Lenovo ThinkPad P1 Gen 6", "sacat": "177"},
         {"query": "Lenovo ThinkPad P16 Gen 1", "sacat": "177"},
         {"query": "Lenovo ThinkPad P16 Gen 2", "sacat": "177"},
-        {"query": "Lenovo ThinkPad P14s AMD 32GB", "sacat": "177"},
         {"query": "Lenovo ThinkPad P16s AMD 32GB", "sacat": "177"},
-        # 3. HP ZBook Enterprise Workstations
+        # 3. HP ZBook Enterprise Workstations (15" - 16")
         {"query": "HP ZBook Studio G9", "sacat": "177"},
         {"query": "HP ZBook Studio G10", "sacat": "177"},
         {"query": "HP ZBook Fury 16 G9", "sacat": "177"},
         {"query": "HP ZBook Power G9 32GB", "sacat": "177"},
-        # 4. Apple Silicon High-RAM Workstations
+        # 4. Apple Silicon 16" High-RAM Workstations
         {"query": "Apple MacBook Pro 16 M1 Max", "sacat": "111422"},
         {"query": "Apple MacBook Pro 16 M1 Pro 32GB", "sacat": "111422"},
         {"query": "Apple MacBook Pro 16 M2 Max", "sacat": "111422"},
         {"query": "Apple MacBook Pro 16 M2 Pro 32GB", "sacat": "111422"},
         {"query": "Apple MacBook Pro 16 M3 Max", "sacat": "111422"},
-        {"query": "Apple MacBook Pro 14 M1 Max 64GB", "sacat": "111422"},
-        {"query": "Apple MacBook Pro 14 M2 Max", "sacat": "111422"},
-        # 5. Linux / Creator / Modular Workstations
+        # 5. Linux / Creator / Modular Workstations (16")
         {"query": "Framework 16", "sacat": "177"},
-        {"query": "ASUS ROG Zephyrus G14 RTX 4080", "sacat": "177"},
         {"query": "ASUS ProArt P16", "sacat": "177"},
+        {"query": "ASUS ROG Zephyrus G16 RTX 4080", "sacat": "177"},
         {"query": "Minisforum MS-01", "sacat": "179"},
     ]
 
@@ -624,20 +624,14 @@ class SwappaCollector:
     """
 
     TARGET_MODELS = [
-        # Apple Silicon 16" Workstations
+        # Apple Silicon 16" Workstations (Strictly 16" display)
         {"slug": "macbook-pro-2023-16", "name": "Apple MacBook Pro 16\" (2023 M2 Pro/Max)"},
         {"slug": "macbook-pro-2021-16", "name": "Apple MacBook Pro 16\" (2021 M1 Pro/Max)"},
         {"slug": "macbook-pro-2024-16", "name": "Apple MacBook Pro 16\" (2024 M4 Pro/Max)"},
         {"slug": "macbook-pro-late-2023-m3-16", "name": "Apple MacBook Pro 16\" (Late 2023 M3 Pro/Max)"},
-        # Apple Silicon 14" Workstations
-        {"slug": "macbook-pro-2023-14", "name": "Apple MacBook Pro 14\" (2023 M2 Pro/Max)"},
-        {"slug": "macbook-pro-2021-14", "name": "Apple MacBook Pro 14\" (2021 M1 Pro/Max)"},
-        {"slug": "macbook-pro-2024-14", "name": "Apple MacBook Pro 14\" (2024 M4 Pro/Max)"},
-        {"slug": "macbook-pro-late-2023-m3-14", "name": "Apple MacBook Pro 14\" (Late 2023 M3 Pro/Max)"},
-        # High-End Creator / RTX 4080/4090 Workstations
+        # High-End Creator / Workstation Laptops (Strictly 15" - 16" - 18")
+        {"slug": "dell-precision-7670", "name": "Dell Precision 7670 16\" Workstation"},
         {"slug": "razer-blade-16-2025", "name": "Razer Blade 16 Creator Workstation"},
-        {"slug": "razer-blade-14-2023", "name": "Razer Blade 14 Creator Laptop"},
-        {"slug": "asus-rog-zephyrus-g14-2025-ga403", "name": "ASUS ROG Zephyrus G14 (2025 OLED)"},
         {"slug": "asus-rog-zephyrus-duo-16-2022-gx650", "name": "ASUS ROG Zephyrus Duo 16"},
         {"slug": "asus-rog-strix-g18-2025-g815", "name": "ASUS ROG Strix G18 Workstation"},
         {"slug": "asus-rog-strix-g16-2025-g614", "name": "ASUS ROG Strix G16 Workstation"},

@@ -51,26 +51,29 @@ _load_dotenv_safely()
 
 
 SYSTEM_EVALUATION_PROMPT = """You are an elite quantitative hardware arbitrage valuation engine for high-performance developer workstations.
-Analyze the listing title, description, asking price, and source according to SYSTEM DIRECTIVE v3.0:
+Analyze the listing title, description, asking price, and source according to SYSTEM DIRECTIVE v4.0 (The Unicorn Hunter):
 
 Key Rules:
-1. SILICON GATEKEEPER:
-   - Whitelist ONLY: Intel 12th/13th-Gen H/HX (i7-12700H+, i7-13700H+), Intel Core Ultra 7/9, AMD Zen 4/5 (Ryzen 7 7840HS+, 8840HS+, 7940HS), Apple Silicon (M1 Pro/Max, M2 Pro/Max, M3 Pro/Max, M4 Pro/Max).
-   - Hard Blacklist (Score 0.0): Intel 11th-Gen & older (i7-11850H, i9-11950H), Intel P/U-Series (1260P, 1360P, 1355U), cut-down dies (13620H, 12650H), AMD Zen 2/3 (5000/6000), Apple Base M1/M2/M3 <=16GB RAM.
+1. HARDWARE & DISPLAY GATEKEEPER:
+   - Screen Size: Minimum 15.0" - 16" display for laptops. Automatically REJECT (Score 0.0) any 11", 12", 13", or 14" laptop (MacBook Pro 14", Blade 14, Zephyrus G14, ThinkPad P14s). Mini-PCs / compute nodes exempted.
+   - RAM: Minimum 32GB RAM baseline. Non-upgradable Apple Silicon < 32GB is REJECTED (Score 0.0). Upgradable chassis with 16GB only accepted if asking price <= $650.
+   - Budget Envelope: Target <= $1,100 for high-conviction unicorns (benchmark: sub-$721 XPS 15 64GB). Absolute hard ceiling $1,700 for mispriced halo flagships. Asking price > $1,700 is automatically REJECTED (Score 0.0).
+   - Whitelist ONLY: Intel 12th/13th-Gen H/HX (i7-12700H+, i7-13700H+), Intel Core Ultra 7/9, AMD Zen 4/5 (Ryzen 7 7840HS+, 8840HS+, 7940HS), Apple Silicon (M1 Pro/Max, M2 Pro/Max, M3 Pro/Max, M4 Pro/Max >= 32GB).
+   - Hard Blacklist (Score 0.0): Intel 11th-Gen & older, Intel P/U-Series, cut-down dies, AMD Zen 2/3, all laptops < 15.0" screen.
 2. TOTAL LANDED COST (TLC):
-   - TLC = Sticker + (8.25% tax if online) + Penalties (+65 if SSD<=256GB, +40 if missing charger, +65 if dead/missing battery, +110 if 16GB upgradable chassis).
+   - TLC = Sticker + (8.25% tax if online) + Penalties (+65 if SSD<=256GB, +40 if missing charger, +65 if dead/missing battery, +120 if 16GB upgradable chassis for 64GB RAM kit).
 3. EMPIRICAL FMV BENCHMARKS:
    - Dell XPS 15 9530 / Precision 5680: $950 (32GB) / $1,150-$1,450 (64GB)
-   - Dell XPS 15 9520 / Precision 5570: $750-$780 (32GB) / $850-$880 (64GB)
+   - Dell XPS 15 9520 / Precision 5570: $750-$780 (32GB) / $850-$920 (64GB)
    - ThinkPad P1 Gen 6: $1,200 (32GB) / $1,400 (64GB) | ThinkPad P1 Gen 5: $800 (32GB) / $920 (64GB)
    - Apple MacBook Pro 16" M2 Pro/Max: $1,350 (32GB) / $1,550 (64GB) | M1 Pro/Max: $1,050 (32GB) / $1,250 (64GB)
 4. ARBITRAGE SCORING CURVE:
    - Margin Spread % = (FMV - TLC) / FMV * 100
-   - 9.8 - 10.0: TRUE UNICORN (Margin >= 38.0% + 64GB RAM + Tier 1 Chassis + Mint)
-   - 9.0 - 9.7: HIGH-CONVICTION STRIKE (Margin 25.0% - 37.9% + >=32GB RAM + Turnkey)
-   - 8.0 - 8.9: STRONG VALUE BUY (Margin 15.0% - 24.9%)
-   - 7.0 - 7.9: OPPORTUNISTIC OFFER TARGET (Margin 8.0% - 14.9%)
-   - 0.0 - 6.9: PASS / NO ARBITRAGE (Margin < 8.0% or TLC exceeds strike ceiling)
+   - 9.8 - 10.0: TRUE UNICORN (Price <= $1,100 + Margin >= 38.0% + 64GB RAM + Tier 1 15-16" Chassis + Mint)
+   - 9.0 - 9.7: HIGH-CONVICTION STRIKE (Price <= $1,100 + Margin 25.0% - 37.9% + >=32GB RAM + Turnkey)
+   - 8.0 - 8.9: STRONG VALUE BUY (Price <= $1,400 + Margin 15.0% - 24.9%)
+   - 7.0 - 7.9: OPPORTUNISTIC OFFER TARGET (Price <= $1,700 + Margin 8.0% - 14.9%)
+   - 0.0 - 6.9: PASS / NO ARBITRAGE (Margin < 8.0%, Price > $1,700, RAM < 32GB, or Screen < 15.0")
 
 Respond ONLY with valid JSON:
 {
@@ -462,6 +465,20 @@ class GeminiHardwareEvaluator:
         if any(w in text for w in ["latitude 3", "latitude 5", "inspiron", "vostro", "ideapad", "yoga", "thinkbook", "flex 5", "chromebook", "pavilion", "envy", "omnibook", "stream 14", "victus"]):
             if not any(w in text for w in ["precision", "xps 15", "xps 17", "thinkpad p", "p1 gen", "p16", "x1 extreme", "zbook"]):
                 return self._reject_dict("Hard Excluded: Budget consumer / entry business chassis lacks workstation thermal envelope.")
+
+        # J. Absolute Budget Hard Ceiling ($1,700)
+        if listing.price > 1700.0:
+            return self._reject_dict(f"Hard Excluded: Asking price ${listing.price:.2f} exceeds $1,700 absolute budget ceiling.")
+
+        # K. Screen Size Gatekeeper (Minimum 15.0" - 16" Display for Laptops)
+        is_desktop = any(w in text for w in ["mini pc", "desktop", "bundle", "micro center clearance", "ms-01", "ser8", "ser7", "optiplex", "motherboard"])
+        if not is_desktop:
+            small_screen_m = re.search(r'\b(11[\.0-9]*|12[\.0-9]*|13[\.0-9]*|14[\.0-9]*)(?:["”\']|\s*inch|\s*in\b)', text)
+            is_compact_model = any(w in text for w in ["14\"", "14-inch", "14 inch", "14.0", "14.1", "13\"", "13-inch", "blade 14", "zephyrus g14", "p14s", "macbook pro 14", "t14", "x1 carbon", "x13"])
+            has_large_screen = any(w in text for w in ["15.6", "15\"", "15-inch", "16\"", "16-inch", "16 inch", "16.0", "16.2", "17.3", "17\"", "17-inch", "17.0"])
+            if (small_screen_m or is_compact_model) and not has_large_screen:
+                tag = small_screen_m.group(0) if small_screen_m else "compact chassis"
+                return self._reject_dict(f"Hard Excluded: Screen size ({tag}) is smaller than required 15.0\"-16\" developer workstation display.")
 
         # ==========================================
         # 1. DEEP RAM EXTRACTION
