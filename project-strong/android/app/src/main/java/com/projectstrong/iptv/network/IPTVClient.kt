@@ -62,6 +62,27 @@ object IPTVClient {
         "IPTVSmartersPro"
     )
 
+    
+    private fun applyTlsEvasion(builder: OkHttpClient.Builder) {
+        if (com.projectstrong.iptv.data.SettingsManager.tlsEvasionEnabled) {
+            val spec = okhttp3.ConnectionSpec.Builder(okhttp3.ConnectionSpec.MODERN_TLS)
+                .tlsVersions(okhttp3.TlsVersion.TLS_1_3, okhttp3.TlsVersion.TLS_1_2)
+                .cipherSuites(
+                    okhttp3.CipherSuite.TLS_AES_128_GCM_SHA256,
+                    okhttp3.CipherSuite.TLS_AES_256_GCM_SHA384,
+                    okhttp3.CipherSuite.TLS_CHACHA20_POLY1305_SHA256,
+                    okhttp3.CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
+                    okhttp3.CipherSuite.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
+                    okhttp3.CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
+                    okhttp3.CipherSuite.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
+                    okhttp3.CipherSuite.TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256,
+                    okhttp3.CipherSuite.TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256
+                )
+                .build()
+            builder.connectionSpecs(listOf(spec, okhttp3.ConnectionSpec.CLEARTEXT))
+        }
+    }
+
     private val baseClient = OkHttpClient.Builder()
         .connectionPool(ConnectionPool(64, 5, TimeUnit.MINUTES))
         .dispatcher(okhttp3.Dispatcher().apply {
@@ -80,29 +101,32 @@ object IPTVClient {
         } else {
             timeout
         }
-        return baseClient.newBuilder()
+        val b = baseClient.newBuilder()
             .connectTimeout(connectTimeout, TimeUnit.SECONDS)
             .readTimeout(timeout, TimeUnit.SECONDS)
             .writeTimeout(minOf(timeout, 5L), TimeUnit.SECONDS)
-            .build()
+        applyTlsEvasion(b)
+        return b.build()
     }
 
     private fun getDeepQueryClient(): OkHttpClient {
         val timeout = com.projectstrong.iptv.data.SettingsManager.httpTimeoutSeconds.toLong()
-        return baseClient.newBuilder()
+        val b = baseClient.newBuilder()
             .connectTimeout(minOf(timeout, 3L), TimeUnit.SECONDS)
             .readTimeout(minOf(timeout, 5L), TimeUnit.SECONDS)
             .writeTimeout(3L, TimeUnit.SECONDS)
-            .build()
+        applyTlsEvasion(b)
+        return b.build()
     }
 
     private fun getEgressClient(): OkHttpClient {
         val timeout = com.projectstrong.iptv.data.SettingsManager.egressTimeoutSeconds.toLong()
-        return baseClient.newBuilder()
+        val b = baseClient.newBuilder()
             .connectTimeout(minOf(timeout, 3L), TimeUnit.SECONDS)
             .readTimeout(minOf(timeout, 4L), TimeUnit.SECONDS)
             .writeTimeout(3L, TimeUnit.SECONDS)
-            .build()
+        applyTlsEvasion(b)
+        return b.build()
     }
 
     /**
@@ -243,7 +267,7 @@ object IPTVClient {
 
             // Tier 1B: Fallback to /get.php verification (when player_api.php is disabled or returns 403/HTML)
             val m3uUrls = listOf(
-                "$normalizedUrl/get.php?username=$encodedUser&password=$encodedPass&type=m3u_plus&output=ts",
+                "$normalizedUrl/get.php?username=$encodedUser&password=$encodedPass&type=m3u_plus&output=${com.projectstrong.iptv.data.SettingsManager.streamOutputFormat}",
                 "$normalizedUrl/get.php?username=$encodedUser&password=$encodedPass&type=m3u_plus",
                 "$normalizedUrl/get.php?username=$encodedUser&password=$encodedPass",
                 "$normalizedUrl/get.php?username=$encodedUser&password=$encodedPass&type=m3u&output=ts",
@@ -675,7 +699,7 @@ object IPTVClient {
      * Fast M3U line stream counter that parses #EXTINF headers on-the-fly without allocating memory.
      */
     private fun fastCountM3UStreams(baseUrl: String, encodedUser: String, encodedPass: String): Int {
-        val m3uUrl = "$baseUrl/get.php?username=$encodedUser&password=$encodedPass&type=m3u_plus&output=ts"
+        val m3uUrl = "$baseUrl/get.php?username=$encodedUser&password=$encodedPass&type=m3u_plus&output=${com.projectstrong.iptv.data.SettingsManager.streamOutputFormat}"
         try {
             val response = executeWithAdaptiveHeaders(getDeepQueryClient(), m3uUrl)
             if (response.code == 200) {
@@ -704,7 +728,7 @@ object IPTVClient {
      */
     private fun fetchCategoriesFromM3U(baseUrl: String, encodedUser: String, encodedPass: String): JSONArray? {
         val m3uUrls = listOf(
-            "$baseUrl/get.php?username=$encodedUser&password=$encodedPass&type=m3u_plus&output=ts",
+            "$baseUrl/get.php?username=$encodedUser&password=$encodedPass&type=m3u_plus&output=${com.projectstrong.iptv.data.SettingsManager.streamOutputFormat}",
             "$baseUrl/get.php?username=$encodedUser&password=$encodedPass&type=m3u_plus",
             "$baseUrl/get.php?username=$encodedUser&password=$encodedPass&type=m3u&output=ts",
             "$baseUrl/get.php?username=$encodedUser&password=$encodedPass"
@@ -761,7 +785,7 @@ object IPTVClient {
      */
     private fun fetchStreamsFromM3U(baseUrl: String, encodedUser: String, encodedPass: String): JSONArray? {
         val m3uUrls = listOf(
-            "$baseUrl/get.php?username=$encodedUser&password=$encodedPass&type=m3u_plus&output=ts",
+            "$baseUrl/get.php?username=$encodedUser&password=$encodedPass&type=m3u_plus&output=${com.projectstrong.iptv.data.SettingsManager.streamOutputFormat}",
             "$baseUrl/get.php?username=$encodedUser&password=$encodedPass&type=m3u_plus",
             "$baseUrl/get.php?username=$encodedUser&password=$encodedPass&type=m3u&output=ts",
             "$baseUrl/get.php?username=$encodedUser&password=$encodedPass"
@@ -1133,7 +1157,7 @@ object IPTVClient {
             val directStreamUrls = mutableListOf<String>()
             if (sampledStreamIds.isEmpty()) {
                 onProgress?.invoke("Probing fallback M3U playlist headers...", 1, maxSamples + 2)
-                val m3uUrl = "$normalizedUrl/get.php?username=$encodedUser&password=$encodedPass&type=m3u_plus&output=ts"
+                val m3uUrl = "$normalizedUrl/get.php?username=$encodedUser&password=$encodedPass&type=m3u_plus&output=${com.projectstrong.iptv.data.SettingsManager.streamOutputFormat}"
                 try {
                     val m3uReq = Request.Builder()
                         .url(m3uUrl)

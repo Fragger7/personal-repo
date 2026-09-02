@@ -25,6 +25,8 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import android.content.res.Configuration
+import androidx.compose.ui.platform.LocalConfiguration
 import com.projectstrong.iptv.data.CommittedManager
 import com.projectstrong.iptv.data.CommittedRecord
 import com.projectstrong.iptv.data.DataStore
@@ -296,145 +298,100 @@ fun CommittedTab() {
         )
     }
 
-    AnimatedContent(
-        targetState = selectedRecord,
-        modifier = Modifier.fillMaxSize(),
-        label = "CommittedScreenTransition"
-    ) { activeRecord ->
-        if (activeRecord != null) {
-            CommittedDetailScreen(
-                record = activeRecord,
-                onBack = { selectedRecord = null },
-                onDelete = {
-                    recordToDelete = activeRecord
-                },
-                onViewSourceSnapshot = { link, file ->
-                    sourceArchiveViewerData = Pair(link, file)
-                },
-                onPush = {
-                    if (isReloading || isPushing || isRechecking) return@CommittedDetailScreen
-                    if (records.isEmpty()) {
-                        ToastManager.warning("Cannot push empty list to cloud.")
-                        return@CommittedDetailScreen
-                    }
-                    if (DataStore.githubToken.isEmpty()) {
-                        tempToken = ""
-                        showTokenDialog = true
+    val configuration = LocalConfiguration.current
+    val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+    
+    if (isLandscape) {
+        Row(modifier = Modifier.fillMaxSize()) {
+            Box(modifier = Modifier.weight(0.45f).fillMaxHeight()) {
+                CommittedMasterGrid(
+                    records = records,
+                    isBusy = isReloading || isPushing || isRechecking,
+                    statusMessage = actionMessage,
+                    onSelectRecord = { selectedRecord = it },
+                    onViewSourceSnapshot = { link, file -> sourceArchiveViewerData = Pair(link, file) },
+                    onRefresh = { loadRecords() },
+                    onPush = onPush,
+                    onRecheckStatus = onRecheckStatus,
+                    onDeleteRecord = { recordToDelete = it }
+                )
+            }
+            Box(modifier = Modifier.width(1.dp).fillMaxHeight().background(AppSurfaceBorder))
+            Box(modifier = Modifier.weight(0.55f).fillMaxHeight()) {
+                AnimatedContent(
+                    targetState = selectedRecord,
+                    modifier = Modifier.fillMaxSize(),
+                    label = "CommittedScreenTransition"
+                ) { activeRecord ->
+                    if (activeRecord != null) {
+                        CommittedDetailScreen(
+                            record = activeRecord,
+                            onBack = { selectedRecord = null },
+                            onDelete = { recordToDelete = activeRecord },
+                            onViewSourceSnapshot = { link, file -> sourceArchiveViewerData = Pair(link, file) },
+                            onPush = {
+                                if (isReloading || isPushing || isRechecking) return@AnimatedContent
+                                if (records.isEmpty()) {
+                                    ToastManager.warning("Cannot push empty list to cloud.")
+                                    return@AnimatedContent
+                                }
+                                if (DataStore.githubToken.isEmpty()) {
+                                    tempToken = ""
+                                    showTokenDialog = true
+                                } else {
+                                    showPushConfirmDialog = true
+                                }
+                            }
+                        )
                     } else {
-                        showPushConfirmDialog = true
+                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                            Text("Select a record from the grid to view details", color = AppTextSecondary, style = MaterialTheme.typography.bodyLarge)
+                        }
                     }
                 }
-            )
-        } else {
-            CommittedMasterGrid(
-                records = records,
-                isBusy = isReloading || isPushing || isRechecking,
-                statusMessage = actionMessage,
-                onSelectRecord = { selectedRecord = it },
-                onViewSourceSnapshot = { link, file ->
-                    sourceArchiveViewerData = Pair(link, file)
-                },
-                onRecheckStatus = {
-                    if (isReloading || isPushing || isRechecking || records.isEmpty()) return@CommittedMasterGrid
-                    isRechecking = true
-                    actionMessage = "Re-checking live statuses of all ${records.size} saved accounts..."
-                    ToastManager.info("Checking live statuses of ${records.size} accounts...")
-                    coroutineScope.launch {
-                        try {
-                            val count = CommittedManager.recheckAllStatus()
-                            actionMessage = "Status check complete ($count verified)!"
-                            ToastManager.success("Status re-check complete: $count verified!")
-                        } catch (e: Exception) {
-                            actionMessage = "Status check error."
-                            ToastManager.error("Error during status re-check.")
+            }
+        }
+    } else {
+        AnimatedContent(
+            targetState = selectedRecord,
+            modifier = Modifier.fillMaxSize(),
+            label = "CommittedScreenTransition"
+        ) { activeRecord ->
+            if (activeRecord != null) {
+                CommittedDetailScreen(
+                    record = activeRecord,
+                    onBack = { selectedRecord = null },
+                    onDelete = { recordToDelete = activeRecord },
+                    onViewSourceSnapshot = { link, file -> sourceArchiveViewerData = Pair(link, file) },
+                    onPush = {
+                        if (isReloading || isPushing || isRechecking) return@AnimatedContent
+                        if (records.isEmpty()) {
+                            ToastManager.warning("Cannot push empty list to cloud.")
+                            return@AnimatedContent
                         }
-                        isRechecking = false
-                        delay(2500)
-                        actionMessage = ""
-                    }
-                },
-                onReload = {
-                    if (isReloading || isPushing || isRechecking) return@CommittedMasterGrid
-                    isReloading = true
-                    actionMessage = "Syncing from Git repository..."
-                    ToastManager.info("Syncing saved records from GitHub...")
-                    coroutineScope.launch {
-                        try {
-                            delay(400)
-                            val newRecords = withContext(Dispatchers.IO) {
-                                CommittedManager.syncFromCloud()
-                            }
-                            if (newRecords == null) {
-                                actionMessage = "Sync failed. Check internet."
-                                ToastManager.error("Sync failed. Could not fetch committed.json")
-                            } else {
-                                actionMessage = "Synced ${records.size} items from cloud."
-                                ToastManager.success("Synced ${records.size} records from GitHub!")
-                            }
-                        } catch (e: Exception) {
-                            actionMessage = "Sync failed."
-                            ToastManager.error("Sync failed: ${e.localizedMessage}")
+                        if (DataStore.githubToken.isEmpty()) {
+                            tempToken = ""
+                            showTokenDialog = true
+                        } else {
+                            showPushConfirmDialog = true
                         }
-                        isReloading = false
-                        delay(2500)
-                        actionMessage = ""
                     }
-                },
-                onPush = {
-                    if (isReloading || isPushing || isRechecking) return@CommittedMasterGrid
-                    // Guard against empty push
-                    if (records.isEmpty()) {
-                        ToastManager.warning("Cannot push empty list to cloud. Load or sync records first.")
-                        return@CommittedMasterGrid
-                    }
-                    if (DataStore.githubToken.isEmpty()) {
-                        tempToken = ""
-                        showTokenDialog = true
-                    } else {
-                        showPushConfirmDialog = true
-                    }
-                },
-                onOpenTokenSettings = {
-                    tempToken = DataStore.githubToken
-                    showTokenDialog = true
-                }
-            )
+                )
+            } else {
+                CommittedMasterGrid(
+                    records = records,
+                    isBusy = isReloading || isPushing || isRechecking,
+                    statusMessage = actionMessage,
+                    onSelectRecord = { selectedRecord = it },
+                    onViewSourceSnapshot = { link, file -> sourceArchiveViewerData = Pair(link, file) },
+                    onRefresh = { loadRecords() },
+                    onPush = onPush,
+                    onRecheckStatus = onRecheckStatus,
+                    onDeleteRecord = { recordToDelete = it }
+                )
+            }
         }
     }
-}
-
-@Composable
-fun CommittedMasterGrid(
-    records: List<CommittedRecord>,
-    isBusy: Boolean,
-    statusMessage: String,
-    onSelectRecord: (CommittedRecord) -> Unit,
-    onViewSourceSnapshot: (String, String) -> Unit,
-    onRecheckStatus: () -> Unit,
-    onReload: () -> Unit,
-    onPush: () -> Unit,
-    onOpenTokenSettings: () -> Unit
-) {
-    val scrollState = rememberScrollState()
-    val listState = rememberLazyListState()
-    val coroutineScope = rememberCoroutineScope()
-    val clipboardManager = LocalClipboardManager.current
-
-    // Sorting state (default: DATE_ADDED descending)
-    var sortColumn by remember { mutableStateOf(CommittedSortColumn.DATE_ADDED) }
-    var sortAscending by remember { mutableStateOf(false) }
-
-    fun toggleSort(column: CommittedSortColumn) {
-        if (sortColumn == column) {
-            sortAscending = !sortAscending
-        } else {
-            sortColumn = column
-            sortAscending = false
-        }
-    }
-
-    // Delete confirmation state
-    var recordToDelete by remember { mutableStateOf<CommittedRecord?>(null) }
 
     if (recordToDelete != null) {
         val rec = recordToDelete!!
@@ -509,6 +466,35 @@ fun CommittedMasterGrid(
             shape = RoundedCornerShape(16.dp)
         )
     }
+
+}
+
+@Composable
+fun CommittedMasterGrid(
+    records: List<CommittedRecord>,
+    isBusy: Boolean,
+    statusMessage: String?,
+    onSelectRecord: (CommittedRecord) -> Unit,
+    onViewSourceSnapshot: (String, String) -> Unit,
+    onRefresh: () -> Unit,
+    onPush: () -> Unit,
+    onRecheckStatus: () -> Unit,
+    onDeleteRecord: (CommittedRecord) -> Unit
+) {
+    var sortColumn by remember { mutableStateOf(CommittedSortColumn.DATE_ADDED) }
+    var sortAscending by remember { mutableStateOf(false) }
+
+    fun toggleSort(col: CommittedSortColumn) {
+        if (sortColumn == col) {
+            sortAscending = !sortAscending
+        } else {
+            sortColumn = col
+            sortAscending = true
+        }
+    }
+    
+    val clipboardManager = LocalClipboardManager.current
+    val listState = rememberLazyListState()
 
     val sortedRecords = remember(records.toList(), sortColumn, sortAscending) {
         val list = records.toList()
@@ -839,7 +825,7 @@ fun CommittedMasterGrid(
                                                 tooltip = "Copy M3U Playlist Link",
                                                 color = Color(0xFFA78BFA),
                                                 onClick = {
-                                                    val m3uUrl = "${record.safeBaseUrl}/get.php?username=${record.safeUser}&password=${record.safePass}&type=m3u_plus&output=ts"
+                                                    val m3uUrl = "${record.safeBaseUrl}/get.php?username=${record.safeUser}&password=${record.safePass}&type=m3u_plus&output=${com.projectstrong.iptv.data.SettingsManager.streamOutputFormat}"
                                                     clipboardManager.setText(AnnotatedString(m3uUrl))
                                                     ToastManager.success("Copied M3U Playlist URL to clipboard!")
                                                 }
@@ -859,7 +845,7 @@ fun CommittedMasterGrid(
                                             icon = Icons.Default.Delete,
                                             tooltip = "Delete Record",
                                             color = AppError,
-                                            onClick = { recordToDelete = record }
+                                            onClick = { onDeleteRecord(record) }
                                         )
                                     }
                                 }
@@ -880,6 +866,7 @@ fun CommittedMasterGrid(
     }
 }
 
+}
 @Composable
 fun CommittedDetailScreen(
     record: CommittedRecord,
@@ -997,7 +984,7 @@ fun CommittedDetailScreen(
                     }
 
                     if (record.safeUser.isNotEmpty()) {
-                        val m3uUrl = "${record.safeBaseUrl.trimEnd('/')}/get.php?username=${record.safeUser}&password=${record.safePass}&type=m3u_plus&output=ts"
+                        val m3uUrl = "${record.safeBaseUrl.trimEnd('/')}/get.php?username=${record.safeUser}&password=${record.safePass}&type=m3u_plus&output=${com.projectstrong.iptv.data.SettingsManager.streamOutputFormat}"
                         CopyableCredentialField(
                             label = "M3U Playlist URL",
                             value = m3uUrl,

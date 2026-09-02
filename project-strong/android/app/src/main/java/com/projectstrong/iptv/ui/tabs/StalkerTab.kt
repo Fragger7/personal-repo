@@ -24,6 +24,8 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import android.content.res.Configuration
+import androidx.compose.ui.platform.LocalConfiguration
 import com.projectstrong.iptv.data.CommittedManager
 import com.projectstrong.iptv.data.DataStore
 import com.projectstrong.iptv.network.ParsedCredential
@@ -41,18 +43,48 @@ fun StalkerTab(onNextTab: (() -> Unit)? = null) {
         selectedNode = null
     }
 
-    AnimatedContent(targetState = selectedNode != null) { isDetail: Boolean ->
-        if (isDetail && selectedNode != null) {
-            StalkerDetailScreen(
-                node = selectedNode!!,
-                onBack = { selectedNode = null }
-            )
-        } else {
-            StalkerMasterGrid(
-                nodes = stalkerNodes,
-                onSelectNode = { selectedNode = it },
-                onNextTab = onNextTab
-            )
+    val configuration = LocalConfiguration.current
+    val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+    
+    if (isLandscape) {
+        Row(modifier = Modifier.fillMaxSize()) {
+            Box(modifier = Modifier.weight(0.45f).fillMaxHeight()) {
+                StalkerMasterGrid(
+                    nodes = stalkerNodes,
+                    onSelectNode = { selectedNode = it },
+                    onNextTab = onNextTab
+                )
+            }
+            Box(modifier = Modifier.width(1.dp).fillMaxHeight().background(AppSurfaceBorder))
+            Box(modifier = Modifier.weight(0.55f).fillMaxHeight()) {
+                AnimatedContent(targetState = selectedNode != null) { isDetail: Boolean ->
+                    if (isDetail && selectedNode != null) {
+                        StalkerDetailScreen(
+                            node = selectedNode!!,
+                            onBack = { selectedNode = null }
+                        )
+                    } else {
+                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                            Text("Select a portal from the grid to view details", color = AppTextSecondary, style = MaterialTheme.typography.bodyLarge)
+                        }
+                    }
+                }
+            }
+        }
+    } else {
+        AnimatedContent(targetState = selectedNode != null) { isDetail: Boolean ->
+            if (isDetail && selectedNode != null) {
+                StalkerDetailScreen(
+                    node = selectedNode!!,
+                    onBack = { selectedNode = null }
+                )
+            } else {
+                StalkerMasterGrid(
+                    nodes = stalkerNodes,
+                    onSelectNode = { selectedNode = it },
+                    onNextTab = onNextTab
+                )
+            }
         }
     }
 }

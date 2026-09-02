@@ -26,6 +26,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import android.content.res.Configuration
+import androidx.compose.ui.platform.LocalConfiguration
 import com.projectstrong.iptv.data.CommittedManager
 import com.projectstrong.iptv.data.CommittedRecord
 import com.projectstrong.iptv.data.DataStore
@@ -55,18 +57,48 @@ fun XtreamTab(onNextTab: (() -> Unit)? = null) {
         selectedNode = null
     }
 
-    AnimatedContent(targetState = selectedNode != null) { isDetail: Boolean ->
-        if (isDetail && selectedNode != null) {
-            XtreamDetailScreen(
-                node = selectedNode!!,
-                onBack = { selectedNode = null }
-            )
-        } else {
-            XtreamMasterGrid(
-                nodes = xtreamNodes,
-                onSelectNode = { selectedNode = it },
-                onNextTab = onNextTab
-            )
+    val configuration = LocalConfiguration.current
+    val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+    
+    if (isLandscape) {
+        Row(modifier = Modifier.fillMaxSize()) {
+            Box(modifier = Modifier.weight(0.45f).fillMaxHeight()) {
+                XtreamMasterGrid(
+                    nodes = xtreamNodes,
+                    onSelectNode = { selectedNode = it },
+                    onNextTab = onNextTab
+                )
+            }
+            Box(modifier = Modifier.width(1.dp).fillMaxHeight().background(AppSurfaceBorder))
+            Box(modifier = Modifier.weight(0.55f).fillMaxHeight()) {
+                AnimatedContent(targetState = selectedNode != null) { isDetail: Boolean ->
+                    if (isDetail && selectedNode != null) {
+                        XtreamDetailScreen(
+                            node = selectedNode!!,
+                            onBack = { selectedNode = null }
+                        )
+                    } else {
+                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                            Text("Select an account from the grid to view details", color = AppTextSecondary, style = MaterialTheme.typography.bodyLarge)
+                        }
+                    }
+                }
+            }
+        }
+    } else {
+        AnimatedContent(targetState = selectedNode != null) { isDetail: Boolean ->
+            if (isDetail && selectedNode != null) {
+                XtreamDetailScreen(
+                    node = selectedNode!!,
+                    onBack = { selectedNode = null }
+                )
+            } else {
+                XtreamMasterGrid(
+                    nodes = xtreamNodes,
+                    onSelectNode = { selectedNode = it },
+                    onNextTab = onNextTab
+                )
+            }
         }
     }
 }
@@ -513,7 +545,7 @@ fun XtreamMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCredent
                                                 tooltip = "Copy M3U Playlist Link",
                                                 color = Color(0xFFA78BFA),
                                                 onClick = {
-                                                    val m3uUrl = "${node.baseUrl}/get.php?username=${node.user}&password=${node.pass}&type=m3u_plus&output=ts"
+                                                    val m3uUrl = "${node.baseUrl}/get.php?username=${node.user}&password=${node.pass}&type=m3u_plus&output=${com.projectstrong.iptv.data.SettingsManager.streamOutputFormat}"
                                                     clipboardManager.setText(AnnotatedString(m3uUrl))
                                                     ToastManager.success("Copied M3U Playlist URL to clipboard!")
                                                 }
@@ -671,7 +703,7 @@ fun XtreamDetailScreen(node: ParsedCredential, onBack: () -> Unit) {
                     )
                 }
 
-                val m3uUrl = "${node.baseUrl.trimEnd('/')}/get.php?username=${node.user}&password=${node.pass}&type=m3u_plus&output=ts"
+                val m3uUrl = "${node.baseUrl.trimEnd('/')}/get.php?username=${node.user}&password=${node.pass}&type=m3u_plus&output=${com.projectstrong.iptv.data.SettingsManager.streamOutputFormat}"
                 CopyableCredentialField(
                     label = "M3U Playlist URL",
                     value = m3uUrl,

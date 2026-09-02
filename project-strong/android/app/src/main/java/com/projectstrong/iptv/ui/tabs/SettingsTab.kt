@@ -462,6 +462,101 @@ fun SettingsTab() {
                 Divider(color = AppSurfaceBorder.copy(alpha = 0.6f))
 
                 // Fast-Fail Hedging & Straggler Optimization Toggle
+                // Stream Output Format
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Text(
+                        text = "Stream Output Format",
+                        color = AppTextPrimary,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = "Format used for 1-Click copying and streaming.",
+                        color = AppTextMuted,
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        listOf("ts", "m3u8", "play").forEach { format ->
+                            val isSelected = SettingsManager.streamOutputFormat == format
+                            Box(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .height(36.dp)
+                                    .background(
+                                        color = if (isSelected) AppPrimary else AppSurfaceBorder,
+                                        shape = RoundedCornerShape(8.dp)
+                                    )
+                                    .clickable {
+                                        SettingsManager.saveStreamOutputFormat(format)
+                                    },
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = format.uppercase(),
+                                    color = if (isSelected) Color.White else AppTextSecondary,
+                                    style = MaterialTheme.typography.labelMedium,
+                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
+                                )
+                            }
+                        }
+                    }
+                }
+                
+                Divider(color = AppSurfaceBorder.copy(alpha = 0.6f))
+
+                // TLS Evasion
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Text(
+                                text = "TLS Connection Evasion",
+                                color = AppTextPrimary,
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Surface(
+                                shape = RoundedCornerShape(6.dp),
+                                color = AppPrimary.copy(alpha = 0.18f),
+                                border = BorderStroke(1.dp, AppPrimary.copy(alpha = 0.4f))
+                            ) {
+                                Text(
+                                    text = "DPI Shield",
+                                    color = AppPrimary,
+                                    style = MaterialTheme.typography.labelSmall,
+                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        }
+                        Text(
+                            text = "Randomize cipher suites to bypass strict ISP DPI firewalls.",
+                            color = AppTextMuted,
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
+                    Switch(
+                        checked = SettingsManager.tlsEvasionEnabled,
+                        onCheckedChange = { SettingsManager.saveTlsEvasionEnabled(it) },
+                        colors = SwitchDefaults.colors(
+                            checkedThumbColor = Color.White,
+                            checkedTrackColor = Color(0xFF34D399),
+                            uncheckedThumbColor = AppTextSecondary,
+                            uncheckedTrackColor = AppSurfaceBorder
+                        )
+                    )
+                }
+                
+                Divider(color = AppSurfaceBorder.copy(alpha = 0.6f))
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,

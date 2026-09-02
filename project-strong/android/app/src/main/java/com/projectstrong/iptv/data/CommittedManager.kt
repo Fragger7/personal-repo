@@ -188,7 +188,7 @@ object CommittedManager {
         val cleanMac = mac.trim().uppercase()
         val cleanOrigin = originLink?.trim()?.ifEmpty { null }
         val m3u = if (type.contains("Xtream", ignoreCase = true) && cleanUser.isNotEmpty()) {
-            "$cleanBaseUrl/get.php?username=$cleanUser&password=$pass&type=m3u_plus&output=ts"
+            "$cleanBaseUrl/get.php?username=$cleanUser&password=$pass&type=m3u_plus&output=${com.projectstrong.iptv.data.SettingsManager.streamOutputFormat}"
         } else ""
 
         val finalArchiveFile = if (!sourceArchiveFile.isNullOrBlank()) {

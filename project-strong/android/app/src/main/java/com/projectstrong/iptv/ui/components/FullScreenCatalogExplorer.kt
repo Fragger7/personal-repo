@@ -91,7 +91,14 @@ fun FullScreenCatalogExplorer(
                                 val catId = stream.optString("category_id", "")
                                 val icon = stream.optString("stream_icon", "")
                                 val directSource = stream.optString("direct_source", "")
-                                val direct = if (directSource.isNotEmpty()) directSource else "$cleanBaseUrl/live/$user/$pass/$streamId.ts"
+                                val direct = if (directSource.isNotEmpty()) directSource else {
+                                    val fmt = com.projectstrong.iptv.data.SettingsManager.streamOutputFormat
+                                    if (fmt == "play") {
+                                        "$cleanBaseUrl/play/$user/$pass/$streamId"
+                                    } else {
+                                        "$cleanBaseUrl/live/$user/$pass/$streamId.$fmt"
+                                    }
+                                }
 
                                 parsedChannels.add(ChannelItem(streamId, name, catId, icon, direct))
                                 catCountMap[catId] = (catCountMap[catId] ?: 0) + 1
