@@ -300,6 +300,70 @@ fun CommittedTab() {
 
     val configuration = LocalConfiguration.current
     val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+
+    val loadRecords = {
+        if (!isReloading && !isPushing && !isRechecking) {
+            isReloading = true
+            actionMessage = "Syncing with cloud..."
+            ToastManager.info("Syncing records from GitHub...")
+            coroutineScope.launch {
+                val success = withContext(Dispatchers.IO) {
+                    CommittedManager.syncWithCloud()
+                }
+                if (success) {
+                    actionMessage = "Sync successful."
+                    ToastManager.success("Cloud sync complete.")
+                } else {
+                    actionMessage = "Sync failed."
+                    ToastManager.error("Cloud sync failed.")
+                }
+                isReloading = false
+                delay(2500)
+                actionMessage = ""
+            }
+        }
+    }
+
+    val onPushAction = {
+        if (!isReloading && !isPushing && !isRechecking) {
+            if (records.isEmpty()) {
+                ToastManager.warning("Cannot push empty list to cloud.")
+            } else if (DataStore.githubToken.isEmpty()) {
+                tempToken = ""
+                showTokenDialog = true
+            } else {
+                showPushConfirmDialog = true
+            }
+        }
+    }
+
+    val onRecheckStatusAction = {
+        if (!isReloading && !isPushing && !isRechecking) {
+            if (records.isEmpty()) {
+                ToastManager.warning("No records to check.")
+            } else {
+                isRechecking = true
+                actionMessage = "Verifying live status of ${records.size} accounts..."
+                ToastManager.info("Starting background status check...")
+                coroutineScope.launch {
+                    withContext(Dispatchers.IO) {
+                        CommittedManager.recheckAllStatuses()
+                    }
+                    actionMessage = "Check complete."
+                    ToastManager.success("All accounts verified!")
+                    isRechecking = false
+                    delay(2500)
+                    actionMessage = ""
+                }
+            }
+        }
+    }
+    
+    val onOpenTokenSettingsAction = {
+        tempToken = DataStore.githubToken
+        showTokenDialog = true
+    }
+
     
     if (isLandscape) {
         Row(modifier = Modifier.fillMaxSize()) {
@@ -311,9 +375,10 @@ fun CommittedTab() {
                     onSelectRecord = { selectedRecord = it },
                     onViewSourceSnapshot = { link, file -> sourceArchiveViewerData = Pair(link, file) },
                     onRefresh = { loadRecords() },
-                    onPush = onPush,
-                    onRecheckStatus = onRecheckStatus,
-                    onDeleteRecord = { recordToDelete = it }
+                    onPush = onPushAction,
+                    onRecheckStatus = onRecheckStatusAction,
+                    onDeleteRecord = { recordToDelete = it },
+                    onOpenTokenSettings = onOpenTokenSettingsAction
                 )
             }
             Box(modifier = Modifier.width(1.dp).fillMaxHeight().background(AppSurfaceBorder))
@@ -329,19 +394,7 @@ fun CommittedTab() {
                             onBack = { selectedRecord = null },
                             onDelete = { recordToDelete = activeRecord },
                             onViewSourceSnapshot = { link, file -> sourceArchiveViewerData = Pair(link, file) },
-                            onPush = {
-                                if (isReloading || isPushing || isRechecking) return@AnimatedContent
-                                if (records.isEmpty()) {
-                                    ToastManager.warning("Cannot push empty list to cloud.")
-                                    return@AnimatedContent
-                                }
-                                if (DataStore.githubToken.isEmpty()) {
-                                    tempToken = ""
-                                    showTokenDialog = true
-                                } else {
-                                    showPushConfirmDialog = true
-                                }
-                            }
+onPush = onPushAction
                         )
                     } else {
                         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -363,19 +416,7 @@ fun CommittedTab() {
                     onBack = { selectedRecord = null },
                     onDelete = { recordToDelete = activeRecord },
                     onViewSourceSnapshot = { link, file -> sourceArchiveViewerData = Pair(link, file) },
-                    onPush = {
-                        if (isReloading || isPushing || isRechecking) return@AnimatedContent
-                        if (records.isEmpty()) {
-                            ToastManager.warning("Cannot push empty list to cloud.")
-                            return@AnimatedContent
-                        }
-                        if (DataStore.githubToken.isEmpty()) {
-                            tempToken = ""
-                            showTokenDialog = true
-                        } else {
-                            showPushConfirmDialog = true
-                        }
-                    }
+onPush = onPushAction
                 )
             } else {
                 CommittedMasterGrid(
@@ -385,9 +426,10 @@ fun CommittedTab() {
                     onSelectRecord = { selectedRecord = it },
                     onViewSourceSnapshot = { link, file -> sourceArchiveViewerData = Pair(link, file) },
                     onRefresh = { loadRecords() },
-                    onPush = onPush,
-                    onRecheckStatus = onRecheckStatus,
-                    onDeleteRecord = { recordToDelete = it }
+                    onPush = onPushAction,
+                    onRecheckStatus = onRecheckStatusAction,
+                    onDeleteRecord = { recordToDelete = it },
+                    onOpenTokenSettings = onOpenTokenSettingsAction
                 )
             }
         }
@@ -473,13 +515,14 @@ fun CommittedTab() {
 fun CommittedMasterGrid(
     records: List<CommittedRecord>,
     isBusy: Boolean,
-    statusMessage: String?,
+    statusMessage: String,
     onSelectRecord: (CommittedRecord) -> Unit,
     onViewSourceSnapshot: (String, String) -> Unit,
     onRefresh: () -> Unit,
     onPush: () -> Unit,
     onRecheckStatus: () -> Unit,
-    onDeleteRecord: (CommittedRecord) -> Unit
+    onDeleteRecord: (CommittedRecord) -> Unit,
+    onOpenTokenSettings: () -> Unit
 ) {
     var sortColumn by remember { mutableStateOf(CommittedSortColumn.DATE_ADDED) }
     var sortAscending by remember { mutableStateOf(false) }
@@ -495,6 +538,7 @@ fun CommittedMasterGrid(
     
     val clipboardManager = LocalClipboardManager.current
     val listState = rememberLazyListState()
+    val scrollState = rememberScrollState()
 
     val sortedRecords = remember(records.toList(), sortColumn, sortAscending) {
         val list = records.toList()
@@ -613,7 +657,7 @@ fun CommittedMasterGrid(
                     )
                     SecondaryButton(
                         text = "🔄 Sync",
-                        onClick = onReload,
+                        onClick = onRefresh,
                         modifier = Modifier.weight(1f).height(38.dp)
                     )
                     PrimaryButton(
