@@ -112,6 +112,22 @@ This document contains the complete system architecture, operational decisions, 
 * Safe GitHub Personal Access Token (PAT) in-memory/session storage with 1-click "Clear Stored Token" action.
 * Volatile cache clearance without touching committed records.
 
+### H. Stream Egress & Ghost Line Verification Engine (`probeStreamEgress`)
+* **The Problem (Ghost Lines & Egress Blocks)**:
+  * Certain IPTV providers return HTTP 200 on `/player_api.php` authentication and report thousands of active channels, but completely block actual media streaming with **HTTP 456** (Stream Egress Disabled / Token Revoked) or **HTTP 884** (Anti-Dump Lockout / ISP Filtering).
+* **The Solution**:
+  * **Zero-Memory Streaming Sampling**: Uses Android's low-level `JsonReader` to sample stream IDs directly from the network socket without loading huge channel arrays into RAM.
+  * **Dual-Format Byte Validation**: Probes raw `.ts` MPEG-TS chunks and `.m3u8` HLS playlist headers with verified byte egress confirmation and round-trip socket latency benchmarking.
+  * **Consensus-Based Decision Engine**: Differentiates between intermittent CDN network timeouts (`Inconclusive`) vs. definitive provider lockout (`Ghost Line 456` or `Anti-Dump 884`).
+  * **Live Visual Progress UI**: Real-time progress bar, step description, and sample counter inside the deep-dive drawer during probing.
+  * **Deep Scan & Settings Integration**: Configurable socket timeout (2-15s), sample stream count (1-5), and automated execution during batch deep queries (`autoEgressOnDeepScan`).
+
+---
+
+### I. Fast-Fail Hedging & Scan Stalling Protection
+* **Tail-Latency Elimination**: When evaluating dead, non-existent, or timed-out hosts, the network engine skips redundant User-Agent retries on socket timeouts, `UnknownHostException`, and `ConnectException` when fast-fail hedging is enabled.
+* **Coroutines Timeout Guard**: Bounded with `withTimeoutOrNull` limits on batch operations so unclosed remote sockets never stall the scan worker pool.
+
 ---
 
 ## 🎨 3. World-Class UI/UX Design Standards

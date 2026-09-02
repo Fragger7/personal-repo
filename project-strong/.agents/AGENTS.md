@@ -114,6 +114,24 @@ This document contains the complete system architecture, operational decisions, 
 
 ---
 
+### H. Stream Egress & Ghost Line Verification Engine (`probeStreamEgress`)
+* **The Problem (Ghost Lines & Egress Blocks)**:
+  * Certain IPTV providers return HTTP 200 on `/player_api.php` authentication and report thousands of active channels, but completely block actual media streaming with **HTTP 456** (Stream Egress Disabled / Token Revoked) or **HTTP 884** (Anti-Dump Lockout / ISP Filtering).
+* **The Solution**:
+  * **Zero-Memory Streaming Sampling**: Uses Android's low-level `JsonReader` to sample stream IDs directly from the network socket without loading huge channel arrays into RAM.
+  * **Dual-Format Byte Validation**: Probes raw `.ts` MPEG-TS chunks and `.m3u8` HLS playlist headers with verified byte egress confirmation and round-trip socket latency benchmarking.
+  * **Consensus-Based Decision Engine**: Differentiates between intermittent CDN network timeouts (`Inconclusive`) vs. definitive provider lockout (`Ghost Line 456` or `Anti-Dump 884`).
+  * **Live Visual Progress UI**: Real-time progress bar, step description, and sample counter inside the deep-dive drawer during probing.
+  * **Deep Scan & Settings Integration**: Configurable socket timeout (2-15s), sample stream count (1-5), and automated execution during batch deep queries (`autoEgressOnDeepScan`).
+
+---
+
+### I. Fast-Fail Hedging & Scan Stalling Protection
+* **Tail-Latency Elimination**: When evaluating dead, non-existent, or timed-out hosts, the network engine skips redundant User-Agent retries on socket timeouts, `UnknownHostException`, and `ConnectException` when fast-fail hedging is enabled.
+* **Coroutines Timeout Guard**: Bounded with `withTimeoutOrNull` limits on batch operations so unclosed remote sockets never stall the scan worker pool.
+
+---
+
 ## 🎨 3. World-Class UI/UX Design Standards
 
 * **Typography Scale**: Pairing geometric display headers (`titleMedium`, `labelLarge`) with refined body fonts (`bodyMedium`, `bodySmall` in `#A0A0B0`). No amateur oversized fonts.
@@ -212,6 +230,7 @@ Remove-Item -Recurse -Force "C:\Development\Apps\Project Strong\personal-repo-te
 | **Paste.sh Decryption & Large-Buffer Layout Shield** | `IPTVClient.kt`, `ScannerTab.kt`, `app.py`, AES-256-CBC multi-line/single-line payload parser & bounded Compose text field | 🟢 **Verified & Live** |
 | **Dual Traceability (Source & Origin) & Domain Shield** | `CommittedManager.kt`, `CommitDialog.kt`, `XtreamTab.kt`, `StalkerTab.kt`, `CommittedTab.kt`, `app.py` | 🟢 **Verified & Live** |
 | **Base64 De-obfuscation & Auto-Traceability Extraction** | `Base64Tab.kt`, `ScannerTab.kt`, `Parser.kt`, Regex auto-link capture & 1-tap clipboard paste | 🟢 **Verified & Live** |
+| **Stream Egress & Ghost Line Verification Engine** | `IPTVClient.kt`, `CommittedManager.kt`, `XtreamTab.kt`, `CommittedTab.kt`, `SettingsTab.kt`, `StreamPreviewDialog.kt`, `app.py`, HTTP 456/884 consensus probing | 🟢 **Verified & Live** |
 
 ---
 
@@ -223,3 +242,27 @@ Remove-Item -Recurse -Force "C:\Development\Apps\Project Strong\personal-repo-te
    * Scheduled workflow (`.github/workflows/scrape-provider-intel.yml`) to scrape new upstream provider delimiters and sync `provider_intelligence.json`.
 3. **Advanced Stream Output Formats & TLS Evasion**:
    * Add options for custom TLS cipher suites and alternative stream format switching (`/live/{u}/{p}/{id}.ts` vs `.m3u8` vs `/play/`).
+
+
+## ☠️ 9. Buried Skeletons & Deep Engineering Constraints (AI Context)
+
+**CRITICAL**: Any AI agent or developer modifying this codebase MUST read this section to prevent introducing regressions into highly tuned, fragile subsystems.
+
+*   **The UI Engine "Glassmorphism" Trap (Jetpack Compose `RenderEffect`)**:
+    *   *The Skeleton*: Do NOT attempt to build global "glassmorphism" or heavy `RenderEffect.createBlurEffect` UI wrappers (e.g., overriding standard `Card` or `Button` components). Applying a `RenderEffect` blur to a Compose `Modifier.graphicsLayer` on a `Card` blurs the *entire content* of the card (text, buttons, layout), rendering it into an illegible blob. Furthermore, injecting `.scale()` animations globally on buttons breaks hitboxes and layout constraints.
+    *   *The Fix*: Stick strictly to the standard Material 3 components (`Card`, `Button`, `OutlinedTextField`) and the crisp, highly functional fallback themes defined in `Theme.kt`. Avoid massive global UI framework overrides. True systemic theming in this app relies on Material's `colorScheme`, not overriding the foundational composables.
+*   **The OOM (Out Of Memory) JSON Trap (`IPTVClient.kt`)**: 
+    *   *The Skeleton*: Calling `get_live_streams` or `get_vod_streams` on an Xtream API can return a 50MB - 100MB+ JSON array containing 100,000+ media objects. Using standard `Gson`, `Moshi`, or `kotlinx.serialization` to parse this into memory will instantly crash Android devices with an OOM (Out of Memory) exception.
+    *   *The Fix*: We use Android's low-level `android.util.JsonReader` to stream-parse the response token-by-token directly from the OkHttp network socket buffer, maintaining a near-zero memory footprint. Do **NOT** attempt to refactor the catalog explorer back to standard object mapping.
+*   **Garbage Collection (GC) Thrashing (`Parser.kt`)**:
+    *   *The Skeleton*: Scanning a 10,000-line paste dump by dynamically instantiating Regex objects inside loops causes massive JVM GC thrashing, completely freezing the Android UI thread for 10+ seconds.
+    *   *The Fix*: All 15+ complex regex patterns (Xtream, MAC, Tabs, URLs, Timezones) are pre-compiled as top-level singletons in `Parser.kt`. Do not declare new Regex objects inside the `parse()` loop.
+*   **Anti-Bot Network Evasion**: 
+    *   *The Skeleton*: Many providers actively block default HTTP clients (like OkHttp default UA or Python's `requests`).
+    *   *The Fix*: `IPTVClient.kt` hardcodes `User-Agent: IPTVSmartersPro/1.1.1` for Xtream endpoints. Stalker portal endpoints are even stricter—they require injecting the MAC address into cookies (`mac=00:1A:79...`) and using older Set-Top Box user-agents (e.g., MAG250/200). 
+*   **Thread-Safe Git Syncing (`CommittedManager.kt`)**: 
+    *   *The Skeleton*: The database (`committed.json`) is essentially a flat JSON file. Rapid consecutive UI clicks (like deleting 5 records fast) used to cause race conditions, resulting in empty/corrupted JSON file writes.
+    *   *The Fix*: The file is now backed by a Kotlin `Mutex` lock during local `save()` operations on `Dispatchers.IO`. Cloud pushes (`pushToCloud()`) happen asynchronously and gracefully fail without interrupting the UI. Never write to `committed.json` outside of this Mutex.
+*   **Mono-Repo Git Constraint (`git_push.cjs`)**:
+    *   *The Skeleton*: The target GitHub repository contains other sister projects at its root. 
+    *   *The Fix*: You must only push using the `node git_push.cjs` script. It strictly isolates modifications to the `project-strong/` sub-directory. Running standard `git push` manually from the AI Studio root will overwrite or delete the user's other repository contents.

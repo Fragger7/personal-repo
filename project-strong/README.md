@@ -36,6 +36,14 @@ The native Android app (`/android`) runs directly on mobile/residential IP conne
   * Delimiter scraper (Telegram, Discord, WhatsApp, banner channels) with 99% consensus verification.
 * **Hierarchical Channel & VOD Catalog Explorer**:
   * Collapsible categorized channel lists with fast search filtering, individual category counters, and 1-tap stream testing.
+* **Stream Egress & Ghost Line Verification Engine (`probeStreamEgress`)**:
+  * Probes raw `.ts` MPEG-TS chunks and `.m3u8` HLS playlist headers with verified byte egress confirmation and round-trip socket latency benchmarking.
+  * Detects stealth **HTTP 456** (Ghost Line / Stream Disabled) and **HTTP 884** (Anti-Dump Lockout) consensus blocks.
+  * Live visual progress container with step descriptions, sample counter (`current / total`), and progress indicator.
+  * Tunable settings: Auto-probe on deep scan, socket timeout slider (2-15s), and channel sample size (1-5 streams).
+* **Fast-Fail Hedging & Tail-Latency Elimination**:
+  * Skips redundant User-Agent retries on socket timeouts and connection refusals to prevent stalling the worker pool at the end of batch scans.
+  * Thread-safe coroutine timeouts wrapping large channel queries.
 * **Settings & Intelligence Hub**:
   * Real-time zero-latency hardware VPN detector (`NetworkCapabilities.TRANSPORT_VPN`).
   * Outbound IP geolocation shield and public cloud firewall warning indicator.
