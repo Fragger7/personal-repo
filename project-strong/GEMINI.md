@@ -130,6 +130,18 @@ This document contains the complete system architecture, operational decisions, 
 
 ---
 
+### J. Landscape Layout Optimization & Full-Width Data Grids
+* **Full Viewport Master Grids**:
+  * On mobile devices in landscape orientation, data grids across `CommittedTab.kt`, `XtreamTab.kt`, and `StalkerTab.kt` span the entire viewport width (`1.0f`), removing cramped split-pane rows. This affords the 16 enterprise data columns maximum horizontal breathing room.
+  * Clicking any row triggers a seamless transition to the comprehensive Deep-Dive Inspector view with back navigation (`selectedNode = null` / `selectedRecord = null`).
+* **Compact Single-Row Action Headers**:
+  * Top control and filter cards dynamically detect landscape mode via `LocalConfiguration.current.orientation`.
+  * Header layout condenses from a tall 2-tier stacked card (~140dp) into a single streamlined row (~50dp) with tighter padding (`vertical = 8.dp`), positioning Title & Status badges on the left and Filter toggles & Action buttons on the right.
+* **Full-Height Vertical Scrolling Anchor**:
+  * Resolves vertical viewport constraints (~360dp–400dp on phones) by binding the horizontal-scrolling container with `Column(modifier = Modifier.fillMaxHeight())` and anchoring the table list with `LazyColumn(modifier = Modifier.fillMaxWidth().weight(1f), state = listState)` so records scroll smoothly from top to bottom.
+
+---
+
 ## 🎨 3. World-Class UI/UX Design Standards
 
 * **Typography Scale**: Pairing geometric display headers (`titleMedium`, `labelLarge`) with refined body fonts (`bodyMedium`, `bodySmall` in `#A0A0B0`). No amateur oversized fonts.
@@ -229,13 +241,14 @@ Remove-Item -Recurse -Force "C:\Development\Apps\Project Strong\personal-repo-te
 | **Dual Traceability (Source & Origin) & Domain Shield** | `CommittedManager.kt`, `CommitDialog.kt`, `XtreamTab.kt`, `StalkerTab.kt`, `CommittedTab.kt`, `app.py` | 🟢 **Verified & Live** |
 | **Base64 De-obfuscation & Auto-Traceability Extraction** | `Base64Tab.kt`, `ScannerTab.kt`, `Parser.kt`, Regex auto-link capture & 1-tap clipboard paste | 🟢 **Verified & Live** |
 | **Stream Egress & Ghost Line Verification Engine** | `IPTVClient.kt`, `CommittedManager.kt`, `XtreamTab.kt`, `CommittedTab.kt`, `SettingsTab.kt`, `SettingsDialog.kt`, `StreamPreviewDialog.kt`, `app.py`, HTTP 456/884 consensus probing | 🟢 **Verified & Live** |
+| **Landscape Full-Width Data Grids & Viewport Optimization** | `CommittedTab.kt`, `XtreamTab.kt`, `StalkerTab.kt`, `weight(1f)` scroll binding, single-row compact action headers | 🟢 **Verified & Live** |
 
 ---
 
 ## 🚀 8. Upcoming Active Backlog & Next Implementation Tasks
 
-1. **Landscape Split-Pane Master-Detail Tablet/Foldable View**:
-   * Implement responsive side-by-side view on wide screens (Master grid on left 45%, live detail inspector pane on right 55%).
+1. **Foldable / Large-Screen Dual-Pane Adaptation**:
+   * For tablets and foldables with screen width exceeding 840dp (`WindowWidthSizeClass.Expanded`), provide an optional layout toggle to enable side-by-side master-detail inspector layout, while preserving full-width mode for standard phone landscape displays.
 2. **Automated Weekly Provider Intelligence Sync (GitHub Actions Cron)**:
    * Scheduled workflow (`.github/workflows/scrape-provider-intel.yml`) to scrape new upstream provider delimiters and sync `provider_intelligence.json`.
 3. **Advanced Stream Output Formats & TLS Evasion**:
@@ -246,6 +259,9 @@ Remove-Item -Recurse -Force "C:\Development\Apps\Project Strong\personal-repo-te
 
 **CRITICAL**: Any AI agent or developer modifying this codebase MUST read this section to prevent introducing regressions into highly tuned, fragile subsystems.
 
+*   **Landscape Grid Viewport & LazyColumn Weighting Trap (`CommittedTab.kt`, `XtreamTab.kt`, `StalkerTab.kt`)**:
+    *   *The Skeleton*: Placing an unweighted `LazyColumn` or a 45%/55% split-pane row on mobile landscape screens cuts off rows or leaves zero vertical scroll space (phone landscape height is typically only ~360-400dp, with the app bar, top card, and navigation bar leaving very little height). A 45% width split on phone landscape leaves only ~350dp width, making a 16-column horizontal table virtually unreadable.
+    *   *The Fix*: Render data grids at full screen width on mobile landscape, collapse header action cards into a single compact horizontal line (`padding(vertical = 8.dp)`), and anchor the table with `Column(modifier = Modifier.fillMaxHeight())` and `LazyColumn(modifier = Modifier.fillMaxWidth().weight(1f), state = listState)` so it dynamically consumes all remaining vertical height.
 *   **The UI Engine "Glassmorphism" Trap (Jetpack Compose `RenderEffect`)**:
     *   *The Skeleton*: Do NOT attempt to build global "glassmorphism" or heavy `RenderEffect.createBlurEffect` UI wrappers (e.g., overriding standard `Card` or `Button` components). Applying a `RenderEffect` blur to a Compose `Modifier.graphicsLayer` on a `Card` blurs the *entire content* of the card (text, buttons, layout), rendering it into an illegible blob. Furthermore, injecting `.scale()` animations globally on buttons breaks hitboxes and layout constraints.
     *   *The Fix*: Stick strictly to the standard Material 3 components (`Card`, `Button`, `OutlinedTextField`) and the crisp, highly functional fallback themes defined in `Theme.kt`. Avoid massive global UI framework overrides. True systemic theming in this app relies on Material's `colorScheme`, not overriding the foundational composables.

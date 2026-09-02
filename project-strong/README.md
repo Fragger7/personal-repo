@@ -53,6 +53,10 @@ The native Android app (`/android`) runs directly on mobile/residential IP conne
 * **Universal Toast System & Multi-Orientation Layouts**:
   * Non-intrusive auto-dismissing visual toasts across foreground and background coroutine events.
   * Full vertical scrolling across all detail views in portrait and landscape orientations.
+* **Landscape Full-Width Master Grids & Viewport Optimization**:
+  * Full-width display (`1.0f`) across `CommittedTab`, `XtreamTab`, and `StalkerTab` to maximize horizontal column space for 16-column enterprise tables.
+  * Dynamic compact single-row header action toolbars (`padding(vertical = 8.dp)`) that conserve precious vertical viewport space on landscape screens.
+  * Rigid vertical scrolling anchor with `Column(modifier = Modifier.fillMaxHeight())` and `LazyColumn(modifier = Modifier.fillMaxWidth().weight(1f), state = listState)` enabling smooth top-to-bottom scrolling without truncation.
 
 ---
 
@@ -77,6 +81,9 @@ A lightweight web application featuring multi-tiered async validation, automated
 
 **CRITICAL**: Any AI agent or developer modifying this codebase MUST read this section to prevent introducing regressions into highly tuned, fragile subsystems.
 
+*   **Landscape Grid Viewport & LazyColumn Weighting Trap (`CommittedTab.kt`, `XtreamTab.kt`, `StalkerTab.kt`)**:
+    *   *The Skeleton*: Placing an unweighted `LazyColumn` or a 45%/55% split-pane row on mobile landscape screens cuts off rows or leaves zero vertical scroll space (phone landscape height is typically only ~360-400dp, with the app bar, top card, and navigation bar leaving very little height). A 45% width split on phone landscape leaves only ~350dp width, making a 16-column horizontal table virtually unreadable.
+    *   *The Fix*: Render data grids at full screen width on mobile landscape, collapse header action cards into a single compact horizontal line (`padding(vertical = 8.dp)`), and anchor the table with `Column(modifier = Modifier.fillMaxHeight())` and `LazyColumn(modifier = Modifier.fillMaxWidth().weight(1f), state = listState)` so it dynamically consumes all remaining vertical height.
 *   **The UI Engine "Glassmorphism" Trap (Jetpack Compose `RenderEffect`)**:
     *   *The Skeleton*: Do NOT attempt to build global "glassmorphism" or heavy `RenderEffect.createBlurEffect` UI wrappers (e.g., overriding standard `Card` or `Button` components). Applying a `RenderEffect` blur to a Compose `Modifier.graphicsLayer` on a `Card` blurs the *entire content* of the card (text, buttons, layout), rendering it into an illegible blob. Furthermore, injecting `.scale()` animations globally on buttons breaks hitboxes and layout constraints.
     *   *The Fix*: Stick strictly to the standard Material 3 components (`Card`, `Button`, `OutlinedTextField`) and the crisp, highly functional fallback themes defined in `Theme.kt`. Avoid massive global UI framework overrides. True systemic theming in this app relies on Material's `colorScheme`, not overriding the foundational composables.
