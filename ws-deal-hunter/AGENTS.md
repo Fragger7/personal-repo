@@ -23,8 +23,9 @@
 
 ## 📊 2. Current System State & Verified Status
 
-- **Unit Test Suite Status**: **28 / 28 Tests Passing** (`python test_system.py`).
-- **Live Ingestion Verification**: Verified live collection of 200+ real-time listings per cycle.
+- **Unit Test Suite Status**: **30 / 30 Tests Passing** (`python3 test_system.py`).
+- **Live Ingestion Verification**: Verified live collection across eBay (1,000+ items via warmed Chromium session), Swappa (105 items), Dell DFS, Apple Refurbished, Best Buy, and Micro Center.
+- **Active Production Catalog**: **15 verified, live workstation deals** ($\ge 15.0"$ display, $\ge 32\text{GB}$ RAM, sub-$1,000 price point, Intel 12th/13th-Gen H/HX or Apple Silicon).
 - **Production Deployments**:
   - Live on Vercel (React Frontend): **[https://wsdealhunter.vercel.app/](https://wsdealhunter.vercel.app/)**
   - Live on Streamlit Cloud (Python Engine): **[https://wsdealhunter.streamlit.app/](https://wsdealhunter.streamlit.app/)**
