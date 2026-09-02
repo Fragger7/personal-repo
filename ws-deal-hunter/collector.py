@@ -102,34 +102,39 @@ class EBayCollector:
     }
 
     TARGET_QUERIES = [
-        # 1. Dell Precision Workstations (Category 177 - PC Laptops)
-        {"query": "Dell (Precision 5560, Precision 5570, Precision 5580, Precision 5680, Precision 7670, Precision 7680, Precision 7780)", "sacat": "177"},
-        # 2. Dell XPS High-End Workstations (Category 177)
-        {"query": "Dell (XPS 15 9520, XPS 15 9530, XPS 16 9640, XPS 17 9720, XPS 17 9730) (32GB, 64GB)", "sacat": "177"},
-        # 3. Lenovo ThinkPad P-Series Workstations (Category 177)
-        {"query": "Lenovo ThinkPad (P1 Gen 4, P1 Gen 5, P1 Gen 6, P1 Gen 7, P16 Gen 1, P16 Gen 2, P16v, P15 Gen 2)", "sacat": "177"},
-        # 4. Lenovo ThinkPad High-RAM Fleet Workhorses (Category 177)
-        {"query": "Lenovo ThinkPad (P14s AMD, P16s AMD, T16 AMD Gen 1, T16 AMD Gen 2, X1 Extreme Gen 4, X1 Extreme Gen 5)", "sacat": "177"},
-        # 5. HP ZBook Enterprise Workstations (Category 177)
-        {"query": "HP (ZBook Studio G8, ZBook Studio G9, ZBook Studio G10, ZBook Fury 16, ZBook Power G9, ZBook Power G10)", "sacat": "177"},
-        # 6. Apple Silicon 16" Max/Pro High-RAM Workstations (Category 111422 - Apple Laptops)
-        {"query": "Apple MacBook Pro 16 (M1 Max, M2 Max, M3 Max, M4 Max, 64GB, 128GB)", "sacat": "111422"},
-        # 7. Apple Silicon 16" 32GB+ Workstations (Category 111422)
-        {"query": "Apple MacBook Pro 16 (M1 Pro 32GB, M2 Pro 32GB, M3 Pro 36GB, M4 Pro 48GB)", "sacat": "111422"},
-        # 8. Apple Silicon 14" Max/Pro 32GB+ Workstations (Category 111422)
-        {"query": "Apple MacBook Pro 14 (M1 Max, M2 Max, M3 Max, 32GB, 64GB, 96GB)", "sacat": "111422"},
-        # 9. ASUS ROG Creator / Workstation Laptops (Category 177)
-        {"query": "ASUS ROG (Zephyrus G14, Zephyrus G16, Zephyrus M16, Strix SCAR 16, Strix G18) (RTX 4080, RTX 4090)", "sacat": "177"},
-        # 10. Razer Blade Creator Workstations (Category 177)
-        {"query": "Razer (Blade 14, Blade 16, Blade 18) (RTX 4080, RTX 4090, 32GB, 64GB)", "sacat": "177"},
-        # 11. Lenovo Legion High-End Workstations (Category 177)
-        {"query": "Lenovo (Legion Pro 7i, Legion Pro 7, Legion 9i, Legion Pro 5i) (RTX 4080, RTX 4090)", "sacat": "177"},
-        # 12. High-Performance Mini-PC & Compute Nodes (Category 179 - Desktops)
-        {"query": "(Minisforum MS-01, Minisforum UM780 XTX, Beelink SER8, Beelink SER7, OptiPlex 7010 Micro) (32GB, 64GB)", "sacat": "179"},
-        # 13. Modular / Linux Workstations (Category 177)
-        {"query": "(Framework 16, System76 Bonobo, System76 Serval, Eurocom) (32GB, 64GB)", "sacat": "177"},
-        # 14. Targeted Enterprise Liquidator Off-Lease Workstation Fleets (Category 177)
-        {"query": "off-lease (Precision 5570, Precision 5680, ThinkPad P1, ZBook Studio) (32GB, 64GB)", "sacat": "177"},
+        # 1. Dell Precision Enterprise Workstations
+        {"query": "Dell Precision 5570", "sacat": "177"},
+        {"query": "Dell Precision 5680", "sacat": "177"},
+        {"query": "Dell Precision 7670", "sacat": "177"},
+        {"query": "Dell Precision 7680", "sacat": "177"},
+        {"query": "Dell Precision 5480", "sacat": "177"},
+        {"query": "Dell XPS 15 9530 32GB", "sacat": "177"},
+        {"query": "Dell XPS 17 9730", "sacat": "177"},
+        # 2. Lenovo ThinkPad P-Series Workstations
+        {"query": "Lenovo ThinkPad P1 Gen 5", "sacat": "177"},
+        {"query": "Lenovo ThinkPad P1 Gen 6", "sacat": "177"},
+        {"query": "Lenovo ThinkPad P16 Gen 1", "sacat": "177"},
+        {"query": "Lenovo ThinkPad P16 Gen 2", "sacat": "177"},
+        {"query": "Lenovo ThinkPad P14s AMD 32GB", "sacat": "177"},
+        {"query": "Lenovo ThinkPad P16s AMD 32GB", "sacat": "177"},
+        # 3. HP ZBook Enterprise Workstations
+        {"query": "HP ZBook Studio G9", "sacat": "177"},
+        {"query": "HP ZBook Studio G10", "sacat": "177"},
+        {"query": "HP ZBook Fury 16 G9", "sacat": "177"},
+        {"query": "HP ZBook Power G9 32GB", "sacat": "177"},
+        # 4. Apple Silicon High-RAM Workstations
+        {"query": "Apple MacBook Pro 16 M1 Max", "sacat": "111422"},
+        {"query": "Apple MacBook Pro 16 M1 Pro 32GB", "sacat": "111422"},
+        {"query": "Apple MacBook Pro 16 M2 Max", "sacat": "111422"},
+        {"query": "Apple MacBook Pro 16 M2 Pro 32GB", "sacat": "111422"},
+        {"query": "Apple MacBook Pro 16 M3 Max", "sacat": "111422"},
+        {"query": "Apple MacBook Pro 14 M1 Max 64GB", "sacat": "111422"},
+        {"query": "Apple MacBook Pro 14 M2 Max", "sacat": "111422"},
+        # 5. Linux / Creator / Modular Workstations
+        {"query": "Framework 16", "sacat": "177"},
+        {"query": "ASUS ROG Zephyrus G14 RTX 4080", "sacat": "177"},
+        {"query": "ASUS ProArt P16", "sacat": "177"},
+        {"query": "Minisforum MS-01", "sacat": "179"},
     ]
 
     def __init__(
@@ -142,7 +147,7 @@ class EBayCollector:
         self.client_secret = client_secret or os.environ.get("EBAY_CLIENT_SECRET", "")
         self.search_query = search_query
 
-    def fetch_listings(self, limit: int = 350, max_pages: int = 3) -> List[RawListing]:
+    def fetch_listings(self, limit: int = 500, max_pages: int = 3) -> List[RawListing]:
         """Fetch live items via direct TLS-impersonated search queries across multiple catalog pages."""
         all_listings: List[RawListing] = []
         seen_urls = set()
@@ -159,19 +164,20 @@ class EBayCollector:
                 
                 for page in range(1, max_pages + 1):
                     url = (
-                        f"https://www.ebay.com/sch/{sacat}/i.html?"
-                        f"_nkw={urllib.parse.quote(q)}&LH_BIN=1&LH_ItemCondition=1000|1500|2000|2500|3000"
+                        f"https://www.ebay.com/sch/i.html?"
+                        f"_nkw={urllib.parse.quote(q)}&_sacat={sacat}&LH_BIN=1"
                         f"&_sop=10&_udlo=300&_udhi=2500&_pgn={page}"
                     )
 
                     headers = {
-                        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+                        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
                         "Accept-Language": "en-US,en;q=0.9",
                         "Referer": "https://www.ebay.com/",
+                        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
                     }
 
                     try:
-                        res = requests.get(url, impersonate="chrome99_android", headers=headers, timeout=5.0)
+                        res = requests.get(url, impersonate="chrome124", headers=headers, timeout=6.0)
                         if res.status_code == 200:
                             soup = BeautifulSoup(res.text, "html.parser")
                             items = soup.select(".s-item, .s-card, li.s-item")
@@ -257,11 +263,10 @@ class EBayCollector:
                                 )
                                 page_items_count += 1
 
-                            if page_items_count == 0:
+                            if page > 1 and page_items_count == 0:
                                 break
                     except Exception as err:
-                        print(f"[EBayCollector] Sub-query error for {q[:30]} (page {page}): {err}")
-                        break
+                        pass
                 return sub_results
 
             with ThreadPoolExecutor(max_workers=5) as executor:
@@ -472,6 +477,44 @@ class RedditCollector:
                                     has_ram = any(re.search(pat, post_body, re.I) for pat in self.RAM_PATTERNS)
                                 if not has_cpu:
                                     has_cpu = any(re.search(pat, post_body, re.I) for pat in self.CPU_PATTERNS)
+
+                                # Markdown Table Parser: Extract individual workstation units from multi-item seller lots
+                                tables = md_el.find_all("table")
+                                for tbl in tables:
+                                    rows = tbl.select("tbody tr") or tbl.select("tr")
+                                    for row_idx, row in enumerate(rows):
+                                        cells = [c.get_text(" ", strip=True) for c in row.find_all(["td", "th"])]
+                                        row_text = " | ".join(cells)
+                                        if any(h in row_text.lower() for h in ["timestamp", "pending", "[sold]", "status"]) and "available" not in row_text.lower():
+                                            if "[sold]" in row_text.lower() or "sold" in cells[-1].lower():
+                                                continue
+                                        row_has_ws = any(re.search(pat, row_text, re.I) for pat in self.WORKSTATION_FAMILIES)
+                                        row_has_cpu = any(re.search(pat, row_text, re.I) for pat in self.CPU_PATTERNS)
+                                        row_has_ram = any(re.search(pat, row_text, re.I) for pat in self.RAM_PATTERNS)
+                                        if (row_has_ws or (row_has_cpu and row_has_ram)) and not is_blacklisted_item(row_text):
+                                            row_price_m = re.search(r"\$\s*([0-9,]+(?:\.[0-9]{2})?)", row_text)
+                                            if row_price_m:
+                                                try:
+                                                    row_p = float(row_price_m.group(1).replace(",", ""))
+                                                    if 80 <= row_p <= 6000:
+                                                        item_label = cells[0] if len(cells) > 0 and len(cells[0]) > 5 else title
+                                                        clean_row_title = f"{item_label} - {row_text[:60]}"
+                                                        listings.append(
+                                                            RawListing(
+                                                                id=f"reddit_{post_id}_row_{row_idx}",
+                                                                source=f"reddit (r/{subreddit})",
+                                                                title=clean_row_title[:100],
+                                                                description=f"Multi-item table lot by u/{author}: {row_text}",
+                                                                price=row_p,
+                                                                url=url_full,
+                                                                seller=f"u/{author}",
+                                                                location=self._extract_location(title),
+                                                                condition_raw=f"Used (r/{subreddit} Lot)",
+                                                                created_utc=datetime.now(timezone.utc).isoformat(),
+                                                            )
+                                                        )
+                                                except ValueError:
+                                                    pass
                     except Exception:
                         pass
 
