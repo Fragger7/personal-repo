@@ -101,3 +101,35 @@ export async function testXtreamConnection(
     };
   }
 }
+
+export function parseM3uUrl(url: string): {
+  isXtream: boolean;
+  serverUrl?: string;
+  username?: string;
+  password?: string;
+} {
+  try {
+    const trimmed = url.trim();
+    const parsed = new URL(trimmed.startsWith('http://') || trimmed.startsWith('https://') ? trimmed : `http://${trimmed}`);
+    const username = parsed.searchParams.get('username') || parsed.searchParams.get('user');
+    const password = parsed.searchParams.get('password') || parsed.searchParams.get('pass');
+    
+    if (username && password) {
+      const serverUrl = `${parsed.protocol}//${parsed.host}`;
+      return { isXtream: true, serverUrl, username, password };
+    }
+    return { isXtream: false };
+  } catch {
+    return { isXtream: false };
+  }
+}
+
+export function generateMasterM3uUrl(serverUrl: string, username: string, password: string): string {
+  let clean = serverUrl.trim();
+  if (!clean.startsWith('http://') && !clean.startsWith('https://')) {
+    clean = `http://${clean}`;
+  }
+  clean = clean.replace(/\/+$/, '');
+  return `${clean}/get.php?username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}&type=m3u_plus&output=ts`;
+}
+

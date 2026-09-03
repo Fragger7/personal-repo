@@ -42,8 +42,12 @@ export interface XtreamPortal {
   serverUrl: string;
   username: string;
   password: string;
+  m3uUrl?: string;
   type: 'xtream' | 'stalker' | 'm3u';
   isActive: boolean;
+  syncLive?: boolean;
+  syncMovies?: boolean;
+  syncSeries?: boolean;
   createdAt: number;
   lastVerifiedAt?: number;
   status?: 'unknown' | 'online' | 'unauthorized' | 'offline';
@@ -51,6 +55,7 @@ export interface XtreamPortal {
   vodCount?: number;
   expiryDate?: string;
 }
+
 
 // Firestore operations for portals
 export function subscribeToUserPortals(userId: string, callback: (portals: XtreamPortal[]) => void): Unsubscribe {
