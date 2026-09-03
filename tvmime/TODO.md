@@ -1,5 +1,10 @@
 # TVMime Task List 📝
 
+### Phase 0: Planning & Architecture
+- [x] Analyze IPTV constraints and domain knowledge.
+- [x] Finalize KMP "Shared Core, Native UI" architecture.
+- [x] Generate and select UI/UX design language (`tv_livetv_red_black.jpg`).
+- [x] Initialize Git repository inside Monorepo.
 ### Phase 1: Cloud Presence & Admin Foundation
 - [ ] Initialize KMP Project Structure (`shared`, `androidApp`, `tvApp`, `adminWeb`).
 - [ ] Setup Firebase Project via Web Console.
