@@ -15,15 +15,10 @@
 
 ---
 
-## 🧹 Scheduled Legacy Path Cleanup Directive
-> [!IMPORTANT]
-> The legacy path `/Users/admin/Development/Antigravity/` is **deprecated** and preserved only as a temporary backward-compatibility bridge during the migration session.
-> **Action for Next Session**:
-> When an agent is launched directly from the canonical root (`/Users/admin/Development/personal-repo`) or its subfolders, safely delete `/Users/admin/Development/Antigravity/` and all its deprecated artifacts:
-> - `WS Deal Hunter.archive/`
-> - Deprecated loose `Project Strong/` and `Lease Hunter/`
-> - Legacy August archives (`Lease/`, `Migration Project/`, `WS Restore/`)
-> - The backward-compatibility symlink `WS Deal Hunter`
+## 🧹 Scheduled Legacy Path Cleanup Directive (Completed)
+> [!NOTE]
+> The legacy path `/Users/admin/Development/Antigravity/` and all its deprecated artifacts (`WS Deal Hunter.archive/`, loose legacy apps, August archives, and backward-compatibility symlinks) have been safely cleaned up and deleted.
+> The workspace is strictly consolidated under canonical `/Users/admin/Development/personal-repo`.
 
 ---
 
