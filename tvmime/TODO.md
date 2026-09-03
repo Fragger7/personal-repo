@@ -1,0 +1,28 @@
+# TVMime Task List 📝
+
+### Phase 1: Cloud Presence & Admin Foundation
+- [ ] Initialize KMP Project Structure (`shared`, `androidApp`, `tvApp`, `adminWeb`).
+- [ ] Setup Firebase Project via Web Console.
+- [ ] Create `adminWeb` React/Compose Web project.
+- [ ] Implement Firebase Auth & Firestore schema (`UserPortals`).
+- [ ] Deploy `adminWeb` to Firebase Hosting.
+
+### Phase 2: Shared Core & Data Layer (Xtream Codes)
+- [ ] Implement Ktor Network Client (with User-Agent spoofing).
+- [ ] Implement robust streaming JSON Parser to prevent OOM.
+- [ ] Implement KMP Room Database for caching channels/EPG.
+- [ ] Sync User Portals from Firebase to local Room DB.
+
+### Phase 3: Android Mobile App & Chromecast
+- [ ] Implement Mobile Jetpack Compose Dashboard (Red & Black).
+- [ ] Integrate `androidx.media3:media3-cast` for Chromecast support.
+
+### Phase 4: Android TV UI (Compose for TV)
+- [ ] Implement Left-Side Navigation Drawer.
+- [ ] Implement Live TV EPG Timeline (Translucent Strips).
+- [ ] Implement VOD Section (Netflix style, TMDB metadata).
+- [ ] Implement ExoPlayer hardware-accelerated playback and overlay.
+
+### Phase 5: CI/CD Pipeline
+- [ ] Create `.github/workflows/android.yml`.
+- [ ] Configure automatic `assembleDebug` for TV and Mobile.
