@@ -2153,5 +2153,19 @@
         "evidence": "Matched Server Metadata Message: \"Welcome to World 8K\" & superscript stream watermarks (\u00b3\u2078\u2074\u2070\u1d3e, STARZPLAY SPORT 8K)",
         "first_seen": "2026-08-29 10:45:02",
         "last_seen": "2026-08-29 10:45:02"
+    },
+    "game8k.space:80": {
+        "provider_name": "\ud83c\udfaf Identified: Strong 8K",
+        "server": "CDN PROXY SERVICE",
+        "cors": "*",
+        "cloudflare": "No",
+        "timezone": "Europe/Amsterdam",
+        "metadata_message": "Welcome to World 8K",
+        "server_protocol": "http",
+        "https_port": "443",
+        "rtmp_port": "25462",
+        "allowed_formats": "['m3u8', 'ts', 'rtmp']",
+        "first_seen": "2026-09-03 08:12:05",
+        "last_seen": "2026-09-03 08:12:05"
     }
 }
