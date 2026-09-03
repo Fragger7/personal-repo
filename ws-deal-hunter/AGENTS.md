@@ -23,13 +23,16 @@
 
 ## 📊 2. Current System State & Verified Status
 
-- **Unit Test Suite Status**: **30 / 30 Tests Passing** (`python3 test_system.py`).
-- **Live Ingestion Verification**: Verified live collection across eBay (1,000+ items via warmed Chromium session), Swappa (105 items), Dell DFS, Apple Refurbished, Best Buy, and Micro Center.
-- **Active Production Catalog**: **15 verified, live workstation deals** ($\ge 15.0"$ display, $\ge 32\text{GB}$ RAM, sub-$1,000 price point, Intel 12th/13th-Gen H/HX or Apple Silicon).
+- **Unit Test Suite Status**: **31 / 31 Tests Passing** (`python3 test_system.py` in 1.1s).
+- **Live Ingestion Verification**: Verified live collection across eBay (warmed session cookies), Swappa, Reddit, Dell DFS Refurbished, and Micro Center.
+- **Active Production Catalog**: **11 verified, 100% in-stock workstation deals** ($\ge 15.0"$ display, $\ge 32\text{GB}$ RAM, sub-$1,000 price point, Intel 12th/13th-Gen H/HX).
+- **Liveness Reaper**: Upgraded to direct item page probing + Schema.org JSON-LD `offers.availability == https://schema.org/OutOfStock` detection. Ghost out-of-stock listings are purged on the spot.
+- **Heartbeat & Daemon Cadence**: Persistent 4-hour elapsed-time tracker backed by `price_benchmarks.json`. Actions runs on minute `:23` of every hour.
 - **Production Deployments**:
   - Live on Vercel (React Frontend): **[https://wsdealhunter.vercel.app/](https://wsdealhunter.vercel.app/)**
   - Live on Streamlit Cloud (Python Engine): **[https://wsdealhunter.streamlit.app/](https://wsdealhunter.streamlit.app/)**
 - **Git Branch & Remote**: Tracked on `main` branch connected to `https://github.com/Fragger7/personal-repo.git`.
+- **Canonical Workspace Path**: `/Users/admin/Development/personal-repo` (subproject `ws-deal-hunter/`).
 
 ---
 
@@ -278,6 +281,30 @@ C:\Development\Apps\WS Deal Hunter\
   2. Created `.agents/rules/agentic_efficiency.md` codifying the global token economy protocol (zero-token test iteration, CLI context hygiene, bounded file slicing, prompt cache alignment, and uncompromising code quality).
   3. **Living Guidelines & Self-Evolution Directive**: Codified that efficiency techniques are baseline recommendations ("floor, not a ceiling"). Incoming agents (Claude, DeepSeek, GPT, Gemini) that identify superior or newer token-saving/development techniques are explicitly mandated to: (a) employ the better method, (b) update the documentation, and (c) inform the user of the upgrade.
 - **Test Coverage**: 30 / 30 tests passing in 2.1s (`python test_system.py`).
+
+### Decision 39: Persistent Elapsed-Time Heartbeat Architecture & De-Congested Cron
+- **Problem**: GitHub Actions runs on the free tier experience 20–50 minute queue delays at peak hours. A naive `hour % 6 == 0` heartbeat check failed to fire because runs frequently executed at odd hours (3, 8, 13, 17, 20, 23 UTC), causing complete Telegram silence.
+- **Decision & Solution**:
+  1. Implemented persistent elapsed-time tracking via `_get_last_heartbeat_time()` and `_save_last_heartbeat_time()` in `daemon.py`, storing `last_heartbeat_timestamp` in `price_benchmarks.json`.
+  2. Heartbeat fires reliably whenever $\ge 4$ hours have elapsed since the last heartbeat, completely immune to runner queue delays.
+  3. Added `FORCE_HEARTBEAT` env override triggered by manual `workflow_dispatch` in GitHub Actions.
+  4. Shifted GitHub Actions cron from `0 * * * *` (global peak congestion) to `23 * * * *` (off-minute low congestion).
+  5. Added `git pull --rebase origin main || true` and `[skip ci]` flag to prevent Android APK build collisions in peer projects.
+
+### Decision 40: Direct Item Schema.org JSON-LD Out-Of-Stock Detection & Ghost Listing Purge
+- **Problem**: eBay search results (`/sch/i.html`) heavily cache sold and out-of-stock listings for hours after depletion. A reaper checking search-by-ID concluded out-of-stock units were still alive, leaving phantom deals (e.g. Wisetek ThinkPad P1 Gen 6 $610.40) in the production dashboard.
+- **Decision & Solution**:
+  1. Upgraded `reap_dead_and_sold_deals()` in `daemon.py` to probe direct item URLs (`/itm/<id>`) using warmed Chromium session cookies.
+  2. Parses Schema.org JSON-LD structured data (`<script type="application/ld+json">`), reading `offers.availability == https://schema.org/OutOfStock` directly from eBay's inventory microservice.
+  3. Checks visible DOM status banners (`This listing sold on...`, `ended by the seller`).
+  4. Instantly purged 3 phantom sold/depleted listings, leaving 11 strictly buyable live deals in `deals.json`.
+
+### Decision 41: Unified Monorepo Root Consolidation (`~/Development/personal-repo`)
+- **Problem**: The local repository was historically cloned into `/Users/admin/Development/Antigravity/Apps/WS Deal Hunter`, causing AI agents (including TiviMime) to confuse project boundaries and prompt the creation of fragmented repos.
+- **Decision & Solution**:
+  1. Migrated the canonical monorepo root to `/Users/admin/Development/personal-repo/` (matching `Fragger7/personal-repo`).
+  2. Unified all 5 personal apps: `ws-deal-hunter/`, `project-strong/`, `lease-hunter/`, `daily-push/`, and `tvmime/`.
+  3. Created backward-compatibility symlinks (`WS Deal Hunter -> personal-repo`) to preserve active agent processes, with scheduled retirement for the legacy `/Development/Antigravity/` folder chain.
 
 ---
 

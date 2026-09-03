@@ -4,12 +4,26 @@
 
 ---
 
-## 🏛️ Monorepo Projects
-1. **`ws-deal-hunter/`**: Autonomous Workstation Deal Hunter & Arbitrage Engine (eBay, Swappa, Reddit, DFS Refurbished, Micro Center, B&H). Dashboards: [Vercel](https://wsdealhunter.vercel.app/) & [Streamlit](https://wsdealhunter.streamlit.app/).
-2. **`lease-hunter/`**: EV & Automotive Lease Valuation Engine.
-3. **`daily-push/`**: Automated Daily Push & Notification Pipelines.
-4. **`project-strong/`**: Core Fitness & Analytics Platform.
-5. **`tvmime/`**: Next-Gen Android TV & Web IPTV Streaming Platform.
+## 🏛️ Monorepo Projects & Canonical Paths
+- **Canonical Root**: `/Users/admin/Development/personal-repo` (Git remote: `https://github.com/Fragger7/personal-repo.git`)
+- **Projects**:
+  1. **`ws-deal-hunter/`**: Autonomous Workstation Deal Hunter & Arbitrage Engine (eBay, Swappa, Reddit, DFS Refurbished, Micro Center, B&H). Dashboards: [Vercel](https://wsdealhunter.vercel.app/) & [Streamlit](https://wsdealhunter.streamlit.app/).
+  2. **`lease-hunter/`**: EV & Automotive Lease Valuation Engine.
+  3. **`daily-push/`**: Automated Daily Push & Notification Pipelines.
+  4. **`project-strong/`**: Core Fitness & Analytics Platform.
+  5. **`tvmime/`**: Next-Gen Android TV & Web IPTV Streaming Platform. (Shortcut: `/Users/admin/Development/TVMime`).
+
+---
+
+## 🧹 Scheduled Legacy Path Cleanup Directive
+> [!IMPORTANT]
+> The legacy path `/Users/admin/Development/Antigravity/` is **deprecated** and preserved only as a temporary backward-compatibility bridge during the migration session.
+> **Action for Next Session**:
+> When an agent is launched directly from the canonical root (`/Users/admin/Development/personal-repo`) or its subfolders, safely delete `/Users/admin/Development/Antigravity/` and all its deprecated artifacts:
+> - `WS Deal Hunter.archive/`
+> - Deprecated loose `Project Strong/` and `Lease Hunter/`
+> - Legacy August archives (`Lease/`, `Migration Project/`, `WS Restore/`)
+> - The backward-compatibility symlink `WS Deal Hunter`
 
 ---
 
@@ -32,6 +46,7 @@
   - Exceptional >= 9.0 deals are scarce and fleeting; they sell out within hours.
   - A catalog of **2–4 genuinely buyable, live units** is infinitely better than 11 listings where 9 are sold out.
   - Sold-out and expired items must be purged immediately. Dead listings destroy user trust.
+  - Liveness reaper checks Schema.org JSON-LD `offers.availability == https://schema.org/OutOfStock` and visible DOM banners (`This listing sold on...`) directly on item URLs.
 
 ### 4. Proactive Token Burn & Rate Limit Warnings
 * **Warn before burning quota**:
@@ -41,7 +56,7 @@
 ### 5. Monorepo Directory Boundary Invariance
 * **All Deal Hunter code belongs strictly in `ws-deal-hunter/`**:
   - Never generate loose script files, debug outputs, or test data at the workspace root.
-  - Keep peer project directories (`lease-hunter/`, `daily-push/`, `project-strong/`) isolated and untouched.
+  - Keep peer project directories (`lease-hunter/`, `daily-push/`, `project-strong/`, `tvmime/`) isolated and untouched.
 
 ### 6. Zero Dummy Data in Production
 * Under NO circumstances should mock data, synthetic seed listings, or fallback generators be committed to `deals.json` or served to production dashboards. If a live scraper returns 0 items, it must return `[]`.
