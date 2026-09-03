@@ -23,7 +23,7 @@
 
 ## 📊 2. Current System State & Verified Status
 
-- **Unit Test Suite Status**: **31 / 31 Tests Passing** (`python3 test_system.py` in 1.1s).
+- **Unit Test Suite Status**: **34 / 34 Tests Passing** (`python3 test_system.py` in 1.1s).
 - **Live Ingestion Verification**: Verified live collection across eBay (warmed session cookies), Swappa, Reddit, Dell DFS Refurbished, and Micro Center.
 - **Active Production Catalog**: **11 verified, 100% in-stock workstation deals** ($\ge 15.0"$ display, $\ge 32\text{GB}$ RAM, sub-$1,000 price point, Intel 12th/13th-Gen H/HX).
 - **Liveness Reaper**: Upgraded to direct item page probing + Schema.org JSON-LD `offers.availability == https://schema.org/OutOfStock` detection. Ghost out-of-stock listings are purged on the spot.
@@ -304,22 +304,28 @@ C:\Development\Apps\WS Deal Hunter\
 - **Decision & Solution**:
   1. Migrated the canonical monorepo root to `/Users/admin/Development/personal-repo/` (matching `Fragger7/personal-repo`).
   2. Unified all 5 personal apps: `ws-deal-hunter/`, `project-strong/`, `lease-hunter/`, `daily-push/`, and `tvmime/`.
-  3. Created backward-compatibility symlinks (`WS Deal Hunter -> personal-repo`) to preserve active agent processes, with scheduled retirement for the legacy `/Development/Antigravity/` folder chain.
+  3. Cleaned up and permanently purged the legacy `/Development/Antigravity/` folder chain per directives.
+
+### Decision 42: Multi-Item Reddit Liquidation Table Parser (`parse_markdown_tables`)
+- **Problem**: Liquidators and corporate IT disposers on `r/hardwareswap` and `r/homelabsales` frequently bundle 10–30 enterprise workstations in single bulk posts using Markdown/HTML tables (`| Item | Specs | Price | Status |`). Previously, these posts were skipped because generic post titles lacked explicit individual specs or because title price extraction only captured a single composite price.
+- **Decision & Solution**:
+  1. Added `LIQUIDATION_PATTERNS` to identify multi-unit and liquidation posts even without upfront CPU/RAM in titles.
+  2. Implemented `parse_markdown_tables` and `_extract_raw_markdown_rows` in `RedditCollector` ([`collector.py`](file:///Users/admin/Development/personal-repo/ws-deal-hunter/collector.py)) to parse both HTML `<table>` elements and raw pipe-delimited Markdown tables.
+  3. Added column header mapping (Model, CPU, RAM, GPU, Storage, Price, Status, Qty).
+  4. Added strikethrough detection (`<del>`, `<s>`, `~~`), status column filtering (`Sold`, `Pending`, `OOS`), quantity checks (`0`), and hard exclusion blacklist filtering to automatically drop depleted rows.
+  5. Extracts individual workstation units with calibrated spec titles and prices into dedicated `RawListing` objects while suppressing ambiguous parent post entries.
+  6. Added comprehensive unit tests in [`test_system.py`](file:///Users/admin/Development/personal-repo/ws-deal-hunter/test_system.py) bringing total passing test suite to **34 / 34 tests passing**.
 
 ---
 
 ## 📌 5. Project Backlog & Future Roadmap
-*See [`BACKLOG.md`](file:///C:/Development/Apps/WS%20Deal%20Hunter/BACKLOG.md) for full technical task breakdown and UI/UX design specifications.*
+*See [`BACKLOG.md`](file:///Users/admin/Development/personal-repo/ws-deal-hunter/BACKLOG.md) for full technical task breakdown and UI/UX design specifications.*
 
 ### 🔴 Immediate Backlog (Next Session)
-1. **Multi-Item Reddit Liquidation Table Parser**:
-   - Upgrade `RedditCollector` to parse multi-row Markdown tables (`| Item | Specs | Price |`) in `r/hardwareswap` & `r/homelabsales` bulk liquidation posts to unlock 15–20 additional off-lease enterprise units per cycle.
-2. **Swappa Workstation Directory Expansion**:
-   - Expand Swappa crawling matrix with new model slugs (MacBook Pro 16 M3/M4 Max, ThinkPad P1 Gen 6, Precision 5680, ThinkPad P16).
-3. **Enterprise Refurbished Surge Monitor (DFS & Woot Drops)**:
+1. **Enterprise Refurbished Surge Monitor (DFS & Woot Drops)**:
    - Wire targeted flash-drop watchers for Dell Financial Services (DFS) off-lease Precision events and Woot bulk enterprise liquidation drops.
-4. **Adaptive "Self-Learning" FMV Price Index**:
-   - Scaffold rolling exponential moving average calibration (`price_benchmarks.json`).
+2. **Adaptive "Self-Learning" FMV Price Index Expansion**:
+   - Expand rolling exponential moving average calibration (`price_benchmarks.json`) to incorporate multi-item enterprise clearing prices.
 
 ---
 

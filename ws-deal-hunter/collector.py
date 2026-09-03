@@ -23,7 +23,7 @@ import xml.etree.ElementTree as ET
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 # Set global socket connect/read timeout for snappy non-blocking collector calls
 socket.setdefaulttimeout(1.2)
@@ -359,6 +359,31 @@ class RedditCollector:
         r"optiplex",
     ]
 
+    # Bulk / Liquidation / Multi-Item Lot Patterns
+    LIQUIDATION_PATTERNS = [
+        r"\blaptops?\b",
+        r"\bworkstations?\b",
+        r"\bliquidation\b",
+        r"\bclearance\b",
+        r"\bdownsizing\b",
+        r"\boff[\s\-]lease\b",
+        r"\blots?\b",
+        r"\bbulk\b",
+        r"\bmultiple\b",
+        r"\bcleanout\b",
+        r"\bclean\s*up\b",
+        r"\bvarious\b",
+        r"\bcollection\b",
+        r"\bthin(?:k|g)pads?\b",
+        r"\bprecisions?\b",
+        r"\bzbooks?\b",
+        r"\bmacbooks?\b",
+        r"\bnotebooks?\b",
+        r"\bservers?\b",
+        r"\bhomelab\b",
+        r"\bmini[\s\-]pcs?\b",
+    ]
+
     # Reject listings that are purely accessories or non-compute items
     EXCLUDED_ACCESSORIES = [
         "airpod", "airpods", "magic keyboard", "keyboard case", "mouse", "case only",
@@ -459,17 +484,19 @@ class RedditCollector:
                 ):
                     continue
 
-                # Spec-Assisted Multi-Factor Matching:
+                # Spec-Assisted Multi-Factor Matching & Bulk Liquidation Candidate Detection:
                 has_cpu = any(re.search(pat, title, re.I) for pat in self.CPU_PATTERNS)
                 has_ram = any(re.search(pat, title, re.I) for pat in self.RAM_PATTERNS)
                 has_gpu = any(re.search(pat, title, re.I) for pat in self.GPU_PATTERNS)
                 has_ws = any(re.search(pat, title, re.I) for pat in self.WORKSTATION_FAMILIES)
+                is_bulk_or_lot = any(re.search(pat, title, re.I) for pat in self.LIQUIDATION_PATTERNS)
 
                 is_spec_match = (
                     (has_cpu and has_ram)
                     or (has_ws and (has_ram or has_cpu or has_gpu))
                     or (has_gpu and has_ram)
                     or (has_ws and is_p2p)
+                    or (is_p2p and is_bulk_or_lot)
                 )
 
                 if not is_spec_match:
@@ -478,9 +505,11 @@ class RedditCollector:
                 # Extract price from title first
                 post_body = ""
                 price = self._extract_price(title, "")
+                table_listings: List[RawListing] = []
 
-                # If price not in title or if RAM specs need body verification, inspect post body
-                if (price <= 0 or not has_ram) and permalink:
+                # If price not in title, if RAM needs verification, or if bulk/liquidation candidate, inspect post body
+                should_inspect_body = (price <= 0 or not has_ram or is_bulk_or_lot) and bool(permalink)
+                if should_inspect_body:
                     try:
                         post_res = scraper.get(f"https://old.reddit.com{permalink}", timeout=3.0)
                         if post_res.status_code == 200:
@@ -496,44 +525,22 @@ class RedditCollector:
                                     has_cpu = any(re.search(pat, post_body, re.I) for pat in self.CPU_PATTERNS)
 
                                 # Markdown Table Parser: Extract individual workstation units from multi-item seller lots
-                                tables = md_el.find_all("table")
-                                for tbl in tables:
-                                    rows = tbl.select("tbody tr") or tbl.select("tr")
-                                    for row_idx, row in enumerate(rows):
-                                        cells = [c.get_text(" ", strip=True) for c in row.find_all(["td", "th"])]
-                                        row_text = " | ".join(cells)
-                                        if any(h in row_text.lower() for h in ["timestamp", "pending", "[sold]", "status"]) and "available" not in row_text.lower():
-                                            if "[sold]" in row_text.lower() or "sold" in cells[-1].lower():
-                                                continue
-                                        row_has_ws = any(re.search(pat, row_text, re.I) for pat in self.WORKSTATION_FAMILIES)
-                                        row_has_cpu = any(re.search(pat, row_text, re.I) for pat in self.CPU_PATTERNS)
-                                        row_has_ram = any(re.search(pat, row_text, re.I) for pat in self.RAM_PATTERNS)
-                                        if (row_has_ws or (row_has_cpu and row_has_ram)) and not is_blacklisted_item(row_text):
-                                            row_price_m = re.search(r"\$\s*([0-9,]+(?:\.[0-9]{2})?)", row_text)
-                                            if row_price_m:
-                                                try:
-                                                    row_p = float(row_price_m.group(1).replace(",", ""))
-                                                    if 80 <= row_p <= 6000:
-                                                        item_label = cells[0] if len(cells) > 0 and len(cells[0]) > 5 else title
-                                                        clean_row_title = f"{item_label} - {row_text[:60]}"
-                                                        listings.append(
-                                                            RawListing(
-                                                                id=f"reddit_{post_id}_row_{row_idx}",
-                                                                source=f"reddit (r/{subreddit})",
-                                                                title=clean_row_title[:100],
-                                                                description=f"Multi-item table lot by u/{author}: {row_text}",
-                                                                price=row_p,
-                                                                url=url_full,
-                                                                seller=f"u/{author}",
-                                                                location=self._extract_location(title),
-                                                                condition_raw=f"Used (r/{subreddit} Lot)",
-                                                                created_utc=datetime.now(timezone.utc).isoformat(),
-                                                            )
-                                                        )
-                                                except ValueError:
-                                                    pass
+                                table_listings = self.parse_markdown_tables(
+                                    soup_or_el=md_el,
+                                    raw_text=str(md_el),
+                                    post_title=title,
+                                    post_id=post_id,
+                                    author=author,
+                                    url_full=url_full,
+                                    subreddit=subreddit,
+                                )
                     except Exception:
                         pass
+
+                # If individual workstation units were extracted from tables, add them and skip parent post
+                if table_listings:
+                    listings.extend(table_listings)
+                    continue
 
                 if price <= 0 or price < 80:
                     continue
@@ -630,6 +637,240 @@ class RedditCollector:
         """Extract location tags like [USA-CA] or [US-NY]."""
         m = re.search(r"\[(USA?-[A-Z]{2}|CAN-[A-Z]{2}|UK)\]", title, re.IGNORECASE)
         return m.group(1).upper() if m else "US"
+
+    def _extract_raw_markdown_rows(self, raw_text: str) -> List[List[str]]:
+        """Extract table rows from raw markdown text formatted with pipes (|)."""
+        rows: List[List[str]] = []
+        lines = raw_text.splitlines()
+        for line in lines:
+            line_str = line.strip()
+            if line_str.startswith("|") and line_str.endswith("|") and line_str.count("|") >= 3:
+                inner = line_str[1:-1]
+                # Skip delimiter rows like :---|---:
+                if re.match(r"^[\s\-:|]+$", inner):
+                    continue
+                cells = [c.strip() for c in inner.split("|")]
+                if cells and any(c for c in cells):
+                    rows.append(cells)
+        return rows
+
+    def parse_markdown_tables(
+        self,
+        soup_or_el: Any,
+        raw_text: str,
+        post_title: str,
+        post_id: str,
+        author: str,
+        url_full: str,
+        subreddit: str,
+    ) -> List[RawListing]:
+        """
+        Parses multi-row Markdown and HTML tables (| Item | Specs | Price | Status |)
+        from bulk liquidation and multi-unit seller posts on r/hardwareswap, r/homelabsales, etc.
+        Extracts individual workstation units with calibrated spec titles and prices.
+        """
+        extracted: List[RawListing] = []
+
+        # 1. Look for HTML <table> elements first
+        html_tables = []
+        if soup_or_el and hasattr(soup_or_el, "find_all"):
+            html_tables = soup_or_el.find_all("table")
+
+        table_rows_data: List[List[Tuple[List[str], bool]]] = []
+
+        if html_tables:
+            for tbl in html_tables:
+                current_table: List[Tuple[List[str], bool]] = []
+                rows = tbl.select("tr")
+                for r in rows:
+                    cells = [c.get_text(" ", strip=True) for c in r.find_all(["th", "td"])]
+                    if cells and any(c.strip() for c in cells):
+                        # Detect strikethrough indicating sold item in HTML
+                        has_strikethrough = bool(r.find(["del", "s", "strike"]))
+                        current_table.append((cells, has_strikethrough))
+                if current_table:
+                    table_rows_data.append(current_table)
+
+        # 2. If no HTML tables found, fall back to parsing raw markdown table blocks
+        if not table_rows_data and raw_text:
+            raw_rows = self._extract_raw_markdown_rows(raw_text)
+            if raw_rows:
+                table_rows_data.append([(r, False) for r in raw_rows])
+
+        location = self._extract_location(post_title)
+
+        # 3. Process extracted table structures
+        for tbl_idx, rows_with_meta in enumerate(table_rows_data):
+            if not rows_with_meta:
+                continue
+
+            # Identify headers and map column indices if present
+            col_map: Dict[str, int] = {}
+            header_row_idx = -1
+
+            for r_idx in range(min(3, len(rows_with_meta))):
+                row_cells_lower = [c.lower() for c in rows_with_meta[r_idx][0]]
+                if any(any(k in c for k in ["item", "model", "laptop", "cpu", "processor", "specs", "ram", "price", "status", "cost", "asking", "qty"]) for c in row_cells_lower):
+                    header_row_idx = r_idx
+                    for c_idx, c_text in enumerate(row_cells_lower):
+                        if any(k in c_text for k in ["item", "model", "laptop", "device", "name", "machine", "hardware"]):
+                            col_map.setdefault("model", c_idx)
+                        elif any(k in c_text for k in ["cpu", "processor"]):
+                            col_map.setdefault("cpu", c_idx)
+                        elif any(k in c_text for k in ["ram", "memory"]):
+                            col_map.setdefault("ram", c_idx)
+                        elif any(k in c_text for k in ["storage", "ssd", "hdd", "drive"]):
+                            col_map.setdefault("storage", c_idx)
+                        elif any(k in c_text for k in ["gpu", "graphics"]):
+                            col_map.setdefault("gpu", c_idx)
+                        elif any(k in c_text for k in ["specs", "specification", "description", "details", "config"]):
+                            col_map.setdefault("specs", c_idx)
+                        elif any(k in c_text for k in ["price", "cost", "asking", "$", "shipped", "local"]):
+                            col_map.setdefault("price", c_idx)
+                        elif any(k in c_text for k in ["status", "availability", "available", "sold", "state"]):
+                            col_map.setdefault("status", c_idx)
+                        elif any(k in c_text for k in ["qty", "quantity", "count"]):
+                            col_map.setdefault("qty", c_idx)
+                    break
+
+            start_idx = header_row_idx + 1 if header_row_idx >= 0 else 0
+
+            for row_idx in range(start_idx, len(rows_with_meta)):
+                cells, is_struck_through = rows_with_meta[row_idx]
+                row_text = " | ".join(cells)
+
+                # Skip delimiter lines like |---|---|
+                if all(re.match(r"^[:\s\-]+$", c) for c in cells if c):
+                    continue
+
+                # Skip repeated header row
+                if any(c.lower() in ["item", "model", "cpu", "specs", "price"] for c in cells[:3]):
+                    continue
+
+                # Strikethrough check (<del>, <s>, or ~~ indicates sold item in Reddit markdown)
+                if is_struck_through or "~~" in row_text:
+                    continue
+
+                # Status check
+                if "status" in col_map and col_map["status"] < len(cells):
+                    status_val = cells[col_map["status"]].lower()
+                    if any(s in status_val for s in ["sold", "pending", "oos", "out of stock", "traded", "unavailable", "claimed", "paid", "none", "0/"]):
+                        continue
+                    if status_val.strip() in ["0", "no", "false", "n"]:
+                        continue
+
+                # Quantity check
+                if "qty" in col_map and col_map["qty"] < len(cells):
+                    qty_val = cells[col_map["qty"]].strip().lower()
+                    if qty_val in ["0", "0/1", "0/2", "0/3", "0/4", "0/5", "none", "oos", "sold"]:
+                        continue
+
+                # General sold check in row text
+                row_lower = row_text.lower()
+                if any(s in row_lower for s in ["sold to u/", "[sold]", "(sold)", "sold!"]):
+                    continue
+
+                # Hardware & Workstation matching
+                row_has_ws = any(re.search(pat, row_text, re.I) for pat in self.WORKSTATION_FAMILIES)
+                row_has_cpu = any(re.search(pat, row_text, re.I) for pat in self.CPU_PATTERNS)
+                row_has_ram = any(re.search(pat, row_text, re.I) for pat in self.RAM_PATTERNS)
+                row_has_gpu = any(re.search(pat, row_text, re.I) for pat in self.GPU_PATTERNS)
+
+                # Must be a workstation or high-spec hardware
+                if not (row_has_ws or (row_has_cpu and row_has_ram) or (row_has_gpu and (row_has_cpu or row_has_ram))):
+                    continue
+
+                # Check blacklist (cracked screens, 11th Gen, consumer Inspiron/IdeaPad, locks, accessories)
+                if is_blacklisted_item(row_text):
+                    continue
+
+                # Price extraction
+                row_price = 0.0
+                if "price" in col_map and col_map["price"] < len(cells):
+                    price_str = cells[col_map["price"]]
+                    shipped_m = re.search(r"\$\s*([0-9,]+(?:\.[0-9]{2})?)\s*(?:shipped|shpd)", price_str, re.I)
+                    if shipped_m:
+                        try:
+                            row_price = float(shipped_m.group(1).replace(",", ""))
+                        except ValueError:
+                            pass
+                    if row_price <= 0:
+                        m = re.search(r"\$\s*([0-9,]+(?:\.[0-9]{2})?)", price_str)
+                        if m:
+                            try:
+                                row_price = float(m.group(1).replace(",", ""))
+                            except ValueError:
+                                pass
+                        else:
+                            # Direct numeric under Price column
+                            num_m = re.search(r"\b([1-9][0-9]{2,3}(?:\.[0-9]{2})?)\b", price_str)
+                            if num_m:
+                                try:
+                                    row_price = float(num_m.group(1).replace(",", ""))
+                                except ValueError:
+                                    pass
+
+                if row_price <= 0:
+                    m = re.search(r"\$\s*([0-9,]+(?:\.[0-9]{2})?)", row_text)
+                    if m:
+                        try:
+                            row_price = float(m.group(1).replace(",", ""))
+                        except ValueError:
+                            pass
+
+                if row_price < 80.0 or row_price > 6000.0:
+                    continue
+
+                # Construct clean title from columns or cells
+                model_str = ""
+                if "model" in col_map and col_map["model"] < len(cells):
+                    model_str = cells[col_map["model"]].strip()
+                elif len(cells) > 0 and len(cells[0]) > 4:
+                    model_str = cells[0].strip()
+
+                # Clean markdown formatting from model_str
+                model_str = re.sub(r"\[([^\]]+)\]\([^\)]+\)", r"\1", model_str)
+                model_str = re.sub(r"[*_`]", "", model_str).strip()
+
+                # Extract specs to augment title
+                spec_parts = []
+                for spec_key in ["cpu", "ram", "storage", "gpu", "specs"]:
+                    if spec_key in col_map and col_map[spec_key] < len(cells):
+                        val = cells[col_map[spec_key]].strip()
+                        if val and val.lower() not in ["n/a", "none", "-"]:
+                            spec_parts.append(val)
+
+                clean_specs = " ".join(re.sub(r"[*_`]", "", s) for s in spec_parts if s)
+
+                if model_str and clean_specs:
+                    if all(part.lower() not in model_str.lower() for part in clean_specs.split()[:2]):
+                        clean_row_title = f"{model_str} - {clean_specs}"
+                    else:
+                        clean_row_title = model_str
+                elif model_str:
+                    clean_row_title = f"{model_str} - {row_text[:60]}"
+                else:
+                    clean_row_title = f"{post_title[:40]} - {row_text[:60]}"
+
+                clean_row_title = re.sub(r"\s+", " ", clean_row_title).strip()
+
+                listing_id = f"reddit_{post_id}_tbl{tbl_idx}_r{row_idx}"
+                extracted.append(
+                    RawListing(
+                        id=listing_id,
+                        source=f"reddit (r/{subreddit})",
+                        title=clean_row_title[:120],
+                        description=f"Multi-item table lot by u/{author}: {row_text}",
+                        price=row_price,
+                        url=url_full,
+                        seller=f"u/{author}",
+                        location=location,
+                        condition_raw=f"Used (r/{subreddit} Lot)",
+                        created_utc=datetime.now(timezone.utc).isoformat(),
+                    )
+                )
+
+        return extracted
 
 
 class SwappaCollector:

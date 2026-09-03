@@ -12,6 +12,7 @@ Validates all 5 system modules:
 from __future__ import annotations
 
 import os
+import re
 import sys
 import tempfile
 import unittest
@@ -126,6 +127,143 @@ class TestCollectors(unittest.TestCase):
         title2 = "[BestBuy] Dell XPS 15 9530 i7-13700H 32GB 1TB for $1,299.99 ($300 off)"
         price2 = collector._extract_price(title2, "")
         self.assertEqual(price2, 1299.99)
+
+    def test_reddit_markdown_table_parser_html(self) -> None:
+        """Verify parsing multi-item HTML tables from Reddit liquidation posts."""
+        from bs4 import BeautifulSoup
+
+        collector = RedditCollector()
+        html = """
+        <div class="md">
+            <p>Downsizing company lab. Shipping via UPS Ground.</p>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Item</th>
+                        <th>CPU</th>
+                        <th>RAM</th>
+                        <th>GPU</th>
+                        <th>Price</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Dell Precision 5570</td>
+                        <td>i7-12800H</td>
+                        <td>32GB DDR5</td>
+                        <td>RTX A1000</td>
+                        <td>$650 shipped</td>
+                        <td>Available</td>
+                    </tr>
+                    <tr>
+                        <td>Lenovo ThinkPad P16 Gen 1</td>
+                        <td>i9-12950HX</td>
+                        <td>64GB DDR5</td>
+                        <td>RTX A4500</td>
+                        <td>$920 shipped</td>
+                        <td>Available</td>
+                    </tr>
+                    <tr>
+                        <td><del>MacBook Pro 16 M1 Max</del></td>
+                        <td>M1 Max 32c</td>
+                        <td>32GB</td>
+                        <td>32c GPU</td>
+                        <td>$1,100</td>
+                        <td>Sold to u/buyer1</td>
+                    </tr>
+                    <tr>
+                        <td>HP ZBook Fury 16 G9</td>
+                        <td>i7-12850HX</td>
+                        <td>64GB</td>
+                        <td>RTX A3000</td>
+                        <td>$850</td>
+                        <td>Pending</td>
+                    </tr>
+                    <tr>
+                        <td>Dell Latitude 5420</td>
+                        <td>i5-1135G7</td>
+                        <td>16GB</td>
+                        <td>Intel</td>
+                        <td>$220</td>
+                        <td>Available</td>
+                    </tr>
+                    <tr>
+                        <td>Logitech MX Master 3S Mouse</td>
+                        <td>N/A</td>
+                        <td>N/A</td>
+                        <td>N/A</td>
+                        <td>$60</td>
+                        <td>Available</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        """
+        soup = BeautifulSoup(html, "html.parser")
+        md_el = soup.select_one(".md")
+        extracted = collector.parse_markdown_tables(
+            soup_or_el=md_el,
+            raw_text=str(md_el),
+            post_title="[USA-CA] [H] Enterprise Workstations Liquidation [W] PayPal",
+            post_id="t3_test123",
+            author="seller_corp",
+            url_full="https://www.reddit.com/r/homelabsales/comments/test123",
+            subreddit="homelabsales",
+        )
+
+        # Expected: Exactly 2 valid available workstations (Dell Precision 5570, ThinkPad P16 Gen 1)
+        # Strikethrough/Sold dropped, Pending dropped, Latitude/11th Gen dropped, Mouse dropped
+        self.assertEqual(len(extracted), 2)
+
+        p5570 = next((x for x in extracted if "Precision 5570" in x.title), None)
+        self.assertIsNotNone(p5570)
+        self.assertEqual(p5570.price, 650.0)
+        self.assertEqual(p5570.location, "USA-CA")
+        self.assertIn("32GB", p5570.title)
+
+        p16 = next((x for x in extracted if "P16" in x.title), None)
+        self.assertIsNotNone(p16)
+        self.assertEqual(p16.price, 920.0)
+        self.assertIn("64GB", p16.title)
+
+    def test_reddit_markdown_table_parser_raw_md(self) -> None:
+        """Verify parsing raw Markdown table text formatted with pipes (|)."""
+        collector = RedditCollector()
+        raw_md = """
+| Model | Specs | Price | Status |
+|---|---|---|---|
+| Dell Precision 7670 | i7-12850HX 64GB DDR5 RTX A3000 | $780 shipped | Available |
+| Lenovo ThinkPad P1 Gen 5 | i7-12800H 64GB DDR5 RTX 3070 Ti | $850 shipped | 1 available |
+| ~~HP ZBook Studio G8~~ | i7-11850H 32GB RTX 3070 | ~~$500~~ | Sold |
+        """
+        extracted = collector.parse_markdown_tables(
+            soup_or_el=None,
+            raw_text=raw_md,
+            post_title="[USA-TX] [H] Bulk Off-Lease Workstations [W] PayPal",
+            post_id="t3_lot456",
+            author="liquidator_bob",
+            url_full="https://www.reddit.com/r/hardwareswap/comments/lot456",
+            subreddit="hardwareswap",
+        )
+
+        self.assertEqual(len(extracted), 2)
+        prices = [x.price for x in extracted]
+        self.assertIn(780.0, prices)
+        self.assertIn(850.0, prices)
+        self.assertNotIn(500.0, prices)
+
+    def test_reddit_liquidation_candidate_matching(self) -> None:
+        """Verify that bulk liquidation titles match candidate filter without upfront CPU/RAM specs."""
+        collector = RedditCollector()
+        bulk_titles = [
+            "[USA-TX] [H] Enterprise Workstations & Laptops Liquidation [W] PayPal",
+            "[USA-CA] [H] Downsizing Homelab - Multiple Laptops Clearance [W] PayPal",
+            "[USA-NY] [H] Off-Lease Laptops Cleanout (Dell, Lenovo, HP) [W] PayPal",
+        ]
+        for title in bulk_titles:
+            is_bulk = any(re.search(pat, title, re.I) for pat in collector.LIQUIDATION_PATTERNS)
+            self.assertTrue(is_bulk, f"Title should be recognized as bulk/liquidation candidate: {title}")
 
     def test_swappa_collector_feed(self) -> None:
         collector = SwappaCollector()
