@@ -13,6 +13,9 @@ on:
       - '.github/workflows/tvmime-build.yml'
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build:
     name: Compile TV & Mobile APKs
@@ -38,14 +41,33 @@ jobs:
         working-directory: ./tvmime
         run: gradle :tvApp:assembleDebug :androidApp:assembleDebug --stacktrace
 
+      - name: Stage Release Artifacts
+        run: |
+          cp tvmime/tvApp/build/outputs/apk/debug/*.apk tvmime-tv.apk
+          cp tvmime/androidApp/build/outputs/apk/debug/*.apk tvmime-mobile.apk
+
       - name: Upload Android TV APK Artifact
         uses: actions/upload-artifact@v4
         with:
           name: tvmime-tv-debug-apk
-          path: tvmime/tvApp/build/outputs/apk/debug/*.apk
+          path: tvmime-tv.apk
 
       - name: Upload Android Mobile APK Artifact
         uses: actions/upload-artifact@v4
         with:
           name: tvmime-mobile-debug-apk
-          path: tvmime/androidApp/build/outputs/apk/debug/*.apk
+          path: tvmime-mobile.apk
+
+      - name: Publish Rolling Release APKs
+        uses: softprops/action-gh-release@v2
+        if: github.ref == 'refs/heads/main'
+        with:
+          tag_name: latest
+          name: "TVMime Latest Rolling Build"
+          body: "Automated continuous delivery build of TVMime for Android TV and Android Mobile."
+          prerelease: true
+          files: |
+            tvmime-tv.apk
+            tvmime-mobile.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

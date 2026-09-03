@@ -1,0 +1,20 @@
+{
+  "rewrites": [
+    {
+      "source": "/tv.apk",
+      "destination": "/api/tv"
+    },
+    {
+      "source": "/mobile.apk",
+      "destination": "/api/mobile"
+    },
+    {
+      "source": "/version",
+      "destination": "/api/version"
+    },
+    {
+      "source": "/((?!api/.*).*)",
+      "destination": "/index.html"
+    }
+  ]
+}

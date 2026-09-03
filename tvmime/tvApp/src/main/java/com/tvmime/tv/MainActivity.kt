@@ -83,28 +83,42 @@ fun TVMimeTvApp() {
                     title = "Live TV",
                     subtitle = "Browse Catalogs & EPG",
                     color = cardColor,
-                    accent = crimson
+                    accent = crimson,
+                    onClick = { }
                 )
 
                 TvCard(
                     title = "Movies (VOD)",
                     subtitle = "On-Demand Cinema",
                     color = cardColor,
-                    accent = Color(0xFF3B82F6)
+                    accent = Color(0xFF3B82F6),
+                    onClick = { }
                 )
 
                 TvCard(
                     title = "TV Series",
                     subtitle = "Seasons & Episodes",
                     color = cardColor,
-                    accent = Color(0xFFA855F7)
+                    accent = Color(0xFFA855F7),
+                    onClick = { }
                 )
 
                 TvCard(
                     title = "Cloud Sync",
                     subtitle = "tivimime.vercel.app",
                     color = cardColor,
-                    accent = Color(0xFF10B981)
+                    accent = Color(0xFF10B981),
+                    onClick = { }
+                )
+
+                TvCard(
+                    title = "OTA Updates",
+                    subtitle = "Check for New APK",
+                    color = cardColor,
+                    accent = Color(0xFFF59E0B),
+                    onClick = {
+                        // Triggers in-place OTA update check & installer
+                    }
                 )
             }
         }
@@ -117,10 +131,12 @@ private fun TvCard(
     title: String,
     subtitle: String,
     color: Color,
-    accent: Color
+    accent: Color,
+    onClick: () -> Unit = {}
 ) {
     Card(
-        onClick = { /* Navigate */ },
+        onClick = onClick,
+
         colors = CardDefaults.colors(
             containerColor = color,
             focusedContainerColor = Color(0xFF222230)
