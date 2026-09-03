@@ -58,16 +58,16 @@ class DealHunterDaemon:
         self,
         poll_interval: int = 180,
         min_deal_score: float = 9.0,
-        max_alert_price: float = 850.0,
+        max_alert_price: Optional[float] = None,
         storage_path: str = "deals.json",
         auto_push: bool = False,
         discord_webhook: Optional[str] = None,
-        heartbeat_interval_cycles: int = 6,
+        heartbeat_interval_cycles: int = 4,
         once: bool = False,
     ) -> None:
         self.poll_interval = poll_interval
         self.min_deal_score = min_deal_score
-        self.max_alert_price = max_alert_price
+        self.max_alert_price = max_alert_price if max_alert_price is not None else float(os.environ.get("MAX_ALERT_PRICE", 1100.0))
         self.auto_push = auto_push
         self.once = once
         self.heartbeat_interval_cycles = int(os.environ.get("HEARTBEAT_INTERVAL_CYCLES", heartbeat_interval_cycles))
@@ -77,7 +77,7 @@ class DealHunterDaemon:
         self.evaluator = GeminiHardwareEvaluator()
         self.notifier = PushoverNotifier(
             min_deal_score=min_deal_score,
-            max_price=max_alert_price,
+            max_price=self.max_alert_price,
         )
         self.telegram_notifier = TelegramNotifier()
         self.discord_notifier = DiscordNotifier(webhook_url=discord_webhook)
@@ -86,6 +86,34 @@ class DealHunterDaemon:
         self._thread: Optional[threading.Thread] = None
         self.status = DaemonStatus()
         self._lock = threading.Lock()
+
+    def _get_last_heartbeat_time(self) -> Optional[datetime]:
+        """Read persistent last heartbeat timestamp from price_benchmarks.json."""
+        for path in [Path("price_benchmarks.json"), Path(__file__).resolve().parent / "price_benchmarks.json"]:
+            if path.exists():
+                try:
+                    with open(path, "r", encoding="utf-8") as f:
+                        data = json.load(f)
+                    ts_str = data.get("last_heartbeat_timestamp")
+                    if ts_str:
+                        return datetime.fromisoformat(ts_str)
+                except Exception:
+                    pass
+        return None
+
+    def _save_last_heartbeat_time(self, dt: datetime) -> None:
+        """Persist last heartbeat timestamp to price_benchmarks.json so it commits cleanly in CI."""
+        for path in [Path("price_benchmarks.json"), Path(__file__).resolve().parent / "price_benchmarks.json"]:
+            if path.exists():
+                try:
+                    with open(path, "r", encoding="utf-8") as f:
+                        data = json.load(f)
+                    data["last_heartbeat_timestamp"] = dt.isoformat()
+                    with open(path, "w", encoding="utf-8") as f:
+                        json.dump(data, f, indent=2)
+                    return
+                except Exception as e:
+                    self.log(f"Failed to persist last_heartbeat_timestamp to {path}: {e}")
 
     def log(self, message: str) -> None:
         """Log message with timestamp and append to recent activity queue."""
@@ -189,10 +217,11 @@ class DealHunterDaemon:
             upserted = self.storage.upsert_many(evaluated_deals)
             self.log(f"Atomically committed {upserted} evaluated deals to {self.storage.filepath.name}.")
 
-        # 6. Telegram Pulse Digest & Periodic Heartbeat (Every N hours/cycles or when new deals arrive)
+        # 6. Telegram Pulse Digest & Periodic Heartbeat (Every N hours or when new deals arrive)
         if self.telegram_notifier.bot_token and self.telegram_notifier.chat_id:
             total_active = len(self.storage.get_all())
             usage = self.evaluator.usage_tracker.get_summary()
+            now_utc = datetime.now(timezone.utc)
 
             if evaluated_deals:
                 summary_lines = []
@@ -206,20 +235,41 @@ class DealHunterDaemon:
                     + self.telegram_notifier._format_dashboard_links()
                 )
                 self.telegram_notifier.send_system_message("Inventory Updated", digest_html)
-            elif (
-                (not self.once and current_cycle % self.heartbeat_interval_cycles == 0)
-                or (self.once and datetime.now(timezone.utc).hour % self.heartbeat_interval_cycles == 0)
-            ):
-                # Periodic Heartbeat (Sprinkled every 6 hours instead of buzzing every hour)
-                heartbeat_html = (
-                    f"💓 <b>Autonomous Heartbeat (Every {self.heartbeat_interval_cycles}h)</b>\n"
-                    f"🔍 Scanned <b>{len(raw_listings)} listings</b> across eBay, Reddit & Syndicated Feeds.\n"
-                    f"📊 <b>{total_active} active deals</b> monitored in store (0 unanalyzed items this interval).\n"
-                    f"🤖 <b>AI Usage:</b> {usage['total_calls']} total calls ({usage['total_tokens']:,} tokens) | ~{usage['estimated_daily_left']:,}/1,500 requests left\n\n"
-                    f"⚡ <i>Autonomous Scraper Online & Standing By (Heartbeat every {self.heartbeat_interval_cycles}h)</i>\n"
-                    + self.telegram_notifier._format_dashboard_links()
-                )
-                self.telegram_notifier.send_system_message(f"Heartbeat ({self.heartbeat_interval_cycles}h)", heartbeat_html)
+                if self.once:
+                    self._save_last_heartbeat_time(now_utc)
+            else:
+                force_heartbeat = os.environ.get("FORCE_HEARTBEAT") == "1"
+                should_send_heartbeat = False
+
+                if force_heartbeat:
+                    should_send_heartbeat = True
+                elif not self.once:
+                    if current_cycle % self.heartbeat_interval_cycles == 0:
+                        should_send_heartbeat = True
+                else:
+                    # In --once mode (e.g. GitHub Actions), use robust elapsed-time tracking
+                    last_hb = self._get_last_heartbeat_time()
+                    interval_hours = float(os.environ.get("HEARTBEAT_INTERVAL_HOURS", self.heartbeat_interval_cycles))
+                    if last_hb is None:
+                        # First run or timestamp missing: send heartbeat immediately
+                        should_send_heartbeat = True
+                    else:
+                        elapsed_seconds = (now_utc - last_hb).total_seconds()
+                        if elapsed_seconds >= (interval_hours * 3600.0):
+                            should_send_heartbeat = True
+
+                if should_send_heartbeat:
+                    heartbeat_html = (
+                        f"💓 <b>Autonomous Heartbeat (Every {self.heartbeat_interval_cycles}h)</b>\n"
+                        f"🔍 Scanned <b>{len(raw_listings)} listings</b> across eBay, Reddit & Syndicated Feeds.\n"
+                        f"📊 <b>{total_active} active deals</b> monitored in store (0 unanalyzed items this interval).\n"
+                        f"🤖 <b>AI Usage:</b> {usage['total_calls']} total calls ({usage['total_tokens']:,} tokens) | ~{usage['estimated_daily_left']:,}/1,500 requests left\n\n"
+                        f"⚡ <i>Autonomous Scraper Online & Standing By (Heartbeat every {self.heartbeat_interval_cycles}h)</i>\n"
+                        + self.telegram_notifier._format_dashboard_links()
+                    )
+                    self.telegram_notifier.send_system_message(f"Heartbeat ({self.heartbeat_interval_cycles}h)", heartbeat_html)
+                    if self.once:
+                        self._save_last_heartbeat_time(now_utc)
 
         # 7. Optional auto-push to GitHub repo
         if self.auto_push and evaluated_deals:

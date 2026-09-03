@@ -15,6 +15,7 @@ import os
 import sys
 import tempfile
 import unittest
+from datetime import datetime, timezone
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -497,6 +498,14 @@ class TestDaemonPipeline(unittest.TestCase):
             self.assertGreaterEqual(summary["collected"], 1)
             deals = self.daemon.storage.get_all()
             self.assertGreater(len(deals), 0)
+
+    def test_persistent_heartbeat_timestamp(self) -> None:
+        """Verify reading and writing last_heartbeat_timestamp across cycles."""
+        test_time = datetime(2026, 9, 3, 12, 0, 0, tzinfo=timezone.utc)
+        self.daemon._save_last_heartbeat_time(test_time)
+        read_time = self.daemon._get_last_heartbeat_time()
+        self.assertIsNotNone(read_time)
+        self.assertEqual(read_time, test_time)
 
 
 if __name__ == "__main__":

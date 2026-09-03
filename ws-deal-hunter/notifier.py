@@ -47,12 +47,12 @@ class PushoverNotifier:
         user_key: Optional[str] = None,
         api_token: Optional[str] = None,
         min_deal_score: float = 9.0,
-        max_price: float = 850.0,
+        max_price: Optional[float] = None,
     ) -> None:
         self.user_key = user_key or os.environ.get("PUSHOVER_USER_KEY", "")
         self.api_token = api_token or os.environ.get("PUSHOVER_API_TOKEN", "")
         self.min_deal_score = min_deal_score
-        self.max_price = max_price
+        self.max_price = max_price if max_price is not None else float(os.environ.get("MAX_ALERT_PRICE", 1100.0))
         self._sent_deals: set[str] = set()
 
     def should_alert(self, deal: DealRecord) -> bool:
@@ -71,7 +71,7 @@ class PushoverNotifier:
             return True
 
         # 2. Sweet-Spot Workstation Value
-        if deal.deal_score >= self.min_deal_score and deal.price <= 850.0 and deal.specs.ram_gb >= 32:
+        if deal.deal_score >= self.min_deal_score and deal.price <= self.max_price and deal.specs.ram_gb >= 32:
             return True
 
         # 3. High-ROI Anomaly
