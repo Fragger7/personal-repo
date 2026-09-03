@@ -72,3 +72,5 @@ This document details the active prioritized backlog for **Workstation Deal Hunt
    - ✅ **Completed**: Built cookie-jar warmup against `https://www.ebay.com/` with browser client hints (`Sec-Ch-Ua`), yielding 1,000+ targeted listings with zero CAPTCHAs.
 3. **`Unicorn Hunter Quality Gatekeeper`**:
    - ✅ **Completed**: Enforced hard 15"–16" display minimum, 32GB RAM minimum, sub-$1,700 budget ceiling, and legacy model blacklisting.
+4. **`Multi-Item Reddit Liquidation Table Parser`**:
+   - ✅ **Completed**: Built `parse_markdown_tables` in `RedditCollector` to parse multi-row HTML and Markdown tables in bulk lots on `r/hardwareswap` and `r/homelabsales` with automatic strikethrough, sold, and pending exclusion.
