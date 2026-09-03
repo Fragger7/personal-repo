@@ -29,13 +29,15 @@ To ensure we can seamlessly port this application to **Apple TV (tvOS)** and **i
 
 ---
 
-### Phase 1: Cloud Presence & Admin Foundation (First Priority)
-As requested, we will build the cloud presence first to make testing seamless across devices.
-#### [NEW] `adminWeb/` (Hosted on Firebase Hosting)
-- Setup a React or Compose Web admin UI.
-- Setup Firebase Authentication (Email/Password or Anonymous).
-- Setup Firestore database schema for `UserPortals` (storing Xtream URLs, usernames, passwords).
+### Phase 1: Cloud Presence & Admin Foundation (Completed)
+As requested, we built the cloud presence first to make testing seamless across devices.
+#### [COMPLETED] `adminWeb/` (Hosted on Vercel at https://tivimime.vercel.app)
+- Setup a React 19 + Vite 6 + Tailwind CSS v4 admin UI matching the Deep Black & Crimson Red design tokens.
+- Setup Firebase Authentication (Email/Password and Anonymous Quick Access) under project `tvmime-65909`.
+- Setup Firestore database schema for `user_portals` (storing Xtream URLs, usernames, passwords, status).
+- Deployed `/api/test-portal` serverless proxy function to eliminate CORS and browser Mixed Content errors.
 - This allows us to load a list once in the cloud, and as we iterate on the TV app, it simply logs in and pulls the portals without re-typing.
+
 
 ---
 

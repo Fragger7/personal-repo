@@ -6,11 +6,14 @@
 - [x] Generate and select UI/UX design language (`tv_livetv_red_black.jpg`).
 - [x] Initialize Git repository inside Monorepo.
 ### Phase 1: Cloud Presence & Admin Foundation
-- [x] Initialize Project Structure (`adminWeb` scaffolded).
+- [x] Initialize Project Structure (`adminWeb` scaffolded with Vite 6 + React 19 + Tailwind CSS v4).
 - [x] Setup Firebase Project via Web Console (`tvmime-65909`).
-- [x] Create `adminWeb` React (Vite + TypeScript + Tailwind CSS) project.
+- [x] Create `adminWeb` React project styled with Deep Black & Crimson Red design tokens.
 - [x] Implement Firebase Auth & Firestore schema (`UserPortals`).
-- [ ] Deploy `adminWeb` to Firebase Hosting (optional / on-demand).
+- [x] Deploy `adminWeb` to Vercel production ([tivimime.vercel.app](https://tivimime.vercel.app)).
+- [x] Build serverless proxy (`/api/test-portal`) for zero-CORS / mixed-content IPTV testing.
+- [x] Whitelist `tivimime.vercel.app` in Firebase Authentication Authorized Domains.
+
 
 
 ### Phase 2: Shared Core & Data Layer (Xtream Codes)
