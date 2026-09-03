@@ -94,5 +94,6 @@
     "ssd_2tb_plus": 80.0,
     "ssd_4tb_plus": 180.0,
     "oled_4k_display": 120.0
-  }
+  },
+  "last_heartbeat_timestamp": "2026-09-03T11:27:44.509070+00:00"
 }
