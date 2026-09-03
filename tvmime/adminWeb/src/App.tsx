@@ -43,7 +43,44 @@ import {
   type XtreamAuthResult 
 } from './lib/xtream';
 
+function SlidingToggle({
+  checked,
+  onChange,
+  label,
+}: {
+  checked: boolean;
+  onChange: () => void;
+  label?: string;
+}) {
+  return (
+    <div 
+      onClick={(e) => { e.preventDefault(); e.stopPropagation(); onChange(); }}
+      className="inline-flex items-center gap-2 cursor-pointer select-none group"
+      role="switch"
+      aria-checked={checked}
+    >
+      <div 
+        className={`relative inline-flex h-6 w-11 shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out ${
+          checked ? 'bg-emerald-500 shadow-sm shadow-emerald-500/30' : 'bg-[#262632] group-hover:bg-[#343444]'
+        }`}
+      >
+        <span
+          className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
+            checked ? 'translate-x-5' : 'translate-x-0'
+          }`}
+        />
+      </div>
+      {label && (
+        <span className={`text-xs font-semibold transition-colors ${checked ? 'text-emerald-400' : 'text-gray-400'}`}>
+          {label}
+        </span>
+      )}
+    </div>
+  );
+}
+
 export function App() {
+
   const [user, setUser] = useState<User | null>(null);
   const [loadingAuth, setLoadingAuth] = useState(true);
   const [portals, setPortals] = useState<XtreamPortal[]>([]);
@@ -203,37 +240,50 @@ export function App() {
       const isM3u = inputMode === 'm3u' && (!serverUrl || !username);
       const cleanServer = serverUrl ? serverUrl.trim().replace(/\/+$/, '') : '';
       
-      const payload: Omit<XtreamPortal, 'id'> = {
+      const payload: Partial<XtreamPortal> = {
         userId: user.uid,
         name: name.trim(),
         serverUrl: cleanServer,
         username: username.trim(),
         password: portalPassword.trim(),
-        m3uUrl: m3uUrl.trim() || undefined,
         type: isM3u ? 'm3u' : 'xtream',
-        isActive,
-        syncLive,
-        syncMovies,
-        syncSeries,
-        createdAt: Date.now(),
-        status: testResult?.success ? 'online' : 'unknown',
-        expiryDate: testResult?.expDate || undefined
+        isActive: Boolean(isActive),
+        syncLive: Boolean(syncLive),
+        syncMovies: Boolean(syncMovies),
+        syncSeries: Boolean(syncSeries),
       };
+
+      if (m3uUrl && m3uUrl.trim()) {
+        payload.m3uUrl = m3uUrl.trim();
+      }
+
+      if (testResult?.success) {
+        payload.status = 'online';
+      }
+      if (testResult?.expDate) {
+        payload.expiryDate = testResult.expDate;
+      }
 
       if (editingPortalId) {
         await updatePortal(editingPortalId, payload);
       } else {
-        await addPortal(payload);
+        await addPortal({
+          ...payload,
+          createdAt: Date.now(),
+          status: testResult?.success ? 'online' : 'unknown',
+        } as Omit<XtreamPortal, 'id'>);
       }
 
       setIsFormModalOpen(false);
-    } catch (err) {
-      console.error(err);
-      alert('Failed to save connection.');
+    } catch (err: unknown) {
+      console.error("Save portal error:", err);
+      const msg = err instanceof Error ? err.message : String(err);
+      alert(`Failed to save connection: ${msg}`);
     } finally {
       setSaving(false);
     }
   };
+
 
   const handleToggleActive = async (portal: XtreamPortal) => {
     if (!portal.id) return;
@@ -493,20 +543,14 @@ export function App() {
                       </div>
 
                       {/* Top Right: Enable/Disable Switch & Actions */}
-                      <div className="flex items-center gap-2">
-                        {/* Enable/Disable Toggle */}
-                        <button
-                          onClick={() => handleToggleActive(p)}
-                          title={isEnabled ? "Connection Enabled (TV will sync)" : "Connection Disabled (TV skips this list)"}
-                          className={`text-xs px-3 py-1 rounded-full font-medium transition cursor-pointer flex items-center gap-1.5 ${
-                            isEnabled 
-                              ? 'bg-emerald-950/70 text-emerald-300 border border-emerald-700/80 hover:bg-emerald-900/60' 
-                              : 'bg-gray-800 text-gray-400 border border-gray-700 hover:bg-gray-700'
-                          }`}
-                        >
-                          <span className={`w-2 h-2 rounded-full ${isEnabled ? 'bg-emerald-400' : 'bg-gray-500'}`}></span>
-                          <span>{isEnabled ? 'Enabled' : 'Disabled'}</span>
-                        </button>
+                      <div className="flex items-center gap-3">
+                        {/* Enable/Disable Sliding Toggle */}
+                        <SlidingToggle
+                          checked={isEnabled}
+                          onChange={() => handleToggleActive(p)}
+                          label={isEnabled ? "Active" : "Disabled"}
+                        />
+
 
                         {/* Edit Button */}
                         <button
@@ -844,18 +888,13 @@ export function App() {
                   <p className="text-xs font-semibold text-white">Enable Connection for Player</p>
                   <p className="text-[11px] text-gray-400">If disabled, player app will ignore and not download this playlist</p>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setIsActive(!isActive)}
-                  className={`px-3 py-1.5 rounded-full text-xs font-bold transition cursor-pointer ${
-                    isActive 
-                      ? 'bg-emerald-950/80 text-emerald-300 border border-emerald-700' 
-                      : 'bg-gray-800 text-gray-400 border border-gray-700'
-                  }`}
-                >
-                  {isActive ? 'Active / Enabled' : 'Disabled'}
-                </button>
+                <SlidingToggle
+                  checked={isActive}
+                  onChange={() => setIsActive(!isActive)}
+                  label={isActive ? "Active" : "Disabled"}
+                />
               </div>
+
 
               {/* Test Result Feedback */}
               {testResult && (

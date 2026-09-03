@@ -76,24 +76,37 @@ export function subscribeToUserPortals(userId: string, callback: (portals: Xtrea
   });
 }
 
+function cleanUndefined<T extends Record<string, any>>(obj: T): Partial<T> {
+  const cleaned: any = {};
+  for (const [key, value] of Object.entries(obj)) {
+    if (value !== undefined) {
+      cleaned[key] = value;
+    }
+  }
+  return cleaned;
+}
+
 export async function addPortal(portal: Omit<XtreamPortal, 'id'>): Promise<string> {
   const portalsRef = collection(db, 'user_portals');
-  const docRef = await addDoc(portalsRef, {
+  const cleaned = cleanUndefined({
     ...portal,
-    createdAt: Date.now()
+    createdAt: portal.createdAt || Date.now()
   });
+  const docRef = await addDoc(portalsRef, cleaned);
   return docRef.id;
 }
 
 export async function updatePortal(id: string, updates: Partial<XtreamPortal>): Promise<void> {
   const docRef = doc(db, 'user_portals', id);
-  await updateDoc(docRef, updates);
+  const cleaned = cleanUndefined(updates);
+  await updateDoc(docRef, cleaned);
 }
 
 export async function deletePortal(id: string): Promise<void> {
   const docRef = doc(db, 'user_portals', id);
   await deleteDoc(docRef);
 }
+
 
 export {
   signInAnonymously,
