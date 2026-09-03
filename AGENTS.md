@@ -9,6 +9,7 @@
 2. **`lease-hunter/`**: EV & Automotive Lease Valuation Engine.
 3. **`daily-push/`**: Automated Daily Push & Notification Pipelines.
 4. **`project-strong/`**: Core Fitness & Analytics Platform.
+5. **`tvmime/`**: Next-Gen Android TV & Web IPTV Streaming Platform.
 
 ---
 
