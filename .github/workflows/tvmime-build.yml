@@ -1,0 +1,51 @@
+name: Build TVMime APKs (Android TV & Mobile)
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'tvmime/shared/**'
+      - 'tvmime/tvApp/**'
+      - 'tvmime/androidApp/**'
+      - 'tvmime/gradle/**'
+      - 'tvmime/*.gradle.kts'
+      - '.github/workflows/tvmime-build.yml'
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Compile TV & Mobile APKs
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'gradle'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+        with:
+          gradle-version: '8.7'
+
+      - name: Build Android TV & Mobile APKs
+        working-directory: ./tvmime
+        run: gradle :tvApp:assembleDebug :androidApp:assembleDebug --stacktrace
+
+      - name: Upload Android TV APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: tvmime-tv-debug-apk
+          path: tvmime/tvApp/build/outputs/apk/debug/*.apk
+
+      - name: Upload Android Mobile APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: tvmime-mobile-debug-apk
+          path: tvmime/androidApp/build/outputs/apk/debug/*.apk

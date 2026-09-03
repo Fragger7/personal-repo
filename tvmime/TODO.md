@@ -17,21 +17,27 @@
 
 
 ### Phase 2: Shared Core & Data Layer (Xtream Codes)
-- [ ] Implement Ktor Network Client (with User-Agent spoofing).
-- [ ] Implement robust streaming JSON Parser to prevent OOM.
+- [x] Scaffold KMP Multi-module architecture (`shared`, `tvApp`, `androidApp`, version catalog `libs.versions.toml`).
+- [x] Implement centralized Design System Tokens in Kotlin (`DesignSystemTokens.kt`).
+- [x] Implement Ktor Network Client with User-Agent spoofing (`IPTVSmartersPro/1.1.1`) and fast-fail hedging (`XtreamClient.kt`).
+- [x] Implement zero-OOM token-by-token streaming catalog parser (`StreamingCatalogParser.kt`).
+- [x] Configure hardware-accelerated Media3 player and evasion DataSource (`Media3PlayerConfig.kt`).
 - [ ] Implement KMP Room Database for caching channels/EPG.
 - [ ] Sync User Portals from Firebase to local Room DB.
 
 ### Phase 3: Android Mobile App & Chromecast
-- [ ] Implement Mobile Jetpack Compose Dashboard (Red & Black).
-- [ ] Integrate `androidx.media3:media3-cast` for Chromecast support.
+- [x] Scaffold Mobile Jetpack Compose baseline (`MainActivity.kt`).
+- [ ] Implement full Mobile EPG and channel grid.
+- [ ] Complete `androidx.media3:media3-cast` receiver discovery and remote playback.
 
 ### Phase 4: Android TV UI (Compose for TV)
-- [ ] Implement Left-Side Navigation Drawer.
+- [x] Scaffold Android TV Leanback Compose baseline (`MainActivity.kt`).
+- [ ] Implement Left-Side Navigation Drawer with D-Pad focus.
 - [ ] Implement Live TV EPG Timeline (Translucent Strips).
 - [ ] Implement VOD Section (Netflix style, TMDB metadata).
-- [ ] Implement ExoPlayer hardware-accelerated playback and overlay.
+- [ ] Implement ExoPlayer hardware-accelerated playback overlay.
 
 ### Phase 5: CI/CD Pipeline
-- [ ] Create `.github/workflows/android.yml`.
-- [ ] Configure automatic `assembleDebug` for TV and Mobile.
+- [x] Create `.github/workflows/tvmime-build.yml`.
+- [x] Configure automatic `assembleDebug` and artifact publishing for TV (`tvmime-tv-debug-apk`) and Mobile (`tvmime-mobile-debug-apk`).
+
