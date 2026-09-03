@@ -11,7 +11,7 @@
   2. **`lease-hunter/`**: EV & Automotive Lease Valuation Engine.
   3. **`daily-push/`**: Automated Daily Push & Notification Pipelines.
   4. **`project-strong/`**: Core Fitness & Analytics Platform.
-  *(Note: TiviMime has been migrated to its own dedicated repository at `https://github.com/Fragger7/tivimime` / local path `/Users/admin/Development/tivimime`).*
+  *(Note: TVMime has been migrated to its own dedicated repository at `https://github.com/Fragger7/tvmime` / local path `/Users/admin/Development/tvmime`).*
 
 
 ---
