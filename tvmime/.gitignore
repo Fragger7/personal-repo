@@ -13,3 +13,7 @@
 .externalNativeBuild
 .cxx
 local.properties
+node_modules/
+dist/
+.env.local
+.firebase/

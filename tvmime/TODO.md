@@ -6,11 +6,12 @@
 - [x] Generate and select UI/UX design language (`tv_livetv_red_black.jpg`).
 - [x] Initialize Git repository inside Monorepo.
 ### Phase 1: Cloud Presence & Admin Foundation
-- [ ] Initialize KMP Project Structure (`shared`, `androidApp`, `tvApp`, `adminWeb`).
-- [ ] Setup Firebase Project via Web Console.
-- [ ] Create `adminWeb` React/Compose Web project.
-- [ ] Implement Firebase Auth & Firestore schema (`UserPortals`).
-- [ ] Deploy `adminWeb` to Firebase Hosting.
+- [x] Initialize Project Structure (`adminWeb` scaffolded).
+- [x] Setup Firebase Project via Web Console (`tvmime-65909`).
+- [x] Create `adminWeb` React (Vite + TypeScript + Tailwind CSS) project.
+- [x] Implement Firebase Auth & Firestore schema (`UserPortals`).
+- [ ] Deploy `adminWeb` to Firebase Hosting (optional / on-demand).
+
 
 ### Phase 2: Shared Core & Data Layer (Xtream Codes)
 - [ ] Implement Ktor Network Client (with User-Agent spoofing).
