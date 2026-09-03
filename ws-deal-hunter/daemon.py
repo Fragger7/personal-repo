@@ -327,8 +327,17 @@ class DealHunterDaemon:
         headers = {
             "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
             "Accept-Language": "en-US,en;q=0.9",
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
         }
+
+        # Warm up session with eBay cookie jar for anti-bot bypass
+        ebay_session = None
+        if cffi_requests:
+            try:
+                ebay_session = cffi_requests.Session(impersonate="chrome124")
+                ebay_session.get("https://www.ebay.com/", timeout=8.0)
+            except Exception:
+                ebay_session = None
 
         def check_deal_liveness(deal: DealRecord) -> Optional[str]:
             if not deal.url or deal.url == "#":
@@ -336,48 +345,71 @@ class DealHunterDaemon:
             url = deal.url.strip()
             
             try:
-                # 1. eBay Liveness Check (Search-by-ID validation & DOM inspection)
+                # 1. eBay Liveness Check (Direct item page & Schema.org OutOfStock verification)
                 if "ebay.com" in url:
-                    item_id_match = re.search(r"/itm/([0-9]{9,14})", url)
-                    if item_id_match:
-                        item_id = item_id_match.group(1)
-                        search_url = f"https://www.ebay.com/sch/i.html?_nkw={item_id}"
-                        
-                        resp_text = ""
-                        status_code = 200
-                        if cffi_requests:
+                    resp_text = ""
+                    status_code = 200
+                    if ebay_session:
+                        try:
+                            r = ebay_session.get(url, timeout=8.0)
+                            resp_text = r.text
+                            status_code = r.status_code
+                        except Exception:
+                            pass
+
+                    if not resp_text and cffi_requests:
+                        try:
+                            r = cffi_requests.get(url, impersonate="chrome124", headers=headers, timeout=6.0)
+                            resp_text = r.text
+                            status_code = r.status_code
+                        except Exception:
+                            pass
+                    
+                    if not resp_text and cloud_scraper:
+                        try:
+                            r = cloud_scraper.get(url, timeout=6.0)
+                            resp_text = r.text
+                            status_code = r.status_code
+                        except Exception:
+                            pass
+
+                    if status_code in [404, 410]:
+                        return deal.id
+
+                    if resp_text:
+                        text_lower = resp_text.lower()
+                        # Never reap on CAPTCHA / bot challenge
+                        if "pardon our interruption" in text_lower or "security measure" in text_lower:
+                            return None
+
+                        # 1. Parse Schema.org JSON-LD structured data (gold standard)
+                        if BeautifulSoup:
                             try:
-                                r = cffi_requests.get(search_url, impersonate="chrome99_android", headers=headers, timeout=5.0)
-                                resp_text = r.text
-                                status_code = r.status_code
+                                soup = BeautifulSoup(resp_text, "html.parser")
+                                for s in soup.find_all("script", type="application/ld+json"):
+                                    if not s.string:
+                                        continue
+                                    try:
+                                        data = json.loads(s.string)
+                                        items = data if isinstance(data, list) else [data]
+                                        for itm in items:
+                                            if isinstance(itm, dict) and "offers" in itm:
+                                                offers = itm["offers"]
+                                                if isinstance(offers, dict) and "availability" in offers:
+                                                    avail = str(offers["availability"]).lower()
+                                                    if "outofstock" in avail:
+                                                        return deal.id
+                                                    if "instock" in avail:
+                                                        return None
+                                    except Exception:
+                                        pass
+
+                                # 2. Check visible status message banner
+                                status_el = soup.find("div", class_=lambda c: c and "statusmessage" in c.lower())
+                                if status_el and any(k in status_el.get_text().lower() for k in ["sold on", "ended by the seller", "out of stock"]):
+                                    return deal.id
                             except Exception:
                                 pass
-                        
-                        if not resp_text and cloud_scraper:
-                            try:
-                                r = cloud_scraper.get(search_url, timeout=5.0)
-                                resp_text = r.text
-                                status_code = r.status_code
-                            except Exception:
-                                pass
-
-                        if status_code in [404, 410]:
-                            return deal.id
-
-                        if resp_text:
-                            text_lower = resp_text.lower()
-                            # Never reap on CAPTCHA / bot challenge
-                            if "pardon our interruption" in text_lower or "security measure" in text_lower:
-                                return None
-                            # Explicitly ended / sold indicators on eBay
-                            if (
-                                "this listing was ended" in text_lower
-                                or "this listing has ended" in text_lower
-                                or "the listing you're looking for has ended" in text_lower
-                                or "this item is out of stock" in text_lower
-                                or "0 results found" in text_lower
-                            ):
-                                return deal.id
 
                 # 2. Reddit Liveness Check (JSON and HTML inspection)
                 elif "reddit.com" in url:
