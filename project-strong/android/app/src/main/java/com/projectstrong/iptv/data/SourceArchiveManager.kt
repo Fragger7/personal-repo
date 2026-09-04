@@ -161,42 +161,53 @@ object SourceArchiveManager {
         if (token.isBlank() || fileName.isBlank() || content.isBlank()) return false
         try {
             val cleanName = fileName.replace("sources/", "").trim()
-            val getUrl = URL("https://api.github.com/repos/$GITHUB_REPO/contents/$SOURCES_SUBDIR/$cleanName")
-            val getConn = getUrl.openConnection() as HttpURLConnection
-            getConn.requestMethod = "GET"
-            getConn.setRequestProperty("Accept", "application/vnd.github.v3+json")
-            getConn.setRequestProperty("Authorization", "token $token")
-            getConn.connectTimeout = 6000
-            getConn.readTimeout = 6000
-
+            val url = "https://api.github.com/repos/Fragger7/personal-repo/contents/project-strong/sources/$cleanName"
+            
+            val client = okhttp3.OkHttpClient.Builder().build()
+            
+            val getReq = okhttp3.Request.Builder()
+                .url(url)
+                .header("Accept", "application/vnd.github.v3+json")
+                .header("Authorization", "Bearer $token")
+                .header("Cache-Control", "no-cache")
+                .header("User-Agent", "SherlockStreams/1.0")
+                .build()
+                
             var sha: String? = null
-            if (getConn.responseCode == 200) {
-                val resp = getConn.inputStream.bufferedReader().use { it.readText() }
-                val obj = JSONObject(resp)
+            val getResp = client.newCall(getReq).execute()
+            if (getResp.code == 200) {
+                val respStr = getResp.body?.string() ?: ""
+                val obj = org.json.JSONObject(respStr)
                 sha = obj.optString("sha", null)
             }
+            getResp.close()
 
-            val encoded = Base64.encodeToString(content.toByteArray(Charsets.UTF_8), Base64.NO_WRAP)
-            val putConn = getUrl.openConnection() as HttpURLConnection
-            putConn.requestMethod = "PUT"
-            putConn.setRequestProperty("Accept", "application/vnd.github.v3+json")
-            putConn.setRequestProperty("Authorization", "token $token")
-            putConn.setRequestProperty("Content-Type", "application/json")
-            putConn.doOutput = true
-
-            val payload = JSONObject().apply {
+            val encoded = android.util.Base64.encodeToString(content.toByteArray(Charsets.UTF_8), android.util.Base64.NO_WRAP)
+            
+            val payload = org.json.JSONObject().apply {
                 put("message", "Archive snapshot $cleanName (Forever Source Archive)")
                 put("content", encoded)
                 if (sha != null) put("sha", sha)
             }
+            
+            val requestBody = okhttp3.RequestBody.create(
+                okhttp3.MediaType.parse("application/json"),
+                payload.toString()
+            )
 
-            putConn.outputStream.use { os ->
-                val input = payload.toString().toByteArray(Charsets.UTF_8)
-                os.write(input, 0, input.size)
-            }
+            val putReq = okhttp3.Request.Builder()
+                .url(url)
+                .put(requestBody)
+                .header("Accept", "application/vnd.github.v3+json")
+                .header("Authorization", "Bearer $token")
+                .header("User-Agent", "SherlockStreams/1.0")
+                .build()
 
-            val code = putConn.responseCode
-            return (code == 200 || code == 201)
+            val putResp = client.newCall(putReq).execute()
+            val code = putResp.code
+            putResp.close()
+            
+            return code == 200 || code == 201
         } catch (e: Exception) {
             e.printStackTrace()
             return false
