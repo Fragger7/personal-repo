@@ -11,6 +11,10 @@ import com.projectstrong.iptv.network.VerificationResult
 import com.projectstrong.iptv.ui.components.ToastManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import okhttp3.*
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.RequestBody.Companion.toRequestBody
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
@@ -364,62 +368,66 @@ object CommittedManager {
             val jsonContent = gson.toJson(cleanForCloud)
             val encodedContent = android.util.Base64.encodeToString(jsonContent.toByteArray(Charsets.UTF_8), android.util.Base64.NO_WRAP)
 
-            val putUrl = java.net.URL("https://api.github.com/repos/Fragger7/personal-repo/contents/project-strong/committed.json")
-            val putConnection = putUrl.openConnection() as java.net.HttpURLConnection
-            putConnection.requestMethod = "PUT"
-            putConnection.setRequestProperty("Accept", "application/vnd.github.v3+json")
-            putConnection.setRequestProperty("User-Agent", "SherlockStreams/1.0")
-            putConnection.setRequestProperty("Authorization", "Bearer $authToken")
-            putConnection.setRequestProperty("Content-Type", "application/json")
-            putConnection.doOutput = true
-
             val payload = org.json.JSONObject().apply {
                 put("message", "Delete ${record.safeBaseUrl} (${if (record.safeType == "Xtream") record.safeUser else record.safeMac}) via Android")
                 put("content", encodedContent)
                 if (sha.isNotEmpty()) put("sha", sha)
             }
-
-            putConnection.outputStream.use { os ->
-                val input = payload.toString().toByteArray(Charsets.UTF_8)
-                os.write(input, 0, input.size)
-            }
-
-            val code = putConnection.responseCode
+            
+            val requestBody = payload.toString().toRequestBody("application/json".toMediaType())
+            
+            val putReq = Request.Builder()
+                .url("https://api.github.com/repos/Fragger7/personal-repo/contents/project-strong/committed.json")
+                .put(requestBody)
+                .header("Accept", "application/vnd.github.v3+json")
+                .header("User-Agent", "SherlockStreams/1.0")
+                .header("Authorization", "Bearer $authToken")
+                .build()
+                
+            val putResp = client.newCall(putReq).execute()
+            val code = putResp.code
+            
             if (code != 200 && code != 201) {
-                val errStream = putConnection.errorStream
-                val errStr = errStream?.bufferedReader()?.use { it.readText() } ?: "No error body"
+                val errStr = putResp.body?.string() ?: "No error body"
                 com.projectstrong.iptv.ui.components.ToastManager.error("Delete Error $code: $errStr")
             }
+            putResp.close()
             return@withContext (code == 200 || code == 201)
         } catch (e: Exception) {
             e.printStackTrace()
+            val msg = e.message ?: "Unknown Exception"
+            android.util.Log.e("CommittedManager", "Network Exception: $msg", e)
+            com.projectstrong.iptv.ui.components.ToastManager.error("Sync Exception: $msg")
             return@withContext false
         }
     }
 
     suspend fun syncFromCloud(): List<CommittedRecord>? = withContext(Dispatchers.IO) {
         try {
-            val url = java.net.URL("https://api.github.com/repos/Fragger7/personal-repo/contents/project-strong/committed.json")
-            val connection = url.openConnection() as java.net.HttpURLConnection
-            connection.requestMethod = "GET"
-            connection.useCaches = false
-            connection.setRequestProperty("Accept", "application/vnd.github.v3+json")
-            connection.setRequestProperty("User-Agent", "SherlockStreams/1.0")
             val safeToken = DataStore.githubToken.trim()
+            val client = OkHttpClient.Builder().build()
+            val requestBuilder = Request.Builder()
+                .url("https://api.github.com/repos/Fragger7/personal-repo/contents/project-strong/committed.json")
+                .header("Accept", "application/vnd.github.v3+json")
+                .header("Cache-Control", "no-cache")
+                .header("User-Agent", "SherlockStreams/1.0")
+            
             if (safeToken.isNotEmpty()) {
-                connection.setRequestProperty("Authorization", "Bearer $safeToken")
+                requestBuilder.header("Authorization", "Bearer $safeToken")
             }
-            connection.connectTimeout = 6000
-            connection.readTimeout = 6000
-
-            val getCode = connection.responseCode
+            
+            val response = client.newCall(requestBuilder.build()).execute()
+            val getCode = response.code
+            
             if (getCode != 200 && getCode != 404) {
-                val errStream = connection.errorStream
-                val errStr = errStream?.bufferedReader()?.use { it.readText() } ?: "No error body"
+                val errStr = response.body?.string() ?: "No error body"
                 com.projectstrong.iptv.ui.components.ToastManager.error("Sync GET Error $getCode: $errStr")
+                response.close()
             }
+            
             if (getCode == 200) {
-                val jsonResponse = connection.inputStream.bufferedReader().use { it.readText() }
+                val jsonResponse = response.body?.string() ?: ""
+                response.close()
                 val jsonObj = org.json.JSONObject(jsonResponse)
                 val contentB64 = jsonObj.optString("content", "").replace("\n", "")
 
@@ -483,28 +491,30 @@ object CommittedManager {
             }
 
             // 1. Get current SHA and fetch remote content to merge before pushing (Never Overwrite)
-            val getUrl = java.net.URL("https://api.github.com/repos/Fragger7/personal-repo/contents/project-strong/committed.json")
-            val getConnection = getUrl.openConnection() as java.net.HttpURLConnection
-            getConnection.requestMethod = "GET"
-            getConnection.useCaches = false
-            getConnection.setRequestProperty("Cache-Control", "no-cache")
-            getConnection.setRequestProperty("Accept", "application/vnd.github.v3+json")
-            getConnection.setRequestProperty("User-Agent", "SherlockStreams/1.0")
-            getConnection.setRequestProperty("Authorization", "Bearer $authToken")
-            getConnection.connectTimeout = 6000
-            getConnection.readTimeout = 6000
-
+            val client = OkHttpClient.Builder().build()
+            val getReq = Request.Builder()
+                .url("https://api.github.com/repos/Fragger7/personal-repo/contents/project-strong/committed.json")
+                .header("Accept", "application/vnd.github.v3+json")
+                .header("Cache-Control", "no-cache")
+                .header("User-Agent", "SherlockStreams/1.0")
+                .header("Authorization", "Bearer $authToken")
+                .build()
+                
             var sha = ""
             val remoteRecords = mutableListOf<CommittedRecord>()
-            val getCode = getConnection.responseCode
+            
+            val getResp = client.newCall(getReq).execute()
+            val getCode = getResp.code
+            
             if (getCode != 200 && getCode != 404) {
-                val errStream = getConnection.errorStream
-                val errStr = errStream?.bufferedReader()?.use { it.readText() } ?: "No error body"
+                val errStr = getResp.body?.string() ?: "No error body"
                 com.projectstrong.iptv.ui.components.ToastManager.error("Sync Aborted (GET $getCode): $errStr")
+                getResp.close()
                 return@withContext false
             }
             if (getCode == 200) {
-                val jsonResponse = getConnection.inputStream.bufferedReader().use { it.readText() }
+                val jsonResponse = getResp.body?.string() ?: ""
+                getResp.close()
                 val jsonObj = org.json.JSONObject(jsonResponse)
                 sha = jsonObj.optString("sha", "")
                 val contentB64 = jsonObj.optString("content", "").replace("\n", "")
@@ -560,33 +570,31 @@ object CommittedManager {
             val encodedContent = android.util.Base64.encodeToString(jsonContent.toByteArray(Charsets.UTF_8), android.util.Base64.NO_WRAP)
 
             // 3. Push updated content
-            val putUrl = java.net.URL("https://api.github.com/repos/Fragger7/personal-repo/contents/project-strong/committed.json")
-            val putConnection = putUrl.openConnection() as java.net.HttpURLConnection
-            putConnection.requestMethod = "PUT"
-            putConnection.setRequestProperty("Accept", "application/vnd.github.v3+json")
-            putConnection.setRequestProperty("User-Agent", "SherlockStreams/1.0")
-            putConnection.setRequestProperty("Authorization", "Bearer $authToken")
-            putConnection.setRequestProperty("Content-Type", "application/json")
-            putConnection.doOutput = true
-
             val payload = org.json.JSONObject().apply {
                 put("message", "Sync from Android App (${cleanForCloud.size} records)")
                 put("content", encodedContent)
                 if (sha.isNotEmpty()) put("sha", sha)
             }
-
-            putConnection.outputStream.use { os ->
-                val input = payload.toString().toByteArray(Charsets.UTF_8)
-                os.write(input, 0, input.size)
-            }
-
-            val code = putConnection.responseCode
+            
+            val requestBody = payload.toString().toRequestBody("application/json".toMediaType())
+            
+            val putReq = Request.Builder()
+                .url("https://api.github.com/repos/Fragger7/personal-repo/contents/project-strong/committed.json")
+                .put(requestBody)
+                .header("Accept", "application/vnd.github.v3+json")
+                .header("User-Agent", "SherlockStreams/1.0")
+                .header("Authorization", "Bearer $authToken")
+                .build()
+                
+            val putResp = client.newCall(putReq).execute()
+            val code = putResp.code
+            
             if (code != 200 && code != 201) {
-                val errStream = putConnection.errorStream
-                val errStr = errStream?.bufferedReader()?.use { it.readText() } ?: "No error body"
+                val errStr = putResp.body?.string() ?: "No error body"
                 android.util.Log.e("CommittedManager", "PUT failed: $code - $errStr")
                 com.projectstrong.iptv.ui.components.ToastManager.error("Push Error $code: $errStr")
             }
+            putResp.close()
             if (code == 200 || code == 201) {
                 // Also push any local source snapshot files to GitHub sources/
                 if (::appContext.isInitialized) {
@@ -616,6 +624,9 @@ object CommittedManager {
             return@withContext false
         } catch (e: Exception) {
             e.printStackTrace()
+            val msg = e.message ?: "Unknown Exception"
+            android.util.Log.e("CommittedManager", "Network Exception: $msg", e)
+            com.projectstrong.iptv.ui.components.ToastManager.error("Sync Exception: $msg")
             return@withContext false
         }
     }
