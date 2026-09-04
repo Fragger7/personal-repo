@@ -320,6 +320,7 @@ object CommittedManager {
 
     suspend fun deleteFromCloud(record: CommittedRecord, token: String): Boolean = withContext(Dispatchers.IO) {
         try {
+            val authToken = token.trim()
             val getUrl = java.net.URL("https://api.github.com/repos/Fragger7/personal-repo/contents/project-strong/committed.json")
             val getConnection = getUrl.openConnection() as java.net.HttpURLConnection
             getConnection.requestMethod = "GET"
@@ -392,8 +393,9 @@ object CommittedManager {
             connection.useCaches = false
             connection.setRequestProperty("Accept", "application/vnd.github.v3+json")
             connection.setRequestProperty("User-Agent", "SherlockStreams/1.0")
-            if (DataStore.githubToken.isNotEmpty()) {
-                connection.setRequestProperty("Authorization", "Bearer ${DataStore.githubToken}")
+            val safeToken = DataStore.githubToken.trim()
+            if (safeToken.isNotEmpty()) {
+                connection.setRequestProperty("Authorization", "Bearer $safeToken")
             }
             connection.connectTimeout = 6000
             connection.readTimeout = 6000

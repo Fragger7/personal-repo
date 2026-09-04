@@ -44,7 +44,7 @@ object AppUpdater {
                     .url("https://api.github.com/repos/Fragger7/personal-repo/releases/latest")
                     .header("Accept", "application/vnd.github.v3+json")
                     .apply {
-                        val token = DataStore.githubToken
+                        val token = DataStore.githubToken.trim()
                         if (token.isNotEmpty()) {
                             header("Authorization", "Bearer $token")
                         }
@@ -100,7 +100,7 @@ object AppUpdater {
                     .url(downloadUrl)
                     .header("Accept", "application/octet-stream")
                     .apply {
-                        val token = DataStore.githubToken
+                        val token = DataStore.githubToken.trim()
                         if (token.isNotEmpty()) {
                             header("Authorization", "Bearer $token")
                         }
