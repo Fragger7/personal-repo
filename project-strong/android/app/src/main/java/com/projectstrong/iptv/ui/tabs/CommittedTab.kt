@@ -185,8 +185,8 @@ fun CommittedTab() {
                                 actionMessage = "Push successful! All records synced."
                                 ToastManager.success("Successfully pushed ${records.size} records to GitHub!")
                             } else {
-                                actionMessage = "Push failed. Token may be invalid or expired."
-                                ToastManager.error("Push failed. Check GitHub token permissions.")
+                                actionMessage = "Push failed."
+                                // Do not overwrite the detailed toast from CommittedManager
                             }
                             isPushing = false
                             delay(2500)
