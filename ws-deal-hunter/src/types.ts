@@ -27,6 +27,9 @@ export interface DealRecord {
   evaluated_at: string;
   alerted: boolean;
   is_high_yield: boolean;
+  is_auction?: boolean;
+  bid_count?: number | null;
+  time_left?: string | null;
 }
 
 export interface DashboardStats {

@@ -158,6 +158,10 @@ class DealHunterDaemon:
 
         new_listings: List[RawListing] = []
         for raw in raw_listings:
+            # Check tombstone registry: permanently ignore dead/reaped/removed listings
+            if self.storage.is_tombstoned(raw.id, raw.url):
+                continue
+
             prev_deal = existing_id_map.get(raw.id) or (existing_url_map.get(raw.url) if raw.url else None)
             if prev_deal is None:
                 new_listings.append(raw)
@@ -378,6 +382,10 @@ class DealHunterDaemon:
 
                     if resp_text:
                         text_lower = resp_text.lower()
+                        # If eBay returns an error page or broken listing page, item is gone
+                        if "error page | ebay" in text_lower or "something went wrong on our end" in text_lower:
+                            return deal.id
+
                         # Never reap on CAPTCHA / bot challenge
                         if "pardon our interruption" in text_lower or "security measure" in text_lower:
                             return None
@@ -407,6 +415,15 @@ class DealHunterDaemon:
                                 # 2. Check visible status message banner
                                 status_el = soup.find("div", class_=lambda c: c and "statusmessage" in c.lower())
                                 if status_el and any(k in status_el.get_text().lower() for k in ["sold on", "ended by the seller", "out of stock"]):
+                                    return deal.id
+
+                                # 3. Check ended banner phrases
+                                if any(phrase in text_lower for phrase in [
+                                    "this listing was ended by the seller",
+                                    "this listing has ended",
+                                    "the listing you're looking for has ended",
+                                    "this item is out of stock",
+                                ]):
                                     return deal.id
                             except Exception:
                                 pass

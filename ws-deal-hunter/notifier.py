@@ -66,6 +66,10 @@ class PushoverNotifier:
         if deal.id in self._sent_deals or deal.alerted or deal.deal_score <= 0.0:
             return False
 
+        # Strictly block instant push alerts on active auctions to prevent starting-bid alert spam
+        if getattr(deal, "is_auction", False):
+            return False
+
         # 1. Halo / Unicorn Spread ($600+ profit or 9.0+ score regardless of price)
         if deal.estimated_profit >= 600.0 or deal.deal_score >= 9.0:
             return True
@@ -356,9 +360,12 @@ class TelegramNotifier:
 
         api_url = f"https://api.telegram.org/bot{self.bot_token}/sendMessage"
         
+        bin_deals = [d for d in top_deals if not getattr(d, "is_auction", False)]
+        auction_deals = [d for d in top_deals if getattr(d, "is_auction", False)]
+
         deal_blocks = []
         rank_emojis = ["🥇", "🥈", "🥉"]
-        for idx, deal in enumerate(top_deals[:3]):
+        for idx, deal in enumerate(bin_deals[:3]):
             rank = rank_emojis[idx] if idx < len(rank_emojis) else f"#{idx+1}"
             tier_badge = "🦄 UNICORN" if deal.deal_score >= 9.5 else ("🎯 HIGH-CONVICTION" if deal.deal_score >= 9.0 else "🔥 VALUE BUY")
             deal_blocks.append(
@@ -370,10 +377,31 @@ class TelegramNotifier:
                 f"👉 <a href=\"{deal.url}\"><b>[BUY NOW ON {deal.source.upper()} ↗]</b></a>"
             )
 
+        auction_blocks = []
+        for deal in auction_deals[:2]:
+            bid_info = f"{deal.bid_count} bids" if deal.bid_count is not None else "Active bid"
+            time_str = f", {deal.time_left} left" if deal.time_left else ""
+            target_ceiling = deal.fair_market_value * 0.82
+            auction_blocks.append(
+                f"🔨 <b>[{deal.deal_score:.1f}/10 AUCTION WATCHLIST]</b>\n"
+                f"💻 <b>{deal.title}</b>\n"
+                f"• <b>Current Bid:</b> ${deal.price:,.2f} <i>({bid_info}{time_str})</i>\n"
+                f"• <b>Profitable Ceiling:</b> Up to ${target_ceiling:,.0f} <i>(Est. FMV: ${deal.fair_market_value:,.2f})</i>\n"
+                f"• <b>Specs:</b> {deal.specs.cpu} | {deal.specs.ram_gb}GB RAM | {deal.specs.gpu}\n"
+                f"👉 <a href=\"{deal.url}\"><b>[BID ON {deal.source.upper()} ↗]</b></a>"
+            )
+
+        sections = []
+        if deal_blocks:
+            sections.append("💼 <b>Top Buy-It-Now Workstation Deals:</b>\n\n" + "\n\n".join(deal_blocks))
+        if auction_blocks:
+            sections.append("🔨 <b>Workstation Auction Watchlist (Opportunity to Bid & Win):</b>\n\n" + "\n\n".join(auction_blocks))
+
+        body_content = "\n\n━━━━━━━━━━━━━━━━━━━━\n\n".join(sections) if sections else "<i>No deals qualified for briefing today.</i>"
+
         text = (
-            f"☀️ <b>[12:00 PM CST EXECUTIVE DEAL BRIEFING]</b>\n"
-            f"💼 <i>Top Workstation Arbitrage Opportunities Active Today:</i>\n\n"
-            + "\n\n".join(deal_blocks)
+            f"☀️ <b>[12:00 PM CST EXECUTIVE DEAL BRIEFING]</b>\n\n"
+            + body_content
             + "\n\n"
             + self._format_dashboard_links()
         )

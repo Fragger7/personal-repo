@@ -64,6 +64,9 @@ class DealRecord:
     alerted: bool = False
     is_high_yield: bool = False
     raw_payload: Optional[Dict[str, Any]] = None
+    is_auction: bool = False
+    bid_count: Optional[int] = None
+    time_left: Optional[str] = None
 
     def __post_init__(self) -> None:
         if isinstance(self.specs, dict):
@@ -72,12 +75,17 @@ class DealRecord:
             self.estimated_profit = round(self.fair_market_value - self.price, 2)
         if self.arbitrage_margin_pct == 0.0 and self.price > 0:
             self.arbitrage_margin_pct = round((self.estimated_profit / self.price) * 100, 1)
-        self.is_high_yield = (
-            (self.deal_score >= 9.0)
-            or (self.deal_score >= 8.5 and self.price <= 850.0 and self.specs.ram_gb >= 32)
-            or (self.estimated_profit >= 600.0)
-            or (self.arbitrage_margin_pct >= 45.0 and self.estimated_profit >= 350.0)
-        ) and (self.deal_score > 0.0)
+        
+        # Auctions should never be categorized as instantaneous high-yield Buy-It-Now strikes
+        if self.is_auction:
+            self.is_high_yield = False
+        else:
+            self.is_high_yield = (
+                (self.deal_score >= 9.0)
+                or (self.deal_score >= 8.5 and self.price <= 850.0 and self.specs.ram_gb >= 32)
+                or (self.estimated_profit >= 600.0)
+                or (self.arbitrage_margin_pct >= 45.0 and self.estimated_profit >= 350.0)
+            ) and (self.deal_score > 0.0)
 
     def to_dict(self) -> Dict[str, Any]:
         data = asdict(self)
@@ -113,6 +121,9 @@ class DealRecord:
             alerted=bool(data.get("alerted", False)),
             is_high_yield=bool(data.get("is_high_yield", False)),
             raw_payload=data.get("raw_payload"),
+            is_auction=bool(data.get("is_auction", False)),
+            bid_count=data.get("bid_count"),
+            time_left=data.get("time_left"),
         )
 
 
@@ -279,25 +290,91 @@ class AtomicDealStorage:
                     return True
             return False
 
-    def delete_deal(self, deal_id: str) -> bool:
-        """Delete a deal by ID."""
+    def _read_tombstones(self) -> Dict[str, Dict[str, Any]]:
+        tombstone_path = self.filepath.parent / "tombstones.json"
+        if not tombstone_path.exists():
+            return {}
+        try:
+            with open(tombstone_path, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception:
+            return {}
+
+    def _write_tombstones(self, data: Dict[str, Dict[str, Any]]) -> None:
+        tombstone_path = self.filepath.parent / "tombstones.json"
+        tmp_path = tombstone_path.with_suffix(".tmp")
+        try:
+            with open(tmp_path, "w", encoding="utf-8") as f:
+                json.dump(data, f, indent=2, ensure_ascii=False)
+            os.replace(tmp_path, tombstone_path)
+        except Exception:
+            if tmp_path.exists():
+                tmp_path.unlink()
+
+    def record_tombstone(self, deal_id: str, url: str = "", reason: str = "reaped") -> None:
+        """Permanently record a dead/sold/ended listing so it is never re-evaluated or re-alerted."""
+        with self._lock:
+            tombstones = self._read_tombstones()
+            tombstones[deal_id] = {
+                "url": url,
+                "reaped_at": datetime.now(timezone.utc).isoformat(),
+                "reason": reason,
+            }
+            # Clean up tombstones older than 30 days
+            cutoff = (datetime.now(timezone.utc).timestamp() - (30 * 86400))
+            cleaned = {}
+            for k, v in tombstones.items():
+                reaped_ts = 0.0
+                try:
+                    reaped_ts = datetime.fromisoformat(v.get("reaped_at", "")).timestamp()
+                except Exception:
+                    pass
+                if reaped_ts >= cutoff or reaped_ts == 0.0:
+                    cleaned[k] = v
+            self._write_tombstones(cleaned)
+
+    def is_tombstoned(self, deal_id: str, url: str = "") -> bool:
+        """Check if an item was previously reaped or confirmed dead."""
+        with self._lock:
+            tombstones = self._read_tombstones()
+            if deal_id in tombstones:
+                return True
+            if url and url != "#":
+                clean_target = url.split("?")[0].rstrip("/")
+                for v in tombstones.values():
+                    t_url = v.get("url", "").split("?")[0].rstrip("/")
+                    if t_url and t_url == clean_target:
+                        return True
+            return False
+
+    def delete_deal(self, deal_id: str, reason: str = "reaped") -> bool:
+        """Delete a deal by ID and record tombstone."""
         with self._lock:
             records = self._read_raw()
             initial_len = len(records)
+            deleted_url = ""
+            for r in records:
+                if r.get("id") == deal_id:
+                    deleted_url = r.get("url", "")
+                    break
             records = [r for r in records if r.get("id") != deal_id]
             if len(records) < initial_len:
                 self._write_atomic(records)
+                self.record_tombstone(deal_id, url=deleted_url, reason=reason)
                 return True
             return False
 
-    def delete_many(self, deal_ids: List[str]) -> int:
-        """Delete multiple deals by ID in a single atomic write."""
+    def delete_many(self, deal_ids: List[str], reason: str = "reaped") -> int:
+        """Delete multiple deals by ID in a single atomic write and record tombstones."""
         if not deal_ids:
             return 0
         id_set = set(deal_ids)
         with self._lock:
             records = self._read_raw()
             initial_len = len(records)
+            for r in records:
+                if r.get("id") in id_set:
+                    self.record_tombstone(r.get("id"), url=r.get("url", ""), reason=reason)
             records = [r for r in records if r.get("id") not in id_set]
             deleted_count = initial_len - len(records)
             if deleted_count > 0:
@@ -316,6 +393,7 @@ class AtomicDealStorage:
         search_query: str = "",
         only_high_yield: bool = False,
         sort_by: str = "Deal Score (High to Low)",
+        listing_type: str = "All",
     ) -> List[DealRecord]:
         """Query and filter deals according to faceted parameters."""
         deals = self.get_all()
@@ -323,6 +401,14 @@ class AtomicDealStorage:
         query_lower = search_query.strip().lower()
 
         for d in deals:
+            # Listing Type filter (All, Buy It Now, Auctions)
+            if listing_type.lower() in ["bin", "buy it now", "fixed price"]:
+                if d.is_auction:
+                    continue
+            elif listing_type.lower() in ["auction", "auctions"]:
+                if not d.is_auction:
+                    continue
+
             # Score filter
             if d.deal_score < min_score:
                 continue

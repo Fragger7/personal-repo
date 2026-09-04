@@ -42,6 +42,9 @@ class RawListing:
     condition_raw: str = "Used"
     created_utc: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
     raw_payload: Optional[Dict[str, Any]] = None
+    is_auction: bool = False
+    bid_count: Optional[int] = None
+    time_left: Optional[str] = None
 
     def to_dict(self) -> Dict[str, Any]:
         return asdict(self)
@@ -258,7 +261,19 @@ class EBayCollector:
                                         break
                                 
                                 seller_name = matched_seller if matched_seller else seller_raw
-                                full_desc = f"eBay Buy-It-Now Listing: {title}. Notes: {sub_text}. Condition: {cond_text}. Seller: {seller_name}"
+
+                                # Detect Auction vs Buy-It-Now signals in DOM
+                                text_all = item.get_text(" ")
+                                bids_match = re.search(r"\b(\d+)\s*bids?\b", text_all, re.I)
+                                time_match = re.search(r"\b(\d+[dhm]\s*(?:\d+[hm])?\s*left)\b", text_all, re.I)
+                                has_bid_elem = bool(item.select_one(".s-item__bidCount, .s-item__bids, .s-item__bid-count"))
+                                is_auction = bool(bids_match or time_match or has_bid_elem)
+                                bid_count = int(bids_match.group(1)) if bids_match else (0 if is_auction else None)
+                                time_left = time_match.group(1) if time_match else None
+
+                                listing_label = "eBay Auction" if is_auction else "eBay Buy-It-Now Listing"
+                                auction_note = f" [Active Auction: {bid_count} bids{f', {time_left}' if time_left else ''}]" if is_auction else ""
+                                full_desc = f"{listing_label}: {title}. Notes: {sub_text}{auction_note}. Condition: {cond_text}. Seller: {seller_name}"
 
                                 # Pre-filter blacklist using title AND full description text
                                 if is_blacklisted_item(title, full_desc):
@@ -276,6 +291,9 @@ class EBayCollector:
                                         location="US",
                                         condition_raw=cond_text,
                                         created_utc=datetime.now(timezone.utc).isoformat(),
+                                        is_auction=is_auction,
+                                        bid_count=bid_count,
+                                        time_left=time_left,
                                     )
                                 )
                                 page_items_count += 1
@@ -1258,6 +1276,7 @@ class ShopGoodwillCollector:
                                 location="US",
                                 condition_raw="Estate Liquidation / Tested Working",
                                 created_utc=datetime.now(timezone.utc).isoformat(),
+                                is_auction=True,
                             )
                         )
                 if listings:

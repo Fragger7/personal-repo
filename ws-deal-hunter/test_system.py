@@ -645,6 +645,107 @@ class TestDaemonPipeline(unittest.TestCase):
         self.assertIsNotNone(read_time)
         self.assertEqual(read_time, test_time)
 
+    def test_tombstone_skips_dead_listings(self) -> None:
+        """Verify tombstoned items are permanently ignored by the daemon."""
+        self.daemon.storage.record_tombstone("ebay_dead_123", "https://ebay.com/itm/dead123")
+        self.assertTrue(self.daemon.storage.is_tombstoned("ebay_dead_123"))
+        self.assertTrue(self.daemon.storage.is_tombstoned("other_id", "https://ebay.com/itm/dead123?param=1"))
+
+        raw_dead = RawListing(
+            id="ebay_dead_123",
+            source="ebay",
+            title="Lenovo ThinkPad P1 Gen 6 i9 64GB",
+            description="Reaped sold out unit for tombstone verification.",
+            price=610.0,
+            url="https://ebay.com/itm/dead123",
+        )
+        with patch.object(self.daemon.collector, "collect_all", return_value=[raw_dead]):
+            res = self.daemon.run_cycle()
+            self.assertEqual(res["new_evaluated"], 0)
+            self.assertEqual(res["alerts_sent"], 0)
+
+
+class TestAuctionValuationAndNotification(unittest.TestCase):
+    def setUp(self) -> None:
+        self.evaluator = GeminiHardwareEvaluator()
+        self.notifier = PushoverNotifier()
+        self.tmp_dir = tempfile.TemporaryDirectory()
+        self.db_file = Path(self.tmp_dir.name) / "test_deals.json"
+        self.storage = AtomicDealStorage(filepath=self.db_file)
+
+    def tearDown(self) -> None:
+        self.tmp_dir.cleanup()
+
+    def test_auction_deal_score_capped_and_no_instant_alert(self) -> None:
+        """Verify auctions starting at low prices are never scored 10.0 and never trigger instant alerts."""
+        auction_listing = RawListing(
+            id="ebay_auction_1",
+            source="ebay",
+            title="Lenovo ThinkPad P16 Gen 1 i9-12950HX 64GB DDR5 2TB NVMe RTX A4500 16GB",
+            description="Active auction starting bid $150 with 12 bids.",
+            price=150.0,
+            url="https://ebay.com/itm/auction1",
+            is_auction=True,
+            bid_count=12,
+            time_left="2d 4h",
+        )
+        deal = self.evaluator.evaluate_listing(auction_listing)
+        
+        # 1. Must be identified as an auction
+        self.assertTrue(deal.is_auction)
+        self.assertEqual(deal.bid_count, 12)
+        self.assertEqual(deal.time_left, "2d 4h")
+
+        # 2. Score must be capped at <= 8.2 (never a 10.0 Unicorn)
+        self.assertLessEqual(deal.deal_score, 8.2)
+
+        # 3. is_high_yield must be False
+        self.assertFalse(deal.is_high_yield)
+
+        # 4. Recommendation must indicate auction watchlist with ceiling
+        self.assertIn("AUCTION WATCHLIST", deal.actionable_recommendation)
+
+        # 5. Instant notification must be blocked
+        self.assertFalse(self.notifier.should_alert(deal))
+
+    def test_storage_listing_type_filtering(self) -> None:
+        """Verify filtering deals by listing type (BIN vs Auction)."""
+        bin_deal = DealRecord(
+            id="bin_1",
+            source="ebay",
+            title="Dell Precision 5680 64GB RAM",
+            price=850.0,
+            url="https://ebay.com/itm/bin1",
+            specs=HardwareSpecs(cpu="i7-13800H", ram_gb=64, ssd_gb=1024, gpu="RTX A1000"),
+            fair_market_value=1400.0,
+            deal_score=9.2,
+            is_auction=False,
+        )
+        auction_deal = DealRecord(
+            id="auc_1",
+            source="ebay",
+            title="HP ZBook Studio G9 32GB RAM",
+            price=300.0,
+            url="https://ebay.com/itm/auc1",
+            specs=HardwareSpecs(cpu="i7-12800H", ram_gb=32, ssd_gb=1024, gpu="RTX A2000"),
+            fair_market_value=1100.0,
+            deal_score=7.8,
+            is_auction=True,
+            bid_count=5,
+        )
+        self.storage.upsert_deal(bin_deal)
+        self.storage.upsert_deal(auction_deal)
+
+        all_res = self.storage.filter_deals(listing_type="all")
+        bin_res = self.storage.filter_deals(listing_type="bin")
+        auc_res = self.storage.filter_deals(listing_type="auction")
+
+        self.assertGreaterEqual(len(all_res), 2)
+        self.assertTrue(any(d.id == "bin_1" for d in bin_res))
+        self.assertFalse(any(d.id == "auc_1" for d in bin_res))
+        self.assertTrue(any(d.id == "auc_1" for d in auc_res))
+        self.assertFalse(any(d.id == "bin_1" for d in auc_res))
+
 
 if __name__ == "__main__":
     mode_str = "LIVE NETWORK MODE" if IS_LIVE_TEST else "FAST UNIT MODE (0 API Tokens, Zero Latency)"

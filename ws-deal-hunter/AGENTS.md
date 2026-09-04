@@ -316,6 +316,23 @@ C:\Development\Apps\WS Deal Hunter\
   5. Extracts individual workstation units with calibrated spec titles and prices into dedicated `RawListing` objects while suppressing ambiguous parent post entries.
   6. Added comprehensive unit tests in [`test_system.py`](file:///Users/admin/Development/personal-repo/ws-deal-hunter/test_system.py) bringing total passing test suite to **34 / 34 tests passing**.
 
+### Decision 43: 30-Day Tombstone Registry & Multi-Tier Auction Watchlist Engine
+- **Problem**: 
+  1. **Phantom Re-Alert Loop (Bug 1)**: When an out-of-stock listing (e.g. Wisetek ThinkPad P1 Gen 6 `ebay_800467186135` at $610) was deleted by the liveness reaper, eBay's cached/sponsored search index continued serving the card. Because it was deleted from `deals.json`, the daemon saw it as a brand-new listing, scored it 10.0, fired an hourly "Unicorn Alert" to Telegram, and re-added it, only for the reaper to delete it again in an infinite loop.
+  2. **Auctions Skewing Rating System (Bug 2)**: eBay and Goodwill auctions starting at low prices (e.g. $150–$600) were treated as Buy-It-Now prices. This distorted Deal Scores to 9.8–10.0 and fired false "Buy Immediately" push notifications, while in reality the final clearing price would rise significantly at close.
+- **Decision & Solution**:
+  1. **Persistent 30-Day Tombstone Registry (`tombstones.json`)**:
+     - Built atomic `record_tombstone`, `is_tombstoned`, and automated 30-day TTL cleanup in [`storage.py`](file:///Users/admin/Development/personal-repo/ws-deal-hunter/storage.py).
+     - Whenever a listing is deleted or reaped, its ID and canonical URL are written to `tombstones.json`.
+     - In `daemon.py` candidate ingestion, all incoming listings are pre-checked against `storage.is_tombstoned()`. Reaped or dead listings are permanently dropped before valuation, completely eliminating phantom alert loops.
+  2. **Auction Identification & Valuation Engine**:
+     - Enhanced `collector.py` (`EBayCollector`, `ShopGoodwillCollector`) to extract auction metadata (`is_auction=True`, `bid_count`, `time_left`).
+     - In `evaluator.py`, auctions are scored against a calculated `strike_ceiling` ($0.82 \times \text{FMV}$) rather than immediate purchase price. Deal Score is strictly capped at $\le 8.2$ (never 10.0 Unicorn), and labeled `🔨 AUCTION WATCHLIST: Profitable bid ceiling up to $X (Current: $Y)`.
+     - `is_high_yield` is forced to `False` for auctions, and `notifier.should_alert` strictly blocks instant push alerts on auctions.
+     - Preserved bidding opportunities without noise: In `send_executive_briefing`, auctions are highlighted in a dedicated "🔨 AUCTION WATCHLIST" section with current bid and target bid ceiling.
+     - Added UI badges and "Current Bid" labels in React (`DealCard.tsx`, `DealTable.tsx`) and Streamlit (`app.py`).
+- **Test Coverage**: Total passing test suite expanded to **37 / 37 unit tests passing** (`python test_system.py` in 4.0s).
+
 ---
 
 ## 📌 5. Project Backlog & Future Roadmap

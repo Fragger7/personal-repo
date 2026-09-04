@@ -219,6 +219,17 @@ def main() -> None:
         }.get(s, s.upper()),
     )
 
+    listing_type_choice = st.sidebar.selectbox(
+        "Listing Format",
+        options=["All Listings", "Buy It Now Only", "Auctions Only"],
+        index=0,
+    )
+    listing_type_param = {
+        "All Listings": "All",
+        "Buy It Now Only": "bin",
+        "Auctions Only": "auction",
+    }.get(listing_type_choice, "All")
+
     only_high_yield = st.sidebar.checkbox(
         "Show only High-Yield Alerts (Score >= 8.5 & Price <= $750)",
         value=False,
@@ -245,6 +256,7 @@ def main() -> None:
         search_query=search_query,
         only_high_yield=only_high_yield,
         sort_by=sort_by,
+        listing_type=listing_type_param,
     )
     stats = storage.get_statistics()
     filtered_count = len(filtered_deals)
@@ -307,13 +319,14 @@ def main() -> None:
             for deal in filtered_deals:
                 badge_class = "badge-high" if deal.deal_score >= 8.5 else ("badge-good" if deal.deal_score >= 7.5 else "badge-normal")
                 score_label = f"⭐ {deal.deal_score}/10"
+                auction_tag = f'<span style="background-color: #78350f; color: #fbbf24; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; margin-right: 6px; font-weight: 700;">🔨 AUCTION</span>' if deal.is_auction else ""
 
                 with st.container():
                     st.markdown(
                         f"""
                         <div class="deal-card">
                             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-                                <span style="font-size: 1.15rem; font-weight: 700;">{deal.title}</span>
+                                <span style="font-size: 1.15rem; font-weight: 700;">{auction_tag}{deal.title}</span>
                                 <span class="{badge_class}">{score_label}</span>
                             </div>
                         </div>
@@ -323,9 +336,15 @@ def main() -> None:
 
                     c1, c2, c3 = st.columns([2, 2, 1])
                     with c1:
-                        st.markdown(f"**Asking Price:** `${deal.price:.2f}`")
-                        st.markdown(f"**Fair Market Value:** `${deal.fair_market_value:.2f}`")
-                        st.markdown(f"**Est. Arbitrage Profit:** `+${deal.estimated_profit:.2f}` (`+{deal.arbitrage_margin_pct:.1f}%`)")
+                        if deal.is_auction:
+                            bid_str = f" ({deal.bid_count} bids)" if deal.bid_count is not None else ""
+                            time_str = f" — *{deal.time_left} left*" if deal.time_left else ""
+                            st.markdown(f"**Current Bid:** `${deal.price:.2f}`{bid_str}{time_str}")
+                            st.markdown(f"**Target Ceiling:** `≤ ${(deal.fair_market_value * 0.82):.2f}` *(Est. FMV: ${deal.fair_market_value:.2f})*")
+                        else:
+                            st.markdown(f"**Asking Price:** `${deal.price:.2f}`")
+                            st.markdown(f"**Fair Market Value:** `${deal.fair_market_value:.2f}`")
+                            st.markdown(f"**Est. Arbitrage Profit:** `+${deal.estimated_profit:.2f}` (`+{deal.arbitrage_margin_pct:.1f}%`)")
                         st.markdown(f"**Source:** `{deal.source.upper()}` ({deal.seller})")
                         st.markdown(f"**Date Found:** `{deal.created_utc[:10] if getattr(deal, 'created_utc', '') else 'Today'}`")
 

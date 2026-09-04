@@ -84,6 +84,11 @@ export const DealCard: React.FC<DealCardProps> = ({ deal, onSendPush, onDeleteDe
                 Alert
               </span>
             )}
+            {deal.is_auction && (
+              <span className="bg-amber-500/15 text-amber-400 border border-amber-500/30 px-2 py-1 text-[9px] font-bold uppercase tracking-widest tech-text flex items-center gap-1">
+                🔨 Auction {deal.bid_count !== undefined && deal.bid_count !== null ? `(${deal.bid_count} bids)` : ""}
+              </span>
+            )}
             <span className="text-[10px] text-slate-400 font-medium flex items-center gap-1 border border-slate-800 bg-slate-900/60 px-1.5 py-0.5 rounded" title={`Found: ${dateFoundStr || "N/A"}`}>
               <Clock className="w-2.5 h-2.5 text-slate-500" />
               {formatRelativeTime(dateFoundStr)}
@@ -111,11 +116,16 @@ export const DealCard: React.FC<DealCardProps> = ({ deal, onSendPush, onDeleteDe
           <div className="flex items-end justify-between mb-2">
             <div>
               <span className="text-[9px] font-bold tracking-widest uppercase text-[#666] block mb-1">
-                Asking Price
+                {deal.is_auction ? "Current Bid" : "Asking Price"}
               </span>
               <span className="text-3xl font-black text-[#e2e8f0] tech-text tracking-tighter">
                 ${deal.price.toFixed(0)}
               </span>
+              {deal.is_auction && deal.time_left && (
+                <span className="text-[9px] text-amber-400 font-semibold block mt-0.5">
+                  ⏱ {deal.time_left} left
+                </span>
+              )}
             </div>
             <div className="text-right">
               <span className="text-[9px] font-bold tracking-widest uppercase text-[#666] block mb-1">
@@ -129,12 +139,22 @@ export const DealCard: React.FC<DealCardProps> = ({ deal, onSendPush, onDeleteDe
 
           {/* Arbitrage Spread Bar */}
           <div className="pt-3 border-t border-[#222] flex items-center justify-between">
-            <span className="text-[#666] font-bold text-[9px] uppercase tracking-widest">Spread</span>
+            <span className="text-[#666] font-bold text-[9px] uppercase tracking-widest">
+              {deal.is_auction ? "Target Ceiling" : "Spread"}
+            </span>
             <span className="font-bold text-emerald-500 flex items-center gap-1.5">
-              <span className="bg-emerald-500/10 px-1.5 py-0.5 tech-text">+${deal.estimated_profit.toFixed(0)}</span>
-              <span className="text-[9px] font-black tracking-widest uppercase tech-text text-emerald-500/60">
-                (+{deal.arbitrage_margin_pct.toFixed(0)}% ROI)
-              </span>
+              {deal.is_auction ? (
+                <span className="bg-amber-500/10 text-amber-400 px-1.5 py-0.5 tech-text">
+                  ≤ ${(deal.fair_market_value * 0.82).toFixed(0)}
+                </span>
+              ) : (
+                <>
+                  <span className="bg-emerald-500/10 px-1.5 py-0.5 tech-text">+${deal.estimated_profit.toFixed(0)}</span>
+                  <span className="text-[9px] font-black tracking-widest uppercase tech-text text-emerald-500/60">
+                    (+{deal.arbitrage_margin_pct.toFixed(0)}% ROI)
+                  </span>
+                </>
+              )}
             </span>
           </div>
         </div>

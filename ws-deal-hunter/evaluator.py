@@ -266,6 +266,9 @@ class GeminiHardwareEvaluator:
                 location=raw.location,
                 created_utc=raw.created_utc,
                 is_high_yield=False,
+                is_auction=getattr(raw, "is_auction", False),
+                bid_count=getattr(raw, "bid_count", None),
+                time_left=getattr(raw, "time_left", None),
             )
 
         # 1. First-Stage: Fast Deterministic Heuristic Evaluation (0ms, $0 tokens)
@@ -286,8 +289,11 @@ class GeminiHardwareEvaluator:
                     deal.summary = ai_deal.summary or deal.summary
                     deal.actionable_recommendation = ai_deal.actionable_recommendation or deal.actionable_recommendation
                     if ai_deal.deal_score > 0.0:
-                        # Refine score with AI validation
-                        deal.deal_score = max(deal.deal_score, ai_deal.deal_score)
+                        # Refine score with AI validation (cap auctions at 8.2)
+                        if getattr(raw, "is_auction", False):
+                            deal.deal_score = min(8.2, max(deal.deal_score, ai_deal.deal_score))
+                        else:
+                            deal.deal_score = max(deal.deal_score, ai_deal.deal_score)
                         deal.fair_market_value = ai_deal.fair_market_value or deal.fair_market_value
                         deal.estimated_profit = round(max(0.0, deal.fair_market_value - deal.price), 2)
                         deal.arbitrage_margin_pct = round((deal.estimated_profit / deal.price) * 100.0, 1) if deal.price > 0 else 0.0
@@ -624,30 +630,51 @@ class GeminiHardwareEvaluator:
         # Margin Spread % relative to FMV
         margin_spread_pct = round(((fmv - tlc) / fmv) * 100.0, 1)
         profit = round(max(0.0, fmv - tlc), 2)
+        is_auction = getattr(listing, "is_auction", False)
 
-        # Disqualify if TLC exceeds Strike Ceiling or margin < 8%
-        if tlc > strike_ceiling or margin_spread_pct < 8.0:
-            deal_score = max(1.0, round(5.0 + (margin_spread_pct / 10.0), 1))
-            recommendation = "PASS / NO ARBITRAGE (Exceeds Strike Ceiling)"
-        elif margin_spread_pct >= 38.0 and ram_gb >= 64:
-            # 🦄 TRUE UNICORN DEAL (Strict: 38%+ Margin, True 64GB DDR5 / Unified, Tier 1 Chassis)
-            deal_score = round(min(10.0, 9.8 + ((margin_spread_pct - 38.0) / 20.0)), 1)
-            recommendation = "🦄 TRUE UNICORN DEAL (High Liquidity Equity)"
-        elif margin_spread_pct >= 25.0 and ram_gb >= 32:
-            # 🎯 HIGH-CONVICTION STRIKE (25.0% - 37.9% Margin + >=32GB RAM)
-            deal_score = round(min(9.7, 9.0 + ((margin_spread_pct - 25.0) / 18.0)), 1)
-            recommendation = "🎯 HIGH-CONVICTION STRIKE"
-        elif margin_spread_pct >= 15.0 and ram_gb >= 32:
-            # ⚡ STRONG VALUE BUY (15.0% - 24.9% Margin)
-            deal_score = round(min(8.9, 8.0 + ((margin_spread_pct - 15.0) / 10.0)), 1)
-            recommendation = "⚡ STRONG VALUE BUY"
-        elif margin_spread_pct >= 8.0:
-            # 🤝 OPPORTUNISTIC OFFER TARGET (8.0% - 14.9% Margin)
-            deal_score = round(min(7.9, 7.0 + ((margin_spread_pct - 8.0) / 7.0)), 1)
-            recommendation = "🤝 OPPORTUNISTIC OFFER TARGET"
+        if is_auction:
+            # 🔨 AUCTION VALUATION ENGINE
+            # Current price is a current/starting bid, NOT a fixed purchase price.
+            # Never assign 10.0 Unicorn score to unfinalized auctions.
+            bid_ceiling = strike_ceiling
+            current_bid = listing.price
+
+            if current_bid >= bid_ceiling:
+                deal_score = 4.0
+                recommendation = f"🔨 AUCTION EXCEEDED CEILING: Current bid (${current_bid:,.0f}) exceeds profitable target (${bid_ceiling:,.0f})"
+            else:
+                # Opportunity exists to place a winning bid below strike ceiling
+                headroom_pct = max(0.0, min(100.0, ((bid_ceiling - current_bid) / bid_ceiling) * 100.0))
+                # Cap score at 8.2 so it never triggers instant Tier 1 Unicorn push alerts (threshold >= 8.5)
+                deal_score = round(min(8.2, 7.0 + (headroom_pct / 100.0) * 1.2), 1)
+                recommendation = f"🔨 AUCTION WATCHLIST: Profitable bid ceiling up to ${bid_ceiling:,.0f} (Current: ${current_bid:,.0f})"
+
+            profit = max(0.0, round(bid_ceiling - current_bid, 2))
+            margin_spread_pct = round((profit / bid_ceiling) * 100.0, 1) if bid_ceiling > 0 else 0.0
         else:
-            deal_score = 5.0
-            recommendation = "FAIR MARKET VALUE"
+            # Disqualify if TLC exceeds Strike Ceiling or margin < 8%
+            if tlc > strike_ceiling or margin_spread_pct < 8.0:
+                deal_score = max(1.0, round(5.0 + (margin_spread_pct / 10.0), 1))
+                recommendation = "PASS / NO ARBITRAGE (Exceeds Strike Ceiling)"
+            elif margin_spread_pct >= 38.0 and ram_gb >= 64:
+                # 🦄 TRUE UNICORN DEAL (Strict: 38%+ Margin, True 64GB DDR5 / Unified, Tier 1 Chassis)
+                deal_score = round(min(10.0, 9.8 + ((margin_spread_pct - 38.0) / 20.0)), 1)
+                recommendation = "🦄 TRUE UNICORN DEAL (High Liquidity Equity)"
+            elif margin_spread_pct >= 25.0 and ram_gb >= 32:
+                # 🎯 HIGH-CONVICTION STRIKE (25.0% - 37.9% Margin + >=32GB RAM)
+                deal_score = round(min(9.7, 9.0 + ((margin_spread_pct - 25.0) / 18.0)), 1)
+                recommendation = "🎯 HIGH-CONVICTION STRIKE"
+            elif margin_spread_pct >= 15.0 and ram_gb >= 32:
+                # ⚡ STRONG VALUE BUY (15.0% - 24.9% Margin)
+                deal_score = round(min(8.9, 8.0 + ((margin_spread_pct - 15.0) / 10.0)), 1)
+                recommendation = "⚡ STRONG VALUE BUY"
+            elif margin_spread_pct >= 8.0:
+                # 🤝 OPPORTUNISTIC OFFER TARGET (8.0% - 14.9% Margin)
+                deal_score = round(min(7.9, 7.0 + ((margin_spread_pct - 8.0) / 7.0)), 1)
+                recommendation = "🤝 OPPORTUNISTIC OFFER TARGET"
+            else:
+                deal_score = 5.0
+                recommendation = "FAIR MARKET VALUE"
 
         # ==========================================
         # 5. PRECISE SPEC EXTRACTION (CPU, GPU, Screen)
@@ -724,14 +751,23 @@ class GeminiHardwareEvaluator:
             if ram_gb >= 64
             else "Excellent daily driver for full-stack engineering, multi-container development, and data analysis."
         )
-        if deal_score >= 9.5:
-            sentiment = f"Rare halo opportunity priced at ${listing.price:.0f} with a massive +${profit_spread:.0f} (+{margin_spread_pct:.0f}% ROI) spread below fair market clearing baseline (${fmv:.0f})."
-        elif deal_score >= 8.5:
-            sentiment = f"High-conviction value buy at ${listing.price:.0f} offering +${profit_spread:.0f} (+{margin_spread_pct:.0f}% ROI) profit spread below estimated FMV (${fmv:.0f})."
-        else:
-            sentiment = f"Opportunistic target priced at ${listing.price:.0f} with +${profit_spread:.0f} margin spread."
 
-        summary_commentary = f"{sentiment} Configured with {cpu_label}, {ram_gb}GB RAM, {ssd_gb}GB SSD, and {gpu_label}. {workload_context}{itad_badge}"
+        if is_auction:
+            bid_info = f" with {listing.bid_count} bid{'s' if (listing.bid_count or 0) != 1 else ''}" if listing.bid_count is not None else ""
+            time_info = f" ({listing.time_left} remaining)" if listing.time_left else ""
+            summary_commentary = (
+                f"Active auction at current bid ${listing.price:.0f}{bid_info}{time_info}. "
+                f"Profitable bidding ceiling is up to ${strike_ceiling:,.0f} against estimated FMV (${fmv:,.0f}). "
+                f"Configured with {cpu_label}, {ram_gb}GB RAM, {ssd_gb}GB SSD, and {gpu_label}. {workload_context}{itad_badge}"
+            )
+        else:
+            if deal_score >= 9.5:
+                sentiment = f"Rare halo opportunity priced at ${listing.price:.0f} with a massive +${profit_spread:.0f} (+{margin_spread_pct:.0f}% ROI) spread below fair market clearing baseline (${fmv:.0f})."
+            elif deal_score >= 8.5:
+                sentiment = f"High-conviction value buy at ${listing.price:.0f} offering +${profit_spread:.0f} (+{margin_spread_pct:.0f}% ROI) profit spread below estimated FMV (${fmv:.0f})."
+            else:
+                sentiment = f"Opportunistic target priced at ${listing.price:.0f} with +${profit_spread:.0f} margin spread."
+            summary_commentary = f"{sentiment} Configured with {cpu_label}, {ram_gb}GB RAM, {ssd_gb}GB SSD, and {gpu_label}. {workload_context}{itad_badge}"
 
         return {
             "cpu": cpu_label,
@@ -803,6 +839,9 @@ class GeminiHardwareEvaluator:
             seller=raw.seller,
             location=raw.location,
             created_utc=raw.created_utc,
+            is_auction=getattr(raw, "is_auction", False),
+            bid_count=getattr(raw, "bid_count", None),
+            time_left=getattr(raw, "time_left", None),
             raw_payload=raw.raw_payload,
         )
 

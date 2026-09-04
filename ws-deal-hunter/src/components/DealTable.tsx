@@ -215,6 +215,14 @@ export const DealTable: React.FC<DealTableProps> = ({ deals, onSendPush, onDelet
                     </div>
                     <div className="text-[11px] text-slate-500 flex items-center gap-1.5 mt-0.5">
                       <span className="uppercase font-bold text-slate-400">{deal.source}</span>
+                      {deal.is_auction && (
+                        <>
+                          <span>•</span>
+                          <span className="text-amber-400 font-bold uppercase text-[9px] bg-amber-500/10 px-1 py-0.2 rounded border border-amber-500/20">
+                            🔨 Auction
+                          </span>
+                        </>
+                      )}
                       <span>•</span>
                       <span className="truncate max-w-[120px]">{deal.seller}</span>
                     </div>
@@ -224,7 +232,9 @@ export const DealTable: React.FC<DealTableProps> = ({ deals, onSendPush, onDelet
                   <td className="px-4 py-3 min-w-[280px] max-w-[380px]">
                     <div className="flex items-center gap-1.5 mb-1">
                       <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
-                        deal.deal_score >= 9.0 
+                        deal.is_auction
+                          ? "bg-amber-500/15 text-amber-300 border border-amber-500/30"
+                          : deal.deal_score >= 9.0 
                           ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40" 
                           : deal.deal_score >= 8.0 
                           ? "bg-teal-500/20 text-teal-300 border border-teal-500/40"
@@ -267,6 +277,11 @@ export const DealTable: React.FC<DealTableProps> = ({ deals, onSendPush, onDelet
 
                   {/* Price */}
                   <td className="px-4 py-3 text-right whitespace-nowrap font-bold text-white">
+                    {deal.is_auction && (
+                      <span className="block text-[9px] font-bold uppercase tracking-wider text-amber-400">
+                        Current Bid ({deal.bid_count ?? 0})
+                      </span>
+                    )}
                     ${deal.price.toFixed(0)}
                   </td>
 
