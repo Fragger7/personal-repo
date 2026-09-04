@@ -439,7 +439,7 @@ object CommittedManager {
                     records.addAll(merged)
                     sortByDateAddedDescending()
                     save()
-                    return records.toList()
+                    return@withContext records.toList()
                 }
             }
             return@withContext null
