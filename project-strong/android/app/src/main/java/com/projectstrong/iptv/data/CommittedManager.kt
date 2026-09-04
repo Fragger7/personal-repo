@@ -580,7 +580,7 @@ object CommittedManager {
             
             val requestBody = payload.toString().toRequestBody("application/json".toMediaType())
             
-            val client = OkHttpClient.Builder().build()
+
             
             val putReq = Request.Builder()
                 .url("https://api.github.com/repos/Fragger7/personal-repo/contents/project-strong/committed.json")
