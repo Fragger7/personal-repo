@@ -325,13 +325,20 @@ object CommittedManager {
             val getConnection = getUrl.openConnection() as java.net.HttpURLConnection
             getConnection.requestMethod = "GET"
             getConnection.useCaches = false
+            getConnection.setRequestProperty("Cache-Control", "no-cache")
             getConnection.setRequestProperty("Accept", "application/vnd.github.v3+json")
             getConnection.setRequestProperty("User-Agent", "SherlockStreams/1.0")
             getConnection.setRequestProperty("Authorization", "Bearer $authToken")
             getConnection.connectTimeout = 6000
             getConnection.readTimeout = 6000
 
-            if (getConnection.responseCode != 200) return@withContext false
+            val getCode = getConnection.responseCode
+            if (getCode != 200) {
+                val errStream = getConnection.errorStream
+                val errStr = errStream?.bufferedReader()?.use { it.readText() } ?: "No error body"
+                com.projectstrong.iptv.ui.components.ToastManager.error("Delete Aborted (GET $getCode): $errStr")
+                return@withContext false
+            }
 
             val jsonResponse = getConnection.inputStream.bufferedReader().use { it.readText() }
             val jsonObj = org.json.JSONObject(jsonResponse)
@@ -369,7 +376,7 @@ object CommittedManager {
             val payload = org.json.JSONObject().apply {
                 put("message", "Delete ${record.safeBaseUrl} (${if (record.safeType == "Xtream") record.safeUser else record.safeMac}) via Android")
                 put("content", encodedContent)
-                put("sha", sha)
+                if (sha.isNotEmpty()) put("sha", sha)
             }
 
             putConnection.outputStream.use { os ->
@@ -378,6 +385,11 @@ object CommittedManager {
             }
 
             val code = putConnection.responseCode
+            if (code != 200 && code != 201) {
+                val errStream = putConnection.errorStream
+                val errStr = errStream?.bufferedReader()?.use { it.readText() } ?: "No error body"
+                com.projectstrong.iptv.ui.components.ToastManager.error("Delete Error $code: $errStr")
+            }
             return@withContext (code == 200 || code == 201)
         } catch (e: Exception) {
             e.printStackTrace()
@@ -400,7 +412,13 @@ object CommittedManager {
             connection.connectTimeout = 6000
             connection.readTimeout = 6000
 
-            if (connection.responseCode == 200) {
+            val getCode = connection.responseCode
+            if (getCode != 200 && getCode != 404) {
+                val errStream = connection.errorStream
+                val errStr = errStream?.bufferedReader()?.use { it.readText() } ?: "No error body"
+                com.projectstrong.iptv.ui.components.ToastManager.error("Sync GET Error $getCode: $errStr")
+            }
+            if (getCode == 200) {
                 val jsonResponse = connection.inputStream.bufferedReader().use { it.readText() }
                 val jsonObj = org.json.JSONObject(jsonResponse)
                 val contentB64 = jsonObj.optString("content", "").replace("\n", "")
@@ -469,6 +487,7 @@ object CommittedManager {
             val getConnection = getUrl.openConnection() as java.net.HttpURLConnection
             getConnection.requestMethod = "GET"
             getConnection.useCaches = false
+            getConnection.setRequestProperty("Cache-Control", "no-cache")
             getConnection.setRequestProperty("Accept", "application/vnd.github.v3+json")
             getConnection.setRequestProperty("User-Agent", "SherlockStreams/1.0")
             getConnection.setRequestProperty("Authorization", "Bearer $authToken")
@@ -477,7 +496,14 @@ object CommittedManager {
 
             var sha = ""
             val remoteRecords = mutableListOf<CommittedRecord>()
-            if (getConnection.responseCode == 200) {
+            val getCode = getConnection.responseCode
+            if (getCode != 200 && getCode != 404) {
+                val errStream = getConnection.errorStream
+                val errStr = errStream?.bufferedReader()?.use { it.readText() } ?: "No error body"
+                com.projectstrong.iptv.ui.components.ToastManager.error("Sync Aborted (GET $getCode): $errStr")
+                return@withContext false
+            }
+            if (getCode == 200) {
                 val jsonResponse = getConnection.inputStream.bufferedReader().use { it.readText() }
                 val jsonObj = org.json.JSONObject(jsonResponse)
                 sha = jsonObj.optString("sha", "")
@@ -546,7 +572,7 @@ object CommittedManager {
             val payload = org.json.JSONObject().apply {
                 put("message", "Sync from Android App (${cleanForCloud.size} records)")
                 put("content", encodedContent)
-                put("sha", sha)
+                if (sha.isNotEmpty()) put("sha", sha)
             }
 
             putConnection.outputStream.use { os ->
@@ -555,6 +581,12 @@ object CommittedManager {
             }
 
             val code = putConnection.responseCode
+            if (code != 200 && code != 201) {
+                val errStream = putConnection.errorStream
+                val errStr = errStream?.bufferedReader()?.use { it.readText() } ?: "No error body"
+                android.util.Log.e("CommittedManager", "PUT failed: $code - $errStr")
+                com.projectstrong.iptv.ui.components.ToastManager.error("Push Error $code: $errStr")
+            }
             if (code == 200 || code == 201) {
                 // Also push any local source snapshot files to GitHub sources/
                 if (::appContext.isInitialized) {

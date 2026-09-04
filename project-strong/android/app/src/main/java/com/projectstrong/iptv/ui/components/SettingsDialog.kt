@@ -977,6 +977,67 @@ fun SettingsDialog(
                         }
                     }
 
+                    // Section 5: App Updates & OTA
+                    SettingsDialogSectionHeader(title = "App Updates & OTA", icon = Icons.Default.SystemUpdate)
+                    Surface(
+                        shape = RoundedCornerShape(16.dp),
+                        color = AppSurface,
+                        border = BorderStroke(1.dp, AppSurfaceBorder),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(14.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = "Current Version",
+                                        color = AppTextPrimary,
+                                        fontWeight = FontWeight.SemiBold,
+                                        style = MaterialTheme.typography.bodyMedium
+                                    )
+                                    Text(
+                                        text = "v${com.projectstrong.iptv.BuildConfig.VERSION_NAME} (Build ${com.projectstrong.iptv.BuildConfig.VERSION_CODE})",
+                                        color = AppTextMuted,
+                                        style = MaterialTheme.typography.bodySmall
+                                    )
+                                }
+                                var isCheckingUpdate by remember { mutableStateOf(false) }
+                                Button(
+                                    onClick = {
+                                        isCheckingUpdate = true
+                                        scope.launch {
+                                            com.projectstrong.iptv.network.AppUpdater.checkForUpdates(context)
+                                            kotlinx.coroutines.delay(1000)
+                                            isCheckingUpdate = false
+                                            val state = com.projectstrong.iptv.network.AppUpdater.updateState.value
+                                            if (state is com.projectstrong.iptv.network.UpdateState.Idle) {
+                                                ToastManager.success("App is up to date!")
+                                            }
+                                        }
+                                    },
+                                    colors = ButtonDefaults.buttonColors(containerColor = AppPrimary),
+                                    shape = RoundedCornerShape(10.dp),
+                                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
+                                ) {
+                                    if (isCheckingUpdate) {
+                                        CircularProgressIndicator(modifier = Modifier.size(16.dp), color = Color.White, strokeWidth = 2.dp)
+                                    } else {
+                                        Icon(Icons.Default.Refresh, contentDescription = null, modifier = Modifier.size(16.dp))
+                                    }
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text("Check Update", fontWeight = FontWeight.Bold)
+                                }
+                            }
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(16.dp))
+
                     // Section 4: System & Network Diagnostics
                     SettingsDialogSectionHeader(title = "Diagnostics & System Info", icon = Icons.Default.Dns)
                     Surface(
