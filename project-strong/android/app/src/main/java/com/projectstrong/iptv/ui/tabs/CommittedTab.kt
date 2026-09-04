@@ -311,11 +311,10 @@ fun CommittedTab() {
                     CommittedManager.syncFromCloud()
                 }
                 if (results != null) {
-                    actionMessage = "Sync successful."
-                    ToastManager.success("Cloud sync complete.")
+                    actionMessage = "Sync complete (${results.size} accounts)."
+                    ToastManager.success("Cloud sync complete: ${results.size} accounts loaded.")
                 } else {
                     actionMessage = "Sync failed."
-                    ToastManager.error("Cloud sync failed.")
                 }
                 isReloading = false
                 delay(2500)

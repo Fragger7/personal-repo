@@ -353,8 +353,6 @@ fun SettingsTab() {
                                 val result = CommittedManager.syncFromCloud()
                                 if (result != null) {
                                     ToastManager.success("Synced ${result.size} accounts from GitHub!")
-                                } else {
-                                    ToastManager.error("Cloud fetch failed. Check network or PAT token.")
                                 }
                             }
                         },

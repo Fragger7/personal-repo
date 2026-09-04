@@ -138,8 +138,12 @@ object CommittedManager {
         try {
             val json = file.readText()
             if (json.isNotBlank()) {
-                val type = object : TypeToken<List<CommittedRecord>>() {}.type
-                val list: List<CommittedRecord> = gson.fromJson(json, type)
+                val list: List<CommittedRecord> = try {
+                    gson.fromJson(json, Array<CommittedRecord>::class.java)?.toList() ?: emptyList()
+                } catch (e: Exception) {
+                    val type = object : TypeToken<List<CommittedRecord>>() {}.type
+                    gson.fromJson(json, type) ?: emptyList()
+                }
                 records.clear()
                 records.addAll(list.map { it.copy(baseUrl = normalizeUrl(it.safeBaseUrl)) })
                 sortByDateAddedDescending()
@@ -325,35 +329,45 @@ object CommittedManager {
 
     suspend fun deleteFromCloud(record: CommittedRecord, token: String): Boolean = withContext(Dispatchers.IO) {
         try {
-            val authToken = token.trim()
-            val getUrl = java.net.URL("https://api.github.com/repos/Fragger7/personal-repo/contents/project-strong/committed.json")
-            val getConnection = getUrl.openConnection() as java.net.HttpURLConnection
-            getConnection.requestMethod = "GET"
-            getConnection.useCaches = false
-            getConnection.setRequestProperty("Cache-Control", "no-cache")
-            getConnection.setRequestProperty("Accept", "application/vnd.github.v3+json")
-            getConnection.setRequestProperty("User-Agent", "SherlockStreams/1.0")
-            getConnection.setRequestProperty("Authorization", "Bearer $authToken")
-            getConnection.connectTimeout = 6000
-            getConnection.readTimeout = 6000
+            val authToken = token.filter { !it.isWhitespace() }
+            val client = OkHttpClient.Builder().build()
+            val getUrl = "https://api.github.com/repos/Fragger7/personal-repo/contents/project-strong/committed.json"
+            
+            val getReq = Request.Builder()
+                .url(getUrl)
+                .header("Accept", "application/vnd.github.v3+json")
+                .header("Cache-Control", "no-cache")
+                .header("User-Agent", "SherlockStreams/1.0")
+                .apply {
+                    if (authToken.isNotEmpty()) {
+                        header("Authorization", "Bearer $authToken")
+                    }
+                }
+                .build()
 
-            val getCode = getConnection.responseCode
+            val getResp = client.newCall(getReq).execute()
+            val getCode = getResp.code
             if (getCode != 200) {
-                val errStream = getConnection.errorStream
-                val errStr = errStream?.bufferedReader()?.use { it.readText() } ?: "No error body"
-                com.projectstrong.iptv.ui.components.ToastManager.error("Delete Aborted (GET $getCode): $errStr")
+                val errStr = getResp.body?.string() ?: "No error body"
+                getResp.close()
+                ToastManager.error("Delete Aborted (GET $getCode): $errStr")
                 return@withContext false
             }
 
-            val jsonResponse = getConnection.inputStream.bufferedReader().use { it.readText() }
+            val jsonResponse = getResp.body?.string() ?: ""
+            getResp.close()
             val jsonObj = org.json.JSONObject(jsonResponse)
             val sha = jsonObj.optString("sha", "")
-            val contentB64 = jsonObj.optString("content", "").replace("\n", "")
+            val contentB64 = jsonObj.optString("content", "").filter { !it.isWhitespace() }
 
             val decodedBytes = android.util.Base64.decode(contentB64, android.util.Base64.DEFAULT)
             val remoteJson = String(decodedBytes, Charsets.UTF_8)
-            val type = object : TypeToken<List<CommittedRecord>>() {}.type
-            val remoteList: List<CommittedRecord> = gson.fromJson(remoteJson, type)
+            val remoteList: List<CommittedRecord> = try {
+                gson.fromJson(remoteJson, Array<CommittedRecord>::class.java)?.toList() ?: emptyList()
+            } catch (e: Exception) {
+                val type = object : TypeToken<List<CommittedRecord>>() {}.type
+                gson.fromJson(remoteJson, type) ?: emptyList()
+            }
 
             val targetBase = normalizeUrl(record.safeBaseUrl)
             val targetUser = record.safeUser.trim()
@@ -374,25 +388,21 @@ object CommittedManager {
                 put("content", encodedContent)
                 if (sha.isNotEmpty()) put("sha", sha)
             }
-            
+               
             val requestBody = payload.toString().toRequestBody("application/json".toMediaType())
-            
-            val client = OkHttpClient.Builder().build()
-            
             val putReq = Request.Builder()
-                .url("https://api.github.com/repos/Fragger7/personal-repo/contents/project-strong/committed.json")
+                .url(getUrl)
                 .put(requestBody)
                 .header("Accept", "application/vnd.github.v3+json")
                 .header("User-Agent", "SherlockStreams/1.0")
                 .header("Authorization", "Bearer $authToken")
                 .build()
-                
+                   
             val putResp = client.newCall(putReq).execute()
             val code = putResp.code
-            
             if (code != 200 && code != 201) {
                 val errStr = putResp.body?.string() ?: "No error body"
-                com.projectstrong.iptv.ui.components.ToastManager.error("Delete Error $code: $errStr")
+                ToastManager.error("Delete Error $code: $errStr")
             }
             putResp.close()
             return@withContext (code == 200 || code == 201)
@@ -400,46 +410,51 @@ object CommittedManager {
             e.printStackTrace()
             val msg = e.message ?: "Unknown Exception"
             android.util.Log.e("CommittedManager", "Network Exception: $msg", e)
-            com.projectstrong.iptv.ui.components.ToastManager.error("Sync Exception: $msg")
+            ToastManager.error("Delete Exception: $msg")
             return@withContext false
         }
     }
 
     suspend fun syncFromCloud(): List<CommittedRecord>? = withContext(Dispatchers.IO) {
         try {
-            val safeToken = DataStore.githubToken.trim()
+            val safeToken = DataStore.githubToken.filter { !it.isWhitespace() }
             val client = OkHttpClient.Builder().build()
             val requestBuilder = Request.Builder()
                 .url("https://api.github.com/repos/Fragger7/personal-repo/contents/project-strong/committed.json")
                 .header("Accept", "application/vnd.github.v3+json")
                 .header("Cache-Control", "no-cache")
                 .header("User-Agent", "SherlockStreams/1.0")
-            
+               
             if (safeToken.isNotEmpty()) {
                 requestBuilder.header("Authorization", "Bearer $safeToken")
             }
-            
+               
             val response = client.newCall(requestBuilder.build()).execute()
             val getCode = response.code
-            
+               
             if (getCode != 200 && getCode != 404) {
                 val errStr = response.body?.string() ?: "No error body"
-                com.projectstrong.iptv.ui.components.ToastManager.error("Sync GET Error $getCode: $errStr")
                 response.close()
+                ToastManager.error("Sync GET Error $getCode: $errStr")
+                return@withContext null
             }
-            
+               
             if (getCode == 200) {
                 val jsonResponse = response.body?.string() ?: ""
                 response.close()
                 val jsonObj = org.json.JSONObject(jsonResponse)
-                val contentB64 = jsonObj.optString("content", "").replace("\n", "")
+                val contentB64 = jsonObj.optString("content", "").filter { !it.isWhitespace() }
 
                 if (contentB64.isNotEmpty()) {
                     val decodedBytes = android.util.Base64.decode(contentB64, android.util.Base64.DEFAULT)
                     val json = String(decodedBytes, Charsets.UTF_8)
 
-                    val type = object : TypeToken<List<CommittedRecord>>() {}.type
-                    val remoteList: List<CommittedRecord> = gson.fromJson(json, type)
+                    val remoteList: List<CommittedRecord> = try {
+                        gson.fromJson(json, Array<CommittedRecord>::class.java)?.toList() ?: emptyList()
+                    } catch (e: Exception) {
+                        val type = object : TypeToken<List<CommittedRecord>>() {}.type
+                        gson.fromJson(json, type) ?: emptyList()
+                    }
 
                     // Normalize remote records and mark as synced (isLocalOnly = false)
                     val normalizedRemote = remoteList.map {
@@ -468,29 +483,32 @@ object CommittedManager {
                         }
                     }
 
-                    records.clear()
-                    records.addAll(merged)
-                    sortByDateAddedDescending()
+                    withContext(Dispatchers.Main) {
+                        records.clear()
+                        records.addAll(merged)
+                        sortByDateAddedDescending()
+                    }
                     save()
                     return@withContext records.toList()
                 }
+            } else {
+                response.close()
             }
             return@withContext null
-} catch (e: Exception) {
+        } catch (e: Exception) {
             e.printStackTrace()
             val msg = e.message ?: "Unknown Exception"
             android.util.Log.e("CommittedManager", "Sync Exception: $msg", e)
-            kotlinx.coroutines.GlobalScope.launch(Dispatchers.Main) {
-                com.projectstrong.iptv.ui.components.ToastManager.error("Sync Exception: $msg")
-            }
+            ToastManager.error("Sync Exception: $msg")
             return@withContext null
         }
     }
 
     suspend fun pushToCloud(token: String = DataStore.githubToken): Boolean = withContext(Dispatchers.IO) {
         try {
-            val authToken = token.trim()
+            val authToken = token.filter { !it.isWhitespace() }
             if (authToken.isEmpty()) {
+                ToastManager.error("Push Error: GitHub Token required")
                 return@withContext false
             }
             // Guard: Cannot push empty
@@ -507,17 +525,17 @@ object CommittedManager {
                 .header("User-Agent", "SherlockStreams/1.0")
                 .header("Authorization", "Bearer $authToken")
                 .build()
-                
+                   
             var sha = ""
             val remoteRecords = mutableListOf<CommittedRecord>()
-            
+               
             val getResp = client.newCall(getReq).execute()
             val getCode = getResp.code
-            
+               
             if (getCode != 200 && getCode != 404) {
                 val errStr = getResp.body?.string() ?: "No error body"
-                com.projectstrong.iptv.ui.components.ToastManager.error("Sync Aborted (GET $getCode): $errStr")
                 getResp.close()
+                ToastManager.error("Sync Aborted (GET $getCode): $errStr")
                 return@withContext false
             }
             if (getCode == 200) {
@@ -525,13 +543,17 @@ object CommittedManager {
                 getResp.close()
                 val jsonObj = org.json.JSONObject(jsonResponse)
                 sha = jsonObj.optString("sha", "")
-                val contentB64 = jsonObj.optString("content", "").replace("\n", "")
+                val contentB64 = jsonObj.optString("content", "").filter { !it.isWhitespace() }
                 if (contentB64.isNotEmpty()) {
                     try {
                         val decodedBytes = android.util.Base64.decode(contentB64, android.util.Base64.DEFAULT)
                         val remoteJson = String(decodedBytes, Charsets.UTF_8)
-                        val type = object : TypeToken<List<CommittedRecord>>() {}.type
-                        val list: List<CommittedRecord> = gson.fromJson(remoteJson, type)
+                        val list: List<CommittedRecord> = try {
+                            gson.fromJson(remoteJson, Array<CommittedRecord>::class.java)?.toList() ?: emptyList()
+                        } catch (e: Exception) {
+                            val type = object : TypeToken<List<CommittedRecord>>() {}.type
+                            gson.fromJson(remoteJson, type) ?: emptyList()
+                        }
                         remoteRecords.addAll(list.map {
                             it.copy(
                                 baseUrl = normalizeUrl(it.safeBaseUrl),
@@ -544,7 +566,7 @@ object CommittedManager {
                     }
                 }
             } else {
-                return@withContext false
+                getResp.close()
             }
 
             // 2. Safe Union Merge: Merge all remote records with current local records so no existing cloud accounts are lost
@@ -561,7 +583,6 @@ object CommittedManager {
                 }
 
                 if (matchIdx != -1) {
-                    // Update metadata of matching remote record with local changes (preserving original dateAdded and notes if not overwritten)
                     val existingRem = mergedList[matchIdx]
                     mergedList[matchIdx] = localRec.copy(
                         dateAdded = if (existingRem.safeDateAdded.isNotEmpty()) existingRem.safeDateAdded else localRec.safeDateAdded,
@@ -583,11 +604,9 @@ object CommittedManager {
                 put("content", encodedContent)
                 if (sha.isNotEmpty()) put("sha", sha)
             }
-            
+               
             val requestBody = payload.toString().toRequestBody("application/json".toMediaType())
-            
 
-            
             val putReq = Request.Builder()
                 .url("https://api.github.com/repos/Fragger7/personal-repo/contents/project-strong/committed.json")
                 .put(requestBody)
@@ -595,18 +614,16 @@ object CommittedManager {
                 .header("User-Agent", "SherlockStreams/1.0")
                 .header("Authorization", "Bearer $authToken")
                 .build()
-                
+                   
             val putResp = client.newCall(putReq).execute()
             val code = putResp.code
-            
             if (code != 200 && code != 201) {
                 val errStr = putResp.body?.string() ?: "No error body"
                 android.util.Log.e("CommittedManager", "PUT failed: $code - $errStr")
-                com.projectstrong.iptv.ui.components.ToastManager.error("Push Error $code: $errStr")
+                ToastManager.error("Push Error $code: $errStr")
             }
             putResp.close()
             if (code == 200 || code == 201) {
-                // Also push any local source snapshot files to GitHub sources/
                 if (::appContext.isInitialized) {
                     for (rec in cleanForCloud) {
                         val archiveFile = rec.safeSourceArchiveFile
@@ -623,11 +640,13 @@ object CommittedManager {
                     }
                 }
 
-                // Update local records state to match the merged and synced result
+                // Update local records state to match the merged and synced result on Main thread
                 val syncedList = cleanForCloud.map { it.copy(isLocalOnly = false) }
-                records.clear()
-                records.addAll(syncedList)
-                sortByDateAddedDescending()
+                withContext(Dispatchers.Main) {
+                    records.clear()
+                    records.addAll(syncedList)
+                    sortByDateAddedDescending()
+                }
                 save()
                 return@withContext true
             }
@@ -636,7 +655,7 @@ object CommittedManager {
             e.printStackTrace()
             val msg = e.message ?: "Unknown Exception"
             android.util.Log.e("CommittedManager", "Network Exception: $msg", e)
-            com.projectstrong.iptv.ui.components.ToastManager.error("Sync Exception: $msg")
+            ToastManager.error("Sync Exception: $msg")
             return@withContext false
         }
     }
