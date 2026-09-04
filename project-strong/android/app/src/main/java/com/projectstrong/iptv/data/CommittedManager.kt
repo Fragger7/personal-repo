@@ -324,7 +324,8 @@ object CommittedManager {
             val getConnection = getUrl.openConnection() as java.net.HttpURLConnection
             getConnection.requestMethod = "GET"
             getConnection.setRequestProperty("Accept", "application/vnd.github.v3+json")
-            getConnection.setRequestProperty("Authorization", "token $token")
+            getConnection.setRequestProperty("User-Agent", "SherlockStreams/1.0")
+            getConnection.setRequestProperty("Authorization", "Bearer $token")
             getConnection.connectTimeout = 6000
             getConnection.readTimeout = 6000
 
@@ -358,7 +359,8 @@ object CommittedManager {
             val putConnection = putUrl.openConnection() as java.net.HttpURLConnection
             putConnection.requestMethod = "PUT"
             putConnection.setRequestProperty("Accept", "application/vnd.github.v3+json")
-            putConnection.setRequestProperty("Authorization", "token $token")
+            putConnection.setRequestProperty("User-Agent", "SherlockStreams/1.0")
+            putConnection.setRequestProperty("Authorization", "Bearer $token")
             putConnection.setRequestProperty("Content-Type", "application/json")
             putConnection.doOutput = true
 
@@ -381,14 +383,15 @@ object CommittedManager {
         }
     }
 
-    fun syncFromCloud(): List<CommittedRecord>? {
+    suspend fun syncFromCloud(): List<CommittedRecord>? = withContext(Dispatchers.IO) {
         try {
             val url = java.net.URL("https://api.github.com/repos/Fragger7/personal-repo/contents/project-strong/committed.json")
             val connection = url.openConnection() as java.net.HttpURLConnection
             connection.requestMethod = "GET"
             connection.setRequestProperty("Accept", "application/vnd.github.v3+json")
+            connection.setRequestProperty("User-Agent", "SherlockStreams/1.0")
             if (DataStore.githubToken.isNotEmpty()) {
-                connection.setRequestProperty("Authorization", "token ${DataStore.githubToken}")
+                connection.setRequestProperty("Authorization", "Bearer ${DataStore.githubToken}")
             }
             connection.connectTimeout = 6000
             connection.readTimeout = 6000
@@ -439,22 +442,22 @@ object CommittedManager {
                     return records.toList()
                 }
             }
-            return null
+            return@withContext null
         } catch (e: Exception) {
             e.printStackTrace()
-            return null
+            return@withContext null
         }
     }
 
-    fun pushToCloud(token: String = DataStore.githubToken): Boolean {
+    suspend fun pushToCloud(token: String = DataStore.githubToken): Boolean = withContext(Dispatchers.IO) {
         try {
             val authToken = token.trim()
             if (authToken.isEmpty()) {
-                return false
+                return@withContext false
             }
             // Guard: Cannot push empty
             if (records.isEmpty()) {
-                return false
+                return@withContext false
             }
 
             // 1. Get current SHA and fetch remote content to merge before pushing (Never Overwrite)
@@ -462,7 +465,8 @@ object CommittedManager {
             val getConnection = getUrl.openConnection() as java.net.HttpURLConnection
             getConnection.requestMethod = "GET"
             getConnection.setRequestProperty("Accept", "application/vnd.github.v3+json")
-            getConnection.setRequestProperty("Authorization", "token $authToken")
+            getConnection.setRequestProperty("User-Agent", "SherlockStreams/1.0")
+            getConnection.setRequestProperty("Authorization", "Bearer $authToken")
             getConnection.connectTimeout = 6000
             getConnection.readTimeout = 6000
 
@@ -491,7 +495,7 @@ object CommittedManager {
                     }
                 }
             } else {
-                return false
+                return@withContext false
             }
 
             // 2. Safe Union Merge: Merge all remote records with current local records so no existing cloud accounts are lost
@@ -529,7 +533,8 @@ object CommittedManager {
             val putConnection = putUrl.openConnection() as java.net.HttpURLConnection
             putConnection.requestMethod = "PUT"
             putConnection.setRequestProperty("Accept", "application/vnd.github.v3+json")
-            putConnection.setRequestProperty("Authorization", "token $token")
+            putConnection.setRequestProperty("User-Agent", "SherlockStreams/1.0")
+            putConnection.setRequestProperty("Authorization", "Bearer $token")
             putConnection.setRequestProperty("Content-Type", "application/json")
             putConnection.doOutput = true
 
@@ -569,12 +574,12 @@ object CommittedManager {
                 records.addAll(syncedList)
                 sortByDateAddedDescending()
                 save()
-                return true
+                return@withContext true
             }
-            return false
+            return@withContext false
         } catch (e: Exception) {
             e.printStackTrace()
-            return false
+            return@withContext false
         }
     }
 
