@@ -74,3 +74,7 @@ This document details the active prioritized backlog for **Workstation Deal Hunt
    - ✅ **Completed**: Enforced hard 15"–16" display minimum, 32GB RAM minimum, sub-$1,700 budget ceiling, and legacy model blacklisting.
 4. **`Multi-Item Reddit Liquidation Table Parser`**:
    - ✅ **Completed**: Built `parse_markdown_tables` in `RedditCollector` to parse multi-row HTML and Markdown tables in bulk lots on `r/hardwareswap` and `r/homelabsales` with automatic strikethrough, sold, and pending exclusion.
+5. **`30-Day Persistent Tombstone Registry`**:
+   - ✅ **Completed**: Built atomic tombstone tracking (`tombstones.json`, `storage.py`, `daemon.py`) to permanently prevent sold/reaped listings (e.g. phantom $610 Lenovo) from entering infinite re-alert and ingestion loops.
+6. **`Multi-Tier Auction Watchlist & Valuation Engine`**:
+   - ✅ **Completed**: Added auction metadata parsing (`is_auction`, `bid_count`, `time_left`), strike ceiling valuation ($0.82 \times \text{FMV}$), score capping ($\le 8.2$), instant alert suppression, and dedicated Executive Briefing & Dashboard Watchlist display.
