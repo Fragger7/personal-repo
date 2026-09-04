@@ -323,9 +323,10 @@ object CommittedManager {
             val getUrl = java.net.URL("https://api.github.com/repos/Fragger7/personal-repo/contents/project-strong/committed.json")
             val getConnection = getUrl.openConnection() as java.net.HttpURLConnection
             getConnection.requestMethod = "GET"
+            getConnection.useCaches = false
             getConnection.setRequestProperty("Accept", "application/vnd.github.v3+json")
             getConnection.setRequestProperty("User-Agent", "SherlockStreams/1.0")
-            getConnection.setRequestProperty("Authorization", "Bearer $token")
+            getConnection.setRequestProperty("Authorization", "Bearer $authToken")
             getConnection.connectTimeout = 6000
             getConnection.readTimeout = 6000
 
@@ -360,7 +361,7 @@ object CommittedManager {
             putConnection.requestMethod = "PUT"
             putConnection.setRequestProperty("Accept", "application/vnd.github.v3+json")
             putConnection.setRequestProperty("User-Agent", "SherlockStreams/1.0")
-            putConnection.setRequestProperty("Authorization", "Bearer $token")
+            putConnection.setRequestProperty("Authorization", "Bearer $authToken")
             putConnection.setRequestProperty("Content-Type", "application/json")
             putConnection.doOutput = true
 
@@ -388,6 +389,7 @@ object CommittedManager {
             val url = java.net.URL("https://api.github.com/repos/Fragger7/personal-repo/contents/project-strong/committed.json")
             val connection = url.openConnection() as java.net.HttpURLConnection
             connection.requestMethod = "GET"
+            connection.useCaches = false
             connection.setRequestProperty("Accept", "application/vnd.github.v3+json")
             connection.setRequestProperty("User-Agent", "SherlockStreams/1.0")
             if (DataStore.githubToken.isNotEmpty()) {
@@ -464,6 +466,7 @@ object CommittedManager {
             val getUrl = java.net.URL("https://api.github.com/repos/Fragger7/personal-repo/contents/project-strong/committed.json")
             val getConnection = getUrl.openConnection() as java.net.HttpURLConnection
             getConnection.requestMethod = "GET"
+            getConnection.useCaches = false
             getConnection.setRequestProperty("Accept", "application/vnd.github.v3+json")
             getConnection.setRequestProperty("User-Agent", "SherlockStreams/1.0")
             getConnection.setRequestProperty("Authorization", "Bearer $authToken")
@@ -534,7 +537,7 @@ object CommittedManager {
             putConnection.requestMethod = "PUT"
             putConnection.setRequestProperty("Accept", "application/vnd.github.v3+json")
             putConnection.setRequestProperty("User-Agent", "SherlockStreams/1.0")
-            putConnection.setRequestProperty("Authorization", "Bearer $token")
+            putConnection.setRequestProperty("Authorization", "Bearer $authToken")
             putConnection.setRequestProperty("Content-Type", "application/json")
             putConnection.doOutput = true
 
