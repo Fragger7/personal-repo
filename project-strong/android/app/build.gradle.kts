@@ -20,13 +20,28 @@ android {
         }
     }
 
+    signingConfigs {
+        create("release") {
+            storeFile = file("keystore/sherlock.keystore")
+            storePassword = "sherlock123"
+            keyAlias = "sherlock"
+            keyPassword = "sherlock123"
+        }
+    }
+
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            signingConfig = signingConfigs.getByName("release")
+        }
+        getByName("debug") {
+            // Also sign the debug build with the permanent key so development builds
+            // can be seamlessly installed over release builds without wiping data.
+            signingConfig = signingConfigs.getByName("release")
         }
     }
     compileOptions {

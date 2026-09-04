@@ -226,6 +226,7 @@ Remove-Item -Recurse -Force "C:\Development\Apps\Project Strong\personal-repo-te
 
 | Milestone | Subsystems Involved | Status |
 | :--- | :--- | :--- |
+| **Git-Native OTA Update Engine** | `AppUpdater.kt`, `UpdateDialog.kt`, `FileProvider`, `.github/workflows/android-build.yml` | 🟢 **Verified & Live** |
 | **"Forever Source" Snapshot Archive** | `SourceArchiveManager.kt`, `SourceArchiveViewerDialog.kt`, `committed.json`, `app.py` | 🟢 **Verified & Live** |
 | **Media3 / ExoPlayer In-App Stream Inspector** | `StreamPreviewDialog.kt`, ExoPlayer 1.3.1, OkHttp data source | 🟢 **Verified & Live** |
 | **Provider Intelligence & Brand Forensics** | `ProviderIntelligenceCard.kt`, `provider_intelligence.json`, consensus scoring | 🟢 **Verified & Live** |

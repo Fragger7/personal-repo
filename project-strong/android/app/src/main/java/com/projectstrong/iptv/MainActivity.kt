@@ -34,11 +34,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.projectstrong.iptv.data.CommittedManager
 import com.projectstrong.iptv.data.DataStore
+import com.projectstrong.iptv.network.AppUpdater
 import com.projectstrong.iptv.network.NetworkMonitor
 import com.projectstrong.iptv.ui.components.ConnectionStateDialog
 import com.projectstrong.iptv.ui.components.SettingsDialog
 import com.projectstrong.iptv.ui.components.ToastHost
 import com.projectstrong.iptv.ui.components.ToastManager
+import com.projectstrong.iptv.ui.components.UpdateDialog
 import com.projectstrong.iptv.ui.theme.*
 import kotlinx.coroutines.launch
 
@@ -149,6 +151,7 @@ data class TabItem(
 
 @Composable
 fun MainDashboard() {
+    val context = androidx.compose.ui.platform.LocalContext.current
     var selectedTab by remember { mutableIntStateOf(0) }
     var showConnectionDialog by remember { mutableStateOf(false) }
     var showSettingsDialog by remember { mutableStateOf(false) }
@@ -164,6 +167,22 @@ fun MainDashboard() {
         TabItem("Xtream", xtreamNodesCount, Icons.Default.LiveTv),
         TabItem("Stalker", stalkerNodesCount, Icons.Default.Dns),
         TabItem("Committed", committedCount, Icons.Default.FolderSpecial)
+    )
+
+    val updateState by AppUpdater.updateState.collectAsState()
+
+    LaunchedEffect(Unit) {
+        AppUpdater.checkForUpdates(context)
+    }
+
+    UpdateDialog(
+        updateState = updateState,
+        onDownloadRequested = { url ->
+            DataStore.scanScope.launch {
+                AppUpdater.downloadAndInstallUpdate(context, url)
+            }
+        },
+        onDismiss = { AppUpdater.dismissUpdate() }
     )
 
     if (showConnectionDialog) {

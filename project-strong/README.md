@@ -12,6 +12,10 @@ The native Android app (`/android`) runs directly on mobile/residential IP conne
 * **🏛️ "Forever Source" Git Snapshot & Archive Engine**:
   * Automatically captures raw pastebin/pastetext dumps and saves them as versioned text files directly in the Git repository (`project-strong/sources/{filename}.txt`).
   * In-app monospace source reader with line numbering, text search, raw copy, upstream URL launcher, and 1-click **"⚡ Send to Scanner"** recall pipeline.
+* **Git-Native OTA Update Engine**:
+  * Fully autonomous background polling via the GitHub REST API to detect new releases (`AppUpdater.kt`).
+  * Direct raw `.apk` binary streaming using OkHttp with secure `FileProvider` handoff to the Android OS Package Installer.
+  * In-place seamless upgrades using a permanent stable cryptographic keystore to preserve all local `DataStore` and offline records across updates.
 * **Media3 / ExoPlayer In-App Stream Inspector**:
   * Hardware-accelerated direct stream playback with custom evasion user-agent (`IPTVSmartersPro/1.1.1`) and software decoder fallback.
   * True full-screen mode linked with sensor landscape orientation (`SCREEN_ORIENTATION_SENSOR_LANDSCAPE`).
@@ -73,8 +77,9 @@ A lightweight web application featuring multi-tiered async validation, automated
 ## 🚀 CI/CD & Automated APK Build Pipeline
 
 * **Workflow (`.github/workflows/android-build.yml`)**:
-  * Automatically compiles a debug APK (`app-debug.apk`) on every push to `main` modifying Android files.
-  * Artifacts are published as `project-strong-debug-apk` on GitHub Actions.
+  * Automatically compiles a signed **Release APK** on every push to `main` modifying Android files.
+  * Dynamically bumps versioning based on `GITHUB_RUN_NUMBER`.
+  * Instantly publishes formal GitHub Releases containing the raw unzipped binary (`app-release.apk`) to feed the in-app OTA Update Engine.
 
 
 ## ☠️ 9. Buried Skeletons & Deep Engineering Constraints (AI Context)
