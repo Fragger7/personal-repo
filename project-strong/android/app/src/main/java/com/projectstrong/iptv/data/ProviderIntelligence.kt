@@ -19,6 +19,7 @@ import java.util.Date
 import java.util.Locale
 import java.util.regex.Pattern
 
+@androidx.annotation.Keep
 data class ProviderProfile(
     @SerializedName("domain") val domain: String = "",
     @SerializedName("provider_name") val providerName: String = "",

@@ -28,6 +28,7 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
+@androidx.annotation.Keep
 data class CommittedRecord(
     @SerializedName("type") val type: String? = "Unknown",
     @SerializedName("base_url") val baseUrl: String? = "",
@@ -475,8 +476,13 @@ object CommittedManager {
                 }
             }
             return@withContext null
-        } catch (e: Exception) {
+} catch (e: Exception) {
             e.printStackTrace()
+            val msg = e.message ?: "Unknown Exception"
+            android.util.Log.e("CommittedManager", "Sync Exception: $msg", e)
+            kotlinx.coroutines.GlobalScope.launch(Dispatchers.Main) {
+                com.projectstrong.iptv.ui.components.ToastManager.error("Sync Exception: $msg")
+            }
             return@withContext null
         }
     }
