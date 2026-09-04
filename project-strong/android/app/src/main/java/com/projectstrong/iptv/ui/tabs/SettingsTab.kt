@@ -1049,7 +1049,7 @@ fun SettingsTab() {
                                 kotlinx.coroutines.delay(1000)
                                 isCheckingUpdate = false
                                 val state = com.projectstrong.iptv.network.AppUpdater.updateState.value
-                                if (state is com.projectstrong.iptv.network.AppUpdater.UpdateState.Idle) {
+                                if (state is com.projectstrong.iptv.network.UpdateState.Idle) {
                                     ToastManager.success("App is up to date!")
                                 }
                             }
