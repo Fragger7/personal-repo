@@ -6,6 +6,8 @@ import com.projectstrong.iptv.ui.components.ToastManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.RequestBody.Companion.toRequestBody
 import java.io.File
 import java.net.HttpURLConnection
 import java.net.URI
@@ -190,10 +192,7 @@ object SourceArchiveManager {
                 if (sha != null) put("sha", sha)
             }
             
-            val requestBody = okhttp3.RequestBody.create(
-                okhttp3.MediaType.parse("application/json"),
-                payload.toString()
-            )
+            val requestBody = payload.toString().toRequestBody("application/json".toMediaType())
 
             val putReq = okhttp3.Request.Builder()
                 .url(url)
