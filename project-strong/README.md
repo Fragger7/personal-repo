@@ -57,6 +57,9 @@ The native Android app (`/android`) runs directly on mobile/residential IP conne
 * **Universal Toast System & Multi-Orientation Layouts**:
   * Non-intrusive auto-dismissing visual toasts across foreground and background coroutine events.
   * Full vertical scrolling across all detail views in portrait and landscape orientations.
+* **Edge-to-Edge Immersive Canvas & High-Contrast System Bar Tinting**:
+  * Native `enableEdgeToEdge()` integration with `SystemBarStyle.dark(Color.TRANSPARENT)` forcing status and navigation bar icons to crisp white over the app dark theme canvas.
+  * Root `Modifier.systemBarsPadding()` insets ensuring top bar and navigation components never clip into system cutouts while backgrounds bleed seamlessly across status and navigation bars.
 * **Landscape Full-Width Master Grids & Viewport Optimization**:
   * Full-width display (`1.0f`) across `CommittedTab`, `XtreamTab`, and `StalkerTab` to maximize horizontal column space for 16-column enterprise tables.
   * Dynamic compact single-row header action toolbars (`padding(vertical = 8.dp)`) that conserve precious vertical viewport space on landscape screens.
@@ -86,6 +89,9 @@ A lightweight web application featuring multi-tiered async validation, automated
 
 **CRITICAL**: Any AI agent or developer modifying this codebase MUST read this section to prevent introducing regressions into highly tuned, fragile subsystems.
 
+*   **Edge-to-Edge System Bar Icons Trap (`MainActivity.kt`)**:
+    *   *The Skeleton*: Calling `enableEdgeToEdge()` with default arguments causes the Android OS to select status bar icon contrast based on the device-wide theme. If the device uses a light system theme, the OS renders status bar icons (clock, battery, Wi-Fi) in solid black, rendering them completely invisible against Sherlock Streams signature dark navy canvas.
+    *   *The Fix*: Explicitly pass `statusBarStyle = SystemBarStyle.dark(android.graphics.Color.TRANSPARENT)` and `navigationBarStyle = SystemBarStyle.dark(android.graphics.Color.TRANSPARENT)` into `enableEdgeToEdge()`. In Android APIs, `SystemBarStyle.dark` signifies that the underlying background is dark, instructing the system to render foreground status icons in high-contrast white. Always pair this with `Modifier.systemBarsPadding()` on the root `Box` inside the primary `Surface` to prevent UI controls from clipping into notches or system navigation bars.
 *   **Landscape Grid Viewport & LazyColumn Weighting Trap (`CommittedTab.kt`, `XtreamTab.kt`, `StalkerTab.kt`)**:
     *   *The Skeleton*: Placing an unweighted `LazyColumn` or a 45%/55% split-pane row on mobile landscape screens cuts off rows or leaves zero vertical scroll space (phone landscape height is typically only ~360-400dp, with the app bar, top card, and navigation bar leaving very little height). A 45% width split on phone landscape leaves only ~350dp width, making a 16-column horizontal table virtually unreadable.
     *   *The Fix*: Render data grids at full screen width on mobile landscape, collapse header action cards into a single compact horizontal line (`padding(vertical = 8.dp)`), and anchor the table with `Column(modifier = Modifier.fillMaxHeight())` and `LazyColumn(modifier = Modifier.fillMaxWidth().weight(1f), state = listState)` so it dynamically consumes all remaining vertical height.

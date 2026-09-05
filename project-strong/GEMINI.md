@@ -170,7 +170,7 @@ This document contains the complete system architecture, operational decisions, 
 * **GitHub Action Workflow (`.github/workflows/android-build.yml`)**:
   * Triggers on every `push` to `main` modifying `project-strong/android/**` or the workflow itself.
   * Environment: `ubuntu-latest`, JDK 17, Gradle 8.7 (`gradle/actions/setup-gradle@v3`).
-  * Action: Runs `./gradlew assembleDebug` and uploads `app-debug.apk` as the `project-strong-debug-apk` artifact.
+  * Action: Runs `gradle assembleRelease`, dynamically renames the output binary to `sherlock-streams-v1.10.${{ github.run_number }}.apk`, uploads the artifact under `sherlock-streams-apk`, and publishes a formal GitHub Release under tag `v1.10.${{ github.run_number }}` containing the branded release binary.
 * **Target Repository**: `https://github.com/Fragger7/personal-repo`
 * **Target Branch**: `main`
 
@@ -243,6 +243,8 @@ Remove-Item -Recurse -Force "C:\Development\Apps\Project Strong\personal-repo-te
 | **Base64 De-obfuscation & Auto-Traceability Extraction** | `Base64Tab.kt`, `ScannerTab.kt`, `Parser.kt`, Regex auto-link capture & 1-tap clipboard paste | 🟢 **Verified & Live** |
 | **Stream Egress & Ghost Line Verification Engine** | `IPTVClient.kt`, `CommittedManager.kt`, `XtreamTab.kt`, `CommittedTab.kt`, `SettingsTab.kt`, `SettingsDialog.kt`, `StreamPreviewDialog.kt`, `app.py`, HTTP 456/884 consensus probing | 🟢 **Verified & Live** |
 | **Landscape Full-Width Data Grids & Viewport Optimization** | `CommittedTab.kt`, `XtreamTab.kt`, `StalkerTab.kt`, `weight(1f)` scroll binding, single-row compact action headers | 🟢 **Verified & Live** |
+| **Edge-to-Edge System Bar Tinting & Immersive Canvas** | `MainActivity.kt`, `enableEdgeToEdge`, `SystemBarStyle.dark`, `systemBarsPadding` | 🟢 **Verified & Live** |
+| **CI/CD Branded Release Artifacts & GitHub Releases** | `.github/workflows/android-build.yml`, `sherlock-streams-v1.10.{run}.apk` naming, `sherlock-streams-apk` artifact | 🟢 **Verified & Live** |
 
 ---
 
@@ -260,6 +262,9 @@ Remove-Item -Recurse -Force "C:\Development\Apps\Project Strong\personal-repo-te
 
 **CRITICAL**: Any AI agent or developer modifying this codebase MUST read this section to prevent introducing regressions into highly tuned, fragile subsystems.
 
+*   **Edge-to-Edge System Bar Icons Trap (`MainActivity.kt`)**:
+    *   *The Skeleton*: Calling `enableEdgeToEdge()` with default arguments causes the Android OS to select status bar icon contrast based on the device-wide theme. If the device uses a light system theme, the OS renders status bar icons (clock, battery, Wi-Fi) in solid black, rendering them completely invisible against Sherlock Streams signature dark navy canvas.
+    *   *The Fix*: Explicitly pass `statusBarStyle = SystemBarStyle.dark(android.graphics.Color.TRANSPARENT)` and `navigationBarStyle = SystemBarStyle.dark(android.graphics.Color.TRANSPARENT)` into `enableEdgeToEdge()`. In Android APIs, `SystemBarStyle.dark` signifies that the underlying background is dark, instructing the system to render foreground status icons in high-contrast white. Always pair this with `Modifier.systemBarsPadding()` on the root `Box` inside the primary `Surface` to prevent UI controls from clipping into notches or system navigation bars.
 *   **Landscape Grid Viewport & LazyColumn Weighting Trap (`CommittedTab.kt`, `XtreamTab.kt`, `StalkerTab.kt`)**:
     *   *The Skeleton*: Placing an unweighted `LazyColumn` or a 45%/55% split-pane row on mobile landscape screens cuts off rows or leaves zero vertical scroll space (phone landscape height is typically only ~360-400dp, with the app bar, top card, and navigation bar leaving very little height). A 45% width split on phone landscape leaves only ~350dp width, making a 16-column horizontal table virtually unreadable.
     *   *The Fix*: Render data grids at full screen width on mobile landscape, collapse header action cards into a single compact horizontal line (`padding(vertical = 8.dp)`), and anchor the table with `Column(modifier = Modifier.fillMaxHeight())` and `LazyColumn(modifier = Modifier.fillMaxWidth().weight(1f), state = listState)` so it dynamically consumes all remaining vertical height.
