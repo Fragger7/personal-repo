@@ -3,5 +3,10 @@
     "url": "https://www.ebay.com/itm/800467186135",
     "reaped_at": "2026-09-03T23:55:00.000000+00:00",
     "reason": "out_of_stock_phantom_deal"
+  },
+  "ebay_800607034489": {
+    "url": "https://www.ebay.com/itm/800607034489",
+    "reaped_at": "2026-09-05T05:53:21.897654+00:00",
+    "reason": "reaped"
   }
 }

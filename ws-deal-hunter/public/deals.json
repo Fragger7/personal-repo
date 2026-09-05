@@ -128,38 +128,6 @@
     "time_left": null
   },
   {
-    "id": "ebay_800607034489",
-    "source": "ebay",
-    "title": "New ListingLenovo ThinkPad E16 Gen 1 16\" 24GB, Graphite BlackOpens in a new window or tab",
-    "price": 349.99,
-    "url": "https://www.ebay.com/itm/800607034489",
-    "specs": {
-      "cpu": "Intel Core i7/i9 12th/13th-Gen H",
-      "ram_gb": 24,
-      "ssd_gb": 512,
-      "gpu": "NVIDIA RTX / Workstation GPU",
-      "screen": "15.6\" - 16\" Workstation Display",
-      "condition": "Used / Refurbished"
-    },
-    "fair_market_value": 600.0,
-    "estimated_profit": 250.01,
-    "arbitrage_margin_pct": 71.4,
-    "deal_score": 7.9,
-    "summary": "Opportunistic target priced at $350 with +$221 margin spread. Configured with Intel Core i7/i9 12th/13th-Gen H, 24GB RAM, 512GB SSD, and NVIDIA RTX / Workstation GPU. Excellent daily driver for full-stack engineering, multi-container development, and data analysis.",
-    "actionable_recommendation": "🤝 OPPORTUNISTIC OFFER TARGET",
-    "confidence_score": 0.95,
-    "seller": "eBay Seller",
-    "location": "US",
-    "created_utc": "2026-09-04T05:04:52.739704+00:00",
-    "evaluated_at": "2026-09-04T05:05:19.259775+00:00",
-    "alerted": false,
-    "is_high_yield": false,
-    "raw_payload": null,
-    "is_auction": false,
-    "bid_count": null,
-    "time_left": null
-  },
-  {
     "id": "ebay_318793694605",
     "source": "ebay",
     "title": "Dell XPS 15 9530 15.6'' (1TB SSD Intel Core i9-13900H 5.4GHz 64gb ramOpens in a new window or tab",
