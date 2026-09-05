@@ -1,5 +1,37 @@
 [
   {
+    "id": "ebay_158243691891",
+    "source": "ebay",
+    "title": "LENOVO ThinkPad P15s G2 20W6001VUS i7-1185G7 32GB 512GB Quadro T500 PF3TQRHEOpens in a new window or tab",
+    "price": 415.0,
+    "url": "https://www.ebay.com/itm/158243691891",
+    "specs": {
+      "cpu": "Intel Core i7/i9 12th/13th-Gen H",
+      "ram_gb": 32,
+      "ssd_gb": 512,
+      "gpu": "NVIDIA RTX / Workstation GPU",
+      "screen": "15.6\" - 16\" Workstation Display",
+      "condition": "Used / Refurbished"
+    },
+    "fair_market_value": 750.0,
+    "estimated_profit": 335.0,
+    "arbitrage_margin_pct": 80.7,
+    "deal_score": 9.7,
+    "summary": "This listing features an 11th-Gen Intel Core i7-1185G7 processor, which falls directly into the hard blacklist for outdated low-power quad-core CPUs. Despite having 32GB RAM and a 15.6-inch screen, its low performance renders it unsuitable for modern high-performance developer workloads or local AI tasks. Per system gatekeeper directives, this machine is automatically rejected.",
+    "actionable_recommendation": "❌ PASS / REJECT: Legacy 11th-Gen Intel U-series CPU does not meet minimum hardware performance criteria",
+    "confidence_score": 0.95,
+    "seller": "eBay Seller",
+    "location": "US",
+    "created_utc": "2026-09-05T19:08:21.206177+00:00",
+    "evaluated_at": "2026-09-05T19:08:52.906322+00:00",
+    "alerted": true,
+    "is_high_yield": true,
+    "raw_payload": null,
+    "is_auction": false,
+    "bid_count": null,
+    "time_left": null
+  },
+  {
     "id": "ebay_307135793395",
     "source": "ebay",
     "title": "Dell Precision 3240 Compact 19\" XEON W-1270 1TB SSD 32GB W11POpens in a new window or tab",
