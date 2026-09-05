@@ -322,35 +322,6 @@
     "raw_payload": null
   },
   {
-    "id": "ebay_366640084919",
-    "source": "ebay",
-    "title": "DELL PRECISION 5680 | CORE I9-13900H | 1TB | 64GB | WIN11H | REFURBISHEDOpens in a new window or tab",
-    "price": 1005.0,
-    "url": "https://www.ebay.com/itm/366640084919",
-    "specs": {
-      "cpu": "I9-13900H",
-      "ram_gb": 64,
-      "ssd_gb": 1024,
-      "gpu": "NVIDIA RTX / Workstation GPU",
-      "screen": "15.6\" - 16\" Workstation Display",
-      "condition": "Used / Refurbished"
-    },
-    "fair_market_value": 1380.0,
-    "estimated_profit": 375.0,
-    "arbitrage_margin_pct": 37.3,
-    "deal_score": 9.2,
-    "summary": "This Dell Precision 5680 pairing a 13th Gen Intel Core i9-13900H with 64GB of RAM at just $1,005 represents an exceptional high-performance developer workstation steal. With its premium 16-inch chassis and turnkey 64GB RAM configuration, it is perfectly tailored for heavy local LLM inference, Docker container clusters, and complex compilation workloads. The sub-$1,100 price tag yields a substantial margin spread over fair market value, making it a rare high-conviction deal.",
-    "actionable_recommendation": "🎯 HIGH-CONVICTION STRIKE: Buy immediately at asking price",
-    "confidence_score": 0.95,
-    "seller": "eBay Seller",
-    "location": "US",
-    "created_utc": "2026-09-04T01:05:33.020702+00:00",
-    "evaluated_at": "2026-09-04T01:07:20.871386+00:00",
-    "alerted": true,
-    "is_high_yield": false,
-    "raw_payload": null
-  },
-  {
     "id": "microcenter_5_463812",
     "source": "microcenter",
     "title": "Micro Center Clearance: Motherboard, CPU and 32gb DDR5 bundle 250K $499.99 or 270K $599.99 at Micro Center instore only",
