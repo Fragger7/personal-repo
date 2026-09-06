@@ -528,7 +528,7 @@ def update_provider_intelligence_from_results(results):
 def mine_provider_branding_from_payloads(base_url, categories_data, streams_data):
     """
     Looks for recurring branding patterns in Tier 2 channels/categories, e.g. '### Strong 8K ###', 
-    Telegram/Discord links, etc.
+    Telegram/Discord links, etc. Excludes country names and demonyms from being labeled as brands.
     """
     import re
     import urllib.parse
@@ -540,29 +540,77 @@ def mine_provider_branding_from_payloads(base_url, categories_data, streams_data
         domain = base_url
         
     branding_names = {}
+    detected_regional_focus = None
     
-    # 1. Inspect telegram / discord / whatsapp / general URLs in names
-    contact_pattern = re.compile(r'(t\.me/\w+|discord\.gg/\w+|wa\.me/\d+|https?://[^\s]+)', re.IGNORECASE)
+    country_demonym_map = {
+        "france": "French", "french": "French", "francais": "French", "francaise": "French",
+        "sweden": "Swedish / Nordic", "swedish": "Swedish / Nordic", "sverige": "Swedish / Nordic", "svenska": "Swedish / Nordic",
+        "norway": "Norwegian / Nordic", "norwegian": "Norwegian / Nordic", "norge": "Norwegian / Nordic", "norsk": "Norwegian / Nordic",
+        "denmark": "Danish / Nordic", "danish": "Danish / Nordic", "danmark": "Danish / Nordic", "dansk": "Danish / Nordic",
+        "finland": "Finnish / Nordic", "finnish": "Finnish / Nordic", "suomi": "Finnish / Nordic",
+        "nordic": "Nordic", "scandinavia": "Nordic", "scandinavian": "Nordic",
+        "arabic": "Arabic", "arab": "Arabic", "arabe": "Arabic",
+        "italy": "Italian", "italian": "Italian", "italia": "Italian", "italiano": "Italian",
+        "germany": "German", "german": "German", "deutschland": "German", "deutsch": "German",
+        "spain": "Spanish", "spanish": "Spanish", "espana": "Spanish", "espanol": "Spanish",
+        "portugal": "Portuguese", "portuguese": "Portuguese", "portugues": "Portuguese",
+        "brazil": "Brazilian", "brazilian": "Brazilian", "brasil": "Brazilian",
+        "netherlands": "Dutch", "dutch": "Dutch", "holland": "Dutch", "nederland": "Dutch",
+        "turkey": "Turkish", "turkish": "Turkish", "turkce": "Turkish", "turkiye": "Turkish",
+        "greece": "Greek", "greek": "Greek", "ellada": "Greek",
+        "poland": "Polish", "polish": "Polish", "polska": "Polish", "polski": "Polish",
+        "romania": "Romanian", "romanian": "Romanian",
+        "russia": "Russian", "russian": "Russian",
+        "albania": "Albanian", "albanian": "Albanian", "shqip": "Albanian",
+        "exyu": "Ex-Yu / Balkan", "balkan": "Ex-Yu / Balkan", "serbia": "Balkan", "croatia": "Balkan", "bosnia": "Balkan",
+        "uk": "UK / British", "british": "UK / British", "england": "UK / British",
+        "usa": "USA", "us": "USA", "america": "USA", "american": "USA",
+        "canada": "Canadian", "canadian": "Canadian",
+        "pakistan": "Pakistani", "pak": "Pakistani", "india": "Indian", "hindi": "Indian", "urdu": "Pakistani / Urdu"
+    }
+    generic_blacklist = set(country_demonym_map.keys()) | {
+        'vip', 'vod', 'series', 'movies', 'live', 'channels', 'channel',
+        'sport', 'sports', 'kids', 'news', 'catchup', 'all', 'xxx', 'adult',
+        'cinema', 'documentary', 'music', 'radio', 'entertainment',
+        'general', 'local', 'regional', 'national', 'international', 'ppv',
+        '4k', 'fhd', 'hd', 'hevc', 'sd', 'premium', 'ultra', 'free'
+    }
+    
+    # 1. Inspect telegram / discord / whatsapp links only (no images or local gateway IPs)
+    contact_pattern = re.compile(r'(t\.me/[\w+_-]+|discord\.gg/[\w+_-]+|discord\.com/invite/[\w+_-]+|wa\.me/\d+|chat\.whatsapp\.com/[\w+_-]+)', re.IGNORECASE)
     
     # 2. Inspect decorated dummy channels
     deco_pattern = re.compile(r'^[#=~\|\*]{2,}\s*(.+?)\s*[#=~\|\*]{2,}$')
     
     def analyze_item(name):
+        nonlocal detected_regional_focus
         if not name: return
         name = str(name).strip()
+        name_lower = name.lower()
+        
+        # Check regional/country focus
+        if not detected_regional_focus:
+            for term, label in country_demonym_map.items():
+                if term in name_lower:
+                    detected_regional_focus = label
+                    break
         
         # Contacts
         contacts = contact_pattern.findall(name)
         for c in contacts:
-            brand = f"Link: {c}"
-            branding_names[brand] = branding_names.get(brand, 0) + 15
+            if not any(c.lower().endswith(ext) for ext in ['.png', '.jpg', '.jpeg', '.webp', '.svg', '.gif']):
+                brand = f"Link: {c}"
+                branding_names[brand] = branding_names.get(brand, 0) + 15
             
         # decorated names like ### Provider ###
         match = deco_pattern.search(name)
         if match:
             brand = match.group(1).strip()
-            # filter out common false positives
-            if len(brand) > 3 and not bool(re.search(r'^[-_*~=#|]+$', brand)) and brand.lower() not in ['vip', 'vod', 'series', 'movies', 'live', 'channels', 'sport', 'sports', 'kids', 'news', 'catchup', 'all', 'xxx']:
+            brand_lower = brand.lower()
+            # filter out demonyms and common false positives
+            if (len(brand) > 3 and not bool(re.search(r'^[-_*~=#|]+$', brand)) 
+                and brand_lower not in generic_blacklist 
+                and not any(brand_lower == d for d in country_demonym_map)):
                 branding_names[brand] = branding_names.get(brand, 0) + 2
                 
         # Known giants & StreamCheck verified providers
@@ -582,6 +630,14 @@ def mine_provider_branding_from_payloads(base_url, categories_data, streams_data
             branding_names["Dream 4K"] = branding_names.get("Dream 4K", 0) + 15
         if "Magnum" in name or "Golden" in name:
             branding_names["Magnum OTT (Golden)"] = branding_names.get("Magnum OTT (Golden)", 0) + 15
+        if any(k in name_lower for k in ["nordicone", "nordic one", "n1 iptv", "nordic-one"]):
+            branding_names["NordicOne (N1)"] = branding_names.get("NordicOne (N1)", 0) + 25
+        if any(k in name_lower for k in ["viking iptv", "vikingiptv", "viking ott"]):
+            branding_names["Viking IPTV"] = branding_names.get("Viking IPTV", 0) + 25
+        if any(k in name_lower for k in ["svenska tv", "svenskatv", "svenska iptv"]):
+            branding_names["Svenska TV"] = branding_names.get("Svenska TV", 0) + 25
+        if any(k in name_lower for k in ["vocotv", "voco tv", "vocotv.app"]):
+            branding_names["VocoTV"] = branding_names.get("VocoTV", 0) + 25
         if "┃AT┃" in name or "┃DE┃" in name or "┃UK┃" in name or "┃AF┃" in name or "┃AR┃" in name:
             branding_names["TiviOne"] = branding_names.get("TiviOne", 0) + 20
         if "★ SKY" in name or "★ CINEMA" in name or "ALB ★" in name or "DE ★" in name:
@@ -618,6 +674,8 @@ def mine_provider_branding_from_payloads(base_url, categories_data, streams_data
             # Contact links are strong clues.
             if new_name != current_name and ("Link:" in new_name or "🎯 Identified" not in current_name or branding_names[best_brand] >= 15):
                 existing["provider_name"] = new_name
+                if detected_regional_focus:
+                    existing["regional_focus"] = detected_regional_focus
                 existing["last_seen"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                 if "first_seen" not in existing:
                     existing["first_seen"] = existing["last_seen"]
@@ -626,6 +684,22 @@ def mine_provider_branding_from_payloads(base_url, categories_data, streams_data
                 _, sha = pull_provider_intel()
                 save_provider_intel(local_intel, sha=sha)
                 return best_brand
+        elif detected_regional_focus:
+            local_intel = load_provider_intel()
+            existing = local_intel.get(domain, {})
+            if existing and existing.get("regional_focus") != detected_regional_focus:
+                existing["regional_focus"] = detected_regional_focus
+                local_intel[domain] = existing
+                _, sha = pull_provider_intel()
+                save_provider_intel(local_intel, sha=sha)
+    elif detected_regional_focus:
+        local_intel = load_provider_intel()
+        existing = local_intel.get(domain, {})
+        if existing and existing.get("regional_focus") != detected_regional_focus:
+            existing["regional_focus"] = detected_regional_focus
+            local_intel[domain] = existing
+            _, sha = pull_provider_intel()
+            save_provider_intel(local_intel, sha=sha)
     return None
 
 # --- CUSTOM UI / UX THEMES ---

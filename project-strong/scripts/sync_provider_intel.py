@@ -78,6 +78,57 @@ def http_post_json(url, payload, timeout=15.0):
             print(f"[!] urllib error posting to {url}: {e}")
     return None
 
+COUNTRY_DEMONYM_MAP = {
+    "france": "French", "french": "French", "francais": "French", "francaise": "French",
+    "sweden": "Swedish / Nordic", "swedish": "Swedish / Nordic", "sverige": "Swedish / Nordic", "svenska": "Swedish / Nordic",
+    "norway": "Norwegian / Nordic", "norwegian": "Norwegian / Nordic", "norge": "Norwegian / Nordic", "norsk": "Norwegian / Nordic",
+    "denmark": "Danish / Nordic", "danish": "Danish / Nordic", "danmark": "Danish / Nordic", "dansk": "Danish / Nordic",
+    "finland": "Finnish / Nordic", "finnish": "Finnish / Nordic", "suomi": "Finnish / Nordic",
+    "nordic": "Nordic", "scandinavia": "Nordic", "scandinavian": "Nordic",
+    "arabic": "Arabic", "arab": "Arabic", "arabe": "Arabic",
+    "italy": "Italian", "italian": "Italian", "italia": "Italian", "italiano": "Italian",
+    "germany": "German", "german": "German", "deutschland": "German", "deutsch": "German",
+    "spain": "Spanish", "spanish": "Spanish", "espana": "Spanish", "espanol": "Spanish",
+    "portugal": "Portuguese", "portuguese": "Portuguese", "portugues": "Portuguese",
+    "brazil": "Brazilian", "brazilian": "Brazilian", "brasil": "Brazilian",
+    "netherlands": "Dutch", "dutch": "Dutch", "holland": "Dutch", "nederland": "Dutch",
+    "turkey": "Turkish", "turkish": "Turkish", "turkce": "Turkish", "turkiye": "Turkish",
+    "greece": "Greek", "greek": "Greek", "ellada": "Greek",
+    "poland": "Polish", "polish": "Polish", "polska": "Polish", "polski": "Polish",
+    "romania": "Romanian", "romanian": "Romanian",
+    "russia": "Russian", "russian": "Russian",
+    "albania": "Albanian", "albanian": "Albanian", "shqip": "Albanian",
+    "exyu": "Ex-Yu / Balkan", "balkan": "Ex-Yu / Balkan", "serbia": "Balkan", "croatia": "Balkan", "bosnia": "Balkan",
+    "uk": "UK / British", "british": "UK / British", "england": "UK / British",
+    "usa": "USA", "us": "USA", "america": "USA", "american": "USA",
+    "canada": "Canadian", "canadian": "Canadian",
+    "pakistan": "Pakistani", "pak": "Pakistani", "india": "Indian", "hindi": "Indian", "urdu": "Pakistani / Urdu"
+}
+
+GENERIC_BLACKLIST = set(COUNTRY_DEMONYM_MAP.keys()) | {
+    'vip', 'vod', 'series', 'movies', 'live', 'channels', 'channel',
+    'sport', 'sports', 'kids', 'news', 'catchup', 'all', 'xxx', 'adult',
+    'cinema', 'documentary', 'music', 'radio', 'entertainment',
+    'general', 'local', 'regional', 'national', 'international', 'ppv',
+    '4k', 'fhd', 'hd', 'hevc', 'sd', 'premium', 'ultra', 'free'
+}
+
+def is_demonym_or_country(text):
+    if not text:
+        return False
+    clean = text.lower().strip()
+    if clean.startswith("🎯 identified:"):
+        clean = clean[14:].strip()
+    return clean in COUNTRY_DEMONYM_MAP
+
+def get_regional_focus(text):
+    if not text:
+        return None
+    clean = text.lower().strip()
+    if clean.startswith("🎯 identified:"):
+        clean = clean[14:].strip()
+    return COUNTRY_DEMONYM_MAP.get(clean)
+
 def normalize_domain_key(url_or_host):
     if not url_or_host:
         return ""
@@ -114,6 +165,18 @@ def main():
 
     updated_count = 0
 
+    # Cleanse any previous false-positive country/demonym classifications
+    for domain_k, entry in list(existing_intel.items()):
+        p_name = entry.get("provider_name", "")
+        if is_demonym_or_country(p_name):
+            reg = get_regional_focus(p_name)
+            entry["provider_name"] = "Unidentified Provider"
+            entry["regional_focus"] = reg
+            entry["confidence"] = f"Regional Bouquet ({reg})"
+            entry["evidence"] = f"Identified {reg} channel/category bouquet from verified node."
+            updated_count += 1
+            print(f"  [⟳] Corrected misclassified country entry: {domain_k} -> Regional Bouquet ({reg})")
+
     # 2. Ingest StreamCheck Upstream Provider Directory
     print("\n[+] Fetching live providers from StreamCheck index...")
     providers_data = http_get_json(STREAMCHECK_PROVIDERS_URL)
@@ -148,6 +211,38 @@ def main():
                     if not domain_key:
                         continue
 
+                    # Demonym / Regional classification check
+                    if is_demonym_or_country(clean_p):
+                        reg_focus = get_regional_focus(clean_p)
+                        existing_entry = existing_intel.get(domain_key)
+                        if not existing_entry:
+                            existing_intel[domain_key] = {
+                                "domain": domain_key,
+                                "provider_name": "Unidentified Provider",
+                                "regional_focus": reg_focus,
+                                "server": record.get("Server"),
+                                "cloudflare": "Yes" if "cloudflare" in (record.get("Server") or "").lower() else "No",
+                                "timezone": record.get("Timezone", "UTC"),
+                                "metadata_message": None,
+                                "server_protocol": "http",
+                                "https_port": "443",
+                                "rtmp_port": "25462",
+                                "allowed_formats": "['m3u8', 'ts']",
+                                "community_link": None,
+                                "confidence": f"Regional Bouquet ({reg_focus})",
+                                "evidence": f"Identified {reg_focus} channel bouquet from verified node",
+                                "first_seen": record.get("DateAdded", today_str),
+                                "last_seen": today_str
+                            }
+                            updated_count += 1
+                            print(f"  [+] Learned regional bouquet: {domain_key} -> {reg_focus}")
+                        elif existing_entry.get("regional_focus") != reg_focus:
+                            existing_entry["regional_focus"] = reg_focus
+                            if not existing_entry.get("provider_name", "").startswith("🎯"):
+                                existing_entry["confidence"] = f"Regional Bouquet ({reg_focus})"
+                            updated_count += 1
+                        continue
+
                     # If not already present, or if current record is generic/unbranded
                     existing_entry = existing_intel.get(domain_key)
                     needs_update = False
@@ -177,6 +272,7 @@ def main():
                             "community_link": existing_entry.get("community_link") if existing_entry else None,
                             "confidence": "Verified Brand (Committed Catalog)",
                             "evidence": f"Discovered via verified committed node {provider}",
+                            "regional_focus": existing_entry.get("regional_focus") if existing_entry else None,
                             "first_seen": first_seen,
                             "last_seen": today_str
                         }

@@ -130,7 +130,7 @@
         "allowed_formats": "['m3u8', 'ts']"
     },
     "bestrktv.xyz": {
-        "provider_name": "\ud83c\udfaf Identified: ARABIC",
+        "provider_name": "Unidentified Provider",
         "server": "nginx/1.18.0 (Ubuntu)",
         "cloudflare": "No",
         "timezone": "Sun, 05 Jul 2026 08:21:47 GMT",
@@ -139,7 +139,10 @@
         "rtmp_port": "25462",
         "allowed_formats": "['m3u8', 'ts']",
         "first_seen": "2026-06-25 23:51:52",
-        "last_seen": "2026-07-05 08:21:47"
+        "last_seen": "2026-07-05 08:21:47",
+        "regional_focus": "Arabic",
+        "confidence": "Regional Bouquet (Arabic)",
+        "evidence": "Identified Arabic channel/category bouquet from verified node."
     },
     "yx0nd0d0h0.cava90.xyz": {
         "provider_name": "\ud83d\udc64 Host: yx0nd0d0h0.cava90.xyz",
@@ -2162,7 +2165,7 @@
     },
     "yolomax.pro": {
         "domain": "yolomax.pro",
-        "provider_name": "\ud83c\udfaf Identified: FRENCH",
+        "provider_name": "Unidentified Provider",
         "server": null,
         "cloudflare": "No",
         "timezone": "UTC",
@@ -2172,10 +2175,11 @@
         "rtmp_port": "25462",
         "allowed_formats": "['m3u8', 'ts']",
         "community_link": null,
-        "confidence": "Verified Brand (Committed Catalog)",
-        "evidence": "Discovered via verified committed node FRENCH",
+        "confidence": "Regional Bouquet (French)",
+        "evidence": "Identified French channel/category bouquet from verified node.",
         "first_seen": "2026-09-06 21:24:20",
-        "last_seen": "2026-09-06 21:24:20"
+        "last_seen": "2026-09-06 21:24:20",
+        "regional_focus": "French"
     },
     "filex.me:8080": {
         "domain": "filex.me:8080",
@@ -2196,7 +2200,7 @@
     },
     "fyxthtkx.sidiman.com:80": {
         "domain": "fyxthtkx.sidiman.com:80",
-        "provider_name": "\ud83c\udfaf Identified: FRENCH",
+        "provider_name": "Unidentified Provider",
         "server": null,
         "cloudflare": "No",
         "timezone": "UTC",
@@ -2206,10 +2210,11 @@
         "rtmp_port": "25462",
         "allowed_formats": "['m3u8', 'ts']",
         "community_link": null,
-        "confidence": "Verified Brand (Committed Catalog)",
-        "evidence": "Discovered via verified committed node FRENCH",
+        "confidence": "Regional Bouquet (French)",
+        "evidence": "Identified French channel/category bouquet from verified node.",
         "first_seen": "2026-09-06 21:24:20",
-        "last_seen": "2026-09-06 21:24:20"
+        "last_seen": "2026-09-06 21:24:20",
+        "regional_focus": "French"
     },
     "1.ge-pro.cfd": {
         "domain": "1.ge-pro.cfd",
@@ -2230,7 +2235,7 @@
     },
     "rome66.xyz": {
         "domain": "rome66.xyz",
-        "provider_name": "\ud83c\udfaf Identified: FRENCH",
+        "provider_name": "Unidentified Provider",
         "server": null,
         "cloudflare": "No",
         "timezone": "UTC",
@@ -2240,10 +2245,11 @@
         "rtmp_port": "25462",
         "allowed_formats": "['m3u8', 'ts']",
         "community_link": null,
-        "confidence": "Verified Brand (Committed Catalog)",
-        "evidence": "Discovered via verified committed node FRENCH",
+        "confidence": "Regional Bouquet (French)",
+        "evidence": "Identified French channel/category bouquet from verified node.",
         "first_seen": "2026-09-06 21:24:20",
-        "last_seen": "2026-09-06 21:24:20"
+        "last_seen": "2026-09-06 21:24:20",
+        "regional_focus": "French"
     },
     "11312-ware.cdn-o2.me:80": {
         "domain": "11312-ware.cdn-o2.me:80",
@@ -2281,7 +2287,7 @@
     },
     "iufyctwm.xandoria.cc": {
         "domain": "iufyctwm.xandoria.cc",
-        "provider_name": "\ud83c\udfaf Identified: FRENCH",
+        "provider_name": "Unidentified Provider",
         "server": null,
         "cloudflare": "No",
         "timezone": "UTC",
@@ -2291,10 +2297,11 @@
         "rtmp_port": "25462",
         "allowed_formats": "['m3u8', 'ts']",
         "community_link": null,
-        "confidence": "Verified Brand (Committed Catalog)",
-        "evidence": "Discovered via verified committed node FRENCH",
+        "confidence": "Regional Bouquet (French)",
+        "evidence": "Identified French channel/category bouquet from verified node.",
         "first_seen": "2026-09-06 21:24:20",
-        "last_seen": "2026-09-06 21:24:20"
+        "last_seen": "2026-09-06 21:24:20",
+        "regional_focus": "French"
     },
     "kamariato.com:80": {
         "domain": "kamariato.com:80",
@@ -2349,7 +2356,7 @@
     },
     "dzi-tech.net": {
         "domain": "dzi-tech.net",
-        "provider_name": "\ud83c\udfaf Identified: FRENCH",
+        "provider_name": "Unidentified Provider",
         "server": null,
         "cloudflare": "No",
         "timezone": "UTC",
@@ -2359,9 +2366,10 @@
         "rtmp_port": "25462",
         "allowed_formats": "['m3u8', 'ts']",
         "community_link": null,
-        "confidence": "Verified Brand (Committed Catalog)",
-        "evidence": "Discovered via verified committed node FRENCH",
+        "confidence": "Regional Bouquet (French)",
+        "evidence": "Identified French channel/category bouquet from verified node.",
         "first_seen": "2026-09-06 21:24:20",
-        "last_seen": "2026-09-06 21:24:20"
+        "last_seen": "2026-09-06 21:24:20",
+        "regional_focus": "French"
     }
 }

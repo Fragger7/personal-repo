@@ -76,13 +76,39 @@ data class CommittedRecord(
     val safeEgressDetails get() = egressDetails ?: ""
     val safeProvider: String
         get() {
-            if (!provider.isNullOrEmpty() && provider != "Unknown") return provider
+            if (!provider.isNullOrEmpty() && provider != "Unknown" && provider != "Unbranded") {
+                if (ProviderIntelligenceManager.isDemonymOrCountry(provider)) {
+                    val intel = ProviderIntelligenceManager.getProfile(safeBaseUrl)
+                    if (intel != null && intel.isIdentified) {
+                        return intel.cleanBrand
+                    }
+                    return try {
+                        val uri = java.net.URI(safeBaseUrl)
+                        uri.host ?: "Unbranded"
+                    } catch (e: Exception) {
+                        "Unbranded"
+                    }
+                }
+                return provider
+            }
+            val intel = ProviderIntelligenceManager.getProfile(safeBaseUrl)
+            if (intel != null && intel.isIdentified) {
+                return intel.cleanBrand
+            }
             return try {
                 val uri = java.net.URI(safeBaseUrl)
                 uri.host ?: "Unknown"
             } catch (e: Exception) {
                 "Unknown"
             }
+        }
+    val safeRegionalFocus: String?
+        get() {
+            if (!provider.isNullOrEmpty() && ProviderIntelligenceManager.isDemonymOrCountry(provider)) {
+                return ProviderIntelligenceManager.getRegionalFocusFor(provider)
+            }
+            val intel = ProviderIntelligenceManager.getProfile(safeBaseUrl)
+            return intel?.safeRegionalFocus
         }
     val safeTimezone get() = serverTimezone ?: ""
     val safeNotes get() = notes ?: ""

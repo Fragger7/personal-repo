@@ -129,12 +129,32 @@ fun ProviderIntelligenceCard(
                                     fontWeight = FontWeight.Bold
                                 )
                                 Spacer(modifier = Modifier.height(2.dp))
-                                Text(
-                                    text = displayProfile.cleanBrand,
-                                    color = if (displayProfile.isIdentified) Color(0xFFC084FC) else AppTextPrimary,
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    fontWeight = FontWeight.Bold
-                                )
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    Text(
+                                        text = displayProfile.cleanBrand,
+                                        color = if (displayProfile.isIdentified) Color(0xFFC084FC) else AppTextPrimary,
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                    if (displayProfile.safeRegionalFocus != null) {
+                                        Surface(
+                                            shape = RoundedCornerShape(6.dp),
+                                            color = Color(0xFF38BDF8).copy(alpha = 0.15f),
+                                            border = BorderStroke(1.dp, Color(0xFF38BDF8).copy(alpha = 0.35f))
+                                        ) {
+                                            Text(
+                                                text = "🌍 ${displayProfile.safeRegionalFocus} Bouquet",
+                                                color = Color(0xFF38BDF8),
+                                                style = MaterialTheme.typography.labelSmall,
+                                                fontWeight = FontWeight.Medium,
+                                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                            )
+                                        }
+                                    }
+                                }
                             }
 
                             Surface(

@@ -34,6 +34,7 @@ data class ProviderProfile(
     @SerializedName("community_link") val communityLink: String? = null,
     @SerializedName("confidence") val confidence: String? = null,
     @SerializedName("evidence") val evidence: String? = null,
+    @SerializedName("regional_focus") val regionalFocus: String? = null,
     @SerializedName("first_seen") val firstSeen: String? = null,
     @SerializedName("last_seen") val lastSeen: String? = null
 ) {
@@ -41,7 +42,9 @@ data class ProviderProfile(
         get() {
             if (providerName.startsWith("🎯 Identified: ")) {
                 val candidate = providerName.removePrefix("🎯 Identified: ").trim()
-                if (candidate.startsWith("nginx", ignoreCase = true) || candidate.startsWith("apache", ignoreCase = true) || candidate.equals("cloudflare", ignoreCase = true)) {
+                val lowerCandidate = candidate.lowercase(Locale.ROOT)
+                if (candidate.startsWith("nginx", ignoreCase = true) || candidate.startsWith("apache", ignoreCase = true) || candidate.equals("cloudflare", ignoreCase = true) ||
+                    ProviderIntelligenceManager.isDemonymOrCountry(lowerCandidate) || candidate.startsWith("Link:", ignoreCase = true)) {
                     return "Unidentified Provider"
                 }
                 return candidate
@@ -50,6 +53,10 @@ data class ProviderProfile(
                 return "Unidentified Provider"
             }
             if (providerName.isNotBlank() && !providerName.startsWith("Host:")) {
+                val lower = providerName.lowercase(Locale.ROOT)
+                if (ProviderIntelligenceManager.isDemonymOrCountry(lower) || providerName.startsWith("Link:", ignoreCase = true)) {
+                    return "Unidentified Provider"
+                }
                 return providerName
             }
             return "Unidentified Provider"
@@ -59,12 +66,18 @@ data class ProviderProfile(
         get() {
             if (providerName.startsWith("🎯 Identified: ")) {
                 val candidate = providerName.removePrefix("🎯 Identified: ").trim()
-                if (candidate.startsWith("nginx", ignoreCase = true) || candidate.startsWith("apache", ignoreCase = true) || candidate.equals("cloudflare", ignoreCase = true)) {
+                val lowerCandidate = candidate.lowercase(Locale.ROOT)
+                if (candidate.startsWith("nginx", ignoreCase = true) || candidate.startsWith("apache", ignoreCase = true) || candidate.equals("cloudflare", ignoreCase = true) ||
+                    ProviderIntelligenceManager.isDemonymOrCountry(lowerCandidate) || candidate.startsWith("Link:", ignoreCase = true)) {
                     return false
                 }
                 return true
             }
             if (providerName.startsWith("👤 Host: ") || providerName.startsWith("Host:") || providerName.equals("Unbranded Node", ignoreCase = true) || providerName.equals("Unidentified Provider", ignoreCase = true)) {
+                return false
+            }
+            val lower = providerName.lowercase(Locale.ROOT)
+            if (ProviderIntelligenceManager.isDemonymOrCountry(lower) || providerName.startsWith("Link:", ignoreCase = true)) {
                 return false
             }
             return (!confidence.isNullOrBlank() && !confidence.startsWith("Unknown") && confidence != "Generic" && confidence != "Server Fingerprint")
@@ -74,8 +87,13 @@ data class ProviderProfile(
     val safeCloudflare get() = cloudflare ?: "No"
     val safeTimezone get() = timezone ?: "UTC"
     val safeCommunityLink get() = communityLink ?: ""
-    val safeConfidence get() = confidence ?: if (isIdentified) "High Confidence (90%)" else "Unknown (No Signatures Found)"
-    val safeEvidence get() = evidence ?: if (isIdentified) "Identified via provider footprint" else "No recognized watermark in server response or channel metadata."
+    val safeRegionalFocus: String? get() {
+        if (!regionalFocus.isNullOrBlank()) return regionalFocus
+        val lower = providerName.removePrefix("🎯 Identified: ").trim().lowercase(Locale.ROOT)
+        return ProviderIntelligenceManager.getRegionalFocusFor(lower)
+    }
+    val safeConfidence get() = confidence ?: if (isIdentified) "High Confidence (90%)" else if (safeRegionalFocus != null) "Regional Bouquet (No Infrastructure Signature)" else "Unknown (No Signatures Found)"
+    val safeEvidence get() = evidence ?: if (isIdentified) "Identified via provider footprint" else if (safeRegionalFocus != null) "Identified $safeRegionalFocus channel/category bouquet, but upstream provider infrastructure remains unbranded." else "No recognized watermark in server response or channel metadata."
 }
 
 object ProviderIntelligenceManager {
@@ -126,6 +144,10 @@ object ProviderIntelligenceManager {
         Pair("Star IPTV", listOf("star iptv", "star-iptv", "star 4k iptv")),
         Pair("Beast TV", listOf("beast tv", "beasttv", "beast iptv", "beast-iptv", "beastott")),
         Pair("Helix IPTV", listOf("helix iptv", "helix hosting", "helix-iptv", "helixtv")),
+        Pair("NordicOne (N1)", listOf("nordicone", "nordic one", "nordic-one", "n1 iptv", "n1-iptv", "nordic1", "nordic one iptv")),
+        Pair("Viking IPTV", listOf("viking iptv", "vikingiptv", "viking-iptv", "viking ott", "vikingott")),
+        Pair("Svenska TV", listOf("svenska tv", "svenskatv", "svenska iptv", "svenskaiptv")),
+        Pair("VocoTV", listOf("vocotv", "voco tv", "voco-tv", "vocotv.app", "voco iptv")),
         Pair("IBO Player", listOf("ibo player", "iboplayer", "ibopro")),
         Pair("BOB Player", listOf("bob player", "bobplayer")),
         Pair("SET IPTV", listOf("set iptv", "setiptv")),
@@ -136,12 +158,62 @@ object ProviderIntelligenceManager {
         Pair("Exclusive OTT", listOf("welcome to exclusive", "exclusive iptv"))
     )
 
+    val COUNTRY_DEMONYM_MAP = mapOf(
+        "france" to "French", "french" to "French", "francais" to "French", "francaise" to "French",
+        "sweden" to "Swedish / Nordic", "swedish" to "Swedish / Nordic", "sverige" to "Swedish / Nordic", "svenska" to "Swedish / Nordic",
+        "norway" to "Norwegian / Nordic", "norwegian" to "Norwegian / Nordic", "norge" to "Norwegian / Nordic", "norsk" to "Norwegian / Nordic",
+        "denmark" to "Danish / Nordic", "danish" to "Danish / Nordic", "danmark" to "Danish / Nordic", "dansk" to "Danish / Nordic",
+        "finland" to "Finnish / Nordic", "finnish" to "Finnish / Nordic", "suomi" to "Finnish / Nordic",
+        "nordic" to "Nordic", "scandinavia" to "Nordic", "scandinavian" to "Nordic",
+        "arabic" to "Arabic", "arab" to "Arabic", "arabe" to "Arabic", "arabs" to "Arabic",
+        "italy" to "Italian", "italian" to "Italian", "italia" to "Italian", "italiano" to "Italian",
+        "germany" to "German", "german" to "German", "deutschland" to "German", "deutsch" to "German",
+        "spain" to "Spanish", "spanish" to "Spanish", "espana" to "Spanish", "espanol" to "Spanish",
+        "portugal" to "Portuguese", "portuguese" to "Portuguese", "portugues" to "Portuguese",
+        "brazil" to "Brazilian", "brazilian" to "Brazilian", "brasil" to "Brazilian",
+        "netherlands" to "Dutch", "dutch" to "Dutch", "holland" to "Dutch", "nederland" to "Dutch",
+        "turkey" to "Turkish", "turkish" to "Turkish", "turkce" to "Turkish", "turkiye" to "Turkish",
+        "greece" to "Greek", "greek" to "Greek", "ellada" to "Greek",
+        "poland" to "Polish", "polish" to "Polish", "polska" to "Polish", "polski" to "Polish",
+        "romania" to "Romanian", "romanian" to "Romanian",
+        "russia" to "Russian", "russian" to "Russian",
+        "albania" to "Albanian", "albanian" to "Albanian", "shqip" to "Albanian",
+        "exyu" to "Ex-Yu / Balkan", "balkan" to "Ex-Yu / Balkan", "serbia" to "Balkan", "croatia" to "Balkan", "bosnia" to "Balkan",
+        "uk" to "UK / British", "british" to "UK / British", "england" to "UK / British", "united kingdom" to "UK / British",
+        "usa" to "USA", "us" to "USA", "america" to "USA", "american" to "USA",
+        "canada" to "Canadian", "canadian" to "Canadian",
+        "pakistan" to "Pakistani", "pak" to "Pakistani", "india" to "Indian", "hindi" to "Indian", "urdu" to "Pakistani / Urdu"
+    )
+
+    fun isDemonymOrCountry(term: String): Boolean {
+        val clean = term.lowercase(Locale.ROOT).trim()
+        return COUNTRY_DEMONYM_MAP.containsKey(clean) || clean in setOf(
+            "french", "france", "swedish", "sweden", "arabic", "arab", "italian", "italy",
+            "german", "germany", "spanish", "spain", "portuguese", "portugal", "brazilian", "brazil",
+            "dutch", "netherlands", "turkish", "turkey", "greek", "greece", "polish", "poland",
+            "romanian", "romania", "russian", "russia", "albanian", "albania", "nordic", "scandinavian"
+        )
+    }
+
+    fun getRegionalFocusFor(term: String): String? {
+        val clean = term.lowercase(Locale.ROOT).trim()
+        return COUNTRY_DEMONYM_MAP[clean]
+    }
+
     private val GENERIC_BLACKLIST = setOf(
         "vip", "vod", "series", "movies", "live", "channels", "channel",
         "sport", "sports", "kids", "news", "catchup", "all", "xxx", "adult",
         "4k", "fhd", "hd", "hevc", "sd", "h265", "raw", "premium", "ultra",
-        "usa", "uk", "latino", "arabic", "france", "italy", "germany",
-        "spain", "turkey", "canada", "brazil", "world", "general", "tv",
+        "usa", "us", "america", "american", "uk", "british", "england", "latino",
+        "arabic", "arab", "arabe", "france", "french", "francais", "francaise",
+        "italy", "italian", "italia", "italiano", "germany", "german", "deutsch", "deutschland",
+        "spain", "spanish", "espana", "espanol", "turkey", "turkish", "turkce", "turkiye",
+        "canada", "canadian", "brazil", "brazilian", "portugal", "portuguese",
+        "netherlands", "dutch", "holland", "sweden", "swedish", "sverige", "svenska",
+        "norway", "norwegian", "denmark", "danish", "finland", "finnish", "nordic", "scandinavian",
+        "greece", "greek", "poland", "polish", "romania", "romanian", "russia", "russian",
+        "albania", "albanian", "shqip", "exyu", "balkan", "india", "pakistan",
+        "world", "general", "tv",
         "cinema", "documentary", "music", "radio", "entertainment",
         "action", "comedy", "drama", "family", "horror", "thriller",
         "animation", "anime", "backup", "test", "demo", "stream", "server",
@@ -177,6 +249,7 @@ object ProviderIntelligenceManager {
                     communityLink = values["community_link"]?.toString(),
                     confidence = values["confidence"]?.toString(),
                     evidence = values["evidence"]?.toString(),
+                    regionalFocus = values["regional_focus"]?.toString(),
                     firstSeen = values["first_seen"]?.toString(),
                     lastSeen = values["last_seen"]?.toString()
                 )
@@ -403,8 +476,9 @@ object ProviderIntelligenceManager {
         val brandScores = mutableMapOf<String, Int>()
         var foundCommunityLink: String? = existing.communityLink
         var detectedEvidence: String? = existing.evidence
+        var detectedRegionalFocus: String? = existing.safeRegionalFocus
 
-        val contactRegex = Pattern.compile("(t\\.me/[a-zA-Z0-9_]+|discord\\.gg/[a-zA-Z0-9_]+|wa\\.me/\\d+|https?://[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}/[a-zA-Z0-9_.-]*)", Pattern.CASE_INSENSITIVE)
+        val contactRegex = Pattern.compile("(t\\.me/[a-zA-Z0-9_]+|discord\\.gg/[a-zA-Z0-9_]+|discord\\.com/invite/[a-zA-Z0-9_]+|wa\\.me/\\d+|chat\\.whatsapp\\.com/[a-zA-Z0-9_]+)", Pattern.CASE_INSENSITIVE)
         val bannerRegex = Pattern.compile("^[#=~\\|\\*\\-\\+]{2,}\\s*(.+?)\\s*[#=~\\|\\*\\-\\+]{2,}$")
         val categoryPrefixRegex = Pattern.compile("^(?:\\|[A-Za-z0-9\\s\\-_.]+\\||\\[[A-Za-z0-9\\s\\-_.]+\\])\\s*([A-Za-z0-9\\s\\-_.]+)")
         val bracketPrefixRegex = Pattern.compile("^\\[([a-zA-Z0-9\\s\\-_.]+)\\]")
@@ -413,6 +487,16 @@ object ProviderIntelligenceManager {
             if (text.isNullOrBlank()) return
             val clean = text.trim()
             val lower = clean.lowercase(Locale.ROOT)
+
+            // Detect Regional Focus (e.g. French, Swedish, Arabic) from Categories/Banners
+            if (detectedRegionalFocus == null) {
+                for ((term, focusLabel) in COUNTRY_DEMONYM_MAP) {
+                    if (lower.contains(term)) {
+                        detectedRegionalFocus = focusLabel
+                        break
+                    }
+                }
+            }
 
             // 1. Community Links
             val contactMatcher = contactRegex.matcher(clean)
@@ -441,6 +525,7 @@ object ProviderIntelligenceManager {
                 val candidate = bannerMatcher.group(1)?.trim() ?: ""
                 val lowerCandidate = candidate.lowercase(Locale.ROOT)
                 if (candidate.length in 4..35 && !GENERIC_BLACKLIST.contains(lowerCandidate) &&
+                    !isDemonymOrCountry(lowerCandidate) &&
                     !candidate.all { !it.isLetterOrDigit() }
                 ) {
                     brandScores[candidate] = (brandScores[candidate] ?: 0) + 18
@@ -454,7 +539,7 @@ object ProviderIntelligenceManager {
                 if (prefixMatcher.find()) {
                     val p = prefixMatcher.group(1)?.trim() ?: ""
                     val lowerP = p.lowercase(Locale.ROOT)
-                    if (p.length in 3..25 && !GENERIC_BLACKLIST.contains(lowerP) && !p.all { !it.isLetterOrDigit() }) {
+                    if (p.length in 3..25 && !GENERIC_BLACKLIST.contains(lowerP) && !isDemonymOrCountry(lowerP) && !p.all { !it.isLetterOrDigit() }) {
                         KNOWN_PROVIDERS.forEach { (brandName, triggers) ->
                             if (triggers.any { lowerP.contains(it) }) {
                                 brandScores[brandName] = (brandScores[brandName] ?: 0) + 20
@@ -468,8 +553,13 @@ object ProviderIntelligenceManager {
         categoriesData?.forEach { analyzeText(it.name, isCategory = true) }
         streamsData?.take(300)?.forEach { analyzeText(it.name, isCategory = false) }
 
-        if (brandScores.isNotEmpty()) {
-            val bestCandidate = brandScores.maxByOrNull { it.value }
+        // Filter out any accidental demonym, country, or URL links from candidate brands
+        val filteredBrandScores = brandScores.filterKeys { k ->
+            !isDemonymOrCountry(k) && !k.startsWith("Link:", ignoreCase = true) && !k.contains("pluto.png", ignoreCase = true)
+        }
+
+        if (filteredBrandScores.isNotEmpty()) {
+            val bestCandidate = filteredBrandScores.maxByOrNull { it.value }
             if (bestCandidate != null && bestCandidate.value >= 12) {
                 val bestBrand = bestCandidate.key
                 val hostMatchedExisting = existing.providerName.contains(bestBrand, ignoreCase = true)
@@ -491,6 +581,7 @@ object ProviderIntelligenceManager {
                     communityLink = foundCommunityLink,
                     confidence = confidence,
                     evidence = evidenceMsg,
+                    regionalFocus = detectedRegionalFocus,
                     lastSeen = nowStr
                 )
                 profiles[domain] = updated
@@ -499,13 +590,20 @@ object ProviderIntelligenceManager {
             }
         }
 
-        // If categories or streams were actively queried but nothing matched, mark explicitly as Unidentified
+        // If categories or streams were actively queried but nothing matched infrastructure brand:
         val checkedCount = (categoriesData?.size ?: 0) + (streamsData?.size ?: 0)
         if (checkedCount > 0 && !existing.isIdentified) {
+            val conf = if (detectedRegionalFocus != null) "Regional Bouquet ($detectedRegionalFocus)" else "Unknown (0% Confidence - No Signatures)"
+            val evid = if (detectedRegionalFocus != null) {
+                "Identified $detectedRegionalFocus channel/category bouquet, but upstream provider infrastructure remains unbranded."
+            } else {
+                "Checked $checkedCount categories and streams. No recognized provider signatures found."
+            }
             val updated = existing.copy(
                 providerName = "Unidentified Provider",
-                confidence = "Unknown (0% Confidence - No Signatures)",
-                evidence = "Checked $checkedCount categories and streams. No recognized provider signatures found.",
+                confidence = conf,
+                evidence = evid,
+                regionalFocus = detectedRegionalFocus,
                 lastSeen = nowStr
             )
             profiles[domain] = updated
