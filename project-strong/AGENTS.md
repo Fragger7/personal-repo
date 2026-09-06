@@ -77,7 +77,13 @@ This document contains the complete system architecture, operational decisions, 
   * Yields 99% cross-verified confidence ratings (`Verified Brand`, `Category Watermark`, `Domain Heuristic`).
 * **Bundled Knowledge Base**:
   * Bundles 2,127+ provider forensic profiles in `provider_intelligence.json` and Android assets for instant zero-latency offline brand recognition on first boot.
-  * Synchronizes bidirectional updates seamlessly to GitHub repository when new fingerprints are detected.
+  * Synchronizes bidirectional updates seamlessly to GitHub repository when new fingerprints are detected via `.github/workflows/scrape-provider-intel.yml` and `scripts/sync_provider_intel.py`.
+* **Country/Demonym Filtering & Regional Bouquet Separation**:
+  * **The False-Positive Problem**: In IPTV playlists, category/delimiter headers like `=== FRENCH ===`, `### SWEDISH ###`, or `|AR| ARABIC` were frequently mined as provider company names, causing unbranded servers to be falsely classified under country names.
+  * **Architectural Decoupling**: Decouples the **Upstream Infrastructure Brand** (e.g. *Strong 8K*, *Crystal*, *King 365*, *Trex*, or *Unbranded*) from the **Regional Content Bouquet** (e.g. *French*, *Swedish / Nordic*, *Arabic*).
+  * **Multilingual Demonym Dictionary (`COUNTRY_DEMONYM_MAP`)**: Covers 30+ regional languages across Kotlin and Python. Any standalone country or demonym is promoted to `regional_focus` metadata rather than corrupting the provider name.
+  * **Compound Brand Preservation**: Retains authentic compound brand names with geographic terms (e.g. *French OTT*, *Viking IPTV*, *NordicOne (N1)*).
+  * **Dedicated UI Badging**: Renders a dedicated `🌍 [Region] Bouquet` badge (e.g. `🌍 French Bouquet`) in `ProviderIntelligenceCard.kt` and surfaces `safeRegionalFocus` across `CommittedRecord`.
 
 ---
 
@@ -246,6 +252,7 @@ Remove-Item -Recurse -Force "C:\Development\Apps\Project Strong\personal-repo-te
 | **Edge-to-Edge System Bar Tinting & Immersive Canvas** | `MainActivity.kt`, `enableEdgeToEdge`, `SystemBarStyle.dark`, `systemBarsPadding` | 🟢 **Verified & Live** |
 | **CI/CD Branded Release Artifacts & GitHub Releases** | `.github/workflows/android-build.yml`, `sherlock-streams-v1.10.{run}.apk` naming, `sherlock-streams-apk` artifact | 🟢 **Verified & Live** |
 | **Automated Weekly Provider Intelligence Sync** | `.github/workflows/scrape-provider-intel.yml`, `sync_provider_intel.py`, `permissions: contents: write`, cross-catalog auto-learning | 🟢 **Verified & Live** |
+| **Regional Bouquet & Demonym Filter Engine** | `ProviderIntelligence.kt`, `ProviderIntelligenceCard.kt`, `CommittedManager.kt`, `sync_provider_intel.py`, `app.py`, 30+ regional dictionaries, `regionalFocus` metadata, `🌍 Regional Bouquet` UI badge | 🟢 **Verified & Live** |
 
 ---
 
@@ -288,4 +295,7 @@ Remove-Item -Recurse -Force "C:\Development\Apps\Project Strong\personal-repo-te
 *   **GitHub Actions Workflow Git Push Permissions (`scrape-provider-intel.yml`)**:
     *   *The Skeleton*: In GitHub Actions, default `GITHUB_TOKEN` permissions are read-only. Workflows pushing commits back to the repository (like the weekly provider intelligence sync) will fail with HTTP 403 `Permission to Fragger7/personal-repo.git denied to github-actions[bot]` unless explicitly granted write scopes.
     *   *The Fix*: Always declare `permissions: contents: write` at the top or job level of any workflow running `git push`. Pair this with `git pull --rebase origin main || true` before push to prevent fast-forward collisions with sister workflows, and ensure `sync_provider_intel.py` only rewrites files when genuine updates (`updated_count > 0`) are detected using 4-space indent formatting to prevent spurious 4,000+ line whitespace diffs.
+*   **The Category Demonym / Country Provider Trap (`ProviderIntelligence.kt`, `sync_provider_intel.py`, `CommittedManager.kt`)**:
+    *   *The Skeleton*: IPTV playlists heavily use country/demonym delimiter banners (e.g. `=== FRENCH ===`, `### SWEDISH ###`, `|AR| ARABIC |AR|`). Naive banner parsing mistakes these category headers for upstream infrastructure brand names, tagging unbranded nodes as `"🎯 Identified: FRENCH"`. When saved to `committed.json`, the weekly scraper ingests them as confirmed provider names, creating a self-reinforcing false-positive feedback loop.
+    *   *The Fix*: Always filter candidate brand names through `COUNTRY_DEMONYM_MAP` / `isDemonymOrCountry`. Demote country names from "Provider Brand" to "Regional Bouquet" (`regional_focus`), display them as a separate `🌍 [Region] Bouquet` UI pill, keep the provider field as `Unidentified Provider` / domain, and preserve compound brand names (e.g., *French OTT*, *Viking IPTV*).
 

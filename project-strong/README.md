@@ -38,6 +38,10 @@ The native Android app (`/android`) runs directly on mobile/residential IP conne
 * **Provider Intelligence & Brand Forensics**:
   * Bundles 2,127+ offline provider forensic profiles for instant brand detection.
   * Delimiter scraper (Telegram, Discord, WhatsApp, banner channels) with 99% consensus verification.
+* **Regional Bouquet & Demonym Filter Engine**:
+  * Decouples **Upstream Infrastructure Brands** (e.g., *Strong 8K*, *Crystal*, *King 365*, *Trex*) from **Regional Content Bouquets** (e.g., *French*, *Swedish / Nordic*, *Arabic*).
+  * Multilingual dictionary (`COUNTRY_DEMONYM_MAP`) eliminating false-positive provider brand labeling from category delimiters (e.g., `=== FRENCH ===`, `### SWEDISH ###`, `|AR| ARABIC`).
+  * Dedicated `🌍 [Region] Bouquet` UI badging in the Deep-Dive Inspector and `safeRegionalFocus` across data grids.
 * **Hierarchical Channel & VOD Catalog Explorer**:
   * Collapsible categorized channel lists with fast search filtering, individual category counters, and 1-tap stream testing.
 * **Stream Egress & Ghost Line Verification Engine (`probeStreamEgress`)**:
@@ -113,4 +117,7 @@ A lightweight web application featuring multi-tiered async validation, automated
 *   **Mono-Repo Git Constraint (`git_push.cjs`)**:
     *   *The Skeleton*: The target GitHub repository contains other sister projects at its root. 
     *   *The Fix*: You must only push using the `node git_push.cjs` script. It strictly isolates modifications to the `project-strong/` sub-directory. Running standard `git push` manually from the AI Studio root will overwrite or delete the user's other repository contents.
+*   **The Category Demonym / Country Provider Trap (`ProviderIntelligence.kt`, `sync_provider_intel.py`, `CommittedManager.kt`)**:
+    *   *The Skeleton*: IPTV playlists heavily use country/demonym delimiter banners (e.g. `=== FRENCH ===`, `### SWEDISH ###`, `|AR| ARABIC |AR|`). Naive banner parsing mistakes these category headers for upstream infrastructure brand names, tagging unbranded nodes as `"🎯 Identified: FRENCH"`. When saved to `committed.json`, the weekly scraper ingests them as confirmed provider names, creating a self-reinforcing false-positive feedback loop.
+    *   *The Fix*: Always filter candidate brand names through `COUNTRY_DEMONYM_MAP` / `isDemonymOrCountry`. Demote country names from "Provider Brand" to "Regional Bouquet" (`regional_focus`), display them as a separate `🌍 [Region] Bouquet` UI pill, keep the provider field as `Unidentified Provider` / domain, and preserve compound brand names (e.g., *French OTT*, *Viking IPTV*).
 
