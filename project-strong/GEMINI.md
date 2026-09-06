@@ -245,6 +245,7 @@ Remove-Item -Recurse -Force "C:\Development\Apps\Project Strong\personal-repo-te
 | **Landscape Full-Width Data Grids & Viewport Optimization** | `CommittedTab.kt`, `XtreamTab.kt`, `StalkerTab.kt`, `weight(1f)` scroll binding, single-row compact action headers | 🟢 **Verified & Live** |
 | **Edge-to-Edge System Bar Tinting & Immersive Canvas** | `MainActivity.kt`, `enableEdgeToEdge`, `SystemBarStyle.dark`, `systemBarsPadding` | 🟢 **Verified & Live** |
 | **CI/CD Branded Release Artifacts & GitHub Releases** | `.github/workflows/android-build.yml`, `sherlock-streams-v1.10.{run}.apk` naming, `sherlock-streams-apk` artifact | 🟢 **Verified & Live** |
+| **Automated Weekly Provider Intelligence Sync** | `.github/workflows/scrape-provider-intel.yml`, `sync_provider_intel.py`, `permissions: contents: write`, cross-catalog auto-learning | 🟢 **Verified & Live** |
 
 ---
 
@@ -252,9 +253,7 @@ Remove-Item -Recurse -Force "C:\Development\Apps\Project Strong\personal-repo-te
 
 1. **Foldable / Large-Screen Dual-Pane Adaptation**:
    * For tablets and foldables with screen width exceeding 840dp (`WindowWidthSizeClass.Expanded`), provide an optional layout toggle to enable side-by-side master-detail inspector layout, while preserving full-width mode for standard phone landscape displays.
-2. **Automated Weekly Provider Intelligence Sync (GitHub Actions Cron)**:
-   * Scheduled workflow (`.github/workflows/scrape-provider-intel.yml`) to scrape new upstream provider delimiters and sync `provider_intelligence.json`.
-3. **Advanced Stream Output Formats & TLS Evasion**:
+2. **Advanced Stream Output Formats & TLS Evasion**:
    * Add options for custom TLS cipher suites and alternative stream format switching (`/live/{u}/{p}/{id}.ts` vs `.m3u8` vs `/play/`).
 
 
@@ -286,4 +285,7 @@ Remove-Item -Recurse -Force "C:\Development\Apps\Project Strong\personal-repo-te
 *   **Mono-Repo Git Constraint (`git_push.cjs`)**:
     *   *The Skeleton*: The target GitHub repository contains other sister projects at its root. 
     *   *The Fix*: You must only push using the `node git_push.cjs` script. It strictly isolates modifications to the `project-strong/` sub-directory. Running standard `git push` manually from the AI Studio root will overwrite or delete the user's other repository contents.
+*   **GitHub Actions Workflow Git Push Permissions (`scrape-provider-intel.yml`)**:
+    *   *The Skeleton*: In GitHub Actions, default `GITHUB_TOKEN` permissions are read-only. Workflows pushing commits back to the repository (like the weekly provider intelligence sync) will fail with HTTP 403 `Permission to Fragger7/personal-repo.git denied to github-actions[bot]` unless explicitly granted write scopes.
+    *   *The Fix*: Always declare `permissions: contents: write` at the top or job level of any workflow running `git push`. Pair this with `git pull --rebase origin main || true` before push to prevent fast-forward collisions with sister workflows, and ensure `sync_provider_intel.py` only rewrites files when genuine updates (`updated_count > 0`) are detected using 4-space indent formatting to prevent spurious 4,000+ line whitespace diffs.
 
