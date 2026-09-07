@@ -1,5 +1,37 @@
 [
   {
+    "id": "ebay_298621941554",
+    "source": "ebay",
+    "title": "Dell Precision 5680 Intel Core i9 512GB 32GB RAM 16inch FHD NVIDIA RTX 2000Opens in a new window or tab",
+    "price": 887.5,
+    "url": "https://www.ebay.com/itm/298621941554",
+    "specs": {
+      "cpu": "Intel Core i7/i9 12th/13th-Gen H",
+      "ram_gb": 32,
+      "ssd_gb": 512,
+      "gpu": "NVIDIA RTX / Workstation GPU",
+      "screen": "15.6\" - 16\" Workstation Display",
+      "condition": "Used / Refurbished"
+    },
+    "fair_market_value": 1250.0,
+    "estimated_profit": 362.5,
+    "arbitrage_margin_pct": 40.8,
+    "deal_score": 7.3,
+    "summary": "Opportunistic target priced at $888 with +$289 margin spread. Configured with Intel Core i7/i9 12th/13th-Gen H, 32GB RAM, 512GB SSD, and NVIDIA RTX / Workstation GPU. Excellent daily driver for full-stack engineering, multi-container development, and data analysis.",
+    "actionable_recommendation": "PASS / NO ARBITRAGE (Exceeds Strike Ceiling)",
+    "confidence_score": 0.95,
+    "seller": "eBay Seller",
+    "location": "US",
+    "created_utc": "2026-09-07T00:04:37.306327+00:00",
+    "evaluated_at": "2026-09-07T00:05:21.167792+00:00",
+    "alerted": false,
+    "is_high_yield": false,
+    "raw_payload": null,
+    "is_auction": false,
+    "bid_count": null,
+    "time_left": null
+  },
+  {
     "id": "ebay_227508209009",
     "source": "ebay",
     "title": "New ListingDell Precision 5680 16\" FHD+ i7-13800H 512GB NVMe 64GB RAM RTX A1000 6GB Win 11Opens in a new window or tab",
