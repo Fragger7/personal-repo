@@ -47,6 +47,22 @@ enum class CommittedSortColumn {
     DATE_ADDED, TYPE, STATUS, SYNC, HOST, PROVIDER, CHANNELS, VODS, DAYS_LEFT, EXPIRES, SOURCE, ROOMS, CONTENT
 }
 
+object CommittedFilterStore {
+    var rooms = mutableStateOf(emptySet<String>())
+    var content = mutableStateOf(emptySet<String>())
+    var provider = mutableStateOf(emptySet<String>())
+    var timezone = mutableStateOf(emptySet<String>())
+    var status = mutableStateOf(emptySet<String>())
+    
+    fun clear() {
+        rooms.value = emptySet()
+        content.value = emptySet()
+        provider.value = emptySet()
+        timezone.value = emptySet()
+        status.value = emptySet()
+    }
+}
+
 @Composable
 fun CommittedTab() {
     val records = CommittedManager.records
@@ -498,39 +514,37 @@ fun CommittedMasterGrid(
     val listState = rememberLazyListState()
     val scrollState = rememberScrollState()
 
-    var filterRooms by remember { mutableStateOf("All") }
-    var filterContent by remember { mutableStateOf("All") }
-    var filterProvider by remember { mutableStateOf("All") }
-    var filterTimezone by remember { mutableStateOf("All") }
-    var filterStatus by remember { mutableStateOf("All") }
+    val filterRooms by CommittedFilterStore.rooms
+    val filterContent by CommittedFilterStore.content
+    val filterProvider by CommittedFilterStore.provider
+    val filterTimezone by CommittedFilterStore.timezone
+    val filterStatus by CommittedFilterStore.status
 
     val filteredRecords = remember(records.toList(), filterRooms, filterContent, filterProvider, filterTimezone, filterStatus) {
         records.filter { record ->
-            val matchRooms = when (filterRooms) {
-                "All" -> true
-                "None" -> record.safeRooms.isBlank()
-                else -> record.safeRooms.split(",").map { it.trim() }.contains(filterRooms)
+            val matchRooms = if (filterRooms.isEmpty()) true else {
+                val hasNone = filterRooms.contains("None")
+                val recordVals = record.safeRooms.split(",").map { it.trim() }.filter { it.isNotEmpty() }
+                (hasNone && recordVals.isEmpty()) || filterRooms.intersect(recordVals.toSet()).isNotEmpty()
             }
-            val matchContent = when (filterContent) {
-                "All" -> true
-                "None" -> record.safeContent.isBlank()
-                else -> record.safeContent.split(",").map { it.trim() }.contains(filterContent)
+            val matchContent = if (filterContent.isEmpty()) true else {
+                val hasNone = filterContent.contains("None")
+                val recordVals = record.safeContent.split(",").map { it.trim() }.filter { it.isNotEmpty() }
+                (hasNone && recordVals.isEmpty()) || filterContent.intersect(recordVals.toSet()).isNotEmpty()
             }
             val displayBrand = com.projectstrong.iptv.data.ProviderIntelligenceManager.getProfile(record.safeBaseUrl)?.cleanBrand ?: record.safeProvider.ifEmpty { "Unbranded" }
-            val matchProvider = when (filterProvider) {
-                "All" -> true
-                "None" -> displayBrand == "Unbranded" || displayBrand == "Unknown"
-                else -> displayBrand == filterProvider
+            val matchProvider = if (filterProvider.isEmpty()) true else {
+                val hasNone = filterProvider.contains("None")
+                val isNone = displayBrand == "Unbranded" || displayBrand == "Unknown"
+                (hasNone && isNone) || filterProvider.contains(displayBrand)
             }
-            val matchTimezone = when (filterTimezone) {
-                "All" -> true
-                "None" -> record.safeTimezone.isBlank()
-                else -> record.safeTimezone == filterTimezone
+            val matchTimezone = if (filterTimezone.isEmpty()) true else {
+                val hasNone = filterTimezone.contains("None")
+                (hasNone && record.safeTimezone.isBlank()) || filterTimezone.contains(record.safeTimezone)
             }
-            val matchStatus = when (filterStatus) {
-                "All" -> true
-                "None" -> record.safeStatus.isBlank()
-                else -> record.safeStatus == filterStatus
+            val matchStatus = if (filterStatus.isEmpty()) true else {
+                val hasNone = filterStatus.contains("None")
+                (hasNone && record.safeStatus.isBlank()) || filterStatus.contains(record.safeStatus)
             }
             matchRooms && matchContent && matchProvider && matchTimezone && matchStatus
         }
@@ -857,24 +871,25 @@ fun CommittedMasterGrid(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(Icons.Default.FilterList, contentDescription = "Filter", tint = AppTextSecondary, modifier = Modifier.size(20.dp).padding(end = 8.dp))
-                FilterDropdown("Rooms", distinctRooms, filterRooms) { filterRooms = it }
-                FilterDropdown("Content", distinctContent, filterContent) { filterContent = it }
-                FilterDropdown("Provider", distinctProviders, filterProvider) { filterProvider = it }
-                FilterDropdown("Timezone", distinctTimezones, filterTimezone) { filterTimezone = it }
-                FilterDropdown("Status", distinctStatuses, filterStatus) { filterStatus = it }
+                FilterDropdown("Rooms", distinctRooms, filterRooms) { CommittedFilterStore.rooms.value = it }
+                FilterDropdown("Content", distinctContent, filterContent) { CommittedFilterStore.content.value = it }
+                FilterDropdown("Provider", distinctProviders, filterProvider) { CommittedFilterStore.provider.value = it }
+                FilterDropdown("Timezone", distinctTimezones, filterTimezone) { CommittedFilterStore.timezone.value = it }
+                FilterDropdown("Status", distinctStatuses, filterStatus) { CommittedFilterStore.status.value = it }
                 
-                if (filterRooms != "All" || filterContent != "All" || filterProvider != "All" || filterTimezone != "All" || filterStatus != "All") {
-                    TextButton(onClick = {
-                        filterRooms = "All"
-                        filterContent = "All"
-                        filterProvider = "All"
-                        filterTimezone = "All"
-                        filterStatus = "All"
-                    }) {
+                if (filterRooms.isNotEmpty() || filterContent.isNotEmpty() || filterProvider.isNotEmpty() || filterTimezone.isNotEmpty() || filterStatus.isNotEmpty()) {
+                    TextButton(onClick = { CommittedFilterStore.clear() }) {
                         Text("Clear Filters", color = Color(0xFFEF4444))
                     }
                 }
             }
+            
+            Text(
+                text = "Showing ${sortedRecords.size} of ${records.size}",
+                color = AppTextMuted,
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.padding(start = 16.dp, bottom = 4.dp)
+            )
         }
 
         Surface(

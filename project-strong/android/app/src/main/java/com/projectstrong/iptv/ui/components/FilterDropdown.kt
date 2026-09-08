@@ -24,10 +24,19 @@ import com.projectstrong.iptv.ui.theme.AppTextPrimary
 fun FilterDropdown(
     label: String,
     options: List<String>,
-    selectedOption: String,
-    onOptionSelected: (String) -> Unit
+    selectedOptions: Set<String>,
+    onSelectionChanged: (Set<String>) -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
+    
+    val displayText = if (selectedOptions.isEmpty()) {
+        "Any"
+    } else if (selectedOptions.size == 1) {
+        selectedOptions.first()
+    } else {
+        "${selectedOptions.size} Selected"
+    }
+
     Box(modifier = Modifier.padding(end = 8.dp)) {
         Surface(
             shape = RoundedCornerShape(8.dp),
@@ -40,8 +49,8 @@ fun FilterDropdown(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "$label: $selectedOption",
-                    color = if (selectedOption != "All") AppPrimary else AppTextPrimary,
+                    text = "$label: $displayText",
+                    color = if (selectedOptions.isNotEmpty()) AppPrimary else AppTextPrimary,
                     style = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight.SemiBold
                 )
@@ -56,15 +65,33 @@ fun FilterDropdown(
         DropdownMenu(
             expanded = expanded,
             onDismissRequest = { expanded = false },
-            modifier = Modifier.background(AppSurfaceVariant)
+            modifier = Modifier.background(AppSurfaceVariant).widthIn(min = 180.dp)
         ) {
-            val allOptions = listOf("All", "None") + options
+            val allOptions = listOf("None") + options
             allOptions.forEach { option ->
+                val isSelected = selectedOptions.contains(option)
                 DropdownMenuItem(
-                    text = { Text(option, color = AppTextPrimary) },
+                    text = { 
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Checkbox(
+                                checked = isSelected,
+                                onCheckedChange = null,
+                                colors = CheckboxDefaults.colors(
+                                    checkedColor = AppPrimary,
+                                    uncheckedColor = AppTextMuted
+                                )
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(option, color = AppTextPrimary) 
+                        }
+                    },
                     onClick = {
-                        onOptionSelected(option)
-                        expanded = false
+                        val newSet = if (isSelected) {
+                            selectedOptions - option
+                        } else {
+                            selectedOptions + option
+                        }
+                        onSelectionChanged(newSet)
                     }
                 )
             }

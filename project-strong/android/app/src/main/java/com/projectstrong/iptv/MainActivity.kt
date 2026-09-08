@@ -171,7 +171,8 @@ fun MainDashboard() {
         TabItem("Scanner", 0, Icons.Default.Sensors),
         TabItem("Xtream", xtreamNodesCount, Icons.Default.LiveTv),
         TabItem("Stalker", stalkerNodesCount, Icons.Default.Dns),
-        TabItem("Committed", committedCount, Icons.Default.FolderSpecial)
+        TabItem("Committed", committedCount, Icons.Default.FolderSpecial),
+        TabItem("Analytics", 0, Icons.Default.Analytics)
     )
 
     val updateState by AppUpdater.updateState.collectAsState()
@@ -427,6 +428,7 @@ fun MainDashboard() {
                 2 -> com.projectstrong.iptv.ui.tabs.XtreamTab(onNextTab = { selectedTab = 3 })
                 3 -> com.projectstrong.iptv.ui.tabs.StalkerTab(onNextTab = { selectedTab = 4 })
                 4 -> com.projectstrong.iptv.ui.tabs.CommittedTab()
+                5 -> com.projectstrong.iptv.ui.tabs.AnalyticsTab(onNavigateToCommitted = { selectedTab = 4 })
             }
         }
     }
