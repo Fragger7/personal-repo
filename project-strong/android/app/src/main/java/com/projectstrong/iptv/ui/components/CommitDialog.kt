@@ -40,6 +40,8 @@ fun CommitAccountDialog(
     provider: String = "Unknown",
     serverTimezone: String = "",
     initialNotes: String = "",
+    initialRooms: String = "",
+    initialContent: String = "",
     sourceLink: String = "Direct Ingestion",
     originLink: String = "",
     egressStatus: String? = null,
@@ -50,7 +52,18 @@ fun CommitAccountDialog(
     val context = LocalContext.current
     val clipboardManager = LocalClipboardManager.current
 
-    var notes by remember { mutableStateOf(initialNotes) }
+    val existingRecord = remember(baseUrl, user, mac) {
+        val cleanBase = baseUrl.trim().trimEnd('/')
+        com.projectstrong.iptv.data.CommittedManager.records.find {
+            it.safeBaseUrl.trim().trimEnd('/') == cleanBase &&
+            ((type == "Xtream" && it.safeUser.trim() == user.trim()) ||
+             (type == "Stalker" && it.safeMac.trim().equals(mac.trim(), ignoreCase = true)))
+        }
+    }
+
+    var notes by remember { mutableStateOf(existingRecord?.safeNotes?.ifEmpty { null } ?: initialNotes) }
+    var selectedRooms by remember { mutableStateOf((existingRecord?.safeRooms?.ifEmpty { null } ?: initialRooms).split(",").map { it.trim() }.filter { it.isNotEmpty() }.toSet()) }
+    var selectedContent by remember { mutableStateOf((existingRecord?.safeContent?.ifEmpty { null } ?: initialContent).split(",").map { it.trim() }.filter { it.isNotEmpty() }.toSet()) }
     
     // Auto-populate Source Link: check node sourceLink first, fallback to DataStore.scannerSourceLink
     var sourceLinkInput by remember {
@@ -313,6 +326,22 @@ fun CommitAccountDialog(
                     ),
                     shape = RoundedCornerShape(8.dp)
                 )
+                
+                Spacer(modifier = Modifier.height(12.dp))
+                
+                MultiSelectToggles(
+                    label = "Rooms (Where is this used?)",
+                    options = listOf("P", "LR", "MB", "MR", "M", "G", "O"),
+                    selectedOptions = selectedRooms,
+                    onOptionToggled = { selectedRooms = it }
+                )
+                
+                MultiSelectToggles(
+                    label = "Content Type",
+                    options = listOf("NFL", "Pak", "A", "Philly"),
+                    selectedOptions = selectedContent,
+                    onOptionToggled = { selectedContent = it }
+                )
 
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
@@ -355,6 +384,8 @@ fun CommitAccountDialog(
                                 provider = resolvedProvider,
                                 serverTimezone = serverTimezone,
                                 notes = notes.trim(),
+                                rooms = selectedRooms.joinToString(", "),
+                                content = selectedContent.joinToString(", "),
                                 sourceLink = finalSource,
                                 originLink = finalOrigin,
                                 egressStatus = egressStatus,

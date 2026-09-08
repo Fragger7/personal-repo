@@ -53,6 +53,8 @@ data class CommittedRecord(
     @SerializedName("egress_status", alternate = ["Egress Status", "egressStatus", "stream_status", "Stream Status"]) val egressStatus: String? = null,
     @SerializedName("egress_details", alternate = ["Egress Details", "egressDetails", "stream_details"]) val egressDetails: String? = null,
     @SerializedName("Notes") val notes: String? = "",
+    @SerializedName("Rooms") val rooms: String? = "",
+    @SerializedName("Content") val content: String? = "",
     @SerializedName("Date Selected") val dateAdded: String? = null,
     @SerializedName("isLocalOnly") val isLocalOnly: Boolean? = false
 ) {
@@ -112,6 +114,8 @@ data class CommittedRecord(
         }
     val safeTimezone get() = serverTimezone ?: ""
     val safeNotes get() = notes ?: ""
+    val safeRooms get() = rooms ?: ""
+    val safeContent get() = content ?: ""
     val safeDateAdded get() = dateAdded ?: ""
     val isLocal get() = isLocalOnly == true
 }
@@ -211,6 +215,8 @@ object CommittedManager {
         provider: String = "Unknown",
         serverTimezone: String = "",
         notes: String = "",
+        rooms: String = "",
+        content: String = "",
         sourceLink: String = "Direct Ingestion",
         originLink: String? = null,
         sourceArchiveFile: String? = null,
@@ -260,6 +266,8 @@ object CommittedManager {
             egressStatus = egressStatus,
             egressDetails = egressDetails,
             notes = notes,
+            rooms = rooms,
+            content = content,
             dateAdded = nowStr,
             isLocalOnly = true
         )
@@ -275,7 +283,9 @@ object CommittedManager {
             val existing = records[existingIndex]
             records[existingIndex] = newRecord.copy(
                 dateAdded = if (existing.safeDateAdded.isNotEmpty()) existing.safeDateAdded else nowStr,
-                notes = if (notes.isNotEmpty()) notes else existing.safeNotes,
+                notes = notes,
+                rooms = rooms,
+                content = content,
                 originLink = cleanOrigin ?: existing.originLink,
                 sourceArchiveFile = finalArchiveFile ?: existing.sourceArchiveFile,
                 egressStatus = egressStatus ?: existing.egressStatus,
@@ -761,12 +771,12 @@ object CommittedManager {
         return@withContext updatedCount
     }
 
-    fun updateNotes(record: CommittedRecord, newNotes: String) {
+    fun updateDetails(record: CommittedRecord, newNotes: String, newRooms: String, newContent: String) {
         val index = records.indexOf(record)
         if (index != -1) {
-            records[index] = record.copy(notes = newNotes, isLocalOnly = true)
+            records[index] = record.copy(notes = newNotes, rooms = newRooms, content = newContent, isLocalOnly = true)
             save()
-            ToastManager.success("Notes saved locally")
+            ToastManager.success("Details saved locally")
             
             val token = DataStore.githubToken
             if (token.isNotEmpty()) {
@@ -774,7 +784,7 @@ object CommittedManager {
                     val success = pushToCloud(token)
                     withContext(Dispatchers.Main) {
                         if (success) {
-                            ToastManager.success("Notes saved & synced to Git!")
+                            ToastManager.success("Details saved & synced to Git!")
                         } else {
                             ToastManager.warning("Saved locally, but cloud push failed")
                         }

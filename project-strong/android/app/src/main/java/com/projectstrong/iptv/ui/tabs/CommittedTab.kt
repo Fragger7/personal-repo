@@ -44,7 +44,7 @@ import kotlinx.coroutines.sync.withPermit
 import kotlinx.coroutines.withContext
 
 enum class CommittedSortColumn {
-    DATE_ADDED, TYPE, STATUS, SYNC, HOST, PROVIDER, CHANNELS, VODS, DAYS_LEFT, EXPIRES, SOURCE
+    DATE_ADDED, TYPE, STATUS, SYNC, HOST, PROVIDER, CHANNELS, VODS, DAYS_LEFT, EXPIRES, SOURCE, ROOMS, CONTENT
 }
 
 @Composable
@@ -498,8 +498,68 @@ fun CommittedMasterGrid(
     val listState = rememberLazyListState()
     val scrollState = rememberScrollState()
 
-    val sortedRecords = remember(records.toList(), sortColumn, sortAscending) {
-        val list = records.toList()
+    var filterRooms by remember { mutableStateOf("All") }
+    var filterContent by remember { mutableStateOf("All") }
+    var filterProvider by remember { mutableStateOf("All") }
+    var filterTimezone by remember { mutableStateOf("All") }
+    var filterStatus by remember { mutableStateOf("All") }
+
+    val filteredRecords = remember(records.toList(), filterRooms, filterContent, filterProvider, filterTimezone, filterStatus) {
+        records.filter { record ->
+            val matchRooms = when (filterRooms) {
+                "All" -> true
+                "None" -> record.safeRooms.isBlank()
+                else -> record.safeRooms.split(",").map { it.trim() }.contains(filterRooms)
+            }
+            val matchContent = when (filterContent) {
+                "All" -> true
+                "None" -> record.safeContent.isBlank()
+                else -> record.safeContent.split(",").map { it.trim() }.contains(filterContent)
+            }
+            val displayBrand = com.projectstrong.iptv.data.ProviderIntelligenceManager.getProfile(record.safeBaseUrl)?.cleanBrand ?: record.safeProvider.ifEmpty { "Unbranded" }
+            val matchProvider = when (filterProvider) {
+                "All" -> true
+                "None" -> displayBrand == "Unbranded" || displayBrand == "Unknown"
+                else -> displayBrand == filterProvider
+            }
+            val matchTimezone = when (filterTimezone) {
+                "All" -> true
+                "None" -> record.safeTimezone.isBlank()
+                else -> record.safeTimezone == filterTimezone
+            }
+            val matchStatus = when (filterStatus) {
+                "All" -> true
+                "None" -> record.safeStatus.isBlank()
+                else -> record.safeStatus == filterStatus
+            }
+            matchRooms && matchContent && matchProvider && matchTimezone && matchStatus
+        }
+    }
+
+    val distinctRooms = remember(records.toList()) {
+        val s = mutableSetOf<String>()
+        records.forEach { r -> r.safeRooms.split(",").map { it.trim() }.filter { it.isNotEmpty() }.forEach { s.add(it) } }
+        s.sorted()
+    }
+    val distinctContent = remember(records.toList()) {
+        val s = mutableSetOf<String>()
+        records.forEach { r -> r.safeContent.split(",").map { it.trim() }.filter { it.isNotEmpty() }.forEach { s.add(it) } }
+        s.sorted()
+    }
+    val distinctProviders = remember(records.toList()) {
+        records.map { r ->
+            com.projectstrong.iptv.data.ProviderIntelligenceManager.getProfile(r.safeBaseUrl)?.cleanBrand ?: r.safeProvider.ifEmpty { "Unbranded" }
+        }.filter { it.isNotEmpty() && it != "Unknown" }.distinct().sorted()
+    }
+    val distinctTimezones = remember(records.toList()) {
+        records.map { it.safeTimezone }.filter { it.isNotEmpty() }.distinct().sorted()
+    }
+    val distinctStatuses = remember(records.toList()) {
+        records.map { it.safeStatus }.filter { it.isNotEmpty() }.distinct().sorted()
+    }
+
+    val sortedRecords = remember(filteredRecords, sortColumn, sortAscending) {
+        val list = filteredRecords.toList()
         when (sortColumn) {
             CommittedSortColumn.DATE_ADDED -> {
                 if (sortAscending) list.sortedBy { it.safeDateAdded } else list.sortedByDescending { it.safeDateAdded }
@@ -533,6 +593,12 @@ fun CommittedMasterGrid(
             }
             CommittedSortColumn.SOURCE -> {
                 if (sortAscending) list.sortedBy { it.safeSourceLink } else list.sortedByDescending { it.safeSourceLink }
+            }
+            CommittedSortColumn.ROOMS -> {
+                if (sortAscending) list.sortedBy { it.safeRooms } else list.sortedByDescending { it.safeRooms }
+            }
+            CommittedSortColumn.CONTENT -> {
+                if (sortAscending) list.sortedBy { it.safeContent } else list.sortedByDescending { it.safeContent }
             }
         }
     }
@@ -781,6 +847,35 @@ fun CommittedMasterGrid(
             }
             return
         }
+        
+        if (records.isNotEmpty()) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState())
+                    .padding(vertical = 8.dp, horizontal = 4.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(Icons.Default.FilterList, contentDescription = "Filter", tint = AppTextSecondary, modifier = Modifier.size(20.dp).padding(end = 8.dp))
+                FilterDropdown("Rooms", distinctRooms, filterRooms) { filterRooms = it }
+                FilterDropdown("Content", distinctContent, filterContent) { filterContent = it }
+                FilterDropdown("Provider", distinctProviders, filterProvider) { filterProvider = it }
+                FilterDropdown("Timezone", distinctTimezones, filterTimezone) { filterTimezone = it }
+                FilterDropdown("Status", distinctStatuses, filterStatus) { filterStatus = it }
+                
+                if (filterRooms != "All" || filterContent != "All" || filterProvider != "All" || filterTimezone != "All" || filterStatus != "All") {
+                    TextButton(onClick = {
+                        filterRooms = "All"
+                        filterContent = "All"
+                        filterProvider = "All"
+                        filterTimezone = "All"
+                        filterStatus = "All"
+                    }) {
+                        Text("Clear Filters", color = Color(0xFFEF4444))
+                    }
+                }
+            }
+        }
 
         Surface(
             shape = RoundedCornerShape(14.dp),
@@ -819,6 +914,8 @@ fun CommittedMasterGrid(
                             GridHeader("Timezone", 130.dp)
                             GridHeader("Source Link", 180.dp, onClick = { toggleSort(CommittedSortColumn.SOURCE) }, isSorted = sortColumn == CommittedSortColumn.SOURCE, isAscending = sortAscending)
                             GridHeader("Notes", 200.dp)
+                            GridHeader("Rooms", 120.dp, onClick = { toggleSort(CommittedSortColumn.ROOMS) }, isSorted = sortColumn == CommittedSortColumn.ROOMS, isAscending = sortAscending)
+                            GridHeader("Content", 120.dp, onClick = { toggleSort(CommittedSortColumn.CONTENT) }, isSorted = sortColumn == CommittedSortColumn.CONTENT, isAscending = sortAscending)
                             GridHeader("Actions", 200.dp)
                         }
 
@@ -886,6 +983,10 @@ fun CommittedMasterGrid(
                                     )
                                     // 17. Notes
                                     GridCell(record.safeNotes.ifEmpty { "..." }, 200.dp, color = AppTextSecondary)
+                                    // 18. Rooms
+                                    GridCell(record.safeRooms.ifEmpty { "-" }, 120.dp, color = AppTextSecondary)
+                                    // 19. Content
+                                    GridCell(record.safeContent.ifEmpty { "-" }, 120.dp, color = AppTextSecondary)
 
                                     // Actions (Push if local, Copy, Copy M3U, Source Snapshot, & Delete)
                                     Row(
@@ -973,6 +1074,8 @@ fun CommittedDetailScreen(
 ) {
     val clipboardManager = LocalClipboardManager.current
     var currentNotes by remember(record) { mutableStateOf(record.safeNotes) }
+    var currentRooms by remember(record) { mutableStateOf(record.safeRooms.split(",").map { it.trim() }.filter { it.isNotEmpty() }.toSet()) }
+    var currentContent by remember(record) { mutableStateOf(record.safeContent.split(",").map { it.trim() }.filter { it.isNotEmpty() }.toSet()) }
     var showCatalogExplorer by remember { mutableStateOf(false) }
     val detailScrollState = rememberScrollState()
 
@@ -1287,6 +1390,22 @@ fun CommittedDetailScreen(
             shape = RoundedCornerShape(10.dp)
         )
 
+        Spacer(modifier = Modifier.height(16.dp))
+
+        MultiSelectToggles(
+            label = "ROOMS",
+            options = listOf("P", "LR", "MB", "MR", "M", "G", "O"),
+            selectedOptions = currentRooms,
+            onOptionToggled = { currentRooms = it }
+        )
+        
+        MultiSelectToggles(
+            label = "CONTENT TYPE",
+            options = listOf("NFL", "Pak", "A", "Philly"),
+            selectedOptions = currentContent,
+            onOptionToggled = { currentContent = it }
+        )
+
         Spacer(modifier = Modifier.height(12.dp))
 
         Row(
@@ -1302,9 +1421,14 @@ fun CommittedDetailScreen(
                 )
             }
             PrimaryButton(
-                text = "Save Note",
+                text = "Save Details",
                 onClick = {
-                    CommittedManager.updateNotes(record, currentNotes)
+                    CommittedManager.updateDetails(
+                        record, 
+                        currentNotes, 
+                        currentRooms.joinToString(", "), 
+                        currentContent.joinToString(", ")
+                    )
                 }
             )
         }
