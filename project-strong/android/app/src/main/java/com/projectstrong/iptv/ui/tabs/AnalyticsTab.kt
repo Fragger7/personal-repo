@@ -58,7 +58,7 @@ fun AnalyticsTab(onNavigateToCommitted: () -> Unit) {
 
     // Hardware Connections Capability
     val connectionLimits = records.groupingBy { 
-        val conn = it.safeConnections.toIntOrNull() ?: 1
+        val conn = it.safeMaxConn.toIntOrNull() ?: 1
         if (conn >= 3) "3+ Conns" else "$conn Conn(s)"
     }.eachCount().toList().sortedBy { it.first }
 
