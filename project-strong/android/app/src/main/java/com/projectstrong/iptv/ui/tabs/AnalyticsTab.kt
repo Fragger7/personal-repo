@@ -38,6 +38,10 @@ fun AnalyticsTab(onNavigateToCommitted: () -> Unit) {
     }
 
     // Prepare Data
+    val totalChannels = records.sumOf { it.safeChannels.toIntOrNull() ?: 0 }
+    val totalVods = records.sumOf { it.safeVods.toIntOrNull() ?: 0 }
+    val totalConnections = records.size
+
     val providerCounts = records.groupingBy { 
         ProviderIntelligenceManager.getProfile(it.safeBaseUrl)?.cleanBrand ?: it.safeProvider.ifEmpty { "Unbranded" }
     }.eachCount().toList().sortedByDescending { it.second }.take(8)
@@ -46,8 +50,17 @@ fun AnalyticsTab(onNavigateToCommitted: () -> Unit) {
         if (it.safeStatus.contains("Active", ignoreCase = true)) "🟢 Active" else "🔴 Offline" 
     }.eachCount().toList().sortedByDescending { it.second }
 
-    val contentCounts = records.flatMap { it.safeContent.split(",").map { c -> c.trim() }.filter { c -> c.isNotEmpty() } }
-        .groupingBy { it }.eachCount().toList().sortedByDescending { it.second }
+    // Catalog Density (Avg Channels by Provider)
+    val densityData = records.groupBy { 
+        ProviderIntelligenceManager.getProfile(it.safeBaseUrl)?.cleanBrand ?: it.safeProvider.ifEmpty { "Unbranded" }
+    }.map { (brand, group) ->
+        brand to group.mapNotNull { it.safeChannels.toIntOrNull() }.average().toFloat()
+    }.filter { !it.second.isNaN() && it.second > 0 }.sortedByDescending { it.second }.take(6)
+
+    // Timezone Coverage
+    val timezoneCounts = records.groupingBy { 
+        it.safeTimezone.ifEmpty { "Unknown" }
+    }.eachCount().toList().sortedByDescending { it.second }.take(6)
 
     LazyColumn(
         modifier = Modifier.fillMaxSize().padding(16.dp),
@@ -64,7 +77,15 @@ fun AnalyticsTab(onNavigateToCommitted: () -> Unit) {
         }
         
         item {
-            AnalyticsCard("Provider Distribution (Top 8)") {
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                MetricCard("Connections", "$totalConnections", Modifier.weight(1f))
+                MetricCard("Live Channels", "${totalChannels / 1000}k", Modifier.weight(1f))
+                MetricCard("VOD Library", "${totalVods / 1000}k", Modifier.weight(1f))
+            }
+        }
+        
+        item {
+            AnalyticsCard("Provider Consolidation") {
                 InteractivePieChart(
                     data = providerCounts,
                     onSliceClick = { providerName ->
@@ -76,17 +97,10 @@ fun AnalyticsTab(onNavigateToCommitted: () -> Unit) {
             }
         }
 
-        if (contentCounts.isNotEmpty()) {
+        if (densityData.isNotEmpty()) {
             item {
-                AnalyticsCard("Content Focus") {
-                    InteractivePieChart(
-                        data = contentCounts,
-                        onSliceClick = { contentName ->
-                            CommittedFilterStore.clear()
-                            CommittedFilterStore.content.value = setOf(contentName)
-                            onNavigateToCommitted()
-                        }
-                    )
+                AnalyticsCard("Catalog Density (Avg Channels)") {
+                    AnimatedHorizontalBarChart(data = densityData)
                 }
             }
         }
@@ -103,8 +117,67 @@ fun AnalyticsTab(onNavigateToCommitted: () -> Unit) {
                 )
             }
         }
+
+        if (timezoneCounts.isNotEmpty()) {
+            item {
+                AnalyticsCard("Server Timezone Footprint") {
+                    InteractivePieChart(
+                        data = timezoneCounts,
+                        onSliceClick = { tzName ->
+                            CommittedFilterStore.clear()
+                            CommittedFilterStore.timezone.value = setOf(if (tzName == "Unknown") "" else tzName)
+                            onNavigateToCommitted()
+                        }
+                    )
+                }
+            }
+        }
         
         item { Spacer(modifier = Modifier.height(40.dp)) }
+    }
+}
+
+@Composable
+fun MetricCard(title: String, value: String, modifier: Modifier = Modifier) {
+    Surface(
+        shape = RoundedCornerShape(12.dp),
+        color = AppSurface,
+        border = androidx.compose.foundation.BorderStroke(1.dp, AppSurfaceBorder),
+        modifier = modifier
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(value, color = AppPrimary, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Black)
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(title, color = AppTextMuted, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold)
+        }
+    }
+}
+
+@Composable
+fun AnimatedHorizontalBarChart(data: List<Pair<String, Float>>) {
+    val maxVal = data.maxOfOrNull { it.second } ?: 1f
+    val animationProgress = remember { Animatable(0f) }
+    LaunchedEffect(data) {
+        animationProgress.animateTo(1f, animationSpec = tween(1200, easing = FastOutSlowInEasing))
+    }
+    
+    Column(verticalArrangement = Arrangement.spacedBy(16.dp), modifier = Modifier.fillMaxWidth()) {
+        data.forEach { (name, value) ->
+            val pct = if (maxVal > 0) (value / maxVal) * animationProgress.value else 0f
+            Column {
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                    Text(name, style = MaterialTheme.typography.labelMedium, color = AppTextPrimary, fontWeight = FontWeight.Bold)
+                    Text(value.toInt().toString(), style = MaterialTheme.typography.labelMedium, color = AppTextSecondary)
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+                Box(modifier = Modifier.fillMaxWidth().height(14.dp).background(AppSurfaceVariant, RoundedCornerShape(7.dp))) {
+                    Box(modifier = Modifier.fillMaxWidth(pct).fillMaxHeight().background(AppPrimary, RoundedCornerShape(7.dp)))
+                }
+            }
+        }
     }
 }
 

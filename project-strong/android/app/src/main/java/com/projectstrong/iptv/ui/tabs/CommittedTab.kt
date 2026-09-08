@@ -520,56 +520,69 @@ fun CommittedMasterGrid(
     val filterTimezone by CommittedFilterStore.timezone
     val filterStatus by CommittedFilterStore.status
 
-    val filteredRecords = remember(records.toList(), filterRooms, filterContent, filterProvider, filterTimezone, filterStatus) {
-        records.filter { record ->
-            val matchRooms = if (filterRooms.isEmpty()) true else {
-                val hasNone = filterRooms.contains("None")
-                val recordVals = record.safeRooms.split(",").map { it.trim() }.filter { it.isNotEmpty() }
-                (hasNone && recordVals.isEmpty()) || filterRooms.intersect(recordVals.toSet()).isNotEmpty()
-            }
-            val matchContent = if (filterContent.isEmpty()) true else {
-                val hasNone = filterContent.contains("None")
-                val recordVals = record.safeContent.split(",").map { it.trim() }.filter { it.isNotEmpty() }
-                (hasNone && recordVals.isEmpty()) || filterContent.intersect(recordVals.toSet()).isNotEmpty()
-            }
-            val displayBrand = com.projectstrong.iptv.data.ProviderIntelligenceManager.getProfile(record.safeBaseUrl)?.cleanBrand ?: record.safeProvider.ifEmpty { "Unbranded" }
-            val matchProvider = if (filterProvider.isEmpty()) true else {
-                val hasNone = filterProvider.contains("None")
-                val isNone = displayBrand == "Unbranded" || displayBrand == "Unknown"
-                (hasNone && isNone) || filterProvider.contains(displayBrand)
-            }
-            val matchTimezone = if (filterTimezone.isEmpty()) true else {
-                val hasNone = filterTimezone.contains("None")
-                (hasNone && record.safeTimezone.isBlank()) || filterTimezone.contains(record.safeTimezone)
-            }
-            val matchStatus = if (filterStatus.isEmpty()) true else {
-                val hasNone = filterStatus.contains("None")
-                (hasNone && record.safeStatus.isBlank()) || filterStatus.contains(record.safeStatus)
-            }
-            matchRooms && matchContent && matchProvider && matchTimezone && matchStatus
+    val matchRoomsFunc = { record: com.projectstrong.iptv.data.CommittedRecord ->
+        if (filterRooms.isEmpty()) true else {
+            val hasNone = filterRooms.contains("None")
+            val recordVals = record.safeRooms.split(",").map { it.trim() }.filter { it.isNotEmpty() }
+            (hasNone && recordVals.isEmpty()) || filterRooms.intersect(recordVals.toSet()).isNotEmpty()
+        }
+    }
+    val matchContentFunc = { record: com.projectstrong.iptv.data.CommittedRecord ->
+        if (filterContent.isEmpty()) true else {
+            val hasNone = filterContent.contains("None")
+            val recordVals = record.safeContent.split(",").map { it.trim() }.filter { it.isNotEmpty() }
+            (hasNone && recordVals.isEmpty()) || filterContent.intersect(recordVals.toSet()).isNotEmpty()
+        }
+    }
+    val matchProviderFunc = { record: com.projectstrong.iptv.data.CommittedRecord ->
+        val displayBrand = com.projectstrong.iptv.data.ProviderIntelligenceManager.getProfile(record.safeBaseUrl)?.cleanBrand ?: record.safeProvider.ifEmpty { "Unbranded" }
+        if (filterProvider.isEmpty()) true else {
+            val hasNone = filterProvider.contains("None")
+            val isNone = displayBrand == "Unbranded" || displayBrand == "Unknown"
+            (hasNone && isNone) || filterProvider.contains(displayBrand)
+        }
+    }
+    val matchTimezoneFunc = { record: com.projectstrong.iptv.data.CommittedRecord ->
+        if (filterTimezone.isEmpty()) true else {
+            val hasNone = filterTimezone.contains("None")
+            (hasNone && record.safeTimezone.isBlank()) || filterTimezone.contains(record.safeTimezone)
+        }
+    }
+    val matchStatusFunc = { record: com.projectstrong.iptv.data.CommittedRecord ->
+        if (filterStatus.isEmpty()) true else {
+            val hasNone = filterStatus.contains("None")
+            (hasNone && record.safeStatus.isBlank()) || filterStatus.contains(record.safeStatus)
         }
     }
 
-    val distinctRooms = remember(records.toList()) {
+    val filteredRecords = remember(records.toList(), filterRooms, filterContent, filterProvider, filterTimezone, filterStatus) {
+        records.filter { matchRoomsFunc(it) && matchContentFunc(it) && matchProviderFunc(it) && matchTimezoneFunc(it) && matchStatusFunc(it) }
+    }
+
+    val distinctRooms = remember(records.toList(), filterContent, filterProvider, filterTimezone, filterStatus) {
         val s = mutableSetOf<String>()
-        records.forEach { r -> r.safeRooms.split(",").map { it.trim() }.filter { it.isNotEmpty() }.forEach { s.add(it) } }
+        records.filter { matchContentFunc(it) && matchProviderFunc(it) && matchTimezoneFunc(it) && matchStatusFunc(it) }
+            .forEach { r -> r.safeRooms.split(",").map { it.trim() }.filter { it.isNotEmpty() }.forEach { s.add(it) } }
         s.sorted()
     }
-    val distinctContent = remember(records.toList()) {
+    val distinctContent = remember(records.toList(), filterRooms, filterProvider, filterTimezone, filterStatus) {
         val s = mutableSetOf<String>()
-        records.forEach { r -> r.safeContent.split(",").map { it.trim() }.filter { it.isNotEmpty() }.forEach { s.add(it) } }
+        records.filter { matchRoomsFunc(it) && matchProviderFunc(it) && matchTimezoneFunc(it) && matchStatusFunc(it) }
+            .forEach { r -> r.safeContent.split(",").map { it.trim() }.filter { it.isNotEmpty() }.forEach { s.add(it) } }
         s.sorted()
     }
-    val distinctProviders = remember(records.toList()) {
-        records.map { r ->
-            com.projectstrong.iptv.data.ProviderIntelligenceManager.getProfile(r.safeBaseUrl)?.cleanBrand ?: r.safeProvider.ifEmpty { "Unbranded" }
-        }.filter { it.isNotEmpty() && it != "Unknown" }.distinct().sorted()
+    val distinctProviders = remember(records.toList(), filterRooms, filterContent, filterTimezone, filterStatus) {
+        records.filter { matchRoomsFunc(it) && matchContentFunc(it) && matchTimezoneFunc(it) && matchStatusFunc(it) }
+            .map { r -> com.projectstrong.iptv.data.ProviderIntelligenceManager.getProfile(r.safeBaseUrl)?.cleanBrand ?: r.safeProvider.ifEmpty { "Unbranded" } }
+            .filter { it.isNotEmpty() && it != "Unknown" }.distinct().sorted()
     }
-    val distinctTimezones = remember(records.toList()) {
-        records.map { it.safeTimezone }.filter { it.isNotEmpty() }.distinct().sorted()
+    val distinctTimezones = remember(records.toList(), filterRooms, filterContent, filterProvider, filterStatus) {
+        records.filter { matchRoomsFunc(it) && matchContentFunc(it) && matchProviderFunc(it) && matchStatusFunc(it) }
+            .map { it.safeTimezone }.filter { it.isNotEmpty() }.distinct().sorted()
     }
-    val distinctStatuses = remember(records.toList()) {
-        records.map { it.safeStatus }.filter { it.isNotEmpty() }.distinct().sorted()
+    val distinctStatuses = remember(records.toList(), filterRooms, filterContent, filterProvider, filterTimezone) {
+        records.filter { matchRoomsFunc(it) && matchContentFunc(it) && matchProviderFunc(it) && matchTimezoneFunc(it) }
+            .map { it.safeStatus }.filter { it.isNotEmpty() }.distinct().sorted()
     }
 
     val sortedRecords = remember(filteredRecords, sortColumn, sortAscending) {
