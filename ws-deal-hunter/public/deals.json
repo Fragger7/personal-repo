@@ -1,5 +1,37 @@
 [
   {
+    "id": "ebay_298601861601",
+    "source": "ebay",
+    "title": "Dell XPS 15 9520 TOUCH 3.5K 2.3GHz i7-12700H 32GB 1TB SSD RTX 3050 Ti FairOpens in a new window or tab",
+    "price": 599.99,
+    "url": "https://www.ebay.com/itm/298601861601",
+    "specs": {
+      "cpu": "I7-12700H",
+      "ram_gb": 32,
+      "ssd_gb": 1024,
+      "gpu": "NVIDIA RTX / Workstation GPU",
+      "screen": "15.6\" / 16\" 3.5K OLED Display",
+      "condition": "Used / Refurbished"
+    },
+    "fair_market_value": 750.0,
+    "estimated_profit": 150.01,
+    "arbitrage_margin_pct": 25.0,
+    "deal_score": 7.8,
+    "summary": "Opportunistic target priced at $600 with +$101 margin spread. Configured with I7-12700H, 32GB RAM, 1024GB SSD, and NVIDIA RTX / Workstation GPU. Excellent daily driver for full-stack engineering, multi-container development, and data analysis.",
+    "actionable_recommendation": "🤝 OPPORTUNISTIC OFFER TARGET",
+    "confidence_score": 0.95,
+    "seller": "eBay Seller",
+    "location": "US",
+    "created_utc": "2026-09-08T14:39:27.982191+00:00",
+    "evaluated_at": "2026-09-08T14:40:02.536383+00:00",
+    "alerted": false,
+    "is_high_yield": false,
+    "raw_payload": null,
+    "is_auction": false,
+    "bid_count": null,
+    "time_left": null
+  },
+  {
     "id": "swappa_LAJO48722",
     "source": "swappa",
     "title": "Apple MacBook Pro 16\" (2021 M1 Pro/Max) [32GB / 512GB] - Good",
