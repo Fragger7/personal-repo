@@ -79,6 +79,17 @@ fun AnalyticsTab(onNavigateToCommitted: () -> Unit) {
     val contentCounts = records.flatMap { it.safeContent.split(",").map { c -> c.trim() }.filter { c -> c.isNotEmpty() } }
         .groupingBy { it }.eachCount().toList().sortedByDescending { it.second }
 
+    // Re-added Metrics
+    val densityData = records.groupBy { 
+        ProviderIntelligenceManager.getProfile(it.safeBaseUrl)?.cleanBrand ?: it.safeProvider.ifEmpty { "Unbranded" }
+    }.map { (brand, group) ->
+        brand to group.mapNotNull { it.safeChannels.toIntOrNull() }.average().toFloat()
+    }.filter { !it.second.isNaN() && it.second > 0 }.sortedByDescending { it.second }.take(6)
+
+    val timezoneCounts = records.groupingBy { 
+        it.safeTimezone.ifEmpty { "Unknown" }
+    }.eachCount().toList().sortedByDescending { it.second }.take(6)
+
     LazyColumn(
         modifier = Modifier.fillMaxSize().padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -145,6 +156,29 @@ fun AnalyticsTab(onNavigateToCommitted: () -> Unit) {
             }
         }
         
+        if (densityData.isNotEmpty()) {
+            item {
+                AnalyticsCard("Catalog Density (Avg Channels)") {
+                    AnimatedHorizontalBarChart(data = densityData)
+                }
+            }
+        }
+
+        if (timezoneCounts.isNotEmpty()) {
+            item {
+                AnalyticsCard("Server Timezone Footprint") {
+                    InteractivePieChart(
+                        data = timezoneCounts,
+                        onSliceClick = { tzName ->
+                            CommittedFilterStore.clear()
+                            CommittedFilterStore.timezone.value = setOf(if (tzName == "Unknown") "" else tzName)
+                            onNavigateToCommitted()
+                        }
+                    )
+                }
+            }
+        }
+
         item { Spacer(modifier = Modifier.height(40.dp)) }
     }
 }
@@ -168,6 +202,7 @@ fun MetricCard(title: String, value: String, valueColor: Color, modifier: Modifi
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun SegmentedProgressBar(data: List<Pair<String, Int>>) {
     val total = data.sumOf { it.second }.toFloat()
@@ -189,7 +224,11 @@ fun SegmentedProgressBar(data: List<Pair<String, Int>>) {
             }
         }
         Spacer(modifier = Modifier.height(16.dp))
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+        FlowRow(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterHorizontally),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
             data.forEachIndexed { index, (name, count) ->
                 val pct = ((count / total) * 100).toInt()
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
