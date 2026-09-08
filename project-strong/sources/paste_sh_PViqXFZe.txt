@@ -1,0 +1,509 @@
+Portal			Puerto	Usuario			Password		Región	Estado	Activa desde		Vence			Días	Conex.	Trial	Enlace M3U
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+fev-gd.vip		80	Xhevat1981		8BsJT5lOJV		UTC	Activa	03 mar de 2023 (3.5 a)	03 abr de 2030		1306	1 / 1	No	
+http://fev-gd.vip/get.php?username=Xhevat1981&password=8BsJT5lOJV&type=m3u_plus
+fev-gd.vip		80	MAG9Z4YYCU		MAG2D8P127		UTC	Activa	03 jul de 2026 (2 m)	04 jul de 2028		668	0 / 1	No	
+http://fev-gd.vip/get.php?username=MAG9Z4YYCU&password=MAG2D8P127&type=m3u_plus
+fev-gd.vip		80	R873Y1F1X71B15L		DNLSpdxFAL		UTC	Activa	25 ene de 2026 (7 m)	09 ago de 2027		338	1 / 1	No	
+http://fev-gd.vip/get.php?username=R873Y1F1X71B15L&password=DNLSpdxFAL&type=m3u_plus
+fev-gd.vip		80	MAG82S3B75		MAGW986JTU		UTC	Activa	31 jul de 2026 (1 m)	31 jul de 2027		329	0 / 1	No	
+http://fev-gd.vip/get.php?username=MAG82S3B75&password=MAGW986JTU&type=m3u_plus
+fev-gd.vip		80	4SHL3YLV		dbcTnhXv0f		UTC	Activa	27 jun de 2024 (2.2 a)	27 jul de 2027		326	0 / 1	No	
+http://fev-gd.vip/get.php?username=4SHL3YLV&password=dbcTnhXv0f&type=m3u_plus
+fev-gd.vip		80	MAGHRP7WJT		MAGRDUQKNX		UTC	Activa	11 may de 2026 (3 m)	11 may de 2027		249	0 / 1	No	
+http://fev-gd.vip/get.php?username=MAGHRP7WJT&password=MAGRDUQKNX&type=m3u_plus
+fev-gd.vip		80	MAGRQKUTN7		MAG4322VLE		UTC	Activa	30 abr de 2026 (4 m)	30 abr de 2027		237	0 / 1	No	
+http://fev-gd.vip/get.php?username=MAGRQKUTN7&password=MAG4322VLE&type=m3u_plus
+fev-gd.vip		80	MAGH6MENUX		MAGF5G64K5		UTC	Activa	25 abr de 2026 (4 m)	25 abr de 2027		232	0 / 1	No	
+http://fev-gd.vip/get.php?username=MAGH6MENUX&password=MAGF5G64K5&type=m3u_plus
+fev-gd.vip		80	MAGZHTG9CS		llp55GAogh		UTC	Activa	02 abr de 2026 (5 m)	03 abr de 2027		210	0 / 1	No	
+http://fev-gd.vip/get.php?username=MAGZHTG9CS&password=llp55GAogh&type=m3u_plus
+fev-gd.vip		80	MAG5E1NCA6		mzdHJY9ZND		UTC	Activa	01 abr de 2026 (5 m)	01 abr de 2027		208	0 / 1	No	
+http://fev-gd.vip/get.php?username=MAG5E1NCA6&password=mzdHJY9ZND&type=m3u_plus
+fev-gd.vip		80	6KPYH41X2G3936C		VIk9zl658P		UTC	Activa	16 mar de 2025 (1.5 a)	16 mar de 2027		193	1 / 1	No	
+http://fev-gd.vip/get.php?username=6KPYH41X2G3936C&password=VIk9zl658P&type=m3u_plus
+fev-gd.vip		80	3A7Y89GJQGBRXDH		8yf6TKv8Dv		UTC	Activa	12 mar de 2025 (1.5 a)	13 mar de 2027		189	1 / 1	No	
+http://fev-gd.vip/get.php?username=3A7Y89GJQGBRXDH&password=8yf6TKv8Dv&type=m3u_plus
+fev-gd.vip		80	UJvyVavoaSuvwCj		EYO2bwp93j		UTC	Activa	13 feb de 2020 (6.6 a)	10 mar de 2027		186	0 / 1	No	
+http://fev-gd.vip/get.php?username=UJvyVavoaSuvwCj&password=EYO2bwp93j&type=m3u_plus
+fev-gd.vip		80	037A5771C4ACA43		9KBQNfNZtX		UTC	Activa	01 mar de 2022 (4.5 a)	03 mar de 2027		179	1 / 1	No	
+http://fev-gd.vip/get.php?username=037A5771C4ACA43&password=9KBQNfNZtX&type=m3u_plus
+fev-gd.vip		80	69341468051F693		GXHM1eOW3x		UTC	Activa	20 ene de 2024 (2.6 a)	31 ene de 2027		148	0 / 1	No	
+http://fev-gd.vip/get.php?username=69341468051F693&password=GXHM1eOW3x&type=m3u_plus
+fev-gd.vip		80	D6SEUCY54Y1HCUF		jMAXISI3jU		UTC	Activa	17 dic de 2025 (8 m)	03 ene de 2027		121	0 / 1	No	
+http://fev-gd.vip/get.php?username=D6SEUCY54Y1HCUF&password=jMAXISI3jU&type=m3u_plus
+fev-gd.vip		80	2M3913E6QLD8RWP		eeu53mN4Zp		UTC	Activa	31 dic de 2025 (8 m)	31 dic de 2026		117	0 / 1	No	
+http://fev-gd.vip/get.php?username=2M3913E6QLD8RWP&password=eeu53mN4Zp&type=m3u_plus
+fev-gd.vip		80	C34E66V2GKSEQFY		UqcYBSoTcc		UTC	Activa	21 dic de 2025 (8 m)	21 dic de 2026		107	0 / 1	No	
+http://fev-gd.vip/get.php?username=C34E66V2GKSEQFY&password=UqcYBSoTcc&type=m3u_plus
+fev-gd.vip		80	6D0DD6C5DC6790A		4hNkU4wyrl		UTC	Activa	18 abr de 2023 (3.4 a)	13 dic de 2026		100	0 / 1	No	
+http://fev-gd.vip/get.php?username=6D0DD6C5DC6790A&password=4hNkU4wyrl&type=m3u_plus
+fev-gd.vip		80	JKCR9BHPT6L1W5A		420beEkvc8		UTC	Activa	14 dic de 2025 (8 m)	14 dic de 2026		100	0 / 1	No	
+http://fev-gd.vip/get.php?username=JKCR9BHPT6L1W5A&password=420beEkvc8&type=m3u_plus
+fev-gd.vip		80	26424BE833Z1GM7		meCwppLApB		UTC	Activa	26 nov de 2024 (1.8 a)	09 dic de 2026		96	0 / 1	No	
+http://fev-gd.vip/get.php?username=26424BE833Z1GM7&password=meCwppLApB&type=m3u_plus
+fev-gd.vip		80	CYLYNFU2931F37K		XfiO5RCSth		UTC	Activa	04 mar de 2024 (2.5 a)	07 dic de 2026		93	0 / 1	No	
+http://fev-gd.vip/get.php?username=CYLYNFU2931F37K&password=XfiO5RCSth&type=m3u_plus
+fev-gd.vip		80	59TD675SL2LL4PB		u6z8QHjyx4		UTC	Activa	04 jun de 2025 (1.3 a)	04 dic de 2026		90	0 / 1	No	
+http://fev-gd.vip/get.php?username=59TD675SL2LL4PB&password=u6z8QHjyx4&type=m3u_plus
+fev-gd.vip		80	C03036FAA07645A		BvgIuUiCEf		UTC	Activa	17 sept de 2020 (6.0 a)	29 nov de 2026		85	1 / 1	No	
+http://fev-gd.vip/get.php?username=C03036FAA07645A&password=BvgIuUiCEf&type=m3u_plus
+fev-gd.vip		80	PNZQ639KW6D454B		PHEQV228n0		UTC	Activa	06 nov de 2025 (10 m)	06 nov de 2026		62	0 / 1	No	
+http://fev-gd.vip/get.php?username=PNZQ639KW6D454B&password=PHEQV228n0&type=m3u_plus
+fev-gd.vip		80	688501D0A70AAAF		LmIROwrClg		UTC	Activa	26 oct de 2021 (4.9 a)	03 nov de 2026		59	0 / 1	No	
+http://fev-gd.vip/get.php?username=688501D0A70AAAF&password=LmIROwrClg&type=m3u_plus
+fev-gd.vip		80	T56836Y			NSV5YKX			UTC	Activa	31 oct de 2025 (10 m)	31 oct de 2026		56	1 / 1	No	
+http://fev-gd.vip/get.php?username=T56836Y&password=NSV5YKX&type=m3u_plus
+fev-gd.vip		80	5C5330D65448550		fBZCaX3dZN		UTC	Activa	15 jul de 2022 (4.1 a)	16 oct de 2026		42	0 / 1	No	
+http://fev-gd.vip/get.php?username=5C5330D65448550&password=fBZCaX3dZN&type=m3u_plus
+fev-gd.vip		80	MAG88QFXUT		MAGBBWKD1K		UTC	Activa	02 may de 2026 (4 m)	12 oct de 2026		37	0 / 1	No	
+http://fev-gd.vip/get.php?username=MAG88QFXUT&password=MAGBBWKD1K&type=m3u_plus
+fev-gd.vip		80	P181JE5JFDD465F		360ySq9sLY		UTC	Activa	11 oct de 2025 (10 m)	12 oct de 2026		37	1 / 1	No	
+http://fev-gd.vip/get.php?username=P181JE5JFDD465F&password=360ySq9sLY&type=m3u_plus
+fev-gd.vip		80	KZSV3E7VU1UYLR3		uza6BzsoYd		UTC	Activa	05 dic de 2025 (9 m)	06 oct de 2026		31	1 / 1	No	
+http://fev-gd.vip/get.php?username=KZSV3E7VU1UYLR3&password=uza6BzsoYd&type=m3u_plus
+fev-gd.vip		80	EAHDTHV			NNU2NL5DNF		UTC	Activa	04 abr de 2026 (5 m)	05 oct de 2026		30	0 / 1	No	
+http://fev-gd.vip/get.php?username=EAHDTHV&password=NNU2NL5DNF&type=m3u_plus
+fev-gd.vip		80	TGF600M3HY2VKR9		tyIyjXSLhs		UTC	Activa	21 sept de 2024 (2.0 a)	21 sept de 2026		16	0 / 1	No	
+http://fev-gd.vip/get.php?username=TGF600M3HY2VKR9&password=tyIyjXSLhs&type=m3u_plus
+fev-gd.vip		80	MAGMUU5GVF		MAGPVSGRSE		UTC	Activa	13 jun de 2026 (2 m)	13 sept de 2026		8	0 / 1	No	
+http://fev-gd.vip/get.php?username=MAGMUU5GVF&password=MAGPVSGRSE&type=m3u_plus
+fev-gd.vip		80	MAGE333A6T		MAGCQXESU7		UTC	Activa	07 jun de 2026 (2 m)	08 sept de 2026		3	0 / 1	No	
+http://fev-gd.vip/get.php?username=MAGE333A6T&password=MAGCQXESU7&type=m3u_plus
+fev-gd.vip		80	MAGPP7H9KN		MAGWU8KWBC		UTC	Activa	03 ago de 2026 (1 m)	04 sept de 2026		0	1 / 1	No	
+http://fev-gd.vip/get.php?username=MAGPP7H9KN&password=MAGWU8KWBC&type=m3u_plus
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+gertikanale.com		80	EKN1NDR5XVD893W		xOfQ1dsypO		UTC	Activa	13 jun de 2024 (2.2 a)	24 jun de 2028		658	0 / 1	No	
+http://gertikanale.com/get.php?username=EKN1NDR5XVD893W&password=xOfQ1dsypO&type=m3u_plus
+gertikanale.com		80	MAG1JVYRRT		MAGSXKD2VK		UTC	Activa	29 may de 2026 (3 m)	29 may de 2027		267	0 / 1	No	
+http://gertikanale.com/get.php?username=MAG1JVYRRT&password=MAGSXKD2VK&type=m3u_plus
+gertikanale.com		80	NN193W0YA95RRVM		y8bXQUnAgx		UTC	Activa	13 may de 2025 (1.3 a)	16 may de 2027		253	0 / 1	No	
+http://gertikanale.com/get.php?username=NN193W0YA95RRVM&password=y8bXQUnAgx&type=m3u_plus
+gertikanale.com		80	0LXC6UNM7T4K625		uaNsDzUsRs		UTC	Activa	06 may de 2025 (1.3 a)	06 may de 2027		243	0 / 1	No	
+http://gertikanale.com/get.php?username=0LXC6UNM7T4K625&password=uaNsDzUsRs&type=m3u_plus
+gertikanale.com		80	T5KF954C2AJJK64		qDK3SZhs3x		UTC	Activa	24 feb de 2024 (2.5 a)	02 may de 2027		240	1 / 1	No	
+http://gertikanale.com/get.php?username=T5KF954C2AJJK64&password=qDK3SZhs3x&type=m3u_plus
+gertikanale.com		80	82420D563A23606		DVm7LMuQfy		UTC	Activa	24 abr de 2022 (4.4 a)	25 abr de 2027		233	1 / 1	No	
+http://gertikanale.com/get.php?username=82420D563A23606&password=DVm7LMuQfy&type=m3u_plus
+gertikanale.com		80	MAGT4T91HY		MAG4DZGC6S		UTC	Activa	20 abr de 2026 (4 m)	20 abr de 2027		227	1 / 1	No	
+http://gertikanale.com/get.php?username=MAGT4T91HY&password=MAG4DZGC6S&type=m3u_plus
+gertikanale.com		80	AD1D5F30FF46D29		foBvId38dh		UTC	Activa	25 feb de 2021 (5.5 a)	16 abr de 2027		223	1 / 1	No	
+http://gertikanale.com/get.php?username=AD1D5F30FF46D29&password=foBvId38dh&type=m3u_plus
+gertikanale.com		80	7160546870145367		myqMBuAKLQ		UTC	Activa	18 mar de 2023 (3.5 a)	07 abr de 2027		214	2 / 1	No	
+http://gertikanale.com/get.php?username=7160546870145367&password=myqMBuAKLQ&type=m3u_plus
+gertikanale.com		80	KHXVJEFKB4QGH7H		GvP1Ewukch		UTC	Activa	06 mar de 2025 (1.5 a)	08 mar de 2027		185	0 / 1	No	
+http://gertikanale.com/get.php?username=KHXVJEFKB4QGH7H&password=GvP1Ewukch&type=m3u_plus
+gertikanale.com		80	D45108DF4CCAA81		smNKQqfdZe		UTC	Activa	12 ene de 2021 (5.6 a)	22 feb de 2027		170	1 / 1	No	
+http://gertikanale.com/get.php?username=D45108DF4CCAA81&password=smNKQqfdZe&type=m3u_plus
+gertikanale.com		80	ZHXK27V08U8TN6X		PzFzRrNmEp		UTC	Activa	07 feb de 2026 (6 m)	10 feb de 2027		159	0 / 1	No	
+http://gertikanale.com/get.php?username=ZHXK27V08U8TN6X&password=PzFzRrNmEp&type=m3u_plus
+gertikanale.com		80	FF249FA6F988772		15uA6ZUESL		UTC	Activa	03 feb de 2021 (5.6 a)	08 feb de 2027		156	0 / 1	No	
+http://gertikanale.com/get.php?username=FF249FA6F988772&password=15uA6ZUESL&type=m3u_plus
+gertikanale.com		80	FA1LJSSM7B0WF39		ikp8ZJLTuB		UTC	Activa	29 ene de 2024 (2.6 a)	31 ene de 2027		149	0 / 1	No	
+http://gertikanale.com/get.php?username=FA1LJSSM7B0WF39&password=ikp8ZJLTuB&type=m3u_plus
+gertikanale.com		80	D5D542F7ACCC		cxNc46spP0		UTC	Activa	20 ene de 2023 (3.6 a)	21 ene de 2027		138	0 / 1	No	
+http://gertikanale.com/get.php?username=D5D542F7ACCC&password=cxNc46spP0&type=m3u_plus
+gertikanale.com		80	790F82C7F01A169		peDRlDS0KP		UTC	Activa	02 ene de 2024 (2.7 a)	04 ene de 2027		121	1 / 1	No	
+http://gertikanale.com/get.php?username=790F82C7F01A169&password=peDRlDS0KP&type=m3u_plus
+gertikanale.com		80	AM7QJTPD5L31B43		UBhaYQxoYY		UTC	Activa	21 dic de 2025 (8 m)	22 dic de 2026		108	0 / 1	No	
+http://gertikanale.com/get.php?username=AM7QJTPD5L31B43&password=UBhaYQxoYY&type=m3u_plus
+gertikanale.com		80	MAGFSXZV3Z		MAGWPXF7YC		UTC	Activa	02 jul de 2026 (2 m)	02 dic de 2026		88	1 / 1	No	
+http://gertikanale.com/get.php?username=MAGFSXZV3Z&password=MAGWPXF7YC&type=m3u_plus
+gertikanale.com		80	F03693317D21		Ht24TMVifV		UTC	Activa	05 sept de 2022 (4.0 a)	12 nov de 2026		69	1 / 1	No	
+http://gertikanale.com/get.php?username=F03693317D21&password=Ht24TMVifV&type=m3u_plus
+gertikanale.com		80	MAGBNJ251G		MAGVHWG3H3		UTC	Activa	25 jun de 2026 (2 m)	04 nov de 2026		61	0 / 1	No	
+http://gertikanale.com/get.php?username=MAGBNJ251G&password=MAGVHWG3H3&type=m3u_plus
+gertikanale.com		80	C7H71EWCEYE54DT		RU1zqgezHz		UTC	Activa	04 nov de 2025 (10 m)	05 nov de 2026		61	0 / 1	No	
+http://gertikanale.com/get.php?username=C7H71EWCEYE54DT&password=RU1zqgezHz&type=m3u_plus
+gertikanale.com		80	653D5DD77303C2C		l5WQg8JOUs		UTC	Activa	27 oct de 2022 (3.9 a)	28 oct de 2026		54	1 / 1	No	
+http://gertikanale.com/get.php?username=653D5DD77303C2C&password=l5WQg8JOUs&type=m3u_plus
+gertikanale.com		80	X47U85KX2NL6MZ8		saEgKKhT02		UTC	Activa	12 oct de 2025 (10 m)	12 oct de 2026		38	0 / 1	No	
+http://gertikanale.com/get.php?username=X47U85KX2NL6MZ8&password=saEgKKhT02&type=m3u_plus
+gertikanale.com		80	GD483529		EY8VCZA			UTC	Activa	05 jul de 2026 (2 m)	05 oct de 2026		30	1 / 1	No	
+http://gertikanale.com/get.php?username=GD483529&password=EY8VCZA&type=m3u_plus
+gertikanale.com		80	SE2A1YUE67VD6EM		1N4XdF1Ohw		UTC	Activa	23 mar de 2025 (1.5 a)	28 sept de 2026		23	0 / 1	No	
+http://gertikanale.com/get.php?username=SE2A1YUE67VD6EM&password=1N4XdF1Ohw&type=m3u_plus
+gertikanale.com		80	5415603152027897	Rd8rXeRhoh		UTC	Activa	21 feb de 2022 (4.5 a)	23 sept de 2026		19	0 / 1	No	
+http://gertikanale.com/get.php?username=5415603152027897&password=Rd8rXeRhoh&type=m3u_plus
+gertikanale.com		80	MAGTXN29F9		iY0jBP7rdW		UTC	Activa	15 mar de 2026 (5 m)	15 sept de 2026		11	0 / 1	No	
+http://gertikanale.com/get.php?username=MAGTXN29F9&password=iY0jBP7rdW&type=m3u_plus
+gertikanale.com		80	NY25B2NT85YE4CN		6PHL693BWm		UTC	Activa	13 sept de 2025 (11 m)	14 sept de 2026		9	0 / 1	No	
+http://gertikanale.com/get.php?username=NY25B2NT85YE4CN&password=6PHL693BWm&type=m3u_plus
+gertikanale.com		80	T48G863XB95RABU		Hmtotr2BcZ		UTC	Activa	05 nov de 2025 (10 m)	06 sept de 2026		1	1 / 1	No	
+http://gertikanale.com/get.php?username=T48G863XB95RABU&password=Hmtotr2BcZ&type=m3u_plus
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+dzi-tech.net		80	MAG7MAFDJM		MAGZSGENV1		UTC	Activa	01 jun de 2026 (3 m)	03 jun de 2028		637	0 / 1	No	
+http://dzi-tech.net/get.php?username=MAG7MAFDJM&password=MAGZSGENV1&type=m3u_plus
+dzi-tech.net		80	MAG2QDNXWL		Jx3DLTpQwm		UTC	Activa	27 mar de 2026 (5 m)	28 mar de 2028		571	1 / 1	No	
+http://dzi-tech.net/get.php?username=MAG2QDNXWL&password=Jx3DLTpQwm&type=m3u_plus
+dzi-tech.net		80	GCRST0KMQCL8XQ9		Qmg4ySDz4y		UTC	Activa	03 ago de 2025 (1.1 a)	22 ago de 2027		351	1 / 1	No	
+http://dzi-tech.net/get.php?username=GCRST0KMQCL8XQ9&password=Qmg4ySDz4y&type=m3u_plus
+dzi-tech.net		80	D27D0PC84UAXN82		PYgMxPGjG6		UTC	Activa	10 ago de 2024 (2.1 a)	22 ago de 2027		351	0 / 1	No	
+http://dzi-tech.net/get.php?username=D27D0PC84UAXN82&password=PYgMxPGjG6&type=m3u_plus
+dzi-tech.net		80	MAGLZSLFNU		MAGZUZ4UDS		UTC	Activa	17 jul de 2026 (1 m)	17 jul de 2027		315	0 / 1	No	
+http://dzi-tech.net/get.php?username=MAGLZSLFNU&password=MAGZUZ4UDS&type=m3u_plus
+dzi-tech.net		80	F34D2645D8C36AC		nsyKtKG93g		UTC	Activa	30 dic de 2022 (3.7 a)	11 jul de 2027		309	1 / 1	No	
+http://dzi-tech.net/get.php?username=F34D2645D8C36AC&password=nsyKtKG93g&type=m3u_plus
+dzi-tech.net		80	MAG9P3QMDJ		MAGD8FLNL3		UTC	Activa	21 jun de 2026 (2 m)	21 jun de 2027		290	0 / 1	No	
+http://dzi-tech.net/get.php?username=MAG9P3QMDJ&password=MAGD8FLNL3&type=m3u_plus
+dzi-tech.net		80	MAG26LJPVY		MAGFQHPXV5		UTC	Activa	20 jun de 2026 (2 m)	20 jun de 2027		288	0 / 1	No	
+http://dzi-tech.net/get.php?username=MAG26LJPVY&password=MAGFQHPXV5&type=m3u_plus
+dzi-tech.net		80	MAGNZGFM12		MAG95X61P1		UTC	Activa	16 jun de 2026 (2 m)	16 jun de 2027		284	0 / 1	No	
+http://dzi-tech.net/get.php?username=MAGNZGFM12&password=MAG95X61P1&type=m3u_plus
+dzi-tech.net		80	AA47VVLX8LZ4KH8		rqA0kSmjSs		UTC	Activa	17 abr de 2025 (1.4 a)	08 jun de 2027		277	0 / 1	No	
+http://dzi-tech.net/get.php?username=AA47VVLX8LZ4KH8&password=rqA0kSmjSs&type=m3u_plus
+dzi-tech.net		80	4D93DF994C46A7C		n36jFaEPMz		UTC	Activa	18 sept de 2022 (4.0 a)	25 may de 2027		262	0 / 1	No	
+http://dzi-tech.net/get.php?username=4D93DF994C46A7C&password=n36jFaEPMz&type=m3u_plus
+dzi-tech.net		80	2F4D92294D1107A		NV0SoVlhp7		UTC	Activa	07 sept de 2023 (3.0 a)	15 may de 2027		252	0 / 1	No	
+http://dzi-tech.net/get.php?username=2F4D92294D1107A&password=NV0SoVlhp7&type=m3u_plus
+dzi-tech.net		80	PD5HZGVJ4R997JG		p6Y3AksSLp		UTC	Activa	03 may de 2025 (1.3 a)	03 may de 2027		241	0 / 1	No	
+http://dzi-tech.net/get.php?username=PD5HZGVJ4R997JG&password=p6Y3AksSLp&type=m3u_plus
+dzi-tech.net		80	MAGRHLP5KM		MAGUNAGLTE		UTC	Activa	24 abr de 2026 (4 m)	25 abr de 2027		232	0 / 1	No	
+http://dzi-tech.net/get.php?username=MAGRHLP5KM&password=MAGUNAGLTE&type=m3u_plus
+dzi-tech.net		80	00F3C9D6FA2C5A4		4jOeSlKPPV		UTC	Activa	19 abr de 2022 (4.4 a)	19 abr de 2027		226	0 / 1	No	
+http://dzi-tech.net/get.php?username=00F3C9D6FA2C5A4&password=4jOeSlKPPV&type=m3u_plus
+dzi-tech.net		80	MAGPMLP5F2		MAGGDDUVQQ		UTC	Activa	18 abr de 2026 (4 m)	18 abr de 2027		225	1 / 1	No	
+http://dzi-tech.net/get.php?username=MAGPMLP5F2&password=MAGGDDUVQQ&type=m3u_plus
+dzi-tech.net		80	70F7F319F12A522		7JDFrA58Jc		UTC	Activa	30 abr de 2023 (3.3 a)	17 abr de 2027		224	0 / 1	No	
+http://dzi-tech.net/get.php?username=70F7F319F12A522&password=7JDFrA58Jc&type=m3u_plus
+dzi-tech.net		80	MAGVSW8YEH		MAGWM2Y8LV		UTC	Activa	16 abr de 2026 (4 m)	17 abr de 2027		224	0 / 1	No	
+http://dzi-tech.net/get.php?username=MAGVSW8YEH&password=MAGWM2Y8LV&type=m3u_plus
+dzi-tech.net		80	MAG3JQ8ZBY		MAGBJGCC5E		UTC	Activa	14 abr de 2026 (4 m)	14 abr de 2027		221	0 / 1	No	
+http://dzi-tech.net/get.php?username=MAG3JQ8ZBY&password=MAGBJGCC5E&type=m3u_plus
+dzi-tech.net		80	MAG6M8U5VY		jDm38zXBtu		UTC	Activa	04 abr de 2026 (5 m)	04 abr de 2027		211	0 / 1	No	
+http://dzi-tech.net/get.php?username=MAG6M8U5VY&password=jDm38zXBtu&type=m3u_plus
+dzi-tech.net		80	MAGXNKXF9Q		fpI9nvr1Ei		UTC	Activa	04 abr de 2026 (5 m)	04 abr de 2027		211	0 / 1	No	
+http://dzi-tech.net/get.php?username=MAGXNKXF9Q&password=fpI9nvr1Ei&type=m3u_plus
+dzi-tech.net		80	MAGPB1UF5P		mlQTwBT5H8		UTC	Activa	21 mar de 2026 (5 m)	21 mar de 2027		197	0 / 1	No	
+http://dzi-tech.net/get.php?username=MAGPB1UF5P&password=mlQTwBT5H8&type=m3u_plus
+dzi-tech.net		80	014703361F64		OlwzaPKaat		UTC	Activa	15 ene de 2024 (2.6 a)	20 feb de 2027		168	0 / 1	No	
+http://dzi-tech.net/get.php?username=014703361F64&password=OlwzaPKaat&type=m3u_plus
+dzi-tech.net		80	8VPVPJU1T4BF7ML		fNbA3JQ32L		UTC	Activa	25 ene de 2026 (7 m)	25 ene de 2027		142	2 / 1	No	
+http://dzi-tech.net/get.php?username=8VPVPJU1T4BF7ML&password=fNbA3JQ32L&type=m3u_plus
+dzi-tech.net		80	76F820A449F7C4F		OjpT1hjEvs		UTC	Activa	18 ene de 2024 (2.6 a)	23 ene de 2027		140	0 / 1	No	
+http://dzi-tech.net/get.php?username=76F820A449F7C4F&password=OjpT1hjEvs&type=m3u_plus
+dzi-tech.net		80	LQR59G35347UP3Q		VXXfFkgGjs		UTC	Activa	04 ene de 2026 (8 m)	05 ene de 2027		122	0 / 1	No	
+http://dzi-tech.net/get.php?username=LQR59G35347UP3Q&password=VXXfFkgGjs&type=m3u_plus
+dzi-tech.net		80	MAGJHDZQB3		yFkiS02AWH		UTC	Activa	06 mar de 2026 (6 m)	22 dic de 2026		108	0 / 1	No	
+http://dzi-tech.net/get.php?username=MAGJHDZQB3&password=yFkiS02AWH&type=m3u_plus
+dzi-tech.net		80	30A40C07F92477C		XkwG1UOYXq		UTC	Activa	13 dic de 2022 (3.7 a)	21 dic de 2026		108	0 / 1	No	
+http://dzi-tech.net/get.php?username=30A40C07F92477C&password=XkwG1UOYXq&type=m3u_plus
+dzi-tech.net		80	MAG5UYVYNC		MAGKWGW6UL		UTC	Activa	20 jun de 2026 (2 m)	20 dic de 2026		106	0 / 1	No	
+http://dzi-tech.net/get.php?username=MAG5UYVYNC&password=MAGKWGW6UL&type=m3u_plus
+dzi-tech.net		80	DJ3TW1VDDE6D31Z		uXfvmlR4mQ		UTC	Activa	07 dic de 2025 (9 m)	08 dic de 2026		94	1 / 1	No	
+http://dzi-tech.net/get.php?username=DJ3TW1VDDE6D31Z&password=uXfvmlR4mQ&type=m3u_plus
+dzi-tech.net		80	5C398CD1958C093		rBU6bxLilc		UTC	Activa	22 oct de 2022 (3.9 a)	01 dic de 2026		87	0 / 1	No	
+http://dzi-tech.net/get.php?username=5C398CD1958C093&password=rBU6bxLilc&type=m3u_plus
+dzi-tech.net		80	MAGBGWMGK3		MAGR6CMPV7		UTC	Activa	22 jul de 2026 (1 m)	22 nov de 2026		79	0 / 1	No	
+http://dzi-tech.net/get.php?username=MAGBGWMGK3&password=MAGR6CMPV7&type=m3u_plus
+dzi-tech.net		80	D236C02A2611350		asg0eSKF6L		UTC	Activa	12 nov de 2022 (3.8 a)	20 nov de 2026		77	1 / 1	No	
+http://dzi-tech.net/get.php?username=D236C02A2611350&password=asg0eSKF6L&type=m3u_plus
+dzi-tech.net		80	645C1A5125D5AF8		e6c7aWqpul		UTC	Activa	17 oct de 2023 (2.9 a)	14 nov de 2026		70	1 / 1	No	
+http://dzi-tech.net/get.php?username=645C1A5125D5AF8&password=e6c7aWqpul&type=m3u_plus
+dzi-tech.net		80	F03693317D21		Ht24TMVifV		UTC	Activa	05 sept de 2022 (4.0 a)	12 nov de 2026		69	1 / 1	No	
+http://dzi-tech.net/get.php?username=F03693317D21&password=Ht24TMVifV&type=m3u_plus
+dzi-tech.net		80	JKJ6FLLSYP22KM8		bAYq7bqEzo		UTC	Activa	28 oct de 2025 (10 m)	29 oct de 2026		54	0 / 1	No	
+http://dzi-tech.net/get.php?username=JKJ6FLLSYP22KM8&password=bAYq7bqEzo&type=m3u_plus
+dzi-tech.net		80	YBJ1L93U8HA6N1D		Rln5xt3KHm		UTC	Activa	27 oct de 2025 (10 m)	27 oct de 2026		52	0 / 1	No	
+http://dzi-tech.net/get.php?username=YBJ1L93U8HA6N1D&password=Rln5xt3KHm&type=m3u_plus
+dzi-tech.net		80	AF1A7A69C77FC0C		nx8WKHcrhO		UTC	Activa	15 jul de 2022 (4.1 a)	15 oct de 2026		40	1 / 1	No	
+http://dzi-tech.net/get.php?username=AF1A7A69C77FC0C&password=nx8WKHcrhO&type=m3u_plus
+dzi-tech.net		80	61D3370DD48D836		CQgwwb5860		UTC	Activa	03 oct de 2021 (4.9 a)	15 oct de 2026		40	0 / 1	No	
+http://dzi-tech.net/get.php?username=61D3370DD48D836&password=CQgwwb5860&type=m3u_plus
+dzi-tech.net		80	VO0OnUBpFp8GJRz		kZgCqbgh8P		UTC	Activa	23 sept de 2019 (7.0 a)	14 oct de 2026		40	0 / 1	No	
+http://dzi-tech.net/get.php?username=VO0OnUBpFp8GJRz&password=kZgCqbgh8P&type=m3u_plus
+dzi-tech.net		80	QWMYNZ69T62RPRW		nL8GIV8JHj		UTC	Activa	13 ago de 2024 (2.1 a)	13 oct de 2026		38	0 / 1	No	
+http://dzi-tech.net/get.php?username=QWMYNZ69T62RPRW&password=nL8GIV8JHj&type=m3u_plus
+dzi-tech.net		80	MAGEE44MW3		MAGUK4ZTLL		UTC	Activa	11 jul de 2026 (1 m)	11 oct de 2026		37	0 / 1	No	
+http://dzi-tech.net/get.php?username=MAGEE44MW3&password=MAGUK4ZTLL&type=m3u_plus
+dzi-tech.net		80	A22222			l4eDKjYxLg		UTC	Activa	30 sept de 2023 (2.9 a)	05 oct de 2026		30	1 / 1	No	
+http://dzi-tech.net/get.php?username=A22222&password=l4eDKjYxLg&type=m3u_plus
+dzi-tech.net		80	Y29DPULMRCMB763		wYhBSZZTk5		UTC	Activa	04 oct de 2025 (11 m)	04 oct de 2026		29	0 / 1	No	
+http://dzi-tech.net/get.php?username=Y29DPULMRCMB763&password=wYhBSZZTk5&type=m3u_plus
+dzi-tech.net		80	R3475H43DAX8439		TfAey873sR		UTC	Activa	17 jun de 2024 (2.2 a)	30 sept de 2026		26	0 / 1	No	
+http://dzi-tech.net/get.php?username=R3475H43DAX8439&password=TfAey873sR&type=m3u_plus
+dzi-tech.net		80	T3ZEA5DAHC46J1E		sKgBw6X68r		UTC	Activa	25 sept de 2024 (1.9 a)	29 sept de 2026		24	0 / 1	No	
+http://dzi-tech.net/get.php?username=T3ZEA5DAHC46J1E&password=sKgBw6X68r&type=m3u_plus
+dzi-tech.net		80	LJ4A7445VD1CCUL		wQWIAWsTUo		UTC	Activa	25 nov de 2025 (9 m)	25 sept de 2026		20	0 / 1	No	
+http://dzi-tech.net/get.php?username=LJ4A7445VD1CCUL&password=wQWIAWsTUo&type=m3u_plus
+dzi-tech.net		80	MAGR1NDTWY		MAG5FHK7X2		UTC	Activa	12 jun de 2026 (2 m)	13 sept de 2026		8	0 / 1	No	
+http://dzi-tech.net/get.php?username=MAGR1NDTWY&password=MAG5FHK7X2&type=m3u_plus
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+fontaksarha76.net	80	8W5KX2H91S4323Z		g4KdE3BKdn		UTC	Activa	23 mar de 2024 (2.4 a)	12 may de 2028		615	0 / 1	No	
+http://fontaksarha76.net/get.php?username=8W5KX2H91S4323Z&password=g4KdE3BKdn&type=m3u_plus
+fontaksarha76.net	80	77EC986M0MZUM3T		Hmt6O134HR		UTC	Activa	13 ago de 2024 (2.1 a)	26 ago de 2027		355	0 / 1	No	
+http://fontaksarha76.net/get.php?username=77EC986M0MZUM3T&password=Hmt6O134HR&type=m3u_plus
+fontaksarha76.net	80	W5XN9SZCR7BV755		CFUtHz026Z		UTC	Activa	16 ago de 2025 (1.1 a)	16 ago de 2027		346	0 / 1	No	
+http://fontaksarha76.net/get.php?username=W5XN9SZCR7BV755&password=CFUtHz026Z&type=m3u_plus
+fontaksarha76.net	80	MAGVX8UWY8		MAGWNJ4ZYX		UTC	Activa	19 jul de 2026 (1 m)	20 jul de 2027		319	0 / 1	No	
+http://fontaksarha76.net/get.php?username=MAGVX8UWY8&password=MAGWNJ4ZYX&type=m3u_plus
+fontaksarha76.net	80	X4C92GP56Z3TTN8		E8dbGEn9ac		UTC	Activa	16 nov de 2024 (1.8 a)	11 jul de 2027		309	0 / 1	No	
+http://fontaksarha76.net/get.php?username=X4C92GP56Z3TTN8&password=E8dbGEn9ac&type=m3u_plus
+fontaksarha76.net	80	96SK4C86N43D69B		RiRQKetdPH		UTC	Activa	12 sept de 2025 (11 m)	14 jun de 2027		283	0 / 1	No	
+http://fontaksarha76.net/get.php?username=96SK4C86N43D69B&password=RiRQKetdPH&type=m3u_plus
+fontaksarha76.net	80	0128677828673927	PF8RYFR			UTC	Activa	18 may de 2026 (3 m)	18 may de 2027		256	0 / 1	No	
+http://fontaksarha76.net/get.php?username=0128677828673927&password=PF8RYFR&type=m3u_plus
+fontaksarha76.net	80	T74C4N4181LLFAP		McUTjZcZze		UTC	Activa	11 may de 2025 (1.3 a)	14 may de 2027		251	0 / 1	No	
+http://fontaksarha76.net/get.php?username=T74C4N4181LLFAP&password=McUTjZcZze&type=m3u_plus
+fontaksarha76.net	80	MAGGFW4WK3		MAGZKKLRR3		UTC	Activa	02 may de 2026 (4 m)	02 may de 2027		240	0 / 1	No	
+http://fontaksarha76.net/get.php?username=MAGGFW4WK3&password=MAGZKKLRR3&type=m3u_plus
+fontaksarha76.net	80	MAGGZYBKEW		MAGY7AXPFV		UTC	Activa	29 abr de 2026 (4 m)	29 abr de 2027		236	1 / 1	No	
+http://fontaksarha76.net/get.php?username=MAGGZYBKEW&password=MAGY7AXPFV&type=m3u_plus
+fontaksarha76.net	80	0D8C3AF3510D096		mdVXmIp8uc		UTC	Activa	14 abr de 2023 (3.4 a)	17 abr de 2027		224	0 / 1	No	
+http://fontaksarha76.net/get.php?username=0D8C3AF3510D096&password=mdVXmIp8uc&type=m3u_plus
+fontaksarha76.net	80	MAG1FUPT9J		MAGRTRSF3J		UTC	Activa	14 abr de 2026 (4 m)	14 abr de 2027		221	1 / 1	No	
+http://fontaksarha76.net/get.php?username=MAG1FUPT9J&password=MAGRTRSF3J&type=m3u_plus
+fontaksarha76.net	80	4346V9TB7334RDB		z6i3pKhEqV		UTC	Activa	30 mar de 2025 (1.4 a)	13 abr de 2027		221	0 / 1	No	
+http://fontaksarha76.net/get.php?username=4346V9TB7334RDB&password=z6i3pKhEqV&type=m3u_plus
+fontaksarha76.net	80	113449853325FA7		uBqAEoBS1g		UTC	Activa	25 nov de 2021 (4.8 a)	21 mar de 2027		198	0 / 1	No	
+http://fontaksarha76.net/get.php?username=113449853325FA7&password=uBqAEoBS1g&type=m3u_plus
+fontaksarha76.net	80	MAGWKH439W		AwJab0X2Tr		UTC	Activa	05 mar de 2026 (6 m)	05 mar de 2027		181	1 / 1	No	
+http://fontaksarha76.net/get.php?username=MAGWKH439W&password=AwJab0X2Tr&type=m3u_plus
+fontaksarha76.net	80	945055923602864		WF4UH3MCaS		UTC	Activa	27 feb de 2022 (4.5 a)	02 mar de 2027		179	0 / 1	No	
+http://fontaksarha76.net/get.php?username=945055923602864&password=WF4UH3MCaS&type=m3u_plus
+fontaksarha76.net	80	1gJEtwJEUN		UQnP2nNrsz		UTC	Activa	10 feb de 2019 (7.6 a)	25 feb de 2027		174	0 / 1	No	
+http://fontaksarha76.net/get.php?username=1gJEtwJEUN&password=UQnP2nNrsz&type=m3u_plus
+fontaksarha76.net	80	31A39CFCD05DC25		alIxyGamnQ		UTC	Activa	24 ene de 2021 (5.6 a)	17 feb de 2027		166	0 / 1	No	
+http://fontaksarha76.net/get.php?username=31A39CFCD05DC25&password=alIxyGamnQ&type=m3u_plus
+fontaksarha76.net	80	15E7VEN1V48QCA7		pG1kxVQLZP		UTC	Activa	26 ene de 2025 (1.6 a)	15 feb de 2027		163	1 / 1	No	
+http://fontaksarha76.net/get.php?username=15E7VEN1V48QCA7&password=pG1kxVQLZP&type=m3u_plus
+fontaksarha76.net	80	MS42DTVCP212S5T		pRycosMJqY		UTC	Activa	30 dic de 2024 (1.7 a)	04 feb de 2027		153	0 / 1	No	
+http://fontaksarha76.net/get.php?username=MS42DTVCP212S5T&password=pRycosMJqY&type=m3u_plus
+fontaksarha76.net	80	86D3C48F1165C44		20QFhpMMuP		UTC	Activa	14 dic de 2023 (2.7 a)	27 ene de 2027		144	1 / 1	No	
+http://fontaksarha76.net/get.php?username=86D3C48F1165C44&password=20QFhpMMuP&type=m3u_plus
+fontaksarha76.net	80	61JLQVS1FK64GLD		XiMmei8Sgr		UTC	Activa	24 ene de 2025 (1.6 a)	24 ene de 2027		141	1 / 1	No	
+http://fontaksarha76.net/get.php?username=61JLQVS1FK64GLD&password=XiMmei8Sgr&type=m3u_plus
+fontaksarha76.net	80	MAGYSUYFNT		MAGG61HRJQ		UTC	Activa	19 jul de 2026 (1 m)	19 ene de 2027		136	0 / 1	No	
+http://fontaksarha76.net/get.php?username=MAGYSUYFNT&password=MAGG61HRJQ&type=m3u_plus
+fontaksarha76.net	80	024207HKB4GMMRC		PDhd2t9G1T		UTC	Activa	30 dic de 2024 (1.7 a)	06 ene de 2027		124	0 / 1	No	
+http://fontaksarha76.net/get.php?username=024207HKB4GMMRC&password=PDhd2t9G1T&type=m3u_plus
+fontaksarha76.net	80	E9VL7P7JGNH1V42		o66NcUrnBC		UTC	Activa	28 dic de 2025 (8 m)	28 dic de 2026		114	0 / 1	No	
+http://fontaksarha76.net/get.php?username=E9VL7P7JGNH1V42&password=o66NcUrnBC&type=m3u_plus
+fontaksarha76.net	80	JY23ZVA955H7KU4		4WgRyjhtx6		UTC	Activa	09 dic de 2025 (8 m)	10 dic de 2026		97	0 / 1	No	
+http://fontaksarha76.net/get.php?username=JY23ZVA955H7KU4&password=4WgRyjhtx6&type=m3u_plus
+fontaksarha76.net	80	8D2527645FF727C		tEpOzVsEA4		UTC	Activa	07 nov de 2022 (3.8 a)	09 dic de 2026		95	0 / 1	No	
+http://fontaksarha76.net/get.php?username=8D2527645FF727C&password=tEpOzVsEA4&type=m3u_plus
+fontaksarha76.net	80	9477966F3669020		psYUTBGBkN		UTC	Activa	05 dic de 2023 (2.7 a)	07 dic de 2026		93	0 / 1	No	
+http://fontaksarha76.net/get.php?username=9477966F3669020&password=psYUTBGBkN&type=m3u_plus
+fontaksarha76.net	80	2F1824522A3379C		9otaWSW7cY		UTC	Activa	02 dic de 2023 (2.8 a)	05 dic de 2026		91	0 / 1	No	
+http://fontaksarha76.net/get.php?username=2F1824522A3379C&password=9otaWSW7cY&type=m3u_plus
+fontaksarha76.net	80	MAGFSBY1T7		MAG3VN9H72		UTC	Activa	03 jun de 2026 (3 m)	03 dic de 2026		89	0 / 1	No	
+http://fontaksarha76.net/get.php?username=MAGFSBY1T7&password=MAG3VN9H72&type=m3u_plus
+fontaksarha76.net	80	Y4CA0522MVR144A		xp8P4cwB2H		UTC	Activa	24 nov de 2025 (9 m)	25 nov de 2026		82	0 / 1	No	
+http://fontaksarha76.net/get.php?username=Y4CA0522MVR144A&password=xp8P4cwB2H&type=m3u_plus
+fontaksarha76.net	80	M2448434J852S7J		1anroIRMUr		UTC	Activa	14 may de 2024 (2.3 a)	23 nov de 2026		80	1 / 1	No	
+http://fontaksarha76.net/get.php?username=M2448434J852S7J&password=1anroIRMUr&type=m3u_plus
+fontaksarha76.net	80	MZDH6UAWUVV6332		ixNFG66hQ1		UTC	Activa	06 feb de 2025 (1.6 a)	07 nov de 2026		63	0 / 1	No	
+http://fontaksarha76.net/get.php?username=MZDH6UAWUVV6332&password=ixNFG66hQ1&type=m3u_plus
+fontaksarha76.net	80	D51417F8A386D45		FZXldXuoLF		UTC	Activa	13 dic de 2021 (4.7 a)	03 nov de 2026		60	0 / 1	No	
+http://fontaksarha76.net/get.php?username=D51417F8A386D45&password=FZXldXuoLF&type=m3u_plus
+fontaksarha76.net	80	3M3EW5VWD448TGV		Jq9HfNVAYp		UTC	Activa	04 nov de 2025 (10 m)	04 nov de 2026		60	0 / 1	No	
+http://fontaksarha76.net/get.php?username=3M3EW5VWD448TGV&password=Jq9HfNVAYp&type=m3u_plus
+fontaksarha76.net	80	43QL1VEFVF9W2PE		hDVp1qcf6c		UTC	Activa	24 oct de 2025 (10 m)	25 oct de 2026		50	0 / 1	No	
+http://fontaksarha76.net/get.php?username=43QL1VEFVF9W2PE&password=hDVp1qcf6c&type=m3u_plus
+fontaksarha76.net	80	10K14JTTN6HC3T9		CXj6TBlyGK		UTC	Activa	23 sept de 2025 (11 m)	23 oct de 2026		49	0 / 1	No	
+http://fontaksarha76.net/get.php?username=10K14JTTN6HC3T9&password=CXj6TBlyGK&type=m3u_plus
+fontaksarha76.net	80	5689823			VsVpklSZYa		UTC	Activa	17 oct de 2025 (10 m)	18 oct de 2026		43	1 / 1	No	
+http://fontaksarha76.net/get.php?username=5689823&password=VsVpklSZYa&type=m3u_plus
+fontaksarha76.net	80	3DM5FY4ZG9TEG3K		spkDdTiOFI		UTC	Activa	26 sept de 2024 (1.9 a)	02 oct de 2026		27	0 / 1	No	
+http://fontaksarha76.net/get.php?username=3DM5FY4ZG9TEG3K&password=spkDdTiOFI&type=m3u_plus
+fontaksarha76.net	80	5E5E3PN3E8U514K		35zRhOa4kk		UTC	Activa	17 sept de 2024 (2.0 a)	30 sept de 2026		25	0 / 1	No	
+http://fontaksarha76.net/get.php?username=5E5E3PN3E8U514K&password=35zRhOa4kk&type=m3u_plus
+fontaksarha76.net	80	AYL257438U3B6LE		DaWZGNdV8R		UTC	Activa	24 sept de 2024 (1.9 a)	29 sept de 2026		24	0 / 1	No	
+http://fontaksarha76.net/get.php?username=AYL257438U3B6LE&password=DaWZGNdV8R&type=m3u_plus
+fontaksarha76.net	80	MAGL3LHGTN		MAG2G6C31J		UTC	Activa	22 jul de 2026 (1 m)	22 sept de 2026		18	0 / 1	No	
+http://fontaksarha76.net/get.php?username=MAGL3LHGTN&password=MAG2G6C31J&type=m3u_plus
+fontaksarha76.net	80	107885937610435		wi8yhN3PfU		UTC	Activa	14 sept de 2025 (11 m)	14 sept de 2026		9	0 / 1	No	
+http://fontaksarha76.net/get.php?username=107885937610435&password=wi8yhN3PfU&type=m3u_plus
+fontaksarha76.net	80	4ER2HC92H5L5KP9		wfr9uyGZlO		UTC	Activa	26 ago de 2024 (2.0 a)	09 sept de 2026		5	0 / 1	No	
+http://fontaksarha76.net/get.php?username=4ER2HC92H5L5KP9&password=wfr9uyGZlO&type=m3u_plus
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+flowutc.com		80	3038648ADC112C4		gdlbO9vyg1		UTC	Activa	31 dic de 2023 (2.7 a)	17 abr de 2028		590	1 / 1	No	http://flowutc.com/get.php?username=3038648ADC112C4&password=gdlbO9vyg1&type=m3u_plus
+flowutc.com		80	PK33NZWXVV7YKH3		Bnc2wgiPsy		UTC	Activa	11 jun de 2025 (1.2 a)	11 jun de 2027		279	1 / 1	No	http://flowutc.com/get.php?username=PK33NZWXVV7YKH3&password=Bnc2wgiPsy&type=m3u_plus
+flowutc.com		80	MAGG3TA7NP		MAGJNKQ6QA		UTC	Activa	05 may de 2026 (4 m)	05 jun de 2027		273	0 / 1	No	http://flowutc.com/get.php?username=MAGG3TA7NP&password=MAGJNKQ6QA&type=m3u_plus
+flowutc.com		80	WPJ5WS4MH3PNY27		QsHp40y7Dy		UTC	Activa	23 may de 2024 (2.3 a)	23 may de 2027		261	0 / 1	No	http://flowutc.com/get.php?username=WPJ5WS4MH3PNY27&password=QsHp40y7Dy&type=m3u_plus
+flowutc.com		80	CQ35960			4zNKGNG2Lq		UTC	Activa	11 feb de 2025 (1.6 a)	19 abr de 2027		226	1 / 1	No	http://flowutc.com/get.php?username=CQ35960&password=4zNKGNG2Lq&type=m3u_plus
+flowutc.com		80	1C191A377594F31		3mcDFqC6tm		UTC	Activa	04 sept de 2021 (5.0 a)	07 mar de 2027		183	1 / 1	No	http://flowutc.com/get.php?username=1C191A377594F31&password=3mcDFqC6tm&type=m3u_plus
+flowutc.com		80	GE8JKCEJSC7YZLX		akp7VT1A0n		UTC	Activa	26 ene de 2026 (7 m)	30 ene de 2027		147	0 / 1	No	http://flowutc.com/get.php?username=GE8JKCEJSC7YZLX&password=akp7VT1A0n&type=m3u_plus
+flowutc.com		80	25T17238CK8PGK3		KoR7wnvJVe		UTC	Activa	16 ene de 2025 (1.6 a)	18 ene de 2027		135	0 / 1	No	http://flowutc.com/get.php?username=25T17238CK8PGK3&password=KoR7wnvJVe&type=m3u_plus
+flowutc.com		80	ZNH8U63H5CUQ666		2kpDmwe7AI		UTC	Activa	03 ene de 2025 (1.7 a)	04 ene de 2027		121	0 / 1	No	http://flowutc.com/get.php?username=ZNH8U63H5CUQ666&password=2kpDmwe7AI&type=m3u_plus
+flowutc.com		80	DV16HNTFS1R5CMQ		I8zK8HVReJ		UTC	Activa	21 may de 2024 (2.3 a)	19 dic de 2026		105	1 / 1	No	http://flowutc.com/get.php?username=DV16HNTFS1R5CMQ&password=I8zK8HVReJ&type=m3u_plus
+flowutc.com		80	MJAVEGGTQSJ4TM6		4nowl205oY		UTC	Activa	13 dic de 2025 (8 m)	13 dic de 2026		99	0 / 1	No	http://flowutc.com/get.php?username=MJAVEGGTQSJ4TM6&password=4nowl205oY&type=m3u_plus
+flowutc.com		80	RW9ZAJ6			8B936TL			UTC	Activa	22 nov de 2025 (9 m)	24 nov de 2026		81	0 / 1	No	http://flowutc.com/get.php?username=RW9ZAJ6&password=8B936TL&type=m3u_plus
+flowutc.com		80	D7AA9279C134336		ANcS7dzn5K		UTC	Activa	15 oct de 2020 (5.9 a)	16 nov de 2026		72	0 / 1	No	http://flowutc.com/get.php?username=D7AA9279C134336&password=ANcS7dzn5K&type=m3u_plus
+flowutc.com		80	ZGAT99P6PH019ZX		lGK3jMx6dL		UTC	Activa	28 oct de 2024 (1.8 a)	03 nov de 2026		60	0 / 1	No	http://flowutc.com/get.php?username=ZGAT99P6PH019ZX&password=lGK3jMx6dL&type=m3u_plus
+flowutc.com		80	B43G4AL6W5ULXG3		RYN6p6pV1g		UTC	Activa	17 sept de 2025 (11 m)	17 sept de 2026		12	0 / 1	No	http://flowutc.com/get.php?username=B43G4AL6W5ULXG3&password=RYN6p6pV1g&type=m3u_plus
+flowutc.com		80	MAG4PYGC6M		MAGKMAP1Q8		UTC	Activa	16 jun de 2026 (2 m)	16 sept de 2026		11	0 / 1	No	http://flowutc.com/get.php?username=MAG4PYGC6M&password=MAGKMAP1Q8&type=m3u_plus
+flowutc.com		80	G2Y484S535HQ1EG		R6LJWn7UaU		UTC	Activa	11 sept de 2025 (11 m)	13 sept de 2026		8	0 / 1	No	http://flowutc.com/get.php?username=G2Y484S535HQ1EG&password=R6LJWn7UaU&type=m3u_plus
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+formyeyesonly.org	80	65DC9YE95UC3J2C		eeni3Xf3ut		UTC	Activa	05 ene de 2026 (8 m)	06 ene de 2028		489	0 / 1	No	http://formyeyesonly.org/get.php?username=65DC9YE95UC3J2C&password=eeni3Xf3ut&type=m3u_plus
+formyeyesonly.org	80	99KAX6Z55ESSBM4		r17Aj8V0rH		UTC	Activa	02 ago de 2024 (2.1 a)	22 ago de 2027		351	0 / 1	No	http://formyeyesonly.org/get.php?username=99KAX6Z55ESSBM4&password=r17Aj8V0rH&type=m3u_plus
+formyeyesonly.org	80	MAG4GG3EGB		MAG96DWBX7		UTC	Activa	23 jul de 2026 (1 m)	25 jul de 2027		323	0 / 1	No	http://formyeyesonly.org/get.php?username=MAG4GG3EGB&password=MAG96DWBX7&type=m3u_plus
+formyeyesonly.org	80	MAGSP61SWD		MAGTRKF86H		UTC	Activa	20 jul de 2026 (1 m)	20 jul de 2027		319	0 / 1	No	http://formyeyesonly.org/get.php?username=MAGSP61SWD&password=MAGTRKF86H&type=m3u_plus
+formyeyesonly.org	80	MAGTU9LWLA		MAG2FPKY6K		UTC	Activa	16 jun de 2026 (2 m)	16 jun de 2027		285	0 / 1	No	http://formyeyesonly.org/get.php?username=MAGTU9LWLA&password=MAG2FPKY6K&type=m3u_plus
+formyeyesonly.org	80	MAGL4F4RT2		MAGAM6UGJ7		UTC	Activa	12 jun de 2026 (2 m)	12 jun de 2027		280	0 / 1	No	http://formyeyesonly.org/get.php?username=MAGL4F4RT2&password=MAGAM6UGJ7&type=m3u_plus
+formyeyesonly.org	80	KU6JWFL			AGBA3GK			UTC	Activa	09 jun de 2026 (2 m)	09 jun de 2027		277	0 / 1	No	http://formyeyesonly.org/get.php?username=KU6JWFL&password=AGBA3GK&type=m3u_plus
+formyeyesonly.org	80	yvonarch		dc0yfETppc		UTC	Activa	17 abr de 2024 (2.4 a)	20 abr de 2027		227	1 / 1	No	http://formyeyesonly.org/get.php?username=yvonarch&password=dc0yfETppc&type=m3u_plus
+formyeyesonly.org	80	087AAYWVAAKG5NQ		crgBfV0JH1		UTC	Activa	01 mar de 2025 (1.5 a)	19 abr de 2027		226	0 / 1	No	http://formyeyesonly.org/get.php?username=087AAYWVAAKG5NQ&password=crgBfV0JH1&type=m3u_plus
+formyeyesonly.org	80	MAGX31MAQH		MAG8U3GPTU		UTC	Activa	14 abr de 2026 (4 m)	14 abr de 2027		221	0 / 1	No	http://formyeyesonly.org/get.php?username=MAGX31MAQH&password=MAG8U3GPTU&type=m3u_plus
+formyeyesonly.org	80	6KPYH41X2G3936C		VIk9zl658P		UTC	Activa	16 mar de 2025 (1.5 a)	16 mar de 2027		193	1 / 1	No	http://formyeyesonly.org/get.php?username=6KPYH41X2G3936C&password=VIk9zl658P&type=m3u_plus
+formyeyesonly.org	80	068747894051042		MfFGrdLYzp		UTC	Activa	22 feb de 2024 (2.5 a)	08 mar de 2027		185	1 / 1	No	http://formyeyesonly.org/get.php?username=068747894051042&password=MfFGrdLYzp&type=m3u_plus
+formyeyesonly.org	80	80BE63EDVL0N2U7		mzF7HdUpQn		UTC	Activa	04 mar de 2025 (1.5 a)	04 mar de 2027		181	1 / 1	No	http://formyeyesonly.org/get.php?username=80BE63EDVL0N2U7&password=mzF7HdUpQn&type=m3u_plus
+formyeyesonly.org	80	MAGL7WZ6E6		8GIOtDpEwI		UTC	Activa	02 mar de 2026 (6 m)	03 mar de 2027		180	1 / 1	No	http://formyeyesonly.org/get.php?username=MAGL7WZ6E6&password=8GIOtDpEwI&type=m3u_plus
+formyeyesonly.org	80	1169D8F624757		TO7ljiaakY		UTC	Activa	12 feb de 2025 (1.6 a)	23 feb de 2027		172	1 / 1	No	http://formyeyesonly.org/get.php?username=1169D8F624757&password=TO7ljiaakY&type=m3u_plus
+formyeyesonly.org	80	2382C605D720674		Lq4uPP6MIW		UTC	Activa	21 ago de 2022 (4.0 a)	07 feb de 2027		155	0 / 1	No	http://formyeyesonly.org/get.php?username=2382C605D720674&password=Lq4uPP6MIW&type=m3u_plus
+formyeyesonly.org	80	5DD9C2926A63322		J46MThmxvO		UTC	Activa	17 jul de 2022 (4.1 a)	12 ene de 2027		129	0 / 1	No	http://formyeyesonly.org/get.php?username=5DD9C2926A63322&password=J46MThmxvO&type=m3u_plus
+formyeyesonly.org	80	2D8063A544C5DAC		QFi4CkY9pZ		UTC	Activa	08 oct de 2022 (3.9 a)	11 ene de 2027		128	0 / 1	No	http://formyeyesonly.org/get.php?username=2D8063A544C5DAC&password=QFi4CkY9pZ&type=m3u_plus
+formyeyesonly.org	80	U58AJBHP3R3TELX		hQoZa0Vhzm		UTC	Activa	10 ago de 2024 (2.1 a)	10 ene de 2027		127	1 / 1	No	http://formyeyesonly.org/get.php?username=U58AJBHP3R3TELX&password=hQoZa0Vhzm&type=m3u_plus
+formyeyesonly.org	80	VDMZEZ10XN8L69Y		tsFhiseMAg		UTC	Activa	10 nov de 2024 (1.8 a)	19 dic de 2026		106	0 / 1	No	http://formyeyesonly.org/get.php?username=VDMZEZ10XN8L69Y&password=tsFhiseMAg&type=m3u_plus
+formyeyesonly.org	80	0153E5EZ4LJRK74		MODYRqX824		UTC	Activa	10 dic de 2024 (1.7 a)	13 nov de 2026		69	1 / 1	No	http://formyeyesonly.org/get.php?username=0153E5EZ4LJRK74&password=MODYRqX824&type=m3u_plus
+formyeyesonly.org	80	59D109338CA7A30		6jMhpGKhLV		UTC	Activa	13 nov de 2022 (3.8 a)	07 nov de 2026		63	0 / 1	No	http://formyeyesonly.org/get.php?username=59D109338CA7A30&password=6jMhpGKhLV&type=m3u_plus
+formyeyesonly.org	80	6496T7RBUN65BEJ		r5TjJDqEzc		UTC	Activa	03 nov de 2025 (10 m)	03 nov de 2026		60	0 / 1	No	http://formyeyesonly.org/get.php?username=6496T7RBUN65BEJ&password=r5TjJDqEzc&type=m3u_plus
+formyeyesonly.org	80	arugulabalkishan	OF5CclhYOD		UTC	Activa	26 feb de 2023 (3.5 a)	27 oct de 2026		53	1 / 1	No	http://formyeyesonly.org/get.php?username=arugulabalkishan&password=OF5CclhYOD&type=m3u_plus
+formyeyesonly.org	80	CUW8GJ326LWVT81		tLmTqglffs		UTC	Activa	27 oct de 2025 (10 m)	28 oct de 2026		53	0 / 1	No	http://formyeyesonly.org/get.php?username=CUW8GJ326LWVT81&password=tLmTqglffs&type=m3u_plus
+formyeyesonly.org	80	629399D6D34C524		Eym8Zve09Z		UTC	Activa	26 oct de 2023 (2.9 a)	27 oct de 2026		52	0 / 1	No	http://formyeyesonly.org/get.php?username=629399D6D34C524&password=Eym8Zve09Z&type=m3u_plus
+formyeyesonly.org	80	W559W91CVH20C48		r409HdURQj		UTC	Activa	15 oct de 2024 (1.9 a)	22 oct de 2026		48	1 / 1	No	http://formyeyesonly.org/get.php?username=W559W91CVH20C48&password=r409HdURQj&type=m3u_plus
+formyeyesonly.org	80	BRJ8Y3KBN1L464L		TjjGohGnRO		UTC	Activa	11 oct de 2025 (10 m)	11 oct de 2026		36	0 / 1	No	http://formyeyesonly.org/get.php?username=BRJ8Y3KBN1L464L&password=TjjGohGnRO&type=m3u_plus
+formyeyesonly.org	80	MAGYY9HFP4		MAG6J8ZD1T		UTC	Activa	03 jul de 2026 (2 m)	03 oct de 2026		29	0 / 1	No	http://formyeyesonly.org/get.php?username=MAGYY9HFP4&password=MAG6J8ZD1T&type=m3u_plus
+formyeyesonly.org	80	MAGCLUDM6T		MAG636V3LQ		UTC	Activa	31 may de 2026 (3 m)	03 oct de 2026		28	0 / 1	No	http://formyeyesonly.org/get.php?username=MAGCLUDM6T&password=MAG636V3LQ&type=m3u_plus
+formyeyesonly.org	80	XQFAK947BG1G9U7		IL0hFtD6PQ		UTC	Activa	01 jun de 2025 (1.3 a)	01 oct de 2026		27	0 / 1	No	http://formyeyesonly.org/get.php?username=XQFAK947BG1G9U7&password=IL0hFtD6PQ&type=m3u_plus
+formyeyesonly.org	80	FC0443725A13904		RGyNs7t4xc		UTC	Activa	02 may de 2023 (3.3 a)	18 sept de 2026		13	0 / 1	No	http://formyeyesonly.org/get.php?username=FC0443725A13904&password=RGyNs7t4xc&type=m3u_plus
+formyeyesonly.org	80	T9WV63N1WN13R30		lUNBoiy1ln		UTC	Activa	12 jun de 2025 (1.2 a)	14 sept de 2026		10	0 / 1	No	http://formyeyesonly.org/get.php?username=T9WV63N1WN13R30&password=lUNBoiy1ln&type=m3u_plus
+formyeyesonly.org	80	MAGYM7LNDL		MAG61BBMT8		UTC	Activa	11 jul de 2026 (1 m)	11 sept de 2026		6	1 / 1	No	http://formyeyesonly.org/get.php?username=MAGYM7LNDL&password=MAG61BBMT8&type=m3u_plus
+formyeyesonly.org	80	8UAXEV61T3ZAP7N		I76BOfdwa5		UTC	Activa	08 sept de 2025 (12 m)	09 sept de 2026		5	1 / 1	No	http://formyeyesonly.org/get.php?username=8UAXEV61T3ZAP7N&password=I76BOfdwa5&type=m3u_plus
+formyeyesonly.org	80	MAGYN1YN16		MAGLWKB4UG		UTC	Activa	09 jun de 2026 (2 m)	09 sept de 2026		4	0 / 1	No	http://formyeyesonly.org/get.php?username=MAGYN1YN16&password=MAGLWKB4UG&type=m3u_plus
+formyeyesonly.org	80	6TAFKVVG5LG4PU4		ja587JdOtE		UTC	Activa	19 ago de 2024 (2.0 a)	04 sept de 2026		0	1 / 1	No	http://formyeyesonly.org/get.php?username=6TAFKVVG5LG4PU4&password=ja587JdOtE&type=m3u_plus
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+dzqase.com		80	NPRZUWSATRAW12X		T02nnGWEPI		UTC	Activa	06 jun de 2024 (2.2 a)	09 jun de 2027		277	1 / 1	No	http://dzqase.com/get.php?username=NPRZUWSATRAW12X&password=T02nnGWEPI&type=m3u_plus
+dzqase.com		80	FFD6F6AAA3750C9		ZgLfrcaNAJ		UTC	Activa	09 dic de 2023 (2.7 a)	24 may de 2027		261	0 / 1	No	http://dzqase.com/get.php?username=FFD6F6AAA3750C9&password=ZgLfrcaNAJ&type=m3u_plus
+dzqase.com		80	MAGFZ82X44		MAGG8WWYLE		UTC	Activa	08 may de 2026 (3 m)	09 may de 2027		247	0 / 1	No	http://dzqase.com/get.php?username=MAGFZ82X44&password=MAGG8WWYLE&type=m3u_plus
+dzqase.com		80	WAACJJD1RS7HA53		dUWBmdQjHD		UTC	Activa	20 oct de 2024 (1.9 a)	09 may de 2027		246	0 / 1	No	http://dzqase.com/get.php?username=WAACJJD1RS7HA53&password=dUWBmdQjHD&type=m3u_plus
+dzqase.com		80	MAGGZYBKEW		MAGY7AXPFV		UTC	Activa	29 abr de 2026 (4 m)	29 abr de 2027		236	1 / 1	No	http://dzqase.com/get.php?username=MAGGZYBKEW&password=MAGY7AXPFV&type=m3u_plus
+dzqase.com		80	A6414810D813F87		ledApFU1nq		UTC	Activa	23 mar de 2021 (5.5 a)	11 abr de 2027		218	0 / 1	No	http://dzqase.com/get.php?username=A6414810D813F87&password=ledApFU1nq&type=m3u_plus
+dzqase.com		80	1119098689177		XR3icL7qGN		UTC	Activa	28 feb de 2021 (5.5 a)	01 abr de 2027		209	0 / 1	No	http://dzqase.com/get.php?username=1119098689177&password=XR3icL7qGN&type=m3u_plus
+dzqase.com		80	rdallaire		M1CWpXG51l		UTC	Activa	16 mar de 2021 (5.5 a)	17 mar de 2027		194	0 / 1	No	http://dzqase.com/get.php?username=rdallaire&password=M1CWpXG51l&type=m3u_plus
+dzqase.com		80	99V59J9BG69DVAM		nL6LP46ows		UTC	Activa	05 ene de 2025 (1.7 a)	04 mar de 2027		180	0 / 1	No	http://dzqase.com/get.php?username=99V59J9BG69DVAM&password=nL6LP46ows&type=m3u_plus
+dzqase.com		80	MAGHYHRY5G		WcipCFS13W		UTC	Activa	26 feb de 2026 (6 m)	26 feb de 2027		174	0 / 1	No	http://dzqase.com/get.php?username=MAGHYHRY5G&password=WcipCFS13W&type=m3u_plus
+dzqase.com		80	U8940DRX7TUSJRT		uDlZRgZIS1		UTC	Activa	24 jul de 2025 (1.1 a)	13 feb de 2027		162	0 / 1	No	http://dzqase.com/get.php?username=U8940DRX7TUSJRT&password=uDlZRgZIS1&type=m3u_plus
+dzqase.com		80	D5TA3044Q23W71Y		tqDiSDVE4E		UTC	Activa	14 nov de 2024 (1.8 a)	31 ene de 2027		149	0 / 1	No	http://dzqase.com/get.php?username=D5TA3044Q23W71Y&password=tqDiSDVE4E&type=m3u_plus
+dzqase.com		80	W87NVKU1WSJRR0T		nEwI3rTeoz		UTC	Activa	17 ene de 2026 (7 m)	17 ene de 2027		135	0 / 1	No	http://dzqase.com/get.php?username=W87NVKU1WSJRR0T&password=nEwI3rTeoz&type=m3u_plus
+dzqase.com		80	8036D84D3F5348A		i0mvGtLMgc		UTC	Activa	04 ago de 2021 (5.1 a)	14 ene de 2027		132	0 / 1	No	http://dzqase.com/get.php?username=8036D84D3F5348A&password=i0mvGtLMgc&type=m3u_plus
+dzqase.com		80	PWWJ1QFSW8PP3H4		Yq0AFFEKoK		UTC	Activa	04 ene de 2026 (8 m)	04 ene de 2027		121	0 / 1	No	http://dzqase.com/get.php?username=PWWJ1QFSW8PP3H4&password=Yq0AFFEKoK&type=m3u_plus
+dzqase.com		80	71NU3J9DCYWUEMR		wtiZ9vA5MK		UTC	Activa	30 dic de 2025 (8 m)	31 dic de 2026		117	0 / 1	No	http://dzqase.com/get.php?username=71NU3J9DCYWUEMR&password=wtiZ9vA5MK&type=m3u_plus
+dzqase.com		80	1DAA6E3EY7P7777		xXUSaIS8Pw		UTC	Activa	27 dic de 2025 (8 m)	27 dic de 2026		113	1 / 1	No	http://dzqase.com/get.php?username=1DAA6E3EY7P7777&password=xXUSaIS8Pw&type=m3u_plus
+dzqase.com		80	39F47C7326DCC71		mLzSvpM8O6		UTC	Activa	21 dic de 2023 (2.7 a)	22 dic de 2026		108	0 / 1	No	http://dzqase.com/get.php?username=39F47C7326DCC71&password=mLzSvpM8O6&type=m3u_plus
+dzqase.com		80	4PR7W4Y			u1ZukZBaPt		UTC	Activa	21 dic de 2025 (8 m)	21 dic de 2026		107	0 / 1	No	http://dzqase.com/get.php?username=4PR7W4Y&password=u1ZukZBaPt&type=m3u_plus
+dzqase.com		80	AA85C25F13F1362		dtrLKIeFiI		UTC	Activa	06 dic de 2023 (2.7 a)	17 dic de 2026		103	2 / 1	No	http://dzqase.com/get.php?username=AA85C25F13F1362&password=dtrLKIeFiI&type=m3u_plus
+dzqase.com		80	A58A651C3A90D05		TfL4hVRyTn		UTC	Activa	16 dic de 2023 (2.7 a)	16 dic de 2026		103	0 / 1	No	http://dzqase.com/get.php?username=A58A651C3A90D05&password=TfL4hVRyTn&type=m3u_plus
+dzqase.com		80	1YW3BRY6726565S		cN003pWEWe		UTC	Activa	13 dic de 2025 (8 m)	13 dic de 2026		99	0 / 1	No	http://dzqase.com/get.php?username=1YW3BRY6726565S&password=cN003pWEWe&type=m3u_plus
+dzqase.com		80	879645349801276		hP3dMqWA4l		UTC	Activa	24 nov de 2023 (2.8 a)	11 dic de 2026		97	0 / 1	No	http://dzqase.com/get.php?username=879645349801276&password=hP3dMqWA4l&type=m3u_plus
+dzqase.com		80	CVEZZ28U111795L		7CdRILtQ1F		UTC	Activa	05 dic de 2025 (9 m)	05 dic de 2026		91	0 / 1	No	http://dzqase.com/get.php?username=CVEZZ28U111795L&password=7CdRILtQ1F&type=m3u_plus
+dzqase.com		80	698521			9sCJm4Y8ec		UTC	Activa	25 nov de 2021 (4.8 a)	28 nov de 2026		84	0 / 1	No	http://dzqase.com/get.php?username=698521&password=9sCJm4Y8ec&type=m3u_plus
+dzqase.com		80	Q6Z9BQGL743Y228		iAaqMlmrr4		UTC	Activa	22 oct de 2024 (1.9 a)	16 nov de 2026		73	0 / 1	No	http://dzqase.com/get.php?username=Q6Z9BQGL743Y228&password=iAaqMlmrr4&type=m3u_plus
+dzqase.com		80	4P2JR448LTCTLL2		RicGchGls8		UTC	Activa	05 nov de 2025 (10 m)	05 nov de 2026		61	0 / 1	No	http://dzqase.com/get.php?username=4P2JR448LTCTLL2&password=RicGchGls8&type=m3u_plus
+dzqase.com		80	2F50F7C784CC185		C3ypU5ARmh		UTC	Activa	06 dic de 2021 (4.7 a)	23 oct de 2026		48	0 / 1	No	http://dzqase.com/get.php?username=2F50F7C784CC185&password=C3ypU5ARmh&type=m3u_plus
+dzqase.com		80	B25V4EMRC2517F5		MTGCzYn3Oe		UTC	Activa	25 sept de 2024 (1.9 a)	25 sept de 2026		20	1 / 1	No	http://dzqase.com/get.php?username=B25V4EMRC2517F5&password=MTGCzYn3Oe&type=m3u_plus
+dzqase.com		80	CHRIS50			XToZkr2WTW		UTC	Activa	11 jun de 2024 (2.2 a)	09 sept de 2026		4	0 / 1	No	http://dzqase.com/get.php?username=CHRIS50&password=XToZkr2WTW&type=m3u_plus
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ernstan.online		80	L43RDWEFHDR8H7V		xPhfs5psGc		UTC	Activa	10 mar de 2024 (2.5 a)	06 abr de 2028		580	1 / 1	No	http://ernstan.online/get.php?username=L43RDWEFHDR8H7V&password=xPhfs5psGc&type=m3u_plus
+ernstan.online		80	L43RDWEFHDR8H7V		xPhfs5psGc		UTC	Activa	10 mar de 2024 (2.5 a)	06 abr de 2028		580	1 / 1	No	http://ernstan.online/get.php?username=L43RDWEFHDR8H7V&password=xPhfs5psGc&type=m3u_plus
+ernstan.online		80	MAG2QDNXWL		Jx3DLTpQwm		UTC	Activa	27 mar de 2026 (5 m)	28 mar de 2028		571	1 / 1	No	http://ernstan.online/get.php?username=MAG2QDNXWL&password=Jx3DLTpQwm&type=m3u_plus
+ernstan.online		80	65DC9YE95UC3J2C		eeni3Xf3ut		UTC	Activa	05 ene de 2026 (8 m)	06 ene de 2028		489	0 / 1	No	http://ernstan.online/get.php?username=65DC9YE95UC3J2C&password=eeni3Xf3ut&type=m3u_plus
+ernstan.online		80	828F67727550703		c86xSvRCuz		UTC	Activa	25 jul de 2023 (3.1 a)	25 sept de 2027		385	1 / 1	No	http://ernstan.online/get.php?username=828F67727550703&password=c86xSvRCuz&type=m3u_plus
+ernstan.online		80	828F67727550703		c86xSvRCuz		UTC	Activa	25 jul de 2023 (3.1 a)	25 sept de 2027		385	1 / 1	No	http://ernstan.online/get.php?username=828F67727550703&password=c86xSvRCuz&type=m3u_plus
+ernstan.online		80	D27D0PC84UAXN82		PYgMxPGjG6		UTC	Activa	10 ago de 2024 (2.1 a)	22 ago de 2027		351	0 / 1	No	http://ernstan.online/get.php?username=D27D0PC84UAXN82&password=PYgMxPGjG6&type=m3u_plus
+ernstan.online		80	D27D0PC84UAXN82		PYgMxPGjG6		UTC	Activa	10 ago de 2024 (2.1 a)	22 ago de 2027		351	0 / 1	No	http://ernstan.online/get.php?username=D27D0PC84UAXN82&password=PYgMxPGjG6&type=m3u_plus
+ernstan.online		80	MAGPA3U6CB		MAGDWM9C81		UTC	Activa	05 ago de 2026 (1 m)	05 ago de 2027		334	0 / 1	No	http://ernstan.online/get.php?username=MAGPA3U6CB&password=MAGDWM9C81&type=m3u_plus
+ernstan.online		80	MAG9P3QMDJ		MAGD8FLNL3		UTC	Activa	21 jun de 2026 (2 m)	21 jun de 2027		290	0 / 1	No	http://ernstan.online/get.php?username=MAG9P3QMDJ&password=MAGD8FLNL3&type=m3u_plus
+ernstan.online		80	MAG9P3QMDJ		MAGD8FLNL3		UTC	Activa	21 jun de 2026 (2 m)	21 jun de 2027		290	0 / 1	No	http://ernstan.online/get.php?username=MAG9P3QMDJ&password=MAGD8FLNL3&type=m3u_plus
+ernstan.online		80	MAG26LJPVY		MAGFQHPXV5		UTC	Activa	20 jun de 2026 (2 m)	20 jun de 2027		288	0 / 1	No	http://ernstan.online/get.php?username=MAG26LJPVY&password=MAGFQHPXV5&type=m3u_plus
+ernstan.online		80	MAG26LJPVY		MAGFQHPXV5		UTC	Activa	20 jun de 2026 (2 m)	20 jun de 2027		288	0 / 1	No	http://ernstan.online/get.php?username=MAG26LJPVY&password=MAGFQHPXV5&type=m3u_plus
+ernstan.online		80	DRYV1G5PXDX6E1K		mQHu8FJ1eq		UTC	Activa	11 jun de 2025 (1.2 a)	11 jun de 2027		279	0 / 1	No	http://ernstan.online/get.php?username=DRYV1G5PXDX6E1K&password=mQHu8FJ1eq&type=m3u_plus
+ernstan.online		80	PD5HZGVJ4R997JG		p6Y3AksSLp		UTC	Activa	03 may de 2025 (1.3 a)	03 may de 2027		241	0 / 1	No	http://ernstan.online/get.php?username=PD5HZGVJ4R997JG&password=p6Y3AksSLp&type=m3u_plus
+ernstan.online		80	PD5HZGVJ4R997JG		p6Y3AksSLp		UTC	Activa	03 may de 2025 (1.3 a)	03 may de 2027		241	0 / 1	No	http://ernstan.online/get.php?username=PD5HZGVJ4R997JG&password=p6Y3AksSLp&type=m3u_plus
+ernstan.online		80	MAGRHLP5KM		MAGUNAGLTE		UTC	Activa	24 abr de 2026 (4 m)	25 abr de 2027		232	0 / 1	No	http://ernstan.online/get.php?username=MAGRHLP5KM&password=MAGUNAGLTE&type=m3u_plus
+ernstan.online		80	MAGRHLP5KM		MAGUNAGLTE		UTC	Activa	24 abr de 2026 (4 m)	25 abr de 2027		232	0 / 1	No	http://ernstan.online/get.php?username=MAGRHLP5KM&password=MAGUNAGLTE&type=m3u_plus
+ernstan.online		80	MAGVSW8YEH		MAGWM2Y8LV		UTC	Activa	16 abr de 2026 (4 m)	17 abr de 2027		224	0 / 1	No	http://ernstan.online/get.php?username=MAGVSW8YEH&password=MAGWM2Y8LV&type=m3u_plus
+ernstan.online		80	MAGVSW8YEH		MAGWM2Y8LV		UTC	Activa	16 abr de 2026 (4 m)	17 abr de 2027		224	0 / 1	No	http://ernstan.online/get.php?username=MAGVSW8YEH&password=MAGWM2Y8LV&type=m3u_plus
+ernstan.online		80	MAG3JQ8ZBY		MAGBJGCC5E		UTC	Activa	14 abr de 2026 (4 m)	14 abr de 2027		221	0 / 1	No	http://ernstan.online/get.php?username=MAG3JQ8ZBY&password=MAGBJGCC5E&type=m3u_plus
+ernstan.online		80	MAG3JQ8ZBY		MAGBJGCC5E		UTC	Activa	14 abr de 2026 (4 m)	14 abr de 2027		221	0 / 1	No	http://ernstan.online/get.php?username=MAG3JQ8ZBY&password=MAGBJGCC5E&type=m3u_plus
+ernstan.online		80	588WYB8YXY0FDPS		KBaA0tm2BR		UTC	Activa	13 ene de 2026 (7 m)	13 abr de 2027		220	0 / 1	No	http://ernstan.online/get.php?username=588WYB8YXY0FDPS&password=KBaA0tm2BR&type=m3u_plus
+ernstan.online		80	588WYB8YXY0FDPS		KBaA0tm2BR		UTC	Activa	13 ene de 2026 (7 m)	13 abr de 2027		220	0 / 1	No	http://ernstan.online/get.php?username=588WYB8YXY0FDPS&password=KBaA0tm2BR&type=m3u_plus
+ernstan.online		80	MAG6M8U5VY		jDm38zXBtu		UTC	Activa	04 abr de 2026 (5 m)	04 abr de 2027		211	0 / 1	No	http://ernstan.online/get.php?username=MAG6M8U5VY&password=jDm38zXBtu&type=m3u_plus
+ernstan.online		80	MAGXNKXF9Q		fpI9nvr1Ei		UTC	Activa	04 abr de 2026 (5 m)	04 abr de 2027		211	0 / 1	No	http://ernstan.online/get.php?username=MAGXNKXF9Q&password=fpI9nvr1Ei&type=m3u_plus
+ernstan.online		80	MAG6M8U5VY		jDm38zXBtu		UTC	Activa	04 abr de 2026 (5 m)	04 abr de 2027		211	0 / 1	No	http://ernstan.online/get.php?username=MAG6M8U5VY&password=jDm38zXBtu&type=m3u_plus
+ernstan.online		80	MAGXNKXF9Q		fpI9nvr1Ei		UTC	Activa	04 abr de 2026 (5 m)	04 abr de 2027		211	0 / 1	No	http://ernstan.online/get.php?username=MAGXNKXF9Q&password=fpI9nvr1Ei&type=m3u_plus
+ernstan.online		80	MAGPB1UF5P		mlQTwBT5H8		UTC	Activa	21 mar de 2026 (5 m)	21 mar de 2027		197	0 / 1	No	http://ernstan.online/get.php?username=MAGPB1UF5P&password=mlQTwBT5H8&type=m3u_plus
+ernstan.online		80	MAGPB1UF5P		mlQTwBT5H8		UTC	Activa	21 mar de 2026 (5 m)	21 mar de 2027		197	0 / 1	No	http://ernstan.online/get.php?username=MAGPB1UF5P&password=mlQTwBT5H8&type=m3u_plus
+ernstan.online		80	MAGWSWWXWU		eSHQgzg5ls		UTC	Activa	26 feb de 2026 (6 m)	26 feb de 2027		175	1 / 1	No	http://ernstan.online/get.php?username=MAGWSWWXWU&password=eSHQgzg5ls&type=m3u_plus
+ernstan.online		80	Braulio			Ipijfp8mp8		UTC	Activa	09 feb de 2022 (4.6 a)	22 feb de 2027		170	1 / 1	No	http://ernstan.online/get.php?username=Braulio&password=Ipijfp8mp8&type=m3u_plus
+ernstan.online		80	Braulio			Ipijfp8mp8		UTC	Activa	09 feb de 2022 (4.6 a)	22 feb de 2027		170	1 / 1	No	http://ernstan.online/get.php?username=Braulio&password=Ipijfp8mp8&type=m3u_plus
+ernstan.online		80	945V8M63F6EYFZX		SBU3YuwnAY		UTC	Activa	01 sept de 2024 (2.0 a)	11 feb de 2027		159	0 / 1	No	http://ernstan.online/get.php?username=945V8M63F6EYFZX&password=SBU3YuwnAY&type=m3u_plus
+ernstan.online		80	MJC8L5TMPZEKA2C		7SRreFBVo9		UTC	Activa	08 ene de 2025 (1.7 a)	09 feb de 2027		158	0 / 1	No	http://ernstan.online/get.php?username=MJC8L5TMPZEKA2C&password=7SRreFBVo9&type=m3u_plus
+ernstan.online		80	SWYTX66G7YSKKMQ		jXHJK5CfVG		UTC	Activa	09 feb de 2026 (6 m)	09 feb de 2027		158	1 / 1	No	http://ernstan.online/get.php?username=SWYTX66G7YSKKMQ&password=jXHJK5CfVG&type=m3u_plus
+ernstan.online		80	MJC8L5TMPZEKA2C		7SRreFBVo9		UTC	Activa	08 ene de 2025 (1.7 a)	09 feb de 2027		158	0 / 1	No	http://ernstan.online/get.php?username=MJC8L5TMPZEKA2C&password=7SRreFBVo9&type=m3u_plus
+ernstan.online		80	VVPTZ15UAAJHAMF		RypaJZjKBO		UTC	Activa	09 feb de 2025 (1.6 a)	09 feb de 2027		157	0 / 1	No	http://ernstan.online/get.php?username=VVPTZ15UAAJHAMF&password=RypaJZjKBO&type=m3u_plus
+ernstan.online		80	1119025007937		fCuR7LROsm		UTC	Activa	25 nov de 2020 (5.8 a)	06 feb de 2027		154	1 / 1	No	http://ernstan.online/get.php?username=1119025007937&password=fCuR7LROsm&type=m3u_plus
+ernstan.online		80	1119025007937		fCuR7LROsm		UTC	Activa	25 nov de 2020 (5.8 a)	06 feb de 2027		154	1 / 1	No	http://ernstan.online/get.php?username=1119025007937&password=fCuR7LROsm&type=m3u_plus
+ernstan.online		80	68F4D1D2D514165		Qtqez3b6bb		UTC	Activa	31 ene de 2022 (4.6 a)	02 feb de 2027		151	0 / 1	No	http://ernstan.online/get.php?username=68F4D1D2D514165&password=Qtqez3b6bb&type=m3u_plus
+ernstan.online		80	68F4D1D2D514165		Qtqez3b6bb		UTC	Activa	31 ene de 2022 (4.6 a)	02 feb de 2027		151	0 / 1	No	http://ernstan.online/get.php?username=68F4D1D2D514165&password=Qtqez3b6bb&type=m3u_plus
+ernstan.online		80	W6LGK99HT3KK2Z7		fjA5fl83nQ		UTC	Activa	27 ene de 2024 (2.6 a)	30 ene de 2027		147	0 / 1	No	http://ernstan.online/get.php?username=W6LGK99HT3KK2Z7&password=fjA5fl83nQ&type=m3u_plus
+ernstan.online		80	A13D0F1062D1103		buAyCSqDSG		UTC	Activa	10 jul de 2022 (4.2 a)	28 ene de 2027		145	0 / 1	No	http://ernstan.online/get.php?username=A13D0F1062D1103&password=buAyCSqDSG&type=m3u_plus
+ernstan.online		80	A734241A3217116		WE8of0A8Vx		UTC	Activa	18 mar de 2023 (3.5 a)	22 ene de 2027		139	0 / 1	No	http://ernstan.online/get.php?username=A734241A3217116&password=WE8of0A8Vx&type=m3u_plus
+ernstan.online		80	A734241A3217116		WE8of0A8Vx		UTC	Activa	18 mar de 2023 (3.5 a)	22 ene de 2027		139	0 / 1	No	http://ernstan.online/get.php?username=A734241A3217116&password=WE8of0A8Vx&type=m3u_plus
+ernstan.online		80	654570885181291		ZRMK3mIcSA		UTC	Activa	17 ene de 2025 (1.6 a)	17 ene de 2027		135	0 / 1	No	http://ernstan.online/get.php?username=654570885181291&password=ZRMK3mIcSA&type=m3u_plus
+ernstan.online		80	654570885181291		ZRMK3mIcSA		UTC	Activa	17 ene de 2025 (1.6 a)	17 ene de 2027		135	0 / 1	No	http://ernstan.online/get.php?username=654570885181291&password=ZRMK3mIcSA&type=m3u_plus
+ernstan.online		80	32AA4D494C4CC53		cgwfNd1zUd		UTC	Activa	27 dic de 2023 (2.7 a)	11 ene de 2027		129	0 / 1	No	http://ernstan.online/get.php?username=32AA4D494C4CC53&password=cgwfNd1zUd&type=m3u_plus
+ernstan.online		80	69M3ZS749AVC5M3		QUTWcn9WdJ		UTC	Activa	05 ene de 2026 (8 m)	05 ene de 2027		122	0 / 1	No	http://ernstan.online/get.php?username=69M3ZS749AVC5M3&password=QUTWcn9WdJ&type=m3u_plus
+ernstan.online		80	69M3ZS749AVC5M3		QUTWcn9WdJ		UTC	Activa	05 ene de 2026 (8 m)	05 ene de 2027		122	0 / 1	No	http://ernstan.online/get.php?username=69M3ZS749AVC5M3&password=QUTWcn9WdJ&type=m3u_plus
+ernstan.online		80	3319143632074847		SvU9rr6yZe		UTC	Activa	30 dic de 2022 (3.7 a)	30 dic de 2026		117	0 / 1	No	http://ernstan.online/get.php?username=3319143632074847&password=SvU9rr6yZe&type=m3u_plus
+ernstan.online		80	3319143632074847		SvU9rr6yZe		UTC	Activa	30 dic de 2022 (3.7 a)	30 dic de 2026		117	0 / 1	No	http://ernstan.online/get.php?username=3319143632074847&password=SvU9rr6yZe&type=m3u_plus
+ernstan.online		80	MAG5UYVYNC		MAGKWGW6UL		UTC	Activa	20 jun de 2026 (2 m)	20 dic de 2026		106	0 / 1	No	http://ernstan.online/get.php?username=MAG5UYVYNC&password=MAGKWGW6UL&type=m3u_plus
+ernstan.online		80	MAG5UYVYNC		MAGKWGW6UL		UTC	Activa	20 jun de 2026 (2 m)	20 dic de 2026		106	0 / 1	No	http://ernstan.online/get.php?username=MAG5UYVYNC&password=MAGKWGW6UL&type=m3u_plus
+ernstan.online		80	JLWAW8ML46N884F		uQ7NISxzt5		UTC	Activa	20 dic de 2025 (8 m)	20 dic de 2026		106	0 / 1	No	http://ernstan.online/get.php?username=JLWAW8ML46N884F&password=uQ7NISxzt5&type=m3u_plus
+ernstan.online		80	W29JTC46X39RR4H		8dRiH5BaMn		UTC	Activa	01 dic de 2024 (1.8 a)	12 dic de 2026		98	0 / 1	No	http://ernstan.online/get.php?username=W29JTC46X39RR4H&password=8dRiH5BaMn&type=m3u_plus
+ernstan.online		80	1214C89C31197A5		zQBlvBN3l6		UTC	Activa	25 ene de 2022 (4.6 a)	02 dic de 2026		88	0 / 1	No	http://ernstan.online/get.php?username=1214C89C31197A5&password=zQBlvBN3l6&type=m3u_plus
+ernstan.online		80	MAGBGWMGK3		MAGR6CMPV7		UTC	Activa	22 jul de 2026 (1 m)	22 nov de 2026		79	0 / 1	No	http://ernstan.online/get.php?username=MAGBGWMGK3&password=MAGR6CMPV7&type=m3u_plus
+ernstan.online		80	MAGBGWMGK3		MAGR6CMPV7		UTC	Activa	22 jul de 2026 (1 m)	22 nov de 2026		79	0 / 1	No	http://ernstan.online/get.php?username=MAGBGWMGK3&password=MAGR6CMPV7&type=m3u_plus
+ernstan.online		80	3TTR223B09ZTX9W		7AfGhynAn3		UTC	Activa	20 nov de 2024 (1.8 a)	23 nov de 2026		79	0 / 1	No	http://ernstan.online/get.php?username=3TTR223B09ZTX9W&password=7AfGhynAn3&type=m3u_plus
+ernstan.online		80	UXX8RK7C29D8QHK		XB3i2Tl3yM		UTC	Activa	22 nov de 2025 (9 m)	22 nov de 2026		78	0 / 1	No	http://ernstan.online/get.php?username=UXX8RK7C29D8QHK&password=XB3i2Tl3yM&type=m3u_plus
+ernstan.online		80	661F17D08819AF6		H0Zo3rWkUO		UTC	Activa	19 nov de 2023 (2.8 a)	20 nov de 2026		77	0 / 1	No	http://ernstan.online/get.php?username=661F17D08819AF6&password=H0Zo3rWkUO&type=m3u_plus
+ernstan.online		80	D236C02A2611350		asg0eSKF6L		UTC	Activa	12 nov de 2022 (3.8 a)	20 nov de 2026		77	1 / 1	No	http://ernstan.online/get.php?username=D236C02A2611350&password=asg0eSKF6L&type=m3u_plus
+ernstan.online		80	661F17D08819AF6		H0Zo3rWkUO		UTC	Activa	19 nov de 2023 (2.8 a)	20 nov de 2026		77	0 / 1	No	http://ernstan.online/get.php?username=661F17D08819AF6&password=H0Zo3rWkUO&type=m3u_plus
+ernstan.online		80	F03693317D21		Ht24TMVifV		UTC	Activa	05 sept de 2022 (4.0 a)	12 nov de 2026		69	1 / 1	No	http://ernstan.online/get.php?username=F03693317D21&password=Ht24TMVifV&type=m3u_plus
+ernstan.online		80	F03693317D21		Ht24TMVifV		UTC	Activa	05 sept de 2022 (4.0 a)	12 nov de 2026		69	1 / 1	No	http://ernstan.online/get.php?username=F03693317D21&password=Ht24TMVifV&type=m3u_plus
+ernstan.online		80	EP53G7S8TRVEH7S		oQpxeRFhRL		UTC	Activa	11 nov de 2025 (9 m)	11 nov de 2026		67	0 / 1	No	http://ernstan.online/get.php?username=EP53G7S8TRVEH7S&password=oQpxeRFhRL&type=m3u_plus
+ernstan.online		80	EP53G7S8TRVEH7S		oQpxeRFhRL		UTC	Activa	11 nov de 2025 (9 m)	11 nov de 2026		67	0 / 1	No	http://ernstan.online/get.php?username=EP53G7S8TRVEH7S&password=oQpxeRFhRL&type=m3u_plus
+ernstan.online		80	MAG4B55M5T		MAG47CWDVU		UTC	Activa	09 jul de 2026 (1 m)	10 nov de 2026		66	0 / 1	No	http://ernstan.online/get.php?username=MAG4B55M5T&password=MAG47CWDVU&type=m3u_plus
+ernstan.online		80	A6C2254C676FC5D		0Tm9qDGByH		UTC	Activa	07 nov de 2021 (4.8 a)	07 nov de 2026		64	0 / 1	No	http://ernstan.online/get.php?username=A6C2254C676FC5D&password=0Tm9qDGByH&type=m3u_plus
+ernstan.online		80	136VD8H3L5L0556		MzzgAEZUVw		UTC	Activa	25 abr de 2024 (2.4 a)	07 nov de 2026		63	0 / 1	No	http://ernstan.online/get.php?username=136VD8H3L5L0556&password=MzzgAEZUVw&type=m3u_plus
+ernstan.online		80	132882DA79288D3		zhuYWVLfqB		UTC	Activa	23 ago de 2022 (4.0 a)	22 oct de 2026		48	0 / 1	No	http://ernstan.online/get.php?username=132882DA79288D3&password=zhuYWVLfqB&type=m3u_plus
+ernstan.online		80	741551667752410		hrasXB0fSg		UTC	Activa	19 oct de 2025 (10 m)	19 oct de 2026		44	1 / 1	No	http://ernstan.online/get.php?username=741551667752410&password=hrasXB0fSg&type=m3u_plus
+ernstan.online		80	741551667752410		hrasXB0fSg		UTC	Activa	19 oct de 2025 (10 m)	19 oct de 2026		44	1 / 1	No	http://ernstan.online/get.php?username=741551667752410&password=hrasXB0fSg&type=m3u_plus
+ernstan.online		80	1ZKYC219G3FT69E		M1TblOIbai		UTC	Activa	18 oct de 2025 (10 m)	18 oct de 2026		43	0 / 1	No	http://ernstan.online/get.php?username=1ZKYC219G3FT69E&password=M1TblOIbai&type=m3u_plus
+ernstan.online		80	VO0OnUBpFp8GJRz		kZgCqbgh8P		UTC	Activa	23 sept de 2019 (7.0 a)	14 oct de 2026		40	0 / 1	No	http://ernstan.online/get.php?username=VO0OnUBpFp8GJRz&password=kZgCqbgh8P&type=m3u_plus
+ernstan.online		80	VO0OnUBpFp8GJRz		kZgCqbgh8P		UTC	Activa	23 sept de 2019 (7.0 a)	14 oct de 2026		40	0 / 1	No	http://ernstan.online/get.php?username=VO0OnUBpFp8GJRz&password=kZgCqbgh8P&type=m3u_plus
+ernstan.online		80	QWMYNZ69T62RPRW		nL8GIV8JHj		UTC	Activa	13 ago de 2024 (2.1 a)	13 oct de 2026		38	0 / 1	No	http://ernstan.online/get.php?username=QWMYNZ69T62RPRW&password=nL8GIV8JHj&type=m3u_plus
+ernstan.online		80	QWMYNZ69T62RPRW		nL8GIV8JHj		UTC	Activa	13 ago de 2024 (2.1 a)	13 oct de 2026		38	0 / 1	No	http://ernstan.online/get.php?username=QWMYNZ69T62RPRW&password=nL8GIV8JHj&type=m3u_plus
+ernstan.online		80	4W6VHH0HV41XDN2		j3kQBUvEiy		UTC	Activa	12 feb de 2024 (2.6 a)	07 oct de 2026		33	0 / 1	No	http://ernstan.online/get.php?username=4W6VHH0HV41XDN2&password=j3kQBUvEiy&type=m3u_plus
+ernstan.online		80	4KLD73K10LV1P39		tWGlr8PuNI		UTC	Activa	08 oct de 2025 (11 m)	08 oct de 2026		33	0 / 1	No	http://ernstan.online/get.php?username=4KLD73K10LV1P39&password=tWGlr8PuNI&type=m3u_plus
+ernstan.online		80	4W6VHH0HV41XDN2		j3kQBUvEiy		UTC	Activa	12 feb de 2024 (2.6 a)	07 oct de 2026		33	0 / 1	No	http://ernstan.online/get.php?username=4W6VHH0HV41XDN2&password=j3kQBUvEiy&type=m3u_plus
+ernstan.online		80	4KLD73K10LV1P39		tWGlr8PuNI		UTC	Activa	08 oct de 2025 (11 m)	08 oct de 2026		33	0 / 1	No	http://ernstan.online/get.php?username=4KLD73K10LV1P39&password=tWGlr8PuNI&type=m3u_plus
+ernstan.online		80	Y29DPULMRCMB763		wYhBSZZTk5		UTC	Activa	04 oct de 2025 (11 m)	04 oct de 2026		29	0 / 1	No	http://ernstan.online/get.php?username=Y29DPULMRCMB763&password=wYhBSZZTk5&type=m3u_plus
+ernstan.online		80	Y29DPULMRCMB763		wYhBSZZTk5		UTC	Activa	04 oct de 2025 (11 m)	04 oct de 2026		29	0 / 1	No	http://ernstan.online/get.php?username=Y29DPULMRCMB763&password=wYhBSZZTk5&type=m3u_plus
+ernstan.online		80	8VA9EQGLT4PW655		GiZmtxelyq		UTC	Activa	24 sept de 2025 (11 m)	01 oct de 2026		26	0 / 1	No	http://ernstan.online/get.php?username=8VA9EQGLT4PW655&password=GiZmtxelyq&type=m3u_plus
+ernstan.online		80	R3475H43DAX8439		TfAey873sR		UTC	Activa	17 jun de 2024 (2.2 a)	30 sept de 2026		26	0 / 1	No	http://ernstan.online/get.php?username=R3475H43DAX8439&password=TfAey873sR&type=m3u_plus
+ernstan.online		80	8VA9EQGLT4PW655		GiZmtxelyq		UTC	Activa	24 sept de 2025 (11 m)	01 oct de 2026		26	0 / 1	No	http://ernstan.online/get.php?username=8VA9EQGLT4PW655&password=GiZmtxelyq&type=m3u_plus
+ernstan.online		80	R3475H43DAX8439		TfAey873sR		UTC	Activa	17 jun de 2024 (2.2 a)	30 sept de 2026		26	0 / 1	No	http://ernstan.online/get.php?username=R3475H43DAX8439&password=TfAey873sR&type=m3u_plus
+ernstan.online		80	T3ZEA5DAHC46J1E		sKgBw6X68r		UTC	Activa	25 sept de 2024 (1.9 a)	29 sept de 2026		24	0 / 1	No	http://ernstan.online/get.php?username=T3ZEA5DAHC46J1E&password=sKgBw6X68r&type=m3u_plus
+ernstan.online		80	T3ZEA5DAHC46J1E		sKgBw6X68r		UTC	Activa	25 sept de 2024 (1.9 a)	29 sept de 2026		24	0 / 1	No	http://ernstan.online/get.php?username=T3ZEA5DAHC46J1E&password=sKgBw6X68r&type=m3u_plus
+ernstan.online		80	D2QZ419N6P2CAY9		TVHyXu5cEp		UTC	Activa	21 sept de 2025 (11 m)	21 sept de 2026		16	0 / 1	No	http://ernstan.online/get.php?username=D2QZ419N6P2CAY9&password=TVHyXu5cEp&type=m3u_plus
+ernstan.online		80	MAGR1NDTWY		MAG5FHK7X2		UTC	Activa	12 jun de 2026 (2 m)	13 sept de 2026		8	0 / 1	No	http://ernstan.online/get.php?username=MAGR1NDTWY&password=MAG5FHK7X2&type=m3u_plus
+ernstan.online		80	MAGR1NDTWY		MAG5FHK7X2		UTC	Activa	12 jun de 2026 (2 m)	13 sept de 2026		8	0 / 1	No	http://ernstan.online/get.php?username=MAGR1NDTWY&password=MAG5FHK7X2&type=m3u_plus
