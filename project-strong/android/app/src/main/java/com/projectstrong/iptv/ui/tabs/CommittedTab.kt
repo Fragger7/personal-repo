@@ -560,29 +560,52 @@ fun CommittedMasterGrid(
     }
 
     val distinctRooms = remember(records.toList(), filterContent, filterProvider, filterTimezone, filterStatus) {
-        val s = mutableSetOf<String>()
+        val options = mutableMapOf<String, Int>()
+        var noneCount = 0
         records.filter { matchContentFunc(it) && matchProviderFunc(it) && matchTimezoneFunc(it) && matchStatusFunc(it) }
-            .forEach { r -> r.safeRooms.split(",").map { it.trim() }.filter { it.isNotEmpty() }.forEach { s.add(it) } }
-        s.sorted()
+            .forEach { r -> 
+                val vals = r.safeRooms.split(",").map { it.trim() }.filter { it.isNotEmpty() }
+                if (vals.isEmpty()) noneCount++ else vals.forEach { options[it] = options.getOrDefault(it, 0) + 1 }
+            }
+        Pair(options.toList().sortedBy { it.first }, noneCount)
     }
     val distinctContent = remember(records.toList(), filterRooms, filterProvider, filterTimezone, filterStatus) {
-        val s = mutableSetOf<String>()
+        val options = mutableMapOf<String, Int>()
+        var noneCount = 0
         records.filter { matchRoomsFunc(it) && matchProviderFunc(it) && matchTimezoneFunc(it) && matchStatusFunc(it) }
-            .forEach { r -> r.safeContent.split(",").map { it.trim() }.filter { it.isNotEmpty() }.forEach { s.add(it) } }
-        s.sorted()
+            .forEach { r -> 
+                val vals = r.safeContent.split(",").map { it.trim() }.filter { it.isNotEmpty() }
+                if (vals.isEmpty()) noneCount++ else vals.forEach { options[it] = options.getOrDefault(it, 0) + 1 }
+            }
+        Pair(options.toList().sortedBy { it.first }, noneCount)
     }
     val distinctProviders = remember(records.toList(), filterRooms, filterContent, filterTimezone, filterStatus) {
+        val options = mutableMapOf<String, Int>()
+        var noneCount = 0
         records.filter { matchRoomsFunc(it) && matchContentFunc(it) && matchTimezoneFunc(it) && matchStatusFunc(it) }
-            .map { r -> com.projectstrong.iptv.data.ProviderIntelligenceManager.getProfile(r.safeBaseUrl)?.cleanBrand ?: r.safeProvider.ifEmpty { "Unbranded" } }
-            .filter { it.isNotEmpty() && it != "Unknown" }.distinct().sorted()
+            .forEach { r -> 
+                val brand = com.projectstrong.iptv.data.ProviderIntelligenceManager.getProfile(r.safeBaseUrl)?.cleanBrand ?: r.safeProvider.ifEmpty { "Unbranded" }
+                if (brand == "Unbranded" || brand == "Unknown") noneCount++ else options[brand] = options.getOrDefault(brand, 0) + 1
+            }
+        Pair(options.toList().sortedBy { it.first }, noneCount)
     }
     val distinctTimezones = remember(records.toList(), filterRooms, filterContent, filterProvider, filterStatus) {
+        val options = mutableMapOf<String, Int>()
+        var noneCount = 0
         records.filter { matchRoomsFunc(it) && matchContentFunc(it) && matchProviderFunc(it) && matchStatusFunc(it) }
-            .map { it.safeTimezone }.filter { it.isNotEmpty() }.distinct().sorted()
+            .forEach { r -> 
+                if (r.safeTimezone.isBlank()) noneCount++ else options[r.safeTimezone] = options.getOrDefault(r.safeTimezone, 0) + 1
+            }
+        Pair(options.toList().sortedBy { it.first }, noneCount)
     }
     val distinctStatuses = remember(records.toList(), filterRooms, filterContent, filterProvider, filterTimezone) {
+        val options = mutableMapOf<String, Int>()
+        var noneCount = 0
         records.filter { matchRoomsFunc(it) && matchContentFunc(it) && matchProviderFunc(it) && matchTimezoneFunc(it) }
-            .map { it.safeStatus }.filter { it.isNotEmpty() }.distinct().sorted()
+            .forEach { r -> 
+                if (r.safeStatus.isBlank()) noneCount++ else options[r.safeStatus] = options.getOrDefault(r.safeStatus, 0) + 1
+            }
+        Pair(options.toList().sortedBy { it.first }, noneCount)
     }
 
     val sortedRecords = remember(filteredRecords, sortColumn, sortAscending) {
@@ -884,11 +907,11 @@ fun CommittedMasterGrid(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(Icons.Default.FilterList, contentDescription = "Filter", tint = AppTextSecondary, modifier = Modifier.size(20.dp).padding(end = 8.dp))
-                FilterDropdown("Rooms", distinctRooms, filterRooms) { CommittedFilterStore.rooms.value = it }
-                FilterDropdown("Content", distinctContent, filterContent) { CommittedFilterStore.content.value = it }
-                FilterDropdown("Provider", distinctProviders, filterProvider) { CommittedFilterStore.provider.value = it }
-                FilterDropdown("Timezone", distinctTimezones, filterTimezone) { CommittedFilterStore.timezone.value = it }
-                FilterDropdown("Status", distinctStatuses, filterStatus) { CommittedFilterStore.status.value = it }
+                FilterDropdown("Rooms", distinctRooms.first, distinctRooms.second, filterRooms) { CommittedFilterStore.rooms.value = it }
+                FilterDropdown("Content", distinctContent.first, distinctContent.second, filterContent) { CommittedFilterStore.content.value = it }
+                FilterDropdown("Provider", distinctProviders.first, distinctProviders.second, filterProvider) { CommittedFilterStore.provider.value = it }
+                FilterDropdown("Timezone", distinctTimezones.first, distinctTimezones.second, filterTimezone) { CommittedFilterStore.timezone.value = it }
+                FilterDropdown("Status", distinctStatuses.first, distinctStatuses.second, filterStatus) { CommittedFilterStore.status.value = it }
                 
                 if (filterRooms.isNotEmpty() || filterContent.isNotEmpty() || filterProvider.isNotEmpty() || filterTimezone.isNotEmpty() || filterStatus.isNotEmpty()) {
                     TextButton(onClick = { CommittedFilterStore.clear() }) {

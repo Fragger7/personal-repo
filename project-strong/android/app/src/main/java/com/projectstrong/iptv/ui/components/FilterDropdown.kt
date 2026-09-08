@@ -23,7 +23,8 @@ import com.projectstrong.iptv.ui.theme.AppTextPrimary
 @Composable
 fun FilterDropdown(
     label: String,
-    options: List<String>,
+    options: List<Pair<String, Int>>,
+    noneCount: Int,
     selectedOptions: Set<String>,
     onSelectionChanged: (Set<String>) -> Unit
 ) {
@@ -67,8 +68,8 @@ fun FilterDropdown(
             onDismissRequest = { expanded = false },
             modifier = Modifier.background(AppSurfaceVariant).widthIn(min = 180.dp)
         ) {
-            val allOptions = listOf("None") + options
-            allOptions.forEach { option ->
+            val allOptions = listOf(Pair("None", noneCount)) + options
+            allOptions.forEach { (option, count) ->
                 val isSelected = selectedOptions.contains(option)
                 DropdownMenuItem(
                     text = { 
@@ -82,7 +83,7 @@ fun FilterDropdown(
                                 )
                             )
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text(option, color = AppTextPrimary) 
+                            Text("$option ($count)", color = AppTextPrimary) 
                         }
                     },
                     onClick = {

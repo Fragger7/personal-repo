@@ -37,30 +37,47 @@ fun AnalyticsTab(onNavigateToCommitted: () -> Unit) {
         return
     }
 
-    // Prepare Data
+    // Advanced Metrics
+    val activeCount = records.count { it.safeStatus.contains("Active", ignoreCase = true) }
+    val offlineCount = records.size - activeCount
     val totalChannels = records.sumOf { it.safeChannels.toIntOrNull() ?: 0 }
-    val totalVods = records.sumOf { it.safeVods.toIntOrNull() ?: 0 }
-    val totalConnections = records.size
 
+    // Expiry Horizon
+    val expiryGroups = records.groupingBy { 
+        val days = it.safeDaysLeft.toIntOrNull() ?: 0
+        when {
+            days <= 0 -> "Expired"
+            days <= 30 -> "< 30 Days"
+            days <= 90 -> "30 - 90 Days"
+            days <= 180 -> "90 - 180 Days"
+            else -> "180+ Days"
+        }
+    }.eachCount().toList().sortedBy { 
+        when(it.first) { "Expired" -> 0; "< 30 Days" -> 1; "30 - 90 Days" -> 2; "90 - 180 Days" -> 3; else -> 4 }
+    }
+
+    // Hardware Connections Capability
+    val connectionLimits = records.groupingBy { 
+        val conn = it.safeConnections.toIntOrNull() ?: 1
+        if (conn >= 3) "3+ Conns" else "$conn Conn(s)"
+    }.eachCount().toList().sortedBy { it.first }
+
+    // Provider Dead Weight (% Offline)
+    val providerDeadWeight = records.groupBy { 
+        ProviderIntelligenceManager.getProfile(it.safeBaseUrl)?.cleanBrand ?: it.safeProvider.ifEmpty { "Unbranded" }
+    }.map { (brand, group) ->
+        val offline = group.count { !it.safeStatus.contains("Active", ignoreCase = true) }
+        val pct = if (group.isNotEmpty()) (offline.toFloat() / group.size) * 100 else 0f
+        Triple(brand, pct, group.size)
+    }.filter { it.third >= 3 && it.second > 0 }.sortedByDescending { it.second }.take(6)
+    
+    // Original Metrics
     val providerCounts = records.groupingBy { 
         ProviderIntelligenceManager.getProfile(it.safeBaseUrl)?.cleanBrand ?: it.safeProvider.ifEmpty { "Unbranded" }
     }.eachCount().toList().sortedByDescending { it.second }.take(8)
 
-    val statusCounts = records.groupingBy { 
-        if (it.safeStatus.contains("Active", ignoreCase = true)) "🟢 Active" else "🔴 Offline" 
-    }.eachCount().toList().sortedByDescending { it.second }
-
-    // Catalog Density (Avg Channels by Provider)
-    val densityData = records.groupBy { 
-        ProviderIntelligenceManager.getProfile(it.safeBaseUrl)?.cleanBrand ?: it.safeProvider.ifEmpty { "Unbranded" }
-    }.map { (brand, group) ->
-        brand to group.mapNotNull { it.safeChannels.toIntOrNull() }.average().toFloat()
-    }.filter { !it.second.isNaN() && it.second > 0 }.sortedByDescending { it.second }.take(6)
-
-    // Timezone Coverage
-    val timezoneCounts = records.groupingBy { 
-        it.safeTimezone.ifEmpty { "Unknown" }
-    }.eachCount().toList().sortedByDescending { it.second }.take(6)
+    val contentCounts = records.flatMap { it.safeContent.split(",").map { c -> c.trim() }.filter { c -> c.isNotEmpty() } }
+        .groupingBy { it }.eachCount().toList().sortedByDescending { it.second }
 
     LazyColumn(
         modifier = Modifier.fillMaxSize().padding(16.dp),
@@ -69,7 +86,7 @@ fun AnalyticsTab(onNavigateToCommitted: () -> Unit) {
     ) {
         item {
             Text(
-                text = "Intelligence Dashboard",
+                text = "Operational Intelligence",
                 style = MaterialTheme.typography.titleLarge,
                 color = AppTextPrimary,
                 fontWeight = FontWeight.Bold
@@ -78,9 +95,40 @@ fun AnalyticsTab(onNavigateToCommitted: () -> Unit) {
         
         item {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                MetricCard("Connections", "$totalConnections", Modifier.weight(1f))
-                MetricCard("Live Channels", "${totalChannels / 1000}k", Modifier.weight(1f))
-                MetricCard("VOD Library", "${totalVods / 1000}k", Modifier.weight(1f))
+                MetricCard("Active Nodes", "$activeCount", AppSuccess, Modifier.weight(1f))
+                MetricCard("Dead Weight", "$offlineCount", AppError, Modifier.weight(1f))
+                MetricCard("Avg Channels", "${if(activeCount > 0) totalChannels / activeCount else 0}", AppPrimary, Modifier.weight(1f))
+            }
+        }
+
+        if (expiryGroups.isNotEmpty()) {
+            item {
+                AnalyticsCard("Subscription Expiry Horizon") {
+                    SegmentedProgressBar(data = expiryGroups)
+                }
+            }
+        }
+
+        if (providerDeadWeight.isNotEmpty()) {
+            item {
+                AnalyticsCard("Provider Dead Weight (% Offline)") {
+                    AnimatedHorizontalBarChart(data = providerDeadWeight.map { Pair(it.first, it.second) }, isPercentage = true, colorOverride = AppError)
+                }
+            }
+        }
+
+        item {
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                Box(modifier = Modifier.weight(1f)) {
+                    AnalyticsCard("Hardware Limits") {
+                        MiniDonutChart(data = connectionLimits)
+                    }
+                }
+                Box(modifier = Modifier.weight(1f)) {
+                    AnalyticsCard("Content Vectors") {
+                        MiniDonutChart(data = contentCounts.take(4))
+                    }
+                }
             }
         }
         
@@ -96,49 +144,13 @@ fun AnalyticsTab(onNavigateToCommitted: () -> Unit) {
                 )
             }
         }
-
-        if (densityData.isNotEmpty()) {
-            item {
-                AnalyticsCard("Catalog Density (Avg Channels)") {
-                    AnimatedHorizontalBarChart(data = densityData)
-                }
-            }
-        }
-
-        item {
-            AnalyticsCard("Connection Health") {
-                InteractivePieChart(
-                    data = statusCounts,
-                    onSliceClick = { statusName ->
-                        CommittedFilterStore.clear()
-                        CommittedFilterStore.status.value = setOf(statusName)
-                        onNavigateToCommitted()
-                    }
-                )
-            }
-        }
-
-        if (timezoneCounts.isNotEmpty()) {
-            item {
-                AnalyticsCard("Server Timezone Footprint") {
-                    InteractivePieChart(
-                        data = timezoneCounts,
-                        onSliceClick = { tzName ->
-                            CommittedFilterStore.clear()
-                            CommittedFilterStore.timezone.value = setOf(if (tzName == "Unknown") "" else tzName)
-                            onNavigateToCommitted()
-                        }
-                    )
-                }
-            }
-        }
         
         item { Spacer(modifier = Modifier.height(40.dp)) }
     }
 }
 
 @Composable
-fun MetricCard(title: String, value: String, modifier: Modifier = Modifier) {
+fun MetricCard(title: String, value: String, valueColor: Color, modifier: Modifier = Modifier) {
     Surface(
         shape = RoundedCornerShape(12.dp),
         color = AppSurface,
@@ -149,7 +161,7 @@ fun MetricCard(title: String, value: String, modifier: Modifier = Modifier) {
             modifier = Modifier.padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text(value, color = AppPrimary, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Black)
+            Text(value, color = valueColor, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Black)
             Spacer(modifier = Modifier.height(4.dp))
             Text(title, color = AppTextMuted, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold)
         }
@@ -157,8 +169,45 @@ fun MetricCard(title: String, value: String, modifier: Modifier = Modifier) {
 }
 
 @Composable
-fun AnimatedHorizontalBarChart(data: List<Pair<String, Float>>) {
-    val maxVal = data.maxOfOrNull { it.second } ?: 1f
+fun SegmentedProgressBar(data: List<Pair<String, Int>>) {
+    val total = data.sumOf { it.second }.toFloat()
+    if (total == 0f) return
+    val colors = listOf(AppError, Color(0xFFF59E0B), Color(0xFFFBBF24), AppPrimary, AppSuccess)
+
+    val animationProgress = remember { Animatable(0f) }
+    LaunchedEffect(data) {
+        animationProgress.animateTo(1f, animationSpec = tween(1500, easing = FastOutSlowInEasing))
+    }
+
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Row(modifier = Modifier.fillMaxWidth().height(24.dp).background(AppSurfaceVariant, RoundedCornerShape(12.dp))) {
+            data.forEachIndexed { index, (_, count) ->
+                val weight = (count / total) * animationProgress.value
+                if (weight > 0f) {
+                    Box(modifier = Modifier.fillMaxHeight().weight(weight).background(colors[index % colors.size], RoundedCornerShape(12.dp)))
+                }
+            }
+        }
+        Spacer(modifier = Modifier.height(16.dp))
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+            data.forEachIndexed { index, (name, count) ->
+                val pct = ((count / total) * 100).toInt()
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(modifier = Modifier.size(8.dp).background(colors[index % colors.size], RoundedCornerShape(4.dp)))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(name, color = AppTextPrimary, style = MaterialTheme.typography.labelSmall)
+                    }
+                    Text("$count nodes ($pct%)", color = AppTextMuted, style = MaterialTheme.typography.bodySmall)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun AnimatedHorizontalBarChart(data: List<Pair<String, Float>>, isPercentage: Boolean = false, colorOverride: Color? = null) {
+    val maxVal = if (isPercentage) 100f else (data.maxOfOrNull { it.second } ?: 1f)
     val animationProgress = remember { Animatable(0f) }
     LaunchedEffect(data) {
         animationProgress.animateTo(1f, animationSpec = tween(1200, easing = FastOutSlowInEasing))
@@ -170,11 +219,11 @@ fun AnimatedHorizontalBarChart(data: List<Pair<String, Float>>) {
             Column {
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                     Text(name, style = MaterialTheme.typography.labelMedium, color = AppTextPrimary, fontWeight = FontWeight.Bold)
-                    Text(value.toInt().toString(), style = MaterialTheme.typography.labelMedium, color = AppTextSecondary)
+                    Text(if (isPercentage) "${value.toInt()}%" else value.toInt().toString(), style = MaterialTheme.typography.labelMedium, color = AppTextSecondary)
                 }
                 Spacer(modifier = Modifier.height(8.dp))
                 Box(modifier = Modifier.fillMaxWidth().height(14.dp).background(AppSurfaceVariant, RoundedCornerShape(7.dp))) {
-                    Box(modifier = Modifier.fillMaxWidth(pct).fillMaxHeight().background(AppPrimary, RoundedCornerShape(7.dp)))
+                    Box(modifier = Modifier.fillMaxWidth(pct).fillMaxHeight().background(colorOverride ?: AppPrimary, RoundedCornerShape(7.dp)))
                 }
             }
         }
@@ -196,6 +245,59 @@ fun AnalyticsCard(title: String, content: @Composable () -> Unit) {
             Text(text = title, color = AppTextPrimary, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
             Spacer(modifier = Modifier.height(24.dp))
             content()
+        }
+    }
+}
+
+@Composable
+fun MiniDonutChart(data: List<Pair<String, Int>>) {
+    val total = data.sumOf { it.second }.toFloat()
+    val colors = listOf(AppPrimary, Color(0xFF14B8A6), Color(0xFF8B5CF6), Color(0xFFF59E0B), Color(0xFFEC4899))
+    
+    val animationProgress = remember { Animatable(0f) }
+    LaunchedEffect(data) {
+        animationProgress.animateTo(1f, animationSpec = tween(1000, easing = FastOutSlowInEasing))
+    }
+
+    val angles = remember(data) {
+        var startAngle = -90f
+        data.map { (name, count) ->
+            val sweep = (count / total) * 360f
+            val itemStart = startAngle
+            startAngle += sweep
+            Triple(name, itemStart, sweep)
+        }
+    }
+
+    Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
+        Box(modifier = Modifier.size(100.dp), contentAlignment = Alignment.Center) {
+            Canvas(modifier = Modifier.fillMaxSize()) {
+                val canvasSize = size.minDimension
+                val strokeWidth = 20.dp.toPx()
+                angles.forEachIndexed { index, (_, startAngle, sweepAngle) ->
+                    drawArc(
+                        color = colors[index % colors.size],
+                        startAngle = startAngle,
+                        sweepAngle = sweepAngle * animationProgress.value,
+                        useCenter = false,
+                        style = Stroke(width = strokeWidth, cap = StrokeCap.Butt),
+                        size = Size(canvasSize - strokeWidth, canvasSize - strokeWidth),
+                        topLeft = Offset(strokeWidth / 2f, strokeWidth / 2f)
+                    )
+                }
+            }
+            Text("${total.toInt()}", style = MaterialTheme.typography.titleMedium, color = AppTextPrimary, fontWeight = FontWeight.Bold)
+        }
+        Spacer(modifier = Modifier.height(16.dp))
+        data.forEachIndexed { index, (name, count) ->
+            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(vertical = 2.dp).fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(modifier = Modifier.size(8.dp).background(colors[index % colors.size], RoundedCornerShape(4.dp)))
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text("$name", color = AppTextPrimary, style = MaterialTheme.typography.labelSmall)
+                }
+                Text("$count", color = AppTextMuted, style = MaterialTheme.typography.labelSmall)
+            }
         }
     }
 }
