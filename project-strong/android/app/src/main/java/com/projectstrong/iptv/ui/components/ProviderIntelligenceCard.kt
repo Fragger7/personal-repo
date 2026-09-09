@@ -257,6 +257,69 @@ fun ProviderIntelligenceCard(
                         }
                     }
 
+                    // StreamCheck Index Card
+                    if (displayProfile.scDashboardUrl != null && displayProfile.scDashboardUrl.isNotEmpty()) {
+                        Surface(
+                            shape = RoundedCornerShape(10.dp),
+                            color = Color(0xFF8B5CF6).copy(alpha = 0.15f),
+                            border = BorderStroke(1.dp, Color(0xFF8B5CF6).copy(alpha = 0.4f)),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(10.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                    modifier = Modifier.weight(1f)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.QueryStats,
+                                        contentDescription = null,
+                                        tint = Color(0xFFC4B5FD),
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                    Column {
+                                        Text(
+                                            text = "StreamCheck Upstream Index",
+                                            color = Color(0xFFDDD6FE),
+                                            style = MaterialTheme.typography.labelSmall,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                        Text(
+                                            text = "${displayProfile.scChannels ?: "0"} Live | ${displayProfile.scSeries ?: "0"} Series | ${displayProfile.scMovies ?: "0"} VOD",
+                                            color = Color(0xFFEDE9FE),
+                                            style = MaterialTheme.typography.bodySmall,
+                                            fontWeight = FontWeight.SemiBold
+                                        )
+                                    }
+                                }
+
+                                IconButton(
+                                    onClick = {
+                                        try {
+                                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(displayProfile.scDashboardUrl))
+                                            context.startActivity(intent)
+                                        } catch (e: Exception) {
+                                            ToastManager.error("Could not launch URL")
+                                        }
+                                    },
+                                    modifier = Modifier.size(32.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.OpenInNew,
+                                        contentDescription = "Open Dashboard",
+                                        tint = Color(0xFFC4B5FD),
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                    }
+
                     // Forensic Evidence details
                     if (displayProfile.safeEvidence.isNotEmpty()) {
                         Row(

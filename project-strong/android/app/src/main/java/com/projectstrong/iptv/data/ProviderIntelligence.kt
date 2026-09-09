@@ -36,7 +36,13 @@ data class ProviderProfile(
     @SerializedName("evidence") val evidence: String? = null,
     @SerializedName("regional_focus") val regionalFocus: String? = null,
     @SerializedName("first_seen") val firstSeen: String? = null,
-    @SerializedName("last_seen") val lastSeen: String? = null
+    @SerializedName("last_seen") val lastSeen: String? = null,
+    @SerializedName("sc_channels") val scChannels: String? = null,
+    @SerializedName("sc_series") val scSeries: String? = null,
+    @SerializedName("sc_movies") val scMovies: String? = null,
+    @SerializedName("sc_last_run") val scLastRun: String? = null,
+    @SerializedName("sc_dashboard_url") val scDashboardUrl: String? = null,
+    @SerializedName("watermark") val watermark: String? = null
 ) {
     val cleanBrand: String
         get() {

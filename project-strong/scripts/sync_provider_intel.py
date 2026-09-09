@@ -179,8 +179,15 @@ def main():
             print(f"  [⟳] Corrected misclassified country entry: {domain_k} -> Regional Bouquet ({reg})")
 
     # 2. Ingest StreamCheck Upstream Provider Directory
+    sc_metrics = {}
     print("\n[+] Fetching live providers from StreamCheck index...")
     providers_data = http_get_json(STREAMCHECK_PROVIDERS_URL)
+    series_data = http_get_json("https://search.streamcheck.pro/api/series/providers")
+    movies_data = http_get_json("https://search.streamcheck.pro/api/movies/providers")
+    
+    series_map = {item.get("provider", "").strip().lower(): item.get("series_count", "0") for item in (series_data if isinstance(series_data, list) else [])}
+    movies_map = {item.get("provider", "").strip().lower(): item.get("movies_count", "0") for item in (movies_data if isinstance(movies_data, list) else [])}
+
     if isinstance(providers_data, list):
         print(f"Found {len(providers_data)} active providers in StreamCheck directory:")
         for item in providers_data:
@@ -188,7 +195,29 @@ def main():
             ch_count = item.get("channel_count", "0")
             last_run = item.get("last_run", "")
             dash_url = item.get("dashboard_url", "")
+            p_lower = provider_name.lower()
+            sc_metrics[p_lower] = {
+                "sc_channels": ch_count,
+                "sc_series": series_map.get(p_lower, "0"),
+                "sc_movies": movies_map.get(p_lower, "0"),
+                "sc_last_run": last_run,
+                "sc_dashboard_url": dash_url
+            }
             print(f"  • {provider_name:12} | Channels: {ch_count:>6} | Last Seen: {last_run}")
+            
+        # Update existing intel with StreamCheck metrics
+        for domain_k, entry in list(existing_intel.items()):
+            p_name = entry.get("provider_name", "").lower()
+            for sc_p, sc_data in sc_metrics.items():
+                if sc_p in p_name:
+                    has_changes = False
+                    for k, v in sc_data.items():
+                        if entry.get(k) != v:
+                            entry[k] = v
+                            has_changes = True
+                    if has_changes:
+                        updated_count += 1
+                    break
 
     # 3. Ingest and Learn from Committed Records Catalog
     if os.path.exists(COMMITTED_PATH):
@@ -299,8 +328,24 @@ def main():
                             discovered_delimiters.add((p_name, delim))
     if discovered_delimiters:
         print(f"Verified {len(discovered_delimiters)} provider watermark delimiters in live streams:")
-        for p_name, delim in sorted(discovered_delimiters)[:10]:
-            print(f"  • {p_name:12} uses watermark delimiter '{delim}'")
+        # Group delimiters by provider
+        provider_delims = {}
+        for p_name, delim in discovered_delimiters:
+            if p_name not in provider_delims:
+                provider_delims[p_name] = set()
+            provider_delims[p_name].add(delim)
+            
+        for p_name, delims in provider_delims.items():
+            joined_delims = ",".join(sorted(delims))
+            print(f"  • {p_name:12} uses watermark delimiter(s) '{joined_delims}'")
+            
+            # Map back to existing_intel
+            p_lower = p_name.lower()
+            for domain_k, entry in existing_intel.items():
+                if p_lower in entry.get("provider_name", "").lower():
+                    if entry.get("watermark") != joined_delims:
+                        entry["watermark"] = joined_delims
+                        updated_count += 1
 
     print("\n" + "=" * 60)
     print(f"Intelligence sync complete: {updated_count} new entries learned.")

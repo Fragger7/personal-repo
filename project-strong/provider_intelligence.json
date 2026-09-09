@@ -293,7 +293,13 @@
         "provider_name": "\ud83d\udc64 Host: dm.lion-ott.com:80",
         "cloudflare": "No",
         "first_seen": "2026-07-10 03:13:43",
-        "last_seen": "2026-07-10 03:13:43"
+        "last_seen": "2026-07-10 03:13:43",
+        "sc_channels": "19504",
+        "sc_series": "24506",
+        "sc_movies": "98398",
+        "sc_last_run": "2026-09-07T00:00:18.260Z",
+        "sc_dashboard_url": "https://streamcheck.pro/public/dashboard/2362ef9f-2ac1-4c14-a32b-62bd1f27a10c#theme=night",
+        "watermark": "|"
     },
     "newworld.cctv123.net:2082": {
         "provider_name": "\ud83d\udc64 Host: newworld.cctv123.net:2082",
@@ -858,7 +864,13 @@
         "provider_name": "\ud83d\udc64 Host: line.dino.ws",
         "cloudflare": "No",
         "first_seen": "2026-07-12 20:43:20",
-        "last_seen": "2026-07-12 20:43:20"
+        "last_seen": "2026-07-12 20:43:20",
+        "sc_channels": "21304",
+        "sc_series": "24794",
+        "sc_movies": "103870",
+        "sc_last_run": "2026-09-07T00:00:18.647Z",
+        "sc_dashboard_url": "https://streamcheck.pro/public/dashboard/4bfa988f-bcf9-47e5-a6cb-2367f2942d70#theme=night",
+        "watermark": "|"
     },
     "vod-4k.info:8089": {
         "provider_name": "\ud83d\udc64 Host: vod-4k.info:8089",
@@ -894,7 +906,13 @@
         "provider_name": "\ud83d\udc64 Host: line.tvlion.xyz:80",
         "cloudflare": "No",
         "first_seen": "2026-07-12 20:43:20",
-        "last_seen": "2026-07-12 20:43:20"
+        "last_seen": "2026-07-12 20:43:20",
+        "sc_channels": "19504",
+        "sc_series": "24506",
+        "sc_movies": "98398",
+        "sc_last_run": "2026-09-07T00:00:18.260Z",
+        "sc_dashboard_url": "https://streamcheck.pro/public/dashboard/2362ef9f-2ac1-4c14-a32b-62bd1f27a10c#theme=night",
+        "watermark": "|"
     },
     "live.remorize.live:2082": {
         "provider_name": "\ud83d\udc64 Host: live.remorize.live:2082",
@@ -1002,7 +1020,13 @@
         "provider_name": "\ud83d\udc64 Host: mag.dino.ws:80",
         "cloudflare": "No",
         "first_seen": "2026-07-12 20:43:20",
-        "last_seen": "2026-07-12 20:43:20"
+        "last_seen": "2026-07-12 20:43:20",
+        "sc_channels": "21304",
+        "sc_series": "24794",
+        "sc_movies": "103870",
+        "sc_last_run": "2026-09-07T00:00:18.647Z",
+        "sc_dashboard_url": "https://streamcheck.pro/public/dashboard/4bfa988f-bcf9-47e5-a6cb-2367f2942d70#theme=night",
+        "watermark": "|"
     },
     "s1.stealtnet.com:80": {
         "provider_name": "\ud83d\udc64 Host: s1.stealtnet.com:80",
@@ -1145,7 +1169,13 @@
         "confidence": "Verified Brand (Committed Catalog)",
         "evidence": "Discovered via verified committed node Magnum OTT (Golden)",
         "first_seen": "2026-07-18 15:26:00",
-        "last_seen": "2026-09-06 21:24:20"
+        "last_seen": "2026-09-06 21:24:20",
+        "sc_channels": "27853",
+        "sc_series": "49809",
+        "sc_movies": "156423",
+        "sc_last_run": "2026-09-07T00:00:17.952Z",
+        "sc_dashboard_url": "https://streamcheck.pro/public/dashboard/91bb75b9-0630-4069-8b35-5cfe58cd1a0a#theme=night",
+        "watermark": "|"
     },
     "thesky.live:80": {
         "provider_name": "\ud83d\udc64 Host: thesky.live:80",
@@ -1577,7 +1607,12 @@
         "provider_name": "\ud83d\udc64 Host: MAX",
         "cloudflare": "No",
         "first_seen": "2026-07-18 20:06:13",
-        "last_seen": "2026-07-18 20:06:13"
+        "last_seen": "2026-07-18 20:06:13",
+        "sc_channels": "24217",
+        "sc_series": "28554",
+        "sc_movies": "133328",
+        "sc_last_run": "2026-09-07T00:00:18.534Z",
+        "sc_dashboard_url": "https://streamcheck.pro/public/dashboard/c67d3d9b-d469-413f-a048-ddcd1a2c6b0d#theme=night"
     },
     "Kudos": {
         "provider_name": "\ud83d\udc64 Host: Kudos",
@@ -1682,7 +1717,12 @@
         "cloudflare": "No",
         "timezone": "Sat, 18 Jul 2026 20:06:08 GMT",
         "first_seen": "2026-07-18 20:06:13",
-        "last_seen": "2026-07-18 20:06:13"
+        "last_seen": "2026-07-18 20:06:13",
+        "sc_channels": "24217",
+        "sc_series": "28554",
+        "sc_movies": "133328",
+        "sc_last_run": "2026-09-07T00:00:18.534Z",
+        "sc_dashboard_url": "https://streamcheck.pro/public/dashboard/c67d3d9b-d469-413f-a048-ddcd1a2c6b0d#theme=night"
     },
     "interested": {
         "provider_name": "\ud83d\udc64 Host: interested",
@@ -1697,7 +1737,13 @@
         "cloudflare": "No",
         "timezone": "Sat, 18 Jul 2026 20:06:08 GMT",
         "first_seen": "2026-07-18 20:06:13",
-        "last_seen": "2026-07-18 20:06:13"
+        "last_seen": "2026-07-18 20:06:13",
+        "sc_channels": "21304",
+        "sc_series": "24794",
+        "sc_movies": "103870",
+        "sc_last_run": "2026-09-07T00:00:18.647Z",
+        "sc_dashboard_url": "https://streamcheck.pro/public/dashboard/4bfa988f-bcf9-47e5-a6cb-2367f2942d70#theme=night",
+        "watermark": "|"
     },
     "calls.": {
         "provider_name": "\ud83d\udc64 Host: calls.",
@@ -1712,7 +1758,13 @@
         "last_seen": "2026-07-18 20:06:13",
         "server": "nginx",
         "cors": "*",
-        "timezone": "Sat, 18 Jul 2026 20:06:09 GMT"
+        "timezone": "Sat, 18 Jul 2026 20:06:09 GMT",
+        "sc_channels": "21304",
+        "sc_series": "24794",
+        "sc_movies": "103870",
+        "sc_last_run": "2026-09-07T00:00:18.647Z",
+        "sc_dashboard_url": "https://streamcheck.pro/public/dashboard/4bfa988f-bcf9-47e5-a6cb-2367f2942d70#theme=night",
+        "watermark": "|"
     },
     "Only": {
         "provider_name": "\ud83d\udc64 Host: Only",
@@ -1769,7 +1821,12 @@
         "cloudflare": "No",
         "timezone": "Sat, 18 Jul 2026 20:06:08 GMT",
         "first_seen": "2026-07-18 20:06:13",
-        "last_seen": "2026-07-18 20:06:13"
+        "last_seen": "2026-07-18 20:06:13",
+        "sc_channels": "24217",
+        "sc_series": "28554",
+        "sc_movies": "133328",
+        "sc_last_run": "2026-09-07T00:00:18.534Z",
+        "sc_dashboard_url": "https://streamcheck.pro/public/dashboard/c67d3d9b-d469-413f-a048-ddcd1a2c6b0d#theme=night"
     },
     "vipspaceworld.online": {
         "provider_name": "\ud83d\udc64 Host: vipspaceworld.online",
@@ -2063,7 +2120,12 @@
         "cloudflare": "Yes",
         "timezone": "Sat, 18 Jul 2026 20:25:13 GMT",
         "first_seen": "2026-07-18 20:25:19",
-        "last_seen": "2026-07-18 20:25:19"
+        "last_seen": "2026-07-18 20:25:19",
+        "sc_channels": "24217",
+        "sc_series": "28554",
+        "sc_movies": "133328",
+        "sc_last_run": "2026-09-07T00:00:18.534Z",
+        "sc_dashboard_url": "https://streamcheck.pro/public/dashboard/c67d3d9b-d469-413f-a048-ddcd1a2c6b0d#theme=night"
     },
     "20541": {
         "provider_name": "\ud83d\udc64 Host: 20541",
@@ -2132,7 +2194,13 @@
         "confidence": "High Confidence (95%)",
         "evidence": "Matched Server Metadata Message: \"Welcome to World 8K\" & superscript stream watermarks (\u00b3\u2078\u2074\u2070\u1d3e, STARZPLAY SPORT 8K)",
         "first_seen": "2026-08-29 10:45:02",
-        "last_seen": "2026-08-29 10:45:02"
+        "last_seen": "2026-08-29 10:45:02",
+        "sc_channels": "57182",
+        "sc_series": "47891",
+        "sc_movies": "181209",
+        "sc_last_run": "2026-08-31T00:00:38.175Z",
+        "sc_dashboard_url": "https://streamcheck.pro/public/dashboard/9185cf1d-5ce0-40b2-8534-7a4f00d87b9e#theme=night",
+        "watermark": "|,\u1d3f\u1d2c\u1d42,\u25b6 \ufe0f"
     },
     "204.52.191.254:80": {
         "provider_name": "\ud83c\udfaf Identified: Strong 8K",
@@ -2147,7 +2215,13 @@
         "confidence": "High Confidence (95%)",
         "evidence": "Matched Server Metadata Message: \"Welcome to World 8K\" & superscript stream watermarks (\u00b3\u2078\u2074\u2070\u1d3e, STARZPLAY SPORT 8K)",
         "first_seen": "2026-08-29 10:45:02",
-        "last_seen": "2026-08-29 10:45:02"
+        "last_seen": "2026-08-29 10:45:02",
+        "sc_channels": "57182",
+        "sc_series": "47891",
+        "sc_movies": "181209",
+        "sc_last_run": "2026-08-31T00:00:38.175Z",
+        "sc_dashboard_url": "https://streamcheck.pro/public/dashboard/9185cf1d-5ce0-40b2-8534-7a4f00d87b9e#theme=night",
+        "watermark": "|,\u1d3f\u1d2c\u1d42,\u25b6 \ufe0f"
     },
     "game8k.space:80": {
         "provider_name": "\ud83c\udfaf Identified: Strong 8K",
@@ -2161,7 +2235,13 @@
         "rtmp_port": "25462",
         "allowed_formats": "['m3u8', 'ts', 'rtmp']",
         "first_seen": "2026-09-03 08:12:05",
-        "last_seen": "2026-09-03 08:12:05"
+        "last_seen": "2026-09-03 08:12:05",
+        "sc_channels": "57182",
+        "sc_series": "47891",
+        "sc_movies": "181209",
+        "sc_last_run": "2026-08-31T00:00:38.175Z",
+        "sc_dashboard_url": "https://streamcheck.pro/public/dashboard/9185cf1d-5ce0-40b2-8534-7a4f00d87b9e#theme=night",
+        "watermark": "|,\u1d3f\u1d2c\u1d42,\u25b6 \ufe0f"
     },
     "yolomax.pro": {
         "domain": "yolomax.pro",
@@ -2196,7 +2276,13 @@
         "confidence": "Verified Brand (Committed Catalog)",
         "evidence": "Discovered via verified committed node Magnum OTT (Golden)",
         "first_seen": "2026-09-06 21:24:20",
-        "last_seen": "2026-09-06 21:24:20"
+        "last_seen": "2026-09-06 21:24:20",
+        "sc_channels": "27853",
+        "sc_series": "49809",
+        "sc_movies": "156423",
+        "sc_last_run": "2026-09-07T00:00:17.952Z",
+        "sc_dashboard_url": "https://streamcheck.pro/public/dashboard/91bb75b9-0630-4069-8b35-5cfe58cd1a0a#theme=night",
+        "watermark": "|"
     },
     "fyxthtkx.sidiman.com:80": {
         "domain": "fyxthtkx.sidiman.com:80",
@@ -2231,7 +2317,13 @@
         "confidence": "Verified Brand (Committed Catalog)",
         "evidence": "Discovered via verified committed node Dream 4K",
         "first_seen": "2026-09-06 21:24:20",
-        "last_seen": "2026-09-06 21:24:20"
+        "last_seen": "2026-09-06 21:24:20",
+        "sc_channels": "39102",
+        "sc_series": "51543",
+        "sc_movies": "226554",
+        "sc_last_run": "2026-09-07T00:00:20.160Z",
+        "sc_dashboard_url": "https://streamcheck.pro/public/dashboard/d3aab35a-a74f-4dda-b3b1-3c05dd236513#theme=night",
+        "watermark": "|,\u272a"
     },
     "rome66.xyz": {
         "domain": "rome66.xyz",
@@ -2266,7 +2358,13 @@
         "confidence": "Verified Brand (Committed Catalog)",
         "evidence": "Discovered via verified committed node B1G OTT",
         "first_seen": "2026-09-06 21:24:20",
-        "last_seen": "2026-09-06 21:24:20"
+        "last_seen": "2026-09-06 21:24:20",
+        "sc_channels": "27065",
+        "sc_series": "10822",
+        "sc_movies": "56054",
+        "sc_last_run": "2026-09-07T00:00:18.678Z",
+        "sc_dashboard_url": "https://streamcheck.pro/public/dashboard/a8a62b53-7793-406b-b9e4-dc76c8e82dfb#theme=night",
+        "watermark": "|"
     },
     "goldenvip.sbs:80": {
         "domain": "goldenvip.sbs:80",
@@ -2283,7 +2381,13 @@
         "confidence": "Verified Brand (Committed Catalog)",
         "evidence": "Discovered via verified committed node Magnum OTT (Golden)",
         "first_seen": "2026-09-06 21:24:20",
-        "last_seen": "2026-09-06 21:24:20"
+        "last_seen": "2026-09-06 21:24:20",
+        "sc_channels": "27853",
+        "sc_series": "49809",
+        "sc_movies": "156423",
+        "sc_last_run": "2026-09-07T00:00:17.952Z",
+        "sc_dashboard_url": "https://streamcheck.pro/public/dashboard/91bb75b9-0630-4069-8b35-5cfe58cd1a0a#theme=night",
+        "watermark": "|"
     },
     "iufyctwm.xandoria.cc": {
         "domain": "iufyctwm.xandoria.cc",
@@ -2318,7 +2422,13 @@
         "confidence": "Verified Brand (Committed Catalog)",
         "evidence": "Discovered via verified committed node B1G OTT",
         "first_seen": "2026-09-06 21:24:20",
-        "last_seen": "2026-09-06 21:24:20"
+        "last_seen": "2026-09-06 21:24:20",
+        "sc_channels": "27065",
+        "sc_series": "10822",
+        "sc_movies": "56054",
+        "sc_last_run": "2026-09-07T00:00:18.678Z",
+        "sc_dashboard_url": "https://streamcheck.pro/public/dashboard/a8a62b53-7793-406b-b9e4-dc76c8e82dfb#theme=night",
+        "watermark": "|"
     },
     "yourservicetop.shop": {
         "domain": "yourservicetop.shop",
@@ -2335,7 +2445,12 @@
         "confidence": "Verified Brand (Committed Catalog)",
         "evidence": "Discovered via verified committed node \ud83c\udfaf Identified: MAX PPV",
         "first_seen": "2026-09-06 21:24:20",
-        "last_seen": "2026-09-06 21:24:20"
+        "last_seen": "2026-09-06 21:24:20",
+        "sc_channels": "24217",
+        "sc_series": "28554",
+        "sc_movies": "133328",
+        "sc_last_run": "2026-09-07T00:00:18.534Z",
+        "sc_dashboard_url": "https://streamcheck.pro/public/dashboard/c67d3d9b-d469-413f-a048-ddcd1a2c6b0d#theme=night"
     },
     "fx2727.com:8080": {
         "domain": "fx2727.com:8080",
@@ -2352,7 +2467,12 @@
         "confidence": "Verified Brand (Committed Catalog)",
         "evidence": "Discovered via verified committed node Max OTT",
         "first_seen": "2026-09-06 21:24:20",
-        "last_seen": "2026-09-06 21:24:20"
+        "last_seen": "2026-09-06 21:24:20",
+        "sc_channels": "24217",
+        "sc_series": "28554",
+        "sc_movies": "133328",
+        "sc_last_run": "2026-09-07T00:00:18.534Z",
+        "sc_dashboard_url": "https://streamcheck.pro/public/dashboard/c67d3d9b-d469-413f-a048-ddcd1a2c6b0d#theme=night"
     },
     "dzi-tech.net": {
         "domain": "dzi-tech.net",
