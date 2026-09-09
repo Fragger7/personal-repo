@@ -318,7 +318,6 @@ fun ProviderIntelligenceCard(
                             }
                         }
                     }
-                    }
 
                     // Forensic Evidence details
                     if (displayProfile.safeEvidence.isNotEmpty()) {
