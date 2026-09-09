@@ -21,6 +21,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -1145,7 +1146,7 @@ fun CommittedDetailScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .pointerInput(Unit) { androidx.compose.foundation.gestures.detectTapGestures(onTap = { rootFocusManager.clearFocus() }) }
+            .pointerInput(Unit) { detectTapGestures(onTap = { rootFocusManager.clearFocus() }) }
             .verticalScroll(detailScrollState)
             .padding(16.dp)
     ) {

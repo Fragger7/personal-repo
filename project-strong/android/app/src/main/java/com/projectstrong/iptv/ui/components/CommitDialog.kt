@@ -14,6 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -105,7 +106,7 @@ fun CommitAccountDialog(
             border = BorderStroke(1.dp, AppSurfaceBorder),
             modifier = Modifier.fillMaxWidth().padding(16.dp)
         ) {
-            Column(modifier = Modifier.padding(20.dp).pointerInput(Unit) { androidx.compose.foundation.gestures.detectTapGestures(onTap = { rootFocusManager.clearFocus() }) }.verticalScroll(androidx.compose.foundation.rememberScrollState())) {
+            Column(modifier = Modifier.padding(20.dp).pointerInput(Unit) { detectTapGestures(onTap = { rootFocusManager.clearFocus() }) }.verticalScroll(androidx.compose.foundation.rememberScrollState())) {
                 // Header
                 Row(
                     modifier = Modifier.fillMaxWidth(),
