@@ -99,9 +99,10 @@ COUNTRY_DEMONYM_MAP = {
     "russia": "Russian", "russian": "Russian",
     "albania": "Albanian", "albanian": "Albanian", "shqip": "Albanian",
     "exyu": "Ex-Yu / Balkan", "balkan": "Ex-Yu / Balkan", "serbia": "Balkan", "croatia": "Balkan", "bosnia": "Balkan",
-    "uk": "UK / British", "british": "UK / British", "england": "UK / British",
+    "uk": "UK / British", "british": "UK / British", "england": "UK / British", "english": "UK / English", "united kingdom": "UK / British",
     "usa": "USA", "us": "USA", "america": "USA", "american": "USA",
     "canada": "Canadian", "canadian": "Canadian",
+    "latino": "Latino", "latin": "Latino", "hispanic": "Latino",
     "pakistan": "Pakistani", "pak": "Pakistani", "india": "Indian", "hindi": "Indian", "urdu": "Pakistani / Urdu"
 }
 

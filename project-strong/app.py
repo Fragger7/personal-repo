@@ -2003,7 +2003,19 @@ if st.session_state["playlist_results"] is not None:
             domain = base_url
             
         existing = local_intel.get(domain, {})
-        acc["Provider"] = existing.get("provider_name", "Unknown Provider")
+        raw_prov = existing.get("provider_name", "Unknown Provider")
+        reg_focus = existing.get("regional_focus")
+        
+        if "unidentified" in raw_prov.lower() or "unknown" in raw_prov.lower() or "unbranded" in raw_prov.lower():
+            if reg_focus:
+                acc["Provider"] = f"🌍 {reg_focus} Bouquet"
+            else:
+                acc["Provider"] = "Unknown"
+        else:
+            if raw_prov.startswith("🎯 Identified:"):
+                acc["Provider"] = raw_prov.replace("🎯 Identified:", "").strip()
+            else:
+                acc["Provider"] = raw_prov
 
     df = pd.DataFrame(st.session_state["playlist_results"])
     
@@ -2214,7 +2226,19 @@ with tab_committed:
             except:
                 domain = base_url
             existing = local_intel.get(domain, {})
-            c_rec["Provider"] = existing.get("provider_name", "Unknown Provider")
+            raw_prov = existing.get("provider_name", "Unknown Provider")
+            reg_focus = existing.get("regional_focus")
+            
+            if "unidentified" in raw_prov.lower() or "unknown" in raw_prov.lower() or "unbranded" in raw_prov.lower() or "👤" in raw_prov:
+                if reg_focus:
+                    c_rec["Provider"] = f"🌍 {reg_focus} Bouquet"
+                else:
+                    c_rec["Provider"] = "Unknown"
+            else:
+                if raw_prov.startswith("🎯 Identified:"):
+                    c_rec["Provider"] = raw_prov.replace("🎯 Identified:", "").strip()
+                else:
+                    c_rec["Provider"] = raw_prov
 
         comm_df = pd.DataFrame(committed_records)
         comm_df = comm_df.drop(columns=["fingerprint"], errors="ignore")
