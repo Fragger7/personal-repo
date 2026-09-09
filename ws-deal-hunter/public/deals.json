@@ -1,5 +1,37 @@
 [
   {
+    "id": "ebay_318845721835",
+    "source": "ebay",
+    "title": "New ListingLenovo ThinkPad P15v Gen 3 21D9S4C500 15.6\" i7-12800H 2.4GHz 32GB RAM 512GB SSDOpens in a new window or tab",
+    "price": 499.99,
+    "url": "https://www.ebay.com/itm/318845721835",
+    "specs": {
+      "cpu": "I7-12800H",
+      "ram_gb": 32,
+      "ssd_gb": 512,
+      "gpu": "NVIDIA RTX / Workstation GPU",
+      "screen": "15.6\" - 16\" Workstation Display",
+      "condition": "Used / Refurbished"
+    },
+    "fair_market_value": 730.0,
+    "estimated_profit": 230.01,
+    "arbitrage_margin_pct": 46.0,
+    "deal_score": 9.3,
+    "summary": "This Lenovo ThinkPad P15v Gen 3 delivers exceptional arbitrage value with its 14-core Intel i7-12800H processor and baseline 32GB DDR5 RAM at a sub-$500 entry price. The 15.6\" expandable workstation chassis makes it an ideal portable node for heavy multi-threaded compilation, Docker containers, and virtualized dev environments. At a total landed cost of ~$541 against an FMV of $730, this listing represents a huge margin spread for a turnkey 12th-Gen workstation.",
+    "actionable_recommendation": "🎯 HIGH-CONVICTION STRIKE: Buy immediately at asking price",
+    "confidence_score": 0.95,
+    "seller": "eBay Seller",
+    "location": "US",
+    "created_utc": "2026-09-09T21:46:59.808049+00:00",
+    "evaluated_at": "2026-09-09T21:47:26.297250+00:00",
+    "alerted": true,
+    "is_high_yield": true,
+    "raw_payload": null,
+    "is_auction": false,
+    "bid_count": null,
+    "time_left": null
+  },
+  {
     "id": "ebay_298601861601",
     "source": "ebay",
     "title": "Dell XPS 15 9520 TOUCH 3.5K 2.3GHz i7-12700H 32GB 1TB SSD RTX 3050 Ti FairOpens in a new window or tab",
