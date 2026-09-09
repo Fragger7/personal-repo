@@ -1128,6 +1128,7 @@ fun CommittedDetailScreen(
     var currentRooms by remember(record) { mutableStateOf(record.safeRooms.split(",").map { it.trim() }.filter { it.isNotEmpty() }.toSet()) }
     var currentContent by remember(record) { mutableStateOf(record.safeContent.split(",").map { it.trim() }.filter { it.isNotEmpty() }.toSet()) }
     var showCatalogExplorer by remember { mutableStateOf(false) }
+    val rootFocusManager = androidx.compose.ui.platform.LocalFocusManager.current
     val detailScrollState = rememberScrollState()
 
     if (showCatalogExplorer && record.safeType == "Xtream") {
@@ -1143,6 +1144,7 @@ fun CommittedDetailScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .pointerInput(Unit) { androidx.compose.foundation.gestures.detectTapGestures(onTap = { rootFocusManager.clearFocus() }) }
             .verticalScroll(detailScrollState)
             .padding(16.dp)
     ) {
@@ -1424,12 +1426,15 @@ fun CommittedDetailScreen(
         }
 
         // Notes Area
+        val focusManager = androidx.compose.ui.platform.LocalFocusManager.current
         Text("NOTES & ANNOTATIONS", color = AppTextSecondary, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, modifier = Modifier.padding(bottom = 6.dp))
         OutlinedTextField(
             value = currentNotes,
             onValueChange = { currentNotes = it },
             placeholder = { Text("Add notes for this account...", color = AppTextMuted) },
             modifier = Modifier.fillMaxWidth().height(120.dp),
+            keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(imeAction = androidx.compose.ui.text.input.ImeAction.Default),
+            keyboardActions = androidx.compose.foundation.text.KeyboardActions(onDone = { focusManager.clearFocus() }),
             colors = OutlinedTextFieldDefaults.colors(
                 unfocusedBorderColor = AppSurfaceBorder,
                 focusedBorderColor = AppPrimary,
@@ -1474,6 +1479,7 @@ fun CommittedDetailScreen(
             PrimaryButton(
                 text = "Save Details",
                 onClick = {
+                    rootFocusManager.clearFocus()
                     CommittedManager.updateDetails(
                         record, 
                         currentNotes, 

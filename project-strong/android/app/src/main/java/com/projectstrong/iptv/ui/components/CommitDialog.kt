@@ -94,6 +94,8 @@ fun CommitAccountDialog(
         }
     }
 
+    val rootFocusManager = androidx.compose.ui.platform.LocalFocusManager.current
+
     Dialog(onDismissRequest = onDismiss) {
         Card(
             shape = RoundedCornerShape(16.dp),
@@ -101,7 +103,7 @@ fun CommitAccountDialog(
             border = BorderStroke(1.dp, AppSurfaceBorder),
             modifier = Modifier.fillMaxWidth().padding(16.dp)
         ) {
-            Column(modifier = Modifier.padding(20.dp)) {
+            Column(modifier = Modifier.padding(20.dp).pointerInput(Unit) { androidx.compose.foundation.gestures.detectTapGestures(onTap = { rootFocusManager.clearFocus() }) }.verticalScroll(androidx.compose.foundation.rememberScrollState())) {
                 // Header
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -316,6 +318,8 @@ fun CommitAccountDialog(
                     onValueChange = { notes = it },
                     placeholder = { Text("e.g. Living room TV, US 4K channels, backup link...", color = AppTextMuted) },
                     modifier = Modifier.fillMaxWidth().height(80.dp),
+                    keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(imeAction = androidx.compose.ui.text.input.ImeAction.Default),
+                    keyboardActions = androidx.compose.foundation.text.KeyboardActions(onDone = { rootFocusManager.clearFocus() }),
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedTextColor = AppTextPrimary,
                         unfocusedTextColor = AppTextPrimary,
@@ -359,13 +363,17 @@ fun CommitAccountDialog(
                 ) {
                     SecondaryButton(
                         text = "Cancel",
-                        onClick = onDismiss,
+                        onClick = {
+                            rootFocusManager.clearFocus()
+                            onDismiss()
+                        },
                         modifier = Modifier.weight(1f).height(44.dp)
                     )
                     PrimaryButton(
                         text = "Save & Commit",
                         color = AppSuccess,
                         onClick = {
+                            rootFocusManager.clearFocus()
                             val finalSource = if (sourceLinkInput.trim().isEmpty()) "Direct Ingestion" else sourceLinkInput.trim()
                             val finalOrigin = originLinkInput.trim().ifEmpty { null }
                             CommittedManager.commit(
