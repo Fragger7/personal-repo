@@ -308,7 +308,7 @@
     "id": "ebay_188308699671",
     "source": "ebay",
     "title": "Dell Precision 5680, i7-13700H, 32GB RAM, 512GB SSD, Win 11, *SCREEN MARKS*Opens in a new window or tab",
-    "price": 844.75,
+    "price": 778.95,
     "url": "https://www.ebay.com/itm/188308699671",
     "specs": {
       "cpu": "I7-13700H",
@@ -319,19 +319,22 @@
       "condition": "Used / Refurbished"
     },
     "fair_market_value": 1250.0,
-    "estimated_profit": 405.25,
-    "arbitrage_margin_pct": 48.0,
-    "deal_score": 9.1,
-    "summary": "High-conviction value buy at $845 offering +$336 (+27% ROI) profit spread below estimated FMV ($1250). Configured with I7-13700H, 32GB RAM, 512GB SSD, and NVIDIA RTX / Workstation GPU. Excellent daily driver for full-stack engineering, multi-container development, and data analysis.",
+    "estimated_profit": 471.05,
+    "arbitrage_margin_pct": 60.5,
+    "deal_score": 9.4,
+    "summary": "High-conviction value buy at $779 offering +$407 (+32% ROI) profit spread below estimated FMV ($1250). Configured with I7-13700H, 32GB RAM, 512GB SSD, and NVIDIA RTX / Workstation GPU. Excellent daily driver for full-stack engineering, multi-container development, and data analysis.",
     "actionable_recommendation": "🎯 HIGH-CONVICTION STRIKE",
     "confidence_score": 0.95,
     "seller": "eBay Seller",
     "location": "US",
     "created_utc": "2026-09-02T22:23:10.912403+00:00",
-    "evaluated_at": "2026-09-02T22:24:21.530912+00:00",
+    "evaluated_at": "2026-09-10T18:34:49.577779+00:00",
     "alerted": true,
     "is_high_yield": true,
-    "raw_payload": null
+    "raw_payload": null,
+    "is_auction": false,
+    "bid_count": null,
+    "time_left": null
   },
   {
     "id": "ebay_227424204907",
