@@ -747,12 +747,17 @@ fun CommittedMasterGrid(
                                 onClick = onPush,
                                 modifier = Modifier.height(34.dp)
                             )
-                            PrimaryButton(
-                                text = "➕ Add",
-                                color = AppPrimary,
+                            Button(
                                 onClick = onAddManual,
+                                colors = ButtonDefaults.buttonColors(containerColor = AppPrimary),
+                                shape = RoundedCornerShape(10.dp),
+                                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
                                 modifier = Modifier.height(34.dp)
-                            )
+                            ) {
+                                Icon(Icons.Default.Add, contentDescription = "Add", modifier = Modifier.size(16.dp))
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text("Add", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.labelMedium)
+                            }
                             Surface(
                                 shape = RoundedCornerShape(8.dp),
                                 color = if (DataStore.githubToken.isNotEmpty()) AppPrimary.copy(alpha = 0.15f) else AppSurfaceVariant,
@@ -854,12 +859,15 @@ fun CommittedMasterGrid(
                             onClick = onPush,
                             modifier = Modifier.weight(1.2f).height(38.dp)
                         )
-                        PrimaryButton(
-                            text = "➕",
-                            color = AppPrimary,
+                        Button(
                             onClick = onAddManual,
-                            modifier = Modifier.weight(0.5f).height(38.dp)
-                        )
+                            colors = ButtonDefaults.buttonColors(containerColor = AppPrimary),
+                            shape = RoundedCornerShape(10.dp),
+                            contentPadding = PaddingValues(0.dp),
+                            modifier = Modifier.weight(0.4f).height(38.dp)
+                        ) {
+                            Icon(Icons.Default.Add, contentDescription = "Add", modifier = Modifier.size(20.dp))
+                        }
                         Surface(
                             shape = RoundedCornerShape(8.dp),
                             color = if (DataStore.githubToken.isNotEmpty()) AppPrimary.copy(alpha = 0.15f) else AppSurfaceVariant,
@@ -1482,7 +1490,7 @@ fun CommittedDetailScreen(
         
         MultiSelectToggles(
             label = "Content Type",
-            options = listOf("NFL", "Pak", "A", "Philly", "V", "L", "S"),
+            options = listOf("NFL", "Pak", "A", "Philly", "S"),
             selectedOptions = currentContent,
             onOptionToggled = { currentContent = it }
         )

@@ -351,7 +351,7 @@ fun CommitAccountDialog(
                 
                 MultiSelectToggles(
                     label = "Content Type",
-                    options = listOf("NFL", "Pak", "A", "Philly", "V", "L", "S"),
+                    options = listOf("NFL", "Pak", "A", "Philly", "S"),
                     selectedOptions = selectedContent,
                     onOptionToggled = { selectedContent = it }
                 )

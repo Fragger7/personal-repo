@@ -1085,6 +1085,7 @@ fun SettingsDialog(
             ToastHost(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
+                    .wrapContentSize()
                     .padding(bottom = 32.dp)
             )
         }

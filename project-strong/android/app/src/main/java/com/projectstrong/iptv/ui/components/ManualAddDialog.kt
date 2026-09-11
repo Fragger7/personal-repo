@@ -147,14 +147,14 @@ fun ManualAddDialog(
                     
                     MultiSelectToggles(
                         label = "Room",
-                        options = listOf("Master", "Living", "Guest", "Office", "Basement"),
+                        options = listOf("P", "LR", "MB", "MR", "M", "G", "O"),
                         selectedOptions = selectedRooms,
                         onOptionToggled = { selectedRooms = it }
                     )
 
                     MultiSelectToggles(
                         label = "Content Type",
-                        options = listOf("NFL", "Pak", "A", "Philly", "V", "L", "S"),
+                        options = listOf("NFL", "Pak", "A", "Philly", "S"),
                         selectedOptions = selectedContent,
                         onOptionToggled = { selectedContent = it }
                     )
