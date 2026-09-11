@@ -179,10 +179,7 @@ fun ManualAddDialog(
                                 ToastManager.error("Host is required!")
                                 return@Button
                             }
-                            val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-                            val dateStr = sdf.format(Date())
-                            
-                            val record = CommittedRecord(
+                            CommittedManager.commit(
                                 type = selectedType,
                                 baseUrl = host.trim(),
                                 user = user.trim(),
@@ -193,13 +190,9 @@ fun ManualAddDialog(
                                 rooms = selectedRooms.joinToString(", "),
                                 content = selectedContent.joinToString(", "),
                                 notes = notes.trim(),
-                                dateAdded = dateStr,
-                                isLocalOnly = true,
                                 sourceLink = sourceLink,
                                 originLink = ""
                             )
-                            CommittedManager.records.add(0, record)
-                            CommittedManager.saveLocalOnly()
                             ToastManager.success("Manual Connection Added!")
                             onCommitted()
                             onDismiss()
