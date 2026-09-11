@@ -32,38 +32,6 @@
     "time_left": null
   },
   {
-    "id": "ebay_298662598370",
-    "source": "ebay",
-    "title": "New ListingDell Precision 5570 15.6\" Laptop Intel Core i7-12700H 32GB RAM 512GB SSD Win11POpens in a new window or tab",
-    "price": 620.0,
-    "url": "https://www.ebay.com/itm/298662598370",
-    "specs": {
-      "cpu": "I7-12700H",
-      "ram_gb": 32,
-      "ssd_gb": 512,
-      "gpu": "NVIDIA RTX / Workstation GPU",
-      "screen": "15.6\" - 16\" Workstation Display",
-      "condition": "Used / Refurbished"
-    },
-    "fair_market_value": 780.0,
-    "estimated_profit": 160.0,
-    "arbitrage_margin_pct": 25.8,
-    "deal_score": 7.9,
-    "summary": "Opportunistic target priced at $620 with +$109 margin spread. Configured with I7-12700H, 32GB RAM, 512GB SSD, and NVIDIA RTX / Workstation GPU. Excellent daily driver for full-stack engineering, multi-container development, and data analysis.",
-    "actionable_recommendation": "🤝 OPPORTUNISTIC OFFER TARGET",
-    "confidence_score": 0.95,
-    "seller": "eBay Seller",
-    "location": "US",
-    "created_utc": "2026-09-10T21:42:35.735676+00:00",
-    "evaluated_at": "2026-09-10T21:43:11.331655+00:00",
-    "alerted": false,
-    "is_high_yield": false,
-    "raw_payload": null,
-    "is_auction": false,
-    "bid_count": null,
-    "time_left": null
-  },
-  {
     "id": "ebay_237060224655",
     "source": "ebay",
     "title": "New ListingDell Precision 5570 Laptop - i7-12800H 32GB 512GB Webcam RTX A1000 15.6\" - SP6Opens in a new window or tab",
