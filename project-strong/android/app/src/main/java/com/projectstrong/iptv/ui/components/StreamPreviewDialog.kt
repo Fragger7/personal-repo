@@ -7,6 +7,8 @@ import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.net.Uri
 import android.view.ViewGroup
+import android.view.WindowManager
+
 import android.widget.FrameLayout
 import androidx.annotation.OptIn
 import androidx.compose.animation.*
@@ -189,6 +191,16 @@ fun StreamPreviewDialog(
                 playWhenReady = true
                 videoScalingMode = C.VIDEO_SCALING_MODE_SCALE_TO_FIT
             }
+    }
+
+
+    // Keep Screen On while previewing stream
+    val window = activity?.window
+    DisposableEffect(Unit) {
+        window?.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        onDispose {
+            window?.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        }
     }
 
     // Fullscreen Screen Orientation Sync

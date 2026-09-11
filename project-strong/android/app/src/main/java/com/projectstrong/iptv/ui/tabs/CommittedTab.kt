@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.sp
 import android.content.res.Configuration
 import androidx.compose.ui.platform.LocalConfiguration
 import com.projectstrong.iptv.data.CommittedManager
+import com.projectstrong.iptv.ui.components.ManualAddDialog
 import com.projectstrong.iptv.data.CommittedRecord
 import com.projectstrong.iptv.data.DataStore
 import com.projectstrong.iptv.network.IPTVClient
@@ -74,6 +75,14 @@ fun CommittedTab() {
     var isRechecking by remember { mutableStateOf(false) }
     var actionMessage by remember { mutableStateOf("") }
     var showTokenDialog by remember { mutableStateOf(false) }
+    var showManualAddDialog by remember { mutableStateOf(false) }
+
+    if (showManualAddDialog) {
+        ManualAddDialog(
+            onDismiss = { showManualAddDialog = false },
+            onCommitted = { showManualAddDialog = false }
+        )
+    }
     var showPushConfirmDialog by remember { mutableStateOf(false) }
     var tempToken by remember { mutableStateOf(DataStore.githubToken) }
 
@@ -406,7 +415,8 @@ fun CommittedTab() {
                 onPush = onPushAction,
                 onRecheckStatus = onRecheckStatusAction,
                 onDeleteRecord = { recordToDelete = it },
-                onOpenTokenSettings = onOpenTokenSettingsAction
+                onOpenTokenSettings = onOpenTokenSettingsAction,
+                onAddManual = { showManualAddDialog = true }
             )
         }
     }
@@ -498,7 +508,8 @@ fun CommittedMasterGrid(
     onPush: () -> Unit,
     onRecheckStatus: () -> Unit,
     onDeleteRecord: (CommittedRecord) -> Unit,
-    onOpenTokenSettings: () -> Unit
+    onOpenTokenSettings: () -> Unit,
+    onAddManual: () -> Unit
 ) {
     var sortColumn by remember { mutableStateOf(CommittedSortColumn.DATE_ADDED) }
     var sortAscending by remember { mutableStateOf(false) }
@@ -736,6 +747,12 @@ fun CommittedMasterGrid(
                                 onClick = onPush,
                                 modifier = Modifier.height(34.dp)
                             )
+                            PrimaryButton(
+                                text = "➕ Add",
+                                color = AppPrimary,
+                                onClick = onAddManual,
+                                modifier = Modifier.height(34.dp)
+                            )
                             Surface(
                                 shape = RoundedCornerShape(8.dp),
                                 color = if (DataStore.githubToken.isNotEmpty()) AppPrimary.copy(alpha = 0.15f) else AppSurfaceVariant,
@@ -836,6 +853,12 @@ fun CommittedMasterGrid(
                             color = if (records.isEmpty()) AppTextMuted else AppSuccess,
                             onClick = onPush,
                             modifier = Modifier.weight(1.2f).height(38.dp)
+                        )
+                        PrimaryButton(
+                            text = "➕",
+                            color = AppPrimary,
+                            onClick = onAddManual,
+                            modifier = Modifier.weight(0.5f).height(38.dp)
                         )
                         Surface(
                             shape = RoundedCornerShape(8.dp),
@@ -1458,8 +1481,8 @@ fun CommittedDetailScreen(
         )
         
         MultiSelectToggles(
-            label = "CONTENT TYPE",
-            options = listOf("NFL", "Pak", "A", "Philly"),
+            label = "Content Type",
+            options = listOf("NFL", "Pak", "A", "Philly", "V", "L", "S"),
             selectedOptions = currentContent,
             onOptionToggled = { currentContent = it }
         )

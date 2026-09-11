@@ -104,9 +104,15 @@ fun CommitAccountDialog(
             shape = RoundedCornerShape(16.dp),
             colors = CardDefaults.cardColors(containerColor = AppSurface),
             border = BorderStroke(1.dp, AppSurfaceBorder),
-            modifier = Modifier.fillMaxWidth().padding(16.dp)
+            modifier = Modifier
+                .fillMaxWidth()
+                .fillMaxHeight(0.9f)
         ) {
-            Column(modifier = Modifier.padding(20.dp).pointerInput(Unit) { detectTapGestures(onTap = { rootFocusManager.clearFocus() }) }.verticalScroll(androidx.compose.foundation.rememberScrollState())) {
+            Column(modifier = Modifier
+                .padding(20.dp)
+                .pointerInput(Unit) { detectTapGestures(onTap = { rootFocusManager.clearFocus() }) }
+                .verticalScroll(androidx.compose.foundation.rememberScrollState())
+            ) {
                 // Header
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -345,7 +351,7 @@ fun CommitAccountDialog(
                 
                 MultiSelectToggles(
                     label = "Content Type",
-                    options = listOf("NFL", "Pak", "A", "Philly"),
+                    options = listOf("NFL", "Pak", "A", "Philly", "V", "L", "S"),
                     selectedOptions = selectedContent,
                     onOptionToggled = { selectedContent = it }
                 )

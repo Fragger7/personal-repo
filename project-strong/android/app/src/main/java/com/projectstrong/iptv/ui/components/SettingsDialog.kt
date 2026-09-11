@@ -143,27 +143,28 @@ fun SettingsDialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(usePlatformDefaultWidth = false)
     ) {
-        Surface(
-            modifier = Modifier
-                .fillMaxWidth(0.95f)
-                .fillMaxHeight(0.92f),
-            shape = RoundedCornerShape(24.dp),
-            color = AppBackground,
-            border = BorderStroke(1.dp, AppSurfaceBorder),
-            tonalElevation = 8.dp
-        ) {
-            Column(modifier = Modifier.fillMaxSize()) {
-                // Header Top Bar
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(AppSurface)
-                        .padding(horizontal = 20.dp, vertical = 16.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Surface(
+                modifier = Modifier
+                    .fillMaxWidth(0.95f)
+                    .fillMaxHeight(0.92f),
+                shape = RoundedCornerShape(24.dp),
+                color = AppBackground,
+                border = BorderStroke(1.dp, AppSurfaceBorder),
+                tonalElevation = 8.dp
+            ) {
+                Column(modifier = Modifier.fillMaxSize()) {
+                    // Header Top Bar
                     Row(
-                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(AppSurface)
+                            .padding(horizontal = 20.dp, vertical = 16.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
                         Box(
@@ -1081,10 +1082,14 @@ fun SettingsDialog(
                     Spacer(modifier = Modifier.height(8.dp))
                 }
             }
+            ToastHost(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(bottom = 32.dp)
+            )
         }
     }
 }
-
 @Composable
 private fun SettingsDialogSectionHeader(title: String, icon: ImageVector) {
     Row(
