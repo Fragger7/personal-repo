@@ -194,6 +194,7 @@ fun StreamPreviewDialog(
     }
 
 
+    val activity = remember(context) { context.findActivity() }
     // Keep Screen On while previewing stream
     val window = activity?.window
     DisposableEffect(Unit) {
@@ -204,7 +205,6 @@ fun StreamPreviewDialog(
     }
 
     // Fullscreen Screen Orientation Sync
-    val activity = remember(context) { context.findActivity() }
     DisposableEffect(isFullScreen) {
         if (activity != null) {
             if (isFullScreen) {

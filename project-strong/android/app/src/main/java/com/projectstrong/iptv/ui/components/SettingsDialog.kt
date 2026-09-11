@@ -1090,6 +1090,7 @@ fun SettingsDialog(
         }
     }
 }
+}
 @Composable
 private fun SettingsDialogSectionHeader(title: String, icon: ImageVector) {
     Row(
