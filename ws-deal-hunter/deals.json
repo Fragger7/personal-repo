@@ -1,37 +1,5 @@
 [
   {
-    "id": "ebay_407210111821",
-    "source": "ebay",
-    "title": "New ListingDell Precision 7670 16\" Workstation i7-12850HX 32GB Win 11 Pro 64-bitOpens in a new window or tab",
-    "price": 500.0,
-    "url": "https://www.ebay.com/itm/407210111821",
-    "specs": {
-      "cpu": "I7-12850HX",
-      "ram_gb": 32,
-      "ssd_gb": 512,
-      "gpu": "NVIDIA RTX / Workstation GPU",
-      "screen": "15.6\" - 16\" Workstation Display",
-      "condition": "Used / Refurbished"
-    },
-    "fair_market_value": 950.0,
-    "estimated_profit": 450.0,
-    "arbitrage_margin_pct": 90.0,
-    "deal_score": 9.7,
-    "summary": "This Dell Precision 7670 high-performance enterprise workstation is listed at a deep discount relative to its hardware capabilities, featuring a 16-core Intel i7-12850HX processor and 32GB RAM. It provides exceptional thermal capacity and raw processing power ideal for heavy multi-threaded code compilation, virtual machines, and engineering workloads. At an asking price of $500, this listing yields a massive profit margin exceeding 40% against its fair market value.",
-    "actionable_recommendation": "🎯 HIGH-CONVICTION STRIKE: Buy immediately at asking price",
-    "confidence_score": 0.95,
-    "seller": "eBay Seller",
-    "location": "US",
-    "created_utc": "2026-09-11T21:47:27.046225+00:00",
-    "evaluated_at": "2026-09-11T21:48:09.541940+00:00",
-    "alerted": true,
-    "is_high_yield": true,
-    "raw_payload": null,
-    "is_auction": false,
-    "bid_count": null,
-    "time_left": null
-  },
-  {
     "id": "ebay_206550204115",
     "source": "ebay",
     "title": "New ListingDELL PRECISION 5680  4K UHD⭐ OLED Touch Scree i7-13800H 32GB 512GB SSD RTX A1000Opens in a new window or tab",
