@@ -1,37 +1,5 @@
 [
   {
-    "id": "ebay_298662707604",
-    "source": "ebay",
-    "title": "New ListingDell XPS 15 9520 i9-12900HK 32GB RAM 1TB SSD RTX 3050 Ti READ!Opens in a new window or tab",
-    "price": 600.0,
-    "url": "https://www.ebay.com/itm/298662707604",
-    "specs": {
-      "cpu": "I9-12900HK",
-      "ram_gb": 32,
-      "ssd_gb": 1024,
-      "gpu": "NVIDIA RTX / Workstation GPU",
-      "screen": "15.6\" - 16\" Workstation Display",
-      "condition": "Used / Refurbished"
-    },
-    "fair_market_value": 750.0,
-    "estimated_profit": 150.0,
-    "arbitrage_margin_pct": 25.0,
-    "deal_score": 7.8,
-    "summary": "Opportunistic target priced at $600 with +$100 margin spread. Configured with I9-12900HK, 32GB RAM, 1024GB SSD, and NVIDIA RTX / Workstation GPU. Excellent daily driver for full-stack engineering, multi-container development, and data analysis.",
-    "actionable_recommendation": "🤝 OPPORTUNISTIC OFFER TARGET",
-    "confidence_score": 0.95,
-    "seller": "eBay Seller",
-    "location": "US",
-    "created_utc": "2026-09-12T09:27:47.652452+00:00",
-    "evaluated_at": "2026-09-12T09:28:19.934220+00:00",
-    "alerted": false,
-    "is_high_yield": false,
-    "raw_payload": null,
-    "is_auction": false,
-    "bid_count": null,
-    "time_left": null
-  },
-  {
     "id": "ebay_206550204115",
     "source": "ebay",
     "title": "New ListingDELL PRECISION 5680  4K UHD⭐ OLED Touch Scree i7-13800H 32GB 512GB SSD RTX A1000Opens in a new window or tab",
