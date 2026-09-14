@@ -1,37 +1,5 @@
 [
   {
-    "id": "ebay_168688825470",
-    "source": "ebay",
-    "title": "New ListingDell XPS 15 9520 Core i7-12700H - 32GB RAM 512GB SSD RTX 3050 - Win11Opens in a new window or tab",
-    "price": 569.95,
-    "url": "https://www.ebay.com/itm/168688825470",
-    "specs": {
-      "cpu": "I7-12700H",
-      "ram_gb": 32,
-      "ssd_gb": 512,
-      "gpu": "NVIDIA RTX / Workstation GPU",
-      "screen": "15.6\" - 16\" Workstation Display",
-      "condition": "Used / Refurbished"
-    },
-    "fair_market_value": 765.0,
-    "estimated_profit": 195.05,
-    "arbitrage_margin_pct": 34.2,
-    "deal_score": 8.7,
-    "summary": "At an asking price of $569.95, this Dell XPS 15 9520 delivers exceptional value for a 12th-Gen i7 H-series laptop equipped with 32GB of RAM. The 15.6-inch premium chassis provides an ideal mobile workstation screen for code compilation and multitasking, with an upgradable RAM architecture ready for future 64GB expansion. With a total landed cost under $620 against a $765 market benchmark, it presents a very attractive arbitrage margin for developer daily driving.",
-    "actionable_recommendation": "🔥 STRONG VALUE BUY: Excellent developer daily driver",
-    "confidence_score": 0.95,
-    "seller": "eBay Seller",
-    "location": "US",
-    "created_utc": "2026-09-14T19:30:05.040646+00:00",
-    "evaluated_at": "2026-09-14T19:30:55.419308+00:00",
-    "alerted": true,
-    "is_high_yield": false,
-    "raw_payload": null,
-    "is_auction": false,
-    "bid_count": null,
-    "time_left": null
-  },
-  {
     "id": "microcenter_7_183563",
     "source": "microcenter",
     "title": "Micro Center Clearance: Open Boxes: LG gram Book 15: 15\" FHD IPS Touch, Intel Ultra 5 115U, 32GB LPDDR5, 512GB SSD $546.99",
