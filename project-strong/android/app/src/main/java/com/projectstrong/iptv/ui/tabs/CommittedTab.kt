@@ -534,6 +534,8 @@ fun CommittedMasterGrid(
         }
     }
     
+    val coroutineScope = androidx.compose.runtime.rememberCoroutineScope()
+    val coroutineScope = androidx.compose.runtime.rememberCoroutineScope()
     val clipboardManager = LocalClipboardManager.current
 
     val filterRooms by CommittedFilterStore.rooms
@@ -1161,9 +1163,15 @@ items(sortedRecords, key = { it.safeBaseUrl + it.safeUser + it.safeMac }) { reco
                                             tooltip = "Move to Archived Favorites",
                                             color = AppPrimary,
                                             onClick = {
-                                                com.projectstrong.iptv.data.ArchiveManager.addRecord(record)
-                                                com.projectstrong.iptv.data.CommittedManager.delete(record)
-                                                com.projectstrong.iptv.ui.components.ToastManager.success("Moved to Archived Favorites")
+                                                coroutineScope.launch {
+                                                    com.projectstrong.iptv.data.ArchiveManager.addRecord(record)
+                                                    com.projectstrong.iptv.data.CommittedManager.delete(record)
+                                                    val token = com.projectstrong.iptv.data.DataStore.githubToken
+                                                    if (token.isNotEmpty()) {
+                                                        com.projectstrong.iptv.data.ArchiveManager.pushToCloud(token)
+                                                    }
+                                                    com.projectstrong.iptv.ui.components.ToastManager.success("Moved to Archived Favorites")
+                                                }
                                             }
                                         )
 
@@ -1199,6 +1207,8 @@ fun CommittedDetailScreen(
     onViewSourceSnapshot: (String, String) -> Unit,
     onPush: () -> Unit
 ) {
+    val coroutineScope = androidx.compose.runtime.rememberCoroutineScope()
+    val coroutineScope = androidx.compose.runtime.rememberCoroutineScope()
     val clipboardManager = LocalClipboardManager.current
     var currentNotes by remember(record) { mutableStateOf(record.safeNotes) }
     var currentRooms by remember(record) { mutableStateOf(record.safeRooms.split(",").map { it.trim() }.filter { it.isNotEmpty() }.toSet()) }
@@ -1248,10 +1258,16 @@ fun CommittedDetailScreen(
             }
 
             IconButton(onClick = {
-                com.projectstrong.iptv.data.ArchiveManager.addRecord(record)
-                com.projectstrong.iptv.data.CommittedManager.delete(record)
-                onBack()
-                com.projectstrong.iptv.ui.components.ToastManager.success("Moved to Archived Favorites")
+                coroutineScope.launch {
+                    com.projectstrong.iptv.data.ArchiveManager.addRecord(record)
+                    com.projectstrong.iptv.data.CommittedManager.delete(record)
+                    val token = com.projectstrong.iptv.data.DataStore.githubToken
+                    if (token.isNotEmpty()) {
+                        com.projectstrong.iptv.data.ArchiveManager.pushToCloud(token)
+                    }
+                    onBack()
+                    com.projectstrong.iptv.ui.components.ToastManager.success("Moved to Archived Favorites")
+                }
             }) {
                 Icon(Icons.Default.Archive, contentDescription = "Archive", tint = AppPrimary)
             }

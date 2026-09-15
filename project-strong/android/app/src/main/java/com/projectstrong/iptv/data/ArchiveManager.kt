@@ -92,6 +92,8 @@ object ArchiveManager {
         }
     }
 
+    private val cloudMutex = kotlinx.coroutines.sync.Mutex()
+    fun hasLocalChanges(): Boolean = records.any { it.isLocalOnly == true }
     private val saveMutex = kotlinx.coroutines.sync.Mutex()
     
     private fun save() {
@@ -299,6 +301,7 @@ object ArchiveManager {
     }
 
     suspend fun deleteFromCloud(record: CommittedRecord, token: String): Boolean = withContext(Dispatchers.IO) {
+        cloudMutex.withLock {
         try {
             val authToken = token.filter { !it.isWhitespace() }
             val client = OkHttpClient.Builder().build()
@@ -383,6 +386,7 @@ object ArchiveManager {
             android.util.Log.e("CommittedManager", "Network Exception: $msg", e)
             ToastManager.error("Delete Exception: $msg")
             return@withContext false
+        }
         }
     }
 
@@ -475,7 +479,94 @@ object ArchiveManager {
         }
     }
 
+    
+    suspend fun pullFromCloud(token: String = DataStore.githubToken): Boolean = withContext(Dispatchers.IO) {
+        cloudMutex.withLock {
+            try {
+                val authToken = token.filter { !it.isWhitespace() }
+                if (authToken.isEmpty()) return@withContext false
+                
+                val client = OkHttpClient.Builder().build()
+                val getReq = Request.Builder()
+                    .url("https://api.github.com/repos/Fragger7/personal-repo/contents/project-strong/archivedfavorites.json")
+                    .header("Accept", "application/vnd.github.v3+json")
+                    .header("Cache-Control", "no-cache")
+                    .header("User-Agent", "SherlockStreams/1.0")
+                    .header("Authorization", "Bearer $authToken")
+                    .build()
+                
+                val getResp = client.newCall(getReq).execute()
+                val getCode = getResp.code
+                
+                if (getCode != 200) {
+                    getResp.close()
+                    return@withContext false
+                }
+                
+                val jsonResponse = getResp.body?.string() ?: ""
+                getResp.close()
+                val jsonObj = org.json.JSONObject(jsonResponse)
+                val contentB64 = jsonObj.optString("content", "").filter { !it.isWhitespace() }
+                if (contentB64.isEmpty()) return@withContext false
+                
+                val decodedBytes = android.util.Base64.decode(contentB64, android.util.Base64.DEFAULT)
+                val remoteJson = String(decodedBytes, Charsets.UTF_8)
+                val list: List<CommittedRecord> = try {
+                    gson.fromJson(remoteJson, Array<CommittedRecord>::class.java)?.toList() ?: emptyList()
+                } catch (e: Exception) {
+                    val type = object : TypeToken<List<CommittedRecord>>() {}.type
+                    gson.fromJson(remoteJson, type) ?: emptyList()
+                }
+                
+                val remoteRecords = list.map {
+                    it.copy(
+                        baseUrl = normalizeUrl(it.safeBaseUrl),
+                        user = it.safeUser.trim(),
+                        mac = it.safeMac.trim().uppercase()
+                    )
+                }
+                
+                // Union Merge (Remote -> Local)
+                val mergedList = remoteRecords.toMutableList()
+                for (localRec in records) {
+                    val localBase = normalizeUrl(localRec.safeBaseUrl)
+                    val localUser = localRec.safeUser.trim()
+                    val localMac = localRec.safeMac.trim().uppercase()
+                    
+                    val matchIdx = mergedList.indexOfFirst { rem ->
+                        normalizeUrl(rem.safeBaseUrl).equals(localBase, ignoreCase = true) &&
+                        ((localRec.safeType == "Xtream" && rem.safeUser.trim() == localUser) ||
+                         (localRec.safeType == "Stalker" && rem.safeMac.trim().equals(localMac, ignoreCase = true)))
+                    }
+                    
+                    if (matchIdx != -1) {
+                        val existingRem = mergedList[matchIdx]
+                        mergedList[matchIdx] = localRec.copy(
+                            dateAdded = if (existingRem.safeDateAdded.isNotEmpty()) existingRem.safeDateAdded else localRec.safeDateAdded,
+                            notes = if (localRec.safeNotes.isNotEmpty()) localRec.safeNotes else existingRem.safeNotes,
+                            isLocalOnly = if (localRec.isLocalOnly == true) true else existingRem.isLocalOnly
+                        )
+                    } else {
+                        mergedList.add(0, localRec)
+                    }
+                }
+                
+                withContext(Dispatchers.Main) {
+                    records.clear()
+                    records.addAll(mergedList)
+                    sortByDateAddedDescending()
+                }
+                save()
+                return@withContext true
+            } catch (e: Exception) {
+                e.printStackTrace()
+                return@withContext false
+            }
+        }
+    }
+
     suspend fun pushToCloud(token: String = DataStore.githubToken): Boolean = withContext(Dispatchers.IO) {
+        cloudMutex.withLock {
         try {
             val authToken = token.filter { !it.isWhitespace() }
             if (authToken.isEmpty()) {
@@ -628,6 +719,7 @@ object ArchiveManager {
             android.util.Log.e("CommittedManager", "Network Exception: $msg", e)
             ToastManager.error("Sync Exception: $msg")
             return@withContext false
+        }
         }
     }
 
