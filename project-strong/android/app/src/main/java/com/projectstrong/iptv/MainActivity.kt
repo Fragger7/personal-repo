@@ -159,6 +159,7 @@ data class TabItem(
 fun MainDashboard() {
     val context = androidx.compose.ui.platform.LocalContext.current
     var selectedTab by remember { mutableIntStateOf(0) }
+    val saveableStateHolder = androidx.compose.runtime.saveable.rememberSaveableStateHolder()
     var showConnectionDialog by remember { mutableStateOf(false) }
     var showSettingsDialog by remember { mutableStateOf(false) }
     

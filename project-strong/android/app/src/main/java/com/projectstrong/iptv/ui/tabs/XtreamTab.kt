@@ -48,6 +48,7 @@ import java.util.concurrent.atomic.AtomicInteger
 
 @Composable
 fun XtreamTab(onNextTab: (() -> Unit)? = null) {
+    val listState = androidx.compose.foundation.lazy.rememberLazyListState()
     // Implement chunked/dynamic loading: only show nodes that have finished verifying
     // This prevents rendering thousands of "Connecting..." items and massively improves performance.
     val xtreamNodes = DataStore.scannedNodes.filter { it.type == "Xtream" && (!it.isVerifying && it.status.isNotEmpty()) }

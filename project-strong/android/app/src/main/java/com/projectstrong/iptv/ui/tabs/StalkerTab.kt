@@ -35,6 +35,7 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun StalkerTab(onNextTab: (() -> Unit)? = null) {
+    val listState = androidx.compose.foundation.lazy.rememberLazyListState()
     // Implement chunked/dynamic loading: only show nodes that have finished verifying
     val stalkerNodes = DataStore.scannedNodes.filter { it.type == "Stalker" && (!it.isVerifying && it.status.isNotEmpty()) }
     var selectedNode by remember { mutableStateOf<ParsedCredential?>(null) }
