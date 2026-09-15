@@ -69,6 +69,7 @@ object ArchiveFilterStore {
 
 @Composable
 fun ArchiveTab() {
+    val listState = androidx.compose.foundation.lazy.rememberLazyListState()
     val records = ArchiveManager.records
     var selectedRecord by remember { mutableStateOf<CommittedRecord?>(null) }
     var isReloading by remember { mutableStateOf(false) }
@@ -400,6 +401,7 @@ fun ArchiveTab() {
             )
         } else {
             ArchiveMasterGrid(
+                listState = listState,
                 records = records,
                 isBusy = isReloading || isPushing || isRechecking,
                 statusMessage = actionMessage,
@@ -492,6 +494,7 @@ fun ArchiveTab() {
 
 @Composable
 fun ArchiveMasterGrid(
+    listState: androidx.compose.foundation.lazy.LazyListState,
     records: List<CommittedRecord>,
     isBusy: Boolean,
     statusMessage: String,
@@ -517,7 +520,6 @@ fun ArchiveMasterGrid(
     }
     
     val clipboardManager = LocalClipboardManager.current
-    val listState = rememberLazyListState()
     val scrollState = rememberScrollState()
 
     val filterRooms by ArchiveFilterStore.rooms
@@ -973,7 +975,7 @@ fun ArchiveMasterGrid(
                             GridHeader("Notes", 200.dp)
                             GridHeader("Rooms", 120.dp, onClick = { toggleSort(ArchiveSortColumn.ROOMS) }, isSorted = sortColumn == ArchiveSortColumn.ROOMS, isAscending = sortAscending)
                             GridHeader("Content", 120.dp, onClick = { toggleSort(ArchiveSortColumn.CONTENT) }, isSorted = sortColumn == ArchiveSortColumn.CONTENT, isAscending = sortAscending)
-                            GridHeader("Actions", 200.dp)
+                            GridHeader("Actions", 240.dp)
                         }
 
                         Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(AppSurfaceBorder))
@@ -1064,7 +1066,7 @@ items(sortedRecords, key = { it.safeBaseUrl + it.safeUser + it.safeMac }) { reco
 
                                     // Actions (Push if local, Copy, Copy M3U, Source Snapshot, & Delete)
                                     Row(
-                                        modifier = Modifier.width(200.dp),
+                                        modifier = Modifier.width(240.dp),
                                         horizontalArrangement = Arrangement.spacedBy(6.dp),
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
@@ -1113,6 +1115,18 @@ items(sortedRecords, key = { it.safeBaseUrl + it.safeUser + it.safeMac }) { reco
                                                 onClick = { onViewSourceSnapshot(record.safeSourceLink, record.safeSourceArchiveFile) }
                                             )
                                         }
+
+
+                                        GridActionIconButton(
+                                            icon = Icons.Default.Restore,
+                                            tooltip = "Restore to Committed Data",
+                                            color = AppPrimary,
+                                            onClick = {
+                                                com.projectstrong.iptv.data.CommittedManager.addRecord(record)
+                                                com.projectstrong.iptv.data.ArchiveManager.delete(record)
+                                                com.projectstrong.iptv.ui.components.ToastManager.success("Restored to Committed")
+                                            }
+                                        )
 
                                         GridActionIconButton(
                                             icon = Icons.Default.Delete,
@@ -1168,8 +1182,8 @@ fun ArchiveDetailScreen(
         modifier = Modifier
             .fillMaxSize()
             .pointerInput(Unit) { detectTapGestures(onTap = { rootFocusManager.clearFocus() }) }
-            .verticalScroll(detailScrollState)
             .imePadding()
+            .verticalScroll(detailScrollState)
             .padding(16.dp)
     ) {
         // Toolbar

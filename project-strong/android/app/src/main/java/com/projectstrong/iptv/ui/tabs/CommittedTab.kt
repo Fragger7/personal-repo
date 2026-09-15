@@ -68,6 +68,7 @@ object CommittedFilterStore {
 
 @Composable
 fun CommittedTab() {
+    val listState = androidx.compose.foundation.lazy.rememberLazyListState()
     val records = CommittedManager.records
     var selectedRecord by remember { mutableStateOf<CommittedRecord?>(null) }
     var isReloading by remember { mutableStateOf(false) }
@@ -406,6 +407,7 @@ fun CommittedTab() {
             )
         } else {
             CommittedMasterGrid(
+                listState = listState,
                 records = records,
                 isBusy = isReloading || isPushing || isRechecking,
                 statusMessage = actionMessage,
@@ -499,6 +501,7 @@ fun CommittedTab() {
 
 @Composable
 fun CommittedMasterGrid(
+    listState: androidx.compose.foundation.lazy.LazyListState,
     records: List<CommittedRecord>,
     isBusy: Boolean,
     statusMessage: String,
@@ -524,7 +527,6 @@ fun CommittedMasterGrid(
     }
     
     val clipboardManager = LocalClipboardManager.current
-    val listState = rememberLazyListState()
     val scrollState = rememberScrollState()
 
     val filterRooms by CommittedFilterStore.rooms
@@ -1000,7 +1002,7 @@ fun CommittedMasterGrid(
                             GridHeader("Notes", 200.dp)
                             GridHeader("Rooms", 120.dp, onClick = { toggleSort(CommittedSortColumn.ROOMS) }, isSorted = sortColumn == CommittedSortColumn.ROOMS, isAscending = sortAscending)
                             GridHeader("Content", 120.dp, onClick = { toggleSort(CommittedSortColumn.CONTENT) }, isSorted = sortColumn == CommittedSortColumn.CONTENT, isAscending = sortAscending)
-                            GridHeader("Actions", 200.dp)
+                            GridHeader("Actions", 240.dp)
                         }
 
                         Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(AppSurfaceBorder))
@@ -1091,7 +1093,7 @@ items(sortedRecords, key = { it.safeBaseUrl + it.safeUser + it.safeMac }) { reco
 
                                     // Actions (Push if local, Copy, Copy M3U, Source Snapshot, & Delete)
                                     Row(
-                                        modifier = Modifier.width(200.dp),
+                                        modifier = Modifier.width(240.dp),
                                         horizontalArrangement = Arrangement.spacedBy(6.dp),
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
@@ -1140,6 +1142,18 @@ items(sortedRecords, key = { it.safeBaseUrl + it.safeUser + it.safeMac }) { reco
                                                 onClick = { onViewSourceSnapshot(record.safeSourceLink, record.safeSourceArchiveFile) }
                                             )
                                         }
+
+
+                                        GridActionIconButton(
+                                            icon = Icons.Default.Archive,
+                                            tooltip = "Move to Archived Favorites",
+                                            color = AppPrimary,
+                                            onClick = {
+                                                com.projectstrong.iptv.data.ArchiveManager.addRecord(record)
+                                                com.projectstrong.iptv.data.CommittedManager.delete(record)
+                                                com.projectstrong.iptv.ui.components.ToastManager.success("Moved to Archived Favorites")
+                                            }
+                                        )
 
                                         GridActionIconButton(
                                             icon = Icons.Default.Delete,
@@ -1195,8 +1209,8 @@ fun CommittedDetailScreen(
         modifier = Modifier
             .fillMaxSize()
             .pointerInput(Unit) { detectTapGestures(onTap = { rootFocusManager.clearFocus() }) }
-            .verticalScroll(detailScrollState)
             .imePadding()
+            .verticalScroll(detailScrollState)
             .padding(16.dp)
     ) {
         // Toolbar

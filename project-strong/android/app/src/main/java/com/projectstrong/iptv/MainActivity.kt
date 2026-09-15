@@ -425,14 +425,16 @@ fun MainDashboard() {
                 .fillMaxSize()
                 .padding(horizontal = 8.dp)
         ) {
-            when (selectedTab) {
-                0 -> com.projectstrong.iptv.ui.tabs.Base64Tab(onNextTab = { selectedTab = 1 })
-                1 -> com.projectstrong.iptv.ui.tabs.ScannerTab(onNextTab = { selectedTab = 2 })
-                2 -> com.projectstrong.iptv.ui.tabs.XtreamTab(onNextTab = { selectedTab = 3 })
-                3 -> com.projectstrong.iptv.ui.tabs.StalkerTab(onNextTab = { selectedTab = 4 })
-                4 -> com.projectstrong.iptv.ui.tabs.CommittedTab()
-                5 -> com.projectstrong.iptv.ui.tabs.ArchiveTab()
-                6 -> com.projectstrong.iptv.ui.tabs.AnalyticsTab(onNavigateToCommitted = { selectedTab = 4 })
+            saveableStateHolder.SaveableStateProvider(selectedTab) {
+                when (selectedTab) {
+                    0 -> com.projectstrong.iptv.ui.tabs.Base64Tab(onNextTab = { selectedTab = 1 })
+                    1 -> com.projectstrong.iptv.ui.tabs.ScannerTab(onNextTab = { selectedTab = 2 })
+                    2 -> com.projectstrong.iptv.ui.tabs.XtreamTab(onNextTab = { selectedTab = 3 })
+                    3 -> com.projectstrong.iptv.ui.tabs.StalkerTab(onNextTab = { selectedTab = 4 })
+                    4 -> com.projectstrong.iptv.ui.tabs.CommittedTab()
+                    5 -> com.projectstrong.iptv.ui.tabs.ArchiveTab()
+                    6 -> com.projectstrong.iptv.ui.tabs.AnalyticsTab(onNavigateToCommitted = { selectedTab = 4 })
+                }
             }
         }
     }

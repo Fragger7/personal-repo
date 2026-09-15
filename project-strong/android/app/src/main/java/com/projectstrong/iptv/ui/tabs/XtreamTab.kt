@@ -65,6 +65,7 @@ fun XtreamTab(onNextTab: (() -> Unit)? = null) {
             )
         } else {
             XtreamMasterGrid(
+                listState = listState,
                 nodes = xtreamNodes,
                 onSelectNode = { selectedNode = it },
                 onNextTab = onNextTab
@@ -74,7 +75,8 @@ fun XtreamTab(onNextTab: (() -> Unit)? = null) {
 }
 
 @Composable
-fun XtreamMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCredential) -> Unit, onNextTab: (() -> Unit)? = null) {
+fun XtreamMasterGrid(
+    listState: androidx.compose.foundation.lazy.LazyListState,nodes: List<ParsedCredential>, onSelectNode: (ParsedCredential) -> Unit, onNextTab: (() -> Unit)? = null) {
     var sortColumn by remember { mutableStateOf("") }
     var sortAscending by remember { mutableStateOf(false) }
     var committingNode by remember { mutableStateOf<ParsedCredential?>(null) }
@@ -95,7 +97,6 @@ fun XtreamMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCredent
             }
         }
     val scrollState = rememberScrollState()
-    val listState = rememberLazyListState()
     val clipboardManager = LocalClipboardManager.current
     val coroutineScope = rememberCoroutineScope()
     var fetchingRows by remember { mutableStateOf(emptySet<String>()) }

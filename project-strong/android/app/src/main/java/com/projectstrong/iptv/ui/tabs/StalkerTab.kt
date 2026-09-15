@@ -51,6 +51,7 @@ fun StalkerTab(onNextTab: (() -> Unit)? = null) {
             )
         } else {
             StalkerMasterGrid(
+                listState = listState,
                 nodes = stalkerNodes,
                 onSelectNode = { selectedNode = it },
                 onNextTab = onNextTab
@@ -60,7 +61,8 @@ fun StalkerTab(onNextTab: (() -> Unit)? = null) {
 }
 
 @Composable
-fun StalkerMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCredential) -> Unit, onNextTab: (() -> Unit)? = null) {
+fun StalkerMasterGrid(
+    listState: androidx.compose.foundation.lazy.LazyListState,nodes: List<ParsedCredential>, onSelectNode: (ParsedCredential) -> Unit, onNextTab: (() -> Unit)? = null) {
     var sortColumn by remember { mutableStateOf("") }
     var sortAscending by remember { mutableStateOf(false) }
     var committingNode by remember { mutableStateOf<ParsedCredential?>(null) }
@@ -80,7 +82,6 @@ fun StalkerMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCreden
             }
         }
     val scrollState = rememberScrollState()
-    val listState = rememberLazyListState()
     val clipboardManager = LocalClipboardManager.current
     val coroutineScope = rememberCoroutineScope()
 

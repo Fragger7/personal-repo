@@ -707,7 +707,7 @@ object ArchiveManager {
     }
 
     fun updateDetails(record: CommittedRecord, newNotes: String, newRooms: String, newContent: String) {
-        val index = records.indexOf(record)
+        val index = records.indexOfFirst { it.safeBaseUrl == record.safeBaseUrl && it.safeUser == record.safeUser && it.safeMac == record.safeMac }
         if (index != -1) {
             records[index] = record.copy(notes = newNotes, rooms = newRooms, content = newContent, isLocalOnly = true)
             save()
