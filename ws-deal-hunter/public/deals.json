@@ -32,38 +32,6 @@
     "time_left": null
   },
   {
-    "id": "ebay_389664538870",
-    "source": "ebay",
-    "title": "Dell Precision 3561 15.6\" 32GB 512GB, Titan GreyOpens in a new window or tab",
-    "price": 422.87,
-    "url": "https://www.ebay.com/itm/389664538870",
-    "specs": {
-      "cpu": "Intel Core i7/i9 12th/13th-Gen H",
-      "ram_gb": 32,
-      "ssd_gb": 512,
-      "gpu": "NVIDIA RTX / Workstation GPU",
-      "screen": "15.6\" - 16\" Workstation Display",
-      "condition": "Used / Refurbished"
-    },
-    "fair_market_value": 750.0,
-    "estimated_profit": 327.13,
-    "arbitrage_margin_pct": 77.4,
-    "deal_score": 9.7,
-    "summary": "The Dell Precision 3561 features a 15.6-inch display and 32GB RAM at an affordable price point, but it relies on blacklisted 11th-Gen Intel Tiger Lake processor architecture. Per system directives, 11th-Gen Intel CPUs are strictly excluded due to significantly lower IPC and efficiency compared to 12th-Gen+ hybrid architectures required for modern compilation and compute workloads. Consequently, this listing fails the core hardware gatekeeper check.",
-    "actionable_recommendation": "❌ PASS: 11th-Gen Intel processor violates modern hardware baseline requirements",
-    "confidence_score": 0.95,
-    "seller": "eBay Seller",
-    "location": "US",
-    "created_utc": "2026-09-15T01:35:11.504560+00:00",
-    "evaluated_at": "2026-09-15T01:35:47.541198+00:00",
-    "alerted": true,
-    "is_high_yield": true,
-    "raw_payload": null,
-    "is_auction": false,
-    "bid_count": null,
-    "time_left": null
-  },
-  {
     "id": "microcenter_7_183563",
     "source": "microcenter",
     "title": "Micro Center Clearance: Open Boxes: LG gram Book 15: 15\" FHD IPS Touch, Intel Ultra 5 115U, 32GB LPDDR5, 512GB SSD $546.99",
