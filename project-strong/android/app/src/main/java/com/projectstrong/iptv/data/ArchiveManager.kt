@@ -276,7 +276,7 @@ object ArchiveManager {
     }
 
     fun delete(record: CommittedRecord, token: String = DataStore.githubToken, onComplete: ((Boolean) -> Unit)? = null) {
-        records.remove(record)
+        records.removeAll { it.safeBaseUrl == record.safeBaseUrl && it.safeUser == record.safeUser && it.safeMac == record.safeMac }
         save()
         ToastManager.info("Account removed from Saved Records")
 
