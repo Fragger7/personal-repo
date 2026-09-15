@@ -1223,7 +1223,7 @@ fun CommittedDetailScreen(
 
             IconButton(onClick = {
                 com.projectstrong.iptv.data.ArchiveManager.addRecord(record)
-                com.projectstrong.iptv.data.CommittedManager.deleteRecord(record)
+                com.projectstrong.iptv.data.CommittedManager.delete(record)
                 onBack()
                 com.projectstrong.iptv.ui.components.ToastManager.success("Moved to Archived Favorites")
             }) {

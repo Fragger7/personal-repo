@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.sp
 import android.content.res.Configuration
 import androidx.compose.ui.platform.LocalConfiguration
 import com.projectstrong.iptv.data.ArchiveManager
+import com.projectstrong.iptv.data.CommittedManager
 import com.projectstrong.iptv.ui.components.ManualAddDialog
 import com.projectstrong.iptv.data.CommittedRecord
 import com.projectstrong.iptv.data.DataStore
@@ -738,7 +739,8 @@ fun ArchiveMasterGrid(
                                 color = if (records.isEmpty()) AppTextMuted else AppSuccess,
                                 onClick = onPush,
                                 modifier = Modifier.height(34.dp)
-                            )                            Surface(
+                            )
+                            Surface(
                                 shape = RoundedCornerShape(8.dp),
                                 color = if (DataStore.githubToken.isNotEmpty()) AppPrimary.copy(alpha = 0.15f) else AppSurfaceVariant,
                                 border = androidx.compose.foundation.BorderStroke(
@@ -838,7 +840,8 @@ fun ArchiveMasterGrid(
                             color = if (records.isEmpty()) AppTextMuted else AppSuccess,
                             onClick = onPush,
                             modifier = Modifier.weight(1.2f).height(38.dp)
-                        )                        Surface(
+                        )
+                        Surface(
                             shape = RoundedCornerShape(8.dp),
                             color = if (DataStore.githubToken.isNotEmpty()) AppPrimary.copy(alpha = 0.15f) else AppSurfaceVariant,
                             border = androidx.compose.foundation.BorderStroke(
@@ -1193,7 +1196,7 @@ fun ArchiveDetailScreen(
 
             IconButton(onClick = {
                 CommittedManager.addRecord(record)
-                ArchiveManager.deleteRecord(record)
+                ArchiveManager.delete(record)
                 onBack()
                 com.projectstrong.iptv.ui.components.ToastManager.success("Restored to Committed")
             }) {
@@ -1203,7 +1206,7 @@ fun ArchiveDetailScreen(
 
             IconButton(onClick = {
                 com.projectstrong.iptv.data.ArchiveManager.addRecord(record)
-                com.projectstrong.iptv.data.ArchiveManager.deleteRecord(record)
+                com.projectstrong.iptv.data.ArchiveManager.delete(record)
                 onBack()
                 com.projectstrong.iptv.ui.components.ToastManager.success("Moved to Archived Favorites")
             }) {
