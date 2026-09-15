@@ -69,6 +69,8 @@ object ArchiveFilterStore {
 
 @Composable
 fun ArchiveTab() {
+    val horizontalScrollState = androidx.compose.foundation.rememberScrollState()
+    var lastSelectedNodeId by androidx.compose.runtime.saveable.rememberSaveable { androidx.compose.runtime.mutableStateOf<String?>(null) }
     val listState = androidx.compose.foundation.lazy.rememberLazyListState()
     val records = ArchiveManager.records
     var selectedRecord by remember { mutableStateOf<CommittedRecord?>(null) }
@@ -402,6 +404,9 @@ fun ArchiveTab() {
         } else {
             ArchiveMasterGrid(
                 listState = listState,
+                horizontalScrollState = horizontalScrollState,
+                lastSelectedNodeId = lastSelectedNodeId,
+                onNodeIdSelected = { lastSelectedNodeId = it },
                 records = records,
                 isBusy = isReloading || isPushing || isRechecking,
                 statusMessage = actionMessage,
@@ -495,6 +500,9 @@ fun ArchiveTab() {
 @Composable
 fun ArchiveMasterGrid(
     listState: androidx.compose.foundation.lazy.LazyListState,
+    horizontalScrollState: androidx.compose.foundation.ScrollState,
+    lastSelectedNodeId: String?,
+    onNodeIdSelected: (String) -> Unit,
     records: List<CommittedRecord>,
     isBusy: Boolean,
     statusMessage: String,
@@ -520,7 +528,6 @@ fun ArchiveMasterGrid(
     }
     
     val clipboardManager = LocalClipboardManager.current
-    val scrollState = rememberScrollState()
 
     val filterRooms by ArchiveFilterStore.rooms
     val filterContent by ArchiveFilterStore.content
@@ -946,7 +953,7 @@ fun ArchiveMasterGrid(
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .horizontalScroll(scrollState)
+                        .horizontalScroll(horizontalScrollState)
                 ) {
                     Column(modifier = Modifier.fillMaxHeight()) {
                         // Full 16-Column Header Row matching Python Dataframe exactly
@@ -957,7 +964,7 @@ fun ArchiveMasterGrid(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             GridHeader("Date Added", 140.dp, onClick = { toggleSort(ArchiveSortColumn.DATE_ADDED) }, isSorted = sortColumn == ArchiveSortColumn.DATE_ADDED, isAscending = sortAscending)
-                            GridHeader("Type", 80.dp, onClick = { toggleSort(ArchiveSortColumn.TYPE) }, isSorted = sortColumn == ArchiveSortColumn.TYPE, isAscending = sortAscending)
+                            GridHeader("Type", 130.dp, onClick = { toggleSort(ArchiveSortColumn.TYPE) }, isSorted = sortColumn == ArchiveSortColumn.TYPE, isAscending = sortAscending)
                             GridHeader("Status", 110.dp, onClick = { toggleSort(ArchiveSortColumn.STATUS) }, isSorted = sortColumn == ArchiveSortColumn.STATUS, isAscending = sortAscending)
                             GridHeader("Sync", 110.dp, onClick = { toggleSort(ArchiveSortColumn.SYNC) }, isSorted = sortColumn == ArchiveSortColumn.SYNC, isAscending = sortAscending)
                             GridHeader("Server / Host", 230.dp, onClick = { toggleSort(ArchiveSortColumn.HOST) }, isSorted = sortColumn == ArchiveSortColumn.HOST, isAscending = sortAscending)
@@ -987,6 +994,8 @@ fun ArchiveMasterGrid(
                             state = listState
                         ) {
 items(sortedRecords, key = { it.safeBaseUrl + it.safeUser + it.safeMac }) { record ->
+                                val recordId = record.safeBaseUrl + record.safeUser + record.safeMac
+                                val isSelectedRow = recordId == lastSelectedNodeId
                                 val isDuplicate = remember(record, records) {
                                     val cleanHost = record.safeBaseUrl.trimEnd('/')
                                     records.count {
@@ -999,17 +1008,20 @@ items(sortedRecords, key = { it.safeBaseUrl + it.safeUser + it.safeMac }) { reco
                                     } > 1
                                 }
                                 Row(
-
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .clickable { onSelectRecord(record) }
+                                        .background(if (isSelectedRow) AppPrimary.copy(alpha = 0.15f) else androidx.compose.ui.graphics.Color.Transparent)
+                                        .clickable { 
+                                            onNodeIdSelected(recordId)
+                                            onSelectRecord(record) 
+                                        }
                                         .padding(horizontal = 16.dp, vertical = 10.dp),
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     // 1. Date Added
                                     GridCell(record.safeDateAdded.ifEmpty { "-" }, 140.dp, color = AppTextSecondary)
                                     // 2. Type
-                                    Row(modifier = Modifier.width(130.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                                    Row(modifier = Modifier.width(130.dp).padding(end = 8.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                                         StatusBadge(record.safeType, 70.dp)
                                         if (isDuplicate) {
                                             StatusBadge("⚠️ Dup", 55.dp)
@@ -1066,7 +1078,7 @@ items(sortedRecords, key = { it.safeBaseUrl + it.safeUser + it.safeMac }) { reco
 
                                     // Actions (Push if local, Copy, Copy M3U, Source Snapshot, & Delete)
                                     Row(
-                                        modifier = Modifier.width(240.dp),
+                                        modifier = Modifier.width(240.dp).padding(end = 8.dp),
                                         horizontalArrangement = Arrangement.spacedBy(6.dp),
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {

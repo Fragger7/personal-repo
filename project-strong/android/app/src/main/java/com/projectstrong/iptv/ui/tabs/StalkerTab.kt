@@ -53,6 +53,9 @@ fun StalkerTab(onNextTab: (() -> Unit)? = null) {
         } else {
             StalkerMasterGrid(
                 listState = listState,
+                horizontalScrollState = horizontalScrollState,
+                lastSelectedNodeId = lastSelectedNodeId,
+                onNodeIdSelected = { lastSelectedNodeId = it },
                 nodes = stalkerNodes,
                 onSelectNode = { selectedNode = it },
                 onNextTab = onNextTab
@@ -63,7 +66,10 @@ fun StalkerTab(onNextTab: (() -> Unit)? = null) {
 
 @Composable
 fun StalkerMasterGrid(
-    listState: androidx.compose.foundation.lazy.LazyListState,nodes: List<ParsedCredential>, onSelectNode: (ParsedCredential) -> Unit, onNextTab: (() -> Unit)? = null) {
+    listState: androidx.compose.foundation.lazy.LazyListState,
+    horizontalScrollState: androidx.compose.foundation.ScrollState,
+    lastSelectedNodeId: String?,
+    onNodeIdSelected: (String) -> Unit,nodes: List<ParsedCredential>, onSelectNode: (ParsedCredential) -> Unit, onNextTab: (() -> Unit)? = null) {
     var sortColumn by remember { mutableStateOf("") }
     var sortAscending by remember { mutableStateOf(false) }
     var committingNode by remember { mutableStateOf<ParsedCredential?>(null) }
@@ -82,7 +88,6 @@ fun StalkerMasterGrid(
                 else -> list
             }
         }
-    val scrollState = rememberScrollState()
     val clipboardManager = LocalClipboardManager.current
     val coroutineScope = rememberCoroutineScope()
 
@@ -240,7 +245,7 @@ fun StalkerMasterGrid(
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
-                            .horizontalScroll(scrollState)
+                            .horizontalScroll(horizontalScrollState)
                     ) {
                         Column(modifier = Modifier.fillMaxHeight()) {
                             Row(
@@ -275,10 +280,14 @@ fun StalkerMasterGrid(
                                     val profile = com.projectstrong.iptv.data.ProviderIntelligenceManager.getProfile(node.baseUrl)
                                     val displayBrand = if (profile?.isIdentified == true) profile.cleanBrand else node.provider.ifEmpty { "Unbranded" }
                                     Row(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .clickable { onSelectNode(node) }
-                                            .padding(horizontal = 16.dp, vertical = 10.dp),
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .background(if (isSelectedRow) AppPrimary.copy(alpha = 0.15f) else androidx.compose.ui.graphics.Color.Transparent)
+                                        .clickable { 
+                                            onNodeIdSelected(recordId)
+                                            onSelectNode(node) 
+                                        }
+                                        .padding(horizontal = 16.dp, vertical = 10.dp),
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
                                         GridCell(node.baseUrl, 250.dp, isBold = true)
@@ -291,7 +300,7 @@ fun StalkerMasterGrid(
                                         GridCell(node.sourceLink.ifEmpty { "-" }, 180.dp, color = if (node.sourceLink.startsWith("http")) AppPrimary else AppTextMuted)
 
                                         Row(
-                                            modifier = Modifier.width(110.dp),
+                                            modifier = Modifier.width(110.dp).padding(end = 8.dp),
                                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                                             verticalAlignment = Alignment.CenterVertically
                                         ) {
