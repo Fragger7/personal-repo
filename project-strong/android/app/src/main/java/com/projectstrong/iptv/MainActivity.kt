@@ -160,8 +160,8 @@ fun MainDashboard() {
     androidx.compose.runtime.LaunchedEffect(Unit) {
         val token = com.projectstrong.iptv.data.DataStore.githubToken
         if (token.isNotEmpty()) {
-            kotlinx.coroutines.launch(kotlinx.coroutines.Dispatchers.IO) { com.projectstrong.iptv.data.CommittedManager.pullFromCloud(token) }
-            kotlinx.coroutines.launch(kotlinx.coroutines.Dispatchers.IO) { com.projectstrong.iptv.data.ArchiveManager.pullFromCloud(token) }
+            launch(kotlinx.coroutines.Dispatchers.IO) { com.projectstrong.iptv.data.CommittedManager.pullFromCloud(token) }
+            launch(kotlinx.coroutines.Dispatchers.IO) { com.projectstrong.iptv.data.ArchiveManager.pullFromCloud(token) }
         }
     }
 
@@ -172,12 +172,12 @@ fun MainDashboard() {
         if (selectedTab == 4) { // CommittedTab
             val token = com.projectstrong.iptv.data.DataStore.githubToken
             if (token.isNotEmpty() && com.projectstrong.iptv.data.CommittedManager.hasLocalChanges()) {
-                kotlinx.coroutines.launch(kotlinx.coroutines.Dispatchers.IO) { com.projectstrong.iptv.data.CommittedManager.pushToCloud(token) }
+                launch(kotlinx.coroutines.Dispatchers.IO) { com.projectstrong.iptv.data.CommittedManager.pushToCloud(token) }
             }
         } else if (selectedTab == 5) { // ArchiveTab
             val token = com.projectstrong.iptv.data.DataStore.githubToken
             if (token.isNotEmpty() && com.projectstrong.iptv.data.ArchiveManager.hasLocalChanges()) {
-                kotlinx.coroutines.launch(kotlinx.coroutines.Dispatchers.IO) { com.projectstrong.iptv.data.ArchiveManager.pushToCloud(token) }
+                launch(kotlinx.coroutines.Dispatchers.IO) { com.projectstrong.iptv.data.ArchiveManager.pushToCloud(token) }
             }
         }
     }

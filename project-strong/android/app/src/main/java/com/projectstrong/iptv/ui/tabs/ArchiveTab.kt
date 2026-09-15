@@ -528,7 +528,6 @@ fun ArchiveMasterGrid(
     }
     
     val coroutineScope = androidx.compose.runtime.rememberCoroutineScope()
-    val coroutineScope = androidx.compose.runtime.rememberCoroutineScope()
     val clipboardManager = LocalClipboardManager.current
 
     val filterRooms by ArchiveFilterStore.rooms
@@ -1174,7 +1173,6 @@ fun ArchiveDetailScreen(
     onViewSourceSnapshot: (String, String) -> Unit,
     onPush: () -> Unit
 ) {
-    val coroutineScope = androidx.compose.runtime.rememberCoroutineScope()
     val coroutineScope = androidx.compose.runtime.rememberCoroutineScope()
     val clipboardManager = LocalClipboardManager.current
     var currentNotes by remember(record) { mutableStateOf(record.safeNotes) }

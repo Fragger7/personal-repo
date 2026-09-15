@@ -535,7 +535,6 @@ fun CommittedMasterGrid(
     }
     
     val coroutineScope = androidx.compose.runtime.rememberCoroutineScope()
-    val coroutineScope = androidx.compose.runtime.rememberCoroutineScope()
     val clipboardManager = LocalClipboardManager.current
 
     val filterRooms by CommittedFilterStore.rooms
@@ -1207,7 +1206,6 @@ fun CommittedDetailScreen(
     onViewSourceSnapshot: (String, String) -> Unit,
     onPush: () -> Unit
 ) {
-    val coroutineScope = androidx.compose.runtime.rememberCoroutineScope()
     val coroutineScope = androidx.compose.runtime.rememberCoroutineScope()
     val clipboardManager = LocalClipboardManager.current
     var currentNotes by remember(record) { mutableStateOf(record.safeNotes) }
