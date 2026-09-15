@@ -36,6 +36,8 @@ import kotlinx.coroutines.launch
 @Composable
 fun StalkerTab(onNextTab: (() -> Unit)? = null) {
     val listState = androidx.compose.foundation.lazy.rememberLazyListState()
+    val horizontalScrollState = androidx.compose.foundation.rememberScrollState()
+    var lastSelectedNodeId by androidx.compose.runtime.saveable.rememberSaveable { androidx.compose.runtime.mutableStateOf<String?>(null) }
     // Implement chunked/dynamic loading: only show nodes that have finished verifying
     val stalkerNodes = DataStore.scannedNodes.filter { it.type == "Stalker" && (!it.isVerifying && it.status.isNotEmpty()) }
     var selectedNode by remember { mutableStateOf<ParsedCredential?>(null) }
@@ -277,6 +279,8 @@ fun StalkerMasterGrid(
 
                             LazyColumn(modifier = Modifier.fillMaxWidth().weight(1f), state = listState) {
                                 items(filteredNodes) { node: ParsedCredential ->
+                                    val recordId = node.baseUrl + node.mac
+                                    val isSelectedRow = recordId == lastSelectedNodeId
                                     val profile = com.projectstrong.iptv.data.ProviderIntelligenceManager.getProfile(node.baseUrl)
                                     val displayBrand = if (profile?.isIdentified == true) profile.cleanBrand else node.provider.ifEmpty { "Unbranded" }
                                     Row(

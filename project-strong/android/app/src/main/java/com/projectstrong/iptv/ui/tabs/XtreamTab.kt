@@ -49,6 +49,8 @@ import java.util.concurrent.atomic.AtomicInteger
 @Composable
 fun XtreamTab(onNextTab: (() -> Unit)? = null) {
     val listState = androidx.compose.foundation.lazy.rememberLazyListState()
+    val horizontalScrollState = androidx.compose.foundation.rememberScrollState()
+    var lastSelectedNodeId by androidx.compose.runtime.saveable.rememberSaveable { androidx.compose.runtime.mutableStateOf<String?>(null) }
     // Implement chunked/dynamic loading: only show nodes that have finished verifying
     // This prevents rendering thousands of "Connecting..." items and massively improves performance.
     val xtreamNodes = DataStore.scannedNodes.filter { it.type == "Xtream" && (!it.isVerifying && it.status.isNotEmpty()) }
@@ -564,6 +566,8 @@ fun XtreamMasterGrid(
 
                             LazyColumn(modifier = Modifier.fillMaxWidth().weight(1f), state = listState) {
                                 items(filteredNodes) { node: ParsedCredential ->
+                                    val recordId = node.baseUrl + node.user
+                                    val isSelectedRow = recordId == lastSelectedNodeId
                                     val profile = com.projectstrong.iptv.data.ProviderIntelligenceManager.getProfile(node.baseUrl)
                                     val displayBrand = if (profile?.isIdentified == true) profile.cleanBrand else node.provider.ifEmpty { "Unbranded" }
                                     Row(
