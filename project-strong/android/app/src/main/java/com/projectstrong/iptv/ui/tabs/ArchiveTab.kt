@@ -29,7 +29,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import android.content.res.Configuration
 import androidx.compose.ui.platform.LocalConfiguration
-import com.projectstrong.iptv.data.CommittedManager
+import com.projectstrong.iptv.data.ArchiveManager
 import com.projectstrong.iptv.ui.components.ManualAddDialog
 import com.projectstrong.iptv.data.CommittedRecord
 import com.projectstrong.iptv.data.DataStore
@@ -46,11 +46,11 @@ import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
 import kotlinx.coroutines.withContext
 
-enum class CommittedSortColumn {
+enum class ArchiveSortColumn {
     DATE_ADDED, TYPE, STATUS, SYNC, HOST, PROVIDER, CHANNELS, VODS, DAYS_LEFT, EXPIRES, SOURCE, ROOMS, CONTENT
 }
 
-object CommittedFilterStore {
+object ArchiveFilterStore {
     var rooms = mutableStateOf(emptySet<String>())
     var content = mutableStateOf(emptySet<String>())
     var provider = mutableStateOf(emptySet<String>())
@@ -67,22 +67,15 @@ object CommittedFilterStore {
 }
 
 @Composable
-fun CommittedTab() {
-    val records = CommittedManager.records
+fun ArchiveTab() {
+    val records = ArchiveManager.records
     var selectedRecord by remember { mutableStateOf<CommittedRecord?>(null) }
     var isReloading by remember { mutableStateOf(false) }
     var isPushing by remember { mutableStateOf(false) }
     var isRechecking by remember { mutableStateOf(false) }
     var actionMessage by remember { mutableStateOf("") }
     var showTokenDialog by remember { mutableStateOf(false) }
-    var showManualAddDialog by remember { mutableStateOf(false) }
-
-    if (showManualAddDialog) {
-        ManualAddDialog(
-            onDismiss = { showManualAddDialog = false },
-            onCommitted = { showManualAddDialog = false }
-        )
-    }
+    
     var showPushConfirmDialog by remember { mutableStateOf(false) }
     var tempToken by remember { mutableStateOf(DataStore.githubToken) }
 
@@ -125,7 +118,7 @@ fun CommittedTab() {
                         Spacer(modifier = Modifier.height(8.dp))
                         TextButton(
                             onClick = {
-                                CommittedManager.clearGithubToken()
+                                ArchiveManager.clearGithubToken()
                                 tempToken = ""
                                 showTokenDialog = false
                                 ToastManager.info("GitHub Token cleared")
@@ -142,7 +135,7 @@ fun CommittedTab() {
                     text = "Save Token",
                     onClick = {
                         val tokenClean = tempToken.trim()
-                        CommittedManager.saveGithubToken(tokenClean)
+                        ArchiveManager.saveGithubToken(tokenClean)
                         showTokenDialog = false
                         ToastManager.success("GitHub Token saved securely!")
                     }
@@ -206,14 +199,14 @@ fun CommittedTab() {
                         ToastManager.info("Pushing ${records.size} accounts to GitHub...")
                         coroutineScope.launch {
                             val success = withContext(Dispatchers.IO) {
-                                CommittedManager.pushToCloud(DataStore.githubToken)
+                                ArchiveManager.pushToCloud(DataStore.githubToken)
                             }
                             if (success) {
                                 actionMessage = "Push successful! All records synced."
                                 ToastManager.success("Successfully pushed ${records.size} records to GitHub!")
                             } else {
                                 actionMessage = "Push failed."
-                                // Do not overwrite the detailed toast from CommittedManager
+                                // Do not overwrite the detailed toast from ArchiveManager
                             }
                             isPushing = false
                             delay(2500)
@@ -261,7 +254,7 @@ fun CommittedTab() {
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(
-                        "Are you sure you want to remove this record from your Saved Accounts?",
+                        "Are you sure you want to remove this record from your Archived Favorites?",
                         color = AppTextSecondary,
                         style = MaterialTheme.typography.bodyMedium
                     )
@@ -302,7 +295,7 @@ fun CommittedTab() {
                     onClick = {
                         val toDel = recordToDelete!!
                         recordToDelete = null
-                        CommittedManager.delete(toDel)
+                        ArchiveManager.delete(toDel)
                         if (selectedRecord == toDel) {
                             selectedRecord = null
                         }
@@ -335,7 +328,7 @@ fun CommittedTab() {
             ToastManager.info("Syncing records from GitHub...")
             coroutineScope.launch {
                 val results = withContext(Dispatchers.IO) {
-                    CommittedManager.syncFromCloud()
+                    ArchiveManager.syncFromCloud()
                 }
                 if (results != null) {
                     actionMessage = "Sync complete (${results.size} accounts)."
@@ -373,7 +366,7 @@ fun CommittedTab() {
                 ToastManager.info("Starting background status check...")
                 coroutineScope.launch {
                     withContext(Dispatchers.IO) {
-                        CommittedManager.recheckAllStatus()
+                        ArchiveManager.recheckAllStatus()
                     }
                     actionMessage = "Check complete."
                     ToastManager.success("All accounts verified!")
@@ -397,7 +390,7 @@ fun CommittedTab() {
         label = "CommittedScreenTransition"
     ) { activeRecord ->
         if (activeRecord != null) {
-            CommittedDetailScreen(
+            ArchiveDetailScreen(
                 record = activeRecord,
                 onBack = { selectedRecord = null },
                 onDelete = { recordToDelete = activeRecord },
@@ -405,7 +398,7 @@ fun CommittedTab() {
                 onPush = onPushAction
             )
         } else {
-            CommittedMasterGrid(
+            ArchiveMasterGrid(
                 records = records,
                 isBusy = isReloading || isPushing || isRechecking,
                 statusMessage = actionMessage,
@@ -415,8 +408,7 @@ fun CommittedTab() {
                 onPush = onPushAction,
                 onRecheckStatus = onRecheckStatusAction,
                 onDeleteRecord = { recordToDelete = it },
-                onOpenTokenSettings = onOpenTokenSettingsAction,
-                onAddManual = { showManualAddDialog = true }
+                onOpenTokenSettings = onOpenTokenSettingsAction
             )
         }
     }
@@ -434,7 +426,7 @@ fun CommittedTab() {
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(
-                        "Are you sure you want to remove this record from your Saved Accounts?",
+                        "Are you sure you want to remove this record from your Archived Favorites?",
                         color = AppTextSecondary,
                         style = MaterialTheme.typography.bodyMedium
                     )
@@ -475,7 +467,7 @@ fun CommittedTab() {
                     onClick = {
                         val toDel = recordToDelete!!
                         recordToDelete = null
-                        CommittedManager.delete(toDel)
+                        ArchiveManager.delete(toDel)
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = AppError),
                     shape = RoundedCornerShape(8.dp)
@@ -498,7 +490,7 @@ fun CommittedTab() {
 }
 
 @Composable
-fun CommittedMasterGrid(
+fun ArchiveMasterGrid(
     records: List<CommittedRecord>,
     isBusy: Boolean,
     statusMessage: String,
@@ -508,13 +500,13 @@ fun CommittedMasterGrid(
     onPush: () -> Unit,
     onRecheckStatus: () -> Unit,
     onDeleteRecord: (CommittedRecord) -> Unit,
-    onOpenTokenSettings: () -> Unit,
-    onAddManual: () -> Unit
+    onOpenTokenSettings: () -> Unit
+    
 ) {
-    var sortColumn by remember { mutableStateOf(CommittedSortColumn.DATE_ADDED) }
+    var sortColumn by remember { mutableStateOf(ArchiveSortColumn.DATE_ADDED) }
     var sortAscending by remember { mutableStateOf(false) }
 
-    fun toggleSort(col: CommittedSortColumn) {
+    fun toggleSort(col: ArchiveSortColumn) {
         if (sortColumn == col) {
             sortAscending = !sortAscending
         } else {
@@ -527,11 +519,11 @@ fun CommittedMasterGrid(
     val listState = rememberLazyListState()
     val scrollState = rememberScrollState()
 
-    val filterRooms by CommittedFilterStore.rooms
-    val filterContent by CommittedFilterStore.content
-    val filterProvider by CommittedFilterStore.provider
-    val filterTimezone by CommittedFilterStore.timezone
-    val filterStatus by CommittedFilterStore.status
+    val filterRooms by ArchiveFilterStore.rooms
+    val filterContent by ArchiveFilterStore.content
+    val filterProvider by ArchiveFilterStore.provider
+    val filterTimezone by ArchiveFilterStore.timezone
+    val filterStatus by ArchiveFilterStore.status
 
     val matchRoomsFunc = { record: com.projectstrong.iptv.data.CommittedRecord ->
         if (filterRooms.isEmpty()) true else {
@@ -624,43 +616,43 @@ fun CommittedMasterGrid(
     val sortedRecords = remember(filteredRecords, sortColumn, sortAscending) {
         val list = filteredRecords.toList()
         when (sortColumn) {
-            CommittedSortColumn.DATE_ADDED -> {
+            ArchiveSortColumn.DATE_ADDED -> {
                 if (sortAscending) list.sortedBy { it.safeDateAdded } else list.sortedByDescending { it.safeDateAdded }
             }
-            CommittedSortColumn.TYPE -> {
+            ArchiveSortColumn.TYPE -> {
                 if (sortAscending) list.sortedBy { it.safeType } else list.sortedByDescending { it.safeType }
             }
-            CommittedSortColumn.STATUS -> {
+            ArchiveSortColumn.STATUS -> {
                 if (sortAscending) list.sortedBy { it.safeStatus } else list.sortedByDescending { it.safeStatus }
             }
-            CommittedSortColumn.SYNC -> {
+            ArchiveSortColumn.SYNC -> {
                 if (sortAscending) list.sortedBy { it.isLocal } else list.sortedByDescending { it.isLocal }
             }
-            CommittedSortColumn.HOST -> {
+            ArchiveSortColumn.HOST -> {
                 if (sortAscending) list.sortedBy { it.safeBaseUrl } else list.sortedByDescending { it.safeBaseUrl }
             }
-            CommittedSortColumn.PROVIDER -> {
+            ArchiveSortColumn.PROVIDER -> {
                 if (sortAscending) list.sortedBy { it.safeProvider } else list.sortedByDescending { it.safeProvider }
             }
-            CommittedSortColumn.CHANNELS -> {
+            ArchiveSortColumn.CHANNELS -> {
                 if (sortAscending) list.sortedBy { it.safeChannels.toIntOrNull() ?: -1 } else list.sortedByDescending { it.safeChannels.toIntOrNull() ?: -1 }
             }
-            CommittedSortColumn.VODS -> {
+            ArchiveSortColumn.VODS -> {
                 if (sortAscending) list.sortedBy { it.safeVods.toIntOrNull() ?: -1 } else list.sortedByDescending { it.safeVods.toIntOrNull() ?: -1 }
             }
-            CommittedSortColumn.DAYS_LEFT -> {
+            ArchiveSortColumn.DAYS_LEFT -> {
                 if (sortAscending) list.sortedBy { it.safeDaysLeft.toIntOrNull() ?: -1 } else list.sortedByDescending { it.safeDaysLeft.toIntOrNull() ?: -1 }
             }
-            CommittedSortColumn.EXPIRES -> {
+            ArchiveSortColumn.EXPIRES -> {
                 if (sortAscending) list.sortedBy { it.safeExpires } else list.sortedByDescending { it.safeExpires }
             }
-            CommittedSortColumn.SOURCE -> {
+            ArchiveSortColumn.SOURCE -> {
                 if (sortAscending) list.sortedBy { it.safeSourceLink } else list.sortedByDescending { it.safeSourceLink }
             }
-            CommittedSortColumn.ROOMS -> {
+            ArchiveSortColumn.ROOMS -> {
                 if (sortAscending) list.sortedBy { it.safeRooms } else list.sortedByDescending { it.safeRooms }
             }
-            CommittedSortColumn.CONTENT -> {
+            ArchiveSortColumn.CONTENT -> {
                 if (sortAscending) list.sortedBy { it.safeContent } else list.sortedByDescending { it.safeContent }
             }
         }
@@ -746,19 +738,7 @@ fun CommittedMasterGrid(
                                 color = if (records.isEmpty()) AppTextMuted else AppSuccess,
                                 onClick = onPush,
                                 modifier = Modifier.height(34.dp)
-                            )
-                            Button(
-                                onClick = onAddManual,
-                                colors = ButtonDefaults.buttonColors(containerColor = AppPrimary),
-                                shape = RoundedCornerShape(10.dp),
-                                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
-                                modifier = Modifier.height(34.dp)
-                            ) {
-                                Icon(Icons.Default.Add, contentDescription = "Add", modifier = Modifier.size(16.dp))
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Text("Add", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.labelMedium)
-                            }
-                            Surface(
+                            )                            Surface(
                                 shape = RoundedCornerShape(8.dp),
                                 color = if (DataStore.githubToken.isNotEmpty()) AppPrimary.copy(alpha = 0.15f) else AppSurfaceVariant,
                                 border = androidx.compose.foundation.BorderStroke(
@@ -858,17 +838,7 @@ fun CommittedMasterGrid(
                             color = if (records.isEmpty()) AppTextMuted else AppSuccess,
                             onClick = onPush,
                             modifier = Modifier.weight(1.2f).height(38.dp)
-                        )
-                        Button(
-                            onClick = onAddManual,
-                            colors = ButtonDefaults.buttonColors(containerColor = AppPrimary),
-                            shape = RoundedCornerShape(10.dp),
-                            contentPadding = PaddingValues(0.dp),
-                            modifier = Modifier.weight(0.4f).height(38.dp)
-                        ) {
-                            Icon(Icons.Default.Add, contentDescription = "Add", modifier = Modifier.size(20.dp))
-                        }
-                        Surface(
+                        )                        Surface(
                             shape = RoundedCornerShape(8.dp),
                             color = if (DataStore.githubToken.isNotEmpty()) AppPrimary.copy(alpha = 0.15f) else AppSurfaceVariant,
                             border = androidx.compose.foundation.BorderStroke(
@@ -940,14 +910,14 @@ fun CommittedMasterGrid(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(Icons.Default.FilterList, contentDescription = "Filter", tint = AppTextSecondary, modifier = Modifier.size(20.dp).padding(end = 8.dp))
-                FilterDropdown("Rooms", distinctRooms.first, distinctRooms.second, filterRooms) { CommittedFilterStore.rooms.value = it }
-                FilterDropdown("Content", distinctContent.first, distinctContent.second, filterContent) { CommittedFilterStore.content.value = it }
-                FilterDropdown("Provider", distinctProviders.first, distinctProviders.second, filterProvider) { CommittedFilterStore.provider.value = it }
-                FilterDropdown("Timezone", distinctTimezones.first, distinctTimezones.second, filterTimezone) { CommittedFilterStore.timezone.value = it }
-                FilterDropdown("Status", distinctStatuses.first, distinctStatuses.second, filterStatus) { CommittedFilterStore.status.value = it }
+                FilterDropdown("Rooms", distinctRooms.first, distinctRooms.second, filterRooms) { ArchiveFilterStore.rooms.value = it }
+                FilterDropdown("Content", distinctContent.first, distinctContent.second, filterContent) { ArchiveFilterStore.content.value = it }
+                FilterDropdown("Provider", distinctProviders.first, distinctProviders.second, filterProvider) { ArchiveFilterStore.provider.value = it }
+                FilterDropdown("Timezone", distinctTimezones.first, distinctTimezones.second, filterTimezone) { ArchiveFilterStore.timezone.value = it }
+                FilterDropdown("Status", distinctStatuses.first, distinctStatuses.second, filterStatus) { ArchiveFilterStore.status.value = it }
                 
                 if (filterRooms.isNotEmpty() || filterContent.isNotEmpty() || filterProvider.isNotEmpty() || filterTimezone.isNotEmpty() || filterStatus.isNotEmpty()) {
-                    TextButton(onClick = { CommittedFilterStore.clear() }) {
+                    TextButton(onClick = { ArchiveFilterStore.clear() }) {
                         Text("Clear Filters", color = Color(0xFFEF4444))
                     }
                 }
@@ -981,25 +951,25 @@ fun CommittedMasterGrid(
                                 .padding(horizontal = 16.dp, vertical = 12.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            GridHeader("Date Added", 140.dp, onClick = { toggleSort(CommittedSortColumn.DATE_ADDED) }, isSorted = sortColumn == CommittedSortColumn.DATE_ADDED, isAscending = sortAscending)
-                            GridHeader("Type", 80.dp, onClick = { toggleSort(CommittedSortColumn.TYPE) }, isSorted = sortColumn == CommittedSortColumn.TYPE, isAscending = sortAscending)
-                            GridHeader("Status", 110.dp, onClick = { toggleSort(CommittedSortColumn.STATUS) }, isSorted = sortColumn == CommittedSortColumn.STATUS, isAscending = sortAscending)
-                            GridHeader("Sync", 110.dp, onClick = { toggleSort(CommittedSortColumn.SYNC) }, isSorted = sortColumn == CommittedSortColumn.SYNC, isAscending = sortAscending)
-                            GridHeader("Server / Host", 230.dp, onClick = { toggleSort(CommittedSortColumn.HOST) }, isSorted = sortColumn == CommittedSortColumn.HOST, isAscending = sortAscending)
-                            GridHeader("Provider", 140.dp, onClick = { toggleSort(CommittedSortColumn.PROVIDER) }, isSorted = sortColumn == CommittedSortColumn.PROVIDER, isAscending = sortAscending)
+                            GridHeader("Date Added", 140.dp, onClick = { toggleSort(ArchiveSortColumn.DATE_ADDED) }, isSorted = sortColumn == ArchiveSortColumn.DATE_ADDED, isAscending = sortAscending)
+                            GridHeader("Type", 80.dp, onClick = { toggleSort(ArchiveSortColumn.TYPE) }, isSorted = sortColumn == ArchiveSortColumn.TYPE, isAscending = sortAscending)
+                            GridHeader("Status", 110.dp, onClick = { toggleSort(ArchiveSortColumn.STATUS) }, isSorted = sortColumn == ArchiveSortColumn.STATUS, isAscending = sortAscending)
+                            GridHeader("Sync", 110.dp, onClick = { toggleSort(ArchiveSortColumn.SYNC) }, isSorted = sortColumn == ArchiveSortColumn.SYNC, isAscending = sortAscending)
+                            GridHeader("Server / Host", 230.dp, onClick = { toggleSort(ArchiveSortColumn.HOST) }, isSorted = sortColumn == ArchiveSortColumn.HOST, isAscending = sortAscending)
+                            GridHeader("Provider", 140.dp, onClick = { toggleSort(ArchiveSortColumn.PROVIDER) }, isSorted = sortColumn == ArchiveSortColumn.PROVIDER, isAscending = sortAscending)
                             GridHeader("Username", 140.dp)
                             GridHeader("Password", 140.dp)
                             GridHeader("MAC Address", 150.dp)
-                            GridHeader("Channels", 90.dp, onClick = { toggleSort(CommittedSortColumn.CHANNELS) }, isSorted = sortColumn == CommittedSortColumn.CHANNELS, isAscending = sortAscending)
-                            GridHeader("VODs", 90.dp, onClick = { toggleSort(CommittedSortColumn.VODS) }, isSorted = sortColumn == CommittedSortColumn.VODS, isAscending = sortAscending)
-                            GridHeader("Days Left", 90.dp, onClick = { toggleSort(CommittedSortColumn.DAYS_LEFT) }, isSorted = sortColumn == CommittedSortColumn.DAYS_LEFT, isAscending = sortAscending)
-                            GridHeader("Expires", 110.dp, onClick = { toggleSort(CommittedSortColumn.EXPIRES) }, isSorted = sortColumn == CommittedSortColumn.EXPIRES, isAscending = sortAscending)
+                            GridHeader("Channels", 90.dp, onClick = { toggleSort(ArchiveSortColumn.CHANNELS) }, isSorted = sortColumn == ArchiveSortColumn.CHANNELS, isAscending = sortAscending)
+                            GridHeader("VODs", 90.dp, onClick = { toggleSort(ArchiveSortColumn.VODS) }, isSorted = sortColumn == ArchiveSortColumn.VODS, isAscending = sortAscending)
+                            GridHeader("Days Left", 90.dp, onClick = { toggleSort(ArchiveSortColumn.DAYS_LEFT) }, isSorted = sortColumn == ArchiveSortColumn.DAYS_LEFT, isAscending = sortAscending)
+                            GridHeader("Expires", 110.dp, onClick = { toggleSort(ArchiveSortColumn.EXPIRES) }, isSorted = sortColumn == ArchiveSortColumn.EXPIRES, isAscending = sortAscending)
                             GridHeader("Conns", 80.dp)
                             GridHeader("Timezone", 130.dp)
-                            GridHeader("Source Link", 180.dp, onClick = { toggleSort(CommittedSortColumn.SOURCE) }, isSorted = sortColumn == CommittedSortColumn.SOURCE, isAscending = sortAscending)
+                            GridHeader("Source Link", 180.dp, onClick = { toggleSort(ArchiveSortColumn.SOURCE) }, isSorted = sortColumn == ArchiveSortColumn.SOURCE, isAscending = sortAscending)
                             GridHeader("Notes", 200.dp)
-                            GridHeader("Rooms", 120.dp, onClick = { toggleSort(CommittedSortColumn.ROOMS) }, isSorted = sortColumn == CommittedSortColumn.ROOMS, isAscending = sortAscending)
-                            GridHeader("Content", 120.dp, onClick = { toggleSort(CommittedSortColumn.CONTENT) }, isSorted = sortColumn == CommittedSortColumn.CONTENT, isAscending = sortAscending)
+                            GridHeader("Rooms", 120.dp, onClick = { toggleSort(ArchiveSortColumn.ROOMS) }, isSorted = sortColumn == ArchiveSortColumn.ROOMS, isAscending = sortAscending)
+                            GridHeader("Content", 120.dp, onClick = { toggleSort(ArchiveSortColumn.CONTENT) }, isSorted = sortColumn == ArchiveSortColumn.CONTENT, isAscending = sortAscending)
                             GridHeader("Actions", 200.dp)
                         }
 
@@ -1166,7 +1136,7 @@ items(sortedRecords, key = { it.safeBaseUrl + it.safeUser + it.safeMac }) { reco
     }
 }
 @Composable
-fun CommittedDetailScreen(
+fun ArchiveDetailScreen(
     record: CommittedRecord,
     onBack: () -> Unit,
     onDelete: () -> Unit,
@@ -1222,8 +1192,18 @@ fun CommittedDetailScreen(
             }
 
             IconButton(onClick = {
+                CommittedManager.addRecord(record)
+                ArchiveManager.deleteRecord(record)
+                onBack()
+                com.projectstrong.iptv.ui.components.ToastManager.success("Restored to Committed")
+            }) {
+                Icon(Icons.Default.Restore, contentDescription = "Restore", tint = AppPrimary)
+            }
+
+
+            IconButton(onClick = {
                 com.projectstrong.iptv.data.ArchiveManager.addRecord(record)
-                com.projectstrong.iptv.data.CommittedManager.deleteRecord(record)
+                com.projectstrong.iptv.data.ArchiveManager.deleteRecord(record)
                 onBack()
                 com.projectstrong.iptv.ui.components.ToastManager.success("Moved to Archived Favorites")
             }) {
@@ -1449,7 +1429,7 @@ fun CommittedDetailScreen(
                             if (!isProbingEgress) {
                                 isProbingEgress = true
                                 detailScope.launch {
-                                    val updated = CommittedManager.probeEgressForRecord(record)
+                                    val updated = ArchiveManager.probeEgressForRecord(record)
                                     egressState = updated.safeEgressStatus
                                     egressDetailsState = updated.safeEgressDetails
                                     isProbingEgress = false
@@ -1541,7 +1521,7 @@ fun CommittedDetailScreen(
                 text = "Save Details",
                 onClick = {
                     rootFocusManager.clearFocus()
-                    CommittedManager.updateDetails(
+                    ArchiveManager.updateDetails(
                         record, 
                         currentNotes, 
                         currentRooms.joinToString(", "), 

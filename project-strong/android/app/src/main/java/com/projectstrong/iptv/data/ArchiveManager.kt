@@ -120,7 +120,7 @@ data class CommittedRecord(
     val isLocal get() = isLocalOnly == true
 }
 
-object CommittedManager {
+object ArchiveManager {
     val records = mutableStateListOf<CommittedRecord>()
     private lateinit var file: File
     private lateinit var prefs: SharedPreferences
@@ -132,7 +132,7 @@ object CommittedManager {
 
     fun init(context: Context) {
         appContext = context.applicationContext
-        file = File(context.filesDir, "committed.json")
+        file = File(context.filesDir, "archivedfavorites.json")
         prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         val savedToken = prefs.getString(KEY_GITHUB_TOKEN, "") ?: ""
         DataStore.githubToken = savedToken
@@ -394,7 +394,7 @@ object CommittedManager {
         try {
             val authToken = token.filter { !it.isWhitespace() }
             val client = OkHttpClient.Builder().build()
-            val getUrl = "https://api.github.com/repos/Fragger7/personal-repo/contents/project-strong/committed.json"
+            val getUrl = "https://api.github.com/repos/Fragger7/personal-repo/contents/project-strong/archivedfavorites.json"
             
             val getReq = Request.Builder()
                 .url(getUrl)
@@ -483,7 +483,7 @@ object CommittedManager {
             val safeToken = DataStore.githubToken.filter { !it.isWhitespace() }
             val client = OkHttpClient.Builder().build()
             val requestBuilder = Request.Builder()
-                .url("https://api.github.com/repos/Fragger7/personal-repo/contents/project-strong/committed.json")
+                .url("https://api.github.com/repos/Fragger7/personal-repo/contents/project-strong/archivedfavorites.json")
                 .header("Accept", "application/vnd.github.v3+json")
                 .header("Cache-Control", "no-cache")
                 .header("User-Agent", "SherlockStreams/1.0")
@@ -582,7 +582,7 @@ object CommittedManager {
             // 1. Get current SHA and fetch remote content to merge before pushing (Never Overwrite)
             val client = OkHttpClient.Builder().build()
             val getReq = Request.Builder()
-                .url("https://api.github.com/repos/Fragger7/personal-repo/contents/project-strong/committed.json")
+                .url("https://api.github.com/repos/Fragger7/personal-repo/contents/project-strong/archivedfavorites.json")
                 .header("Accept", "application/vnd.github.v3+json")
                 .header("Cache-Control", "no-cache")
                 .header("User-Agent", "SherlockStreams/1.0")
@@ -671,7 +671,7 @@ object CommittedManager {
             val requestBody = payload.toString().toRequestBody("application/json".toMediaType())
 
             val putReq = Request.Builder()
-                .url("https://api.github.com/repos/Fragger7/personal-repo/contents/project-strong/committed.json")
+                .url("https://api.github.com/repos/Fragger7/personal-repo/contents/project-strong/archivedfavorites.json")
                 .put(requestBody)
                 .header("Accept", "application/vnd.github.v3+json")
                 .header("User-Agent", "SherlockStreams/1.0")

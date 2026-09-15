@@ -61,12 +61,242 @@ fun CommitAccountDialog(
             it.safeBaseUrl.trim().trimEnd('/') == cleanBase &&
             ((type == "Xtream" && it.safeUser.trim() == user.trim()) ||
              (type == "Stalker" && it.safeMac.trim().equals(mac.trim(), ignoreCase = true)))
-        }
+        
+    if (showDuplicateWarning) {
+        AlertDialog(
+            onDismissRequest = { showDuplicateWarning = false },
+            title = { Text("Duplicate Detected") },
+            text = { Text("An exact match for this connection already exists in the Committed Data. Are you sure you want to add a duplicate?") },
+            confirmButton = {
+                TextButton(onClick = {
+                    showDuplicateWarning = false
+                    val finalSource = if (sourceLinkInput.trim().isEmpty()) "Direct Ingestion" else sourceLinkInput.trim()
+                    val finalOrigin = originLinkInput.trim().ifEmpty { null }
+                    CommittedManager.commit(
+                        type = type,
+                        baseUrl = baseUrl,
+                        user = user,
+                        pass = pass,
+                        mac = mac,
+                        status = status,
+                        expires = expires,
+                        daysLeft = daysLeft,
+                        channels = channels,
+                        vods = vods,
+                        activeConn = activeConn,
+                        maxConn = maxConn,
+                        provider = resolvedProvider,
+                        serverTimezone = serverTimezone,
+                        notes = notes.trim(),
+                        rooms = selectedRooms.joinToString(", "),
+                        content = selectedContent.joinToString(", "),
+                        sourceLink = finalSource,
+                        originLink = finalOrigin,
+                        egressStatus = egressStatus,
+                        egressDetails = egressDetails
+                    )
+                    onCommitted()
+                }) {
+                    Text("Add Anyway")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDuplicateWarning = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
     }
+}
+    
+    if (showDuplicateWarning) {
+        AlertDialog(
+            onDismissRequest = { showDuplicateWarning = false },
+            title = { Text("Duplicate Detected") },
+            text = { Text("An exact match for this connection already exists in the Committed Data. Are you sure you want to add a duplicate?") },
+            confirmButton = {
+                TextButton(onClick = {
+                    showDuplicateWarning = false
+                    val finalSource = if (sourceLinkInput.trim().isEmpty()) "Direct Ingestion" else sourceLinkInput.trim()
+                    val finalOrigin = originLinkInput.trim().ifEmpty { null }
+                    CommittedManager.commit(
+                        type = type,
+                        baseUrl = baseUrl,
+                        user = user,
+                        pass = pass,
+                        mac = mac,
+                        status = status,
+                        expires = expires,
+                        daysLeft = daysLeft,
+                        channels = channels,
+                        vods = vods,
+                        activeConn = activeConn,
+                        maxConn = maxConn,
+                        provider = resolvedProvider,
+                        serverTimezone = serverTimezone,
+                        notes = notes.trim(),
+                        rooms = selectedRooms.joinToString(", "),
+                        content = selectedContent.joinToString(", "),
+                        sourceLink = finalSource,
+                        originLink = finalOrigin,
+                        egressStatus = egressStatus,
+                        egressDetails = egressDetails
+                    )
+                    onCommitted()
+                }) {
+                    Text("Add Anyway")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDuplicateWarning = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+}
 
-    var notes by remember { mutableStateOf(existingRecord?.safeNotes?.ifEmpty { null } ?: initialNotes) }
-    var selectedRooms by remember { mutableStateOf((existingRecord?.safeRooms?.ifEmpty { null } ?: initialRooms).split(",").map { it.trim() }.filter { it.isNotEmpty() }.toSet()) }
-    var selectedContent by remember { mutableStateOf((existingRecord?.safeContent?.ifEmpty { null } ?: initialContent).split(",").map { it.trim() }.filter { it.isNotEmpty() }.toSet()) }
+    var notes by remember { mutableStateOf(existingRecord?.safeNotes?.ifEmpty { null } ?: initialNotes) 
+    if (showDuplicateWarning) {
+        AlertDialog(
+            onDismissRequest = { showDuplicateWarning = false },
+            title = { Text("Duplicate Detected") },
+            text = { Text("An exact match for this connection already exists in the Committed Data. Are you sure you want to add a duplicate?") },
+            confirmButton = {
+                TextButton(onClick = {
+                    showDuplicateWarning = false
+                    val finalSource = if (sourceLinkInput.trim().isEmpty()) "Direct Ingestion" else sourceLinkInput.trim()
+                    val finalOrigin = originLinkInput.trim().ifEmpty { null }
+                    CommittedManager.commit(
+                        type = type,
+                        baseUrl = baseUrl,
+                        user = user,
+                        pass = pass,
+                        mac = mac,
+                        status = status,
+                        expires = expires,
+                        daysLeft = daysLeft,
+                        channels = channels,
+                        vods = vods,
+                        activeConn = activeConn,
+                        maxConn = maxConn,
+                        provider = resolvedProvider,
+                        serverTimezone = serverTimezone,
+                        notes = notes.trim(),
+                        rooms = selectedRooms.joinToString(", "),
+                        content = selectedContent.joinToString(", "),
+                        sourceLink = finalSource,
+                        originLink = finalOrigin,
+                        egressStatus = egressStatus,
+                        egressDetails = egressDetails
+                    )
+                    onCommitted()
+                }) {
+                    Text("Add Anyway")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDuplicateWarning = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+}
+    var selectedRooms by remember { mutableStateOf((existingRecord?.safeRooms?.ifEmpty { null } ?: initialRooms).split(",").map { it.trim() }.filter { it.isNotEmpty() }.toSet()) 
+    if (showDuplicateWarning) {
+        AlertDialog(
+            onDismissRequest = { showDuplicateWarning = false },
+            title = { Text("Duplicate Detected") },
+            text = { Text("An exact match for this connection already exists in the Committed Data. Are you sure you want to add a duplicate?") },
+            confirmButton = {
+                TextButton(onClick = {
+                    showDuplicateWarning = false
+                    val finalSource = if (sourceLinkInput.trim().isEmpty()) "Direct Ingestion" else sourceLinkInput.trim()
+                    val finalOrigin = originLinkInput.trim().ifEmpty { null }
+                    CommittedManager.commit(
+                        type = type,
+                        baseUrl = baseUrl,
+                        user = user,
+                        pass = pass,
+                        mac = mac,
+                        status = status,
+                        expires = expires,
+                        daysLeft = daysLeft,
+                        channels = channels,
+                        vods = vods,
+                        activeConn = activeConn,
+                        maxConn = maxConn,
+                        provider = resolvedProvider,
+                        serverTimezone = serverTimezone,
+                        notes = notes.trim(),
+                        rooms = selectedRooms.joinToString(", "),
+                        content = selectedContent.joinToString(", "),
+                        sourceLink = finalSource,
+                        originLink = finalOrigin,
+                        egressStatus = egressStatus,
+                        egressDetails = egressDetails
+                    )
+                    onCommitted()
+                }) {
+                    Text("Add Anyway")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDuplicateWarning = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+}
+    var selectedContent by remember { mutableStateOf((existingRecord?.safeContent?.ifEmpty { null } ?: initialContent).split(",").map { it.trim() }.filter { it.isNotEmpty() }.toSet()) 
+    if (showDuplicateWarning) {
+        AlertDialog(
+            onDismissRequest = { showDuplicateWarning = false },
+            title = { Text("Duplicate Detected") },
+            text = { Text("An exact match for this connection already exists in the Committed Data. Are you sure you want to add a duplicate?") },
+            confirmButton = {
+                TextButton(onClick = {
+                    showDuplicateWarning = false
+                    val finalSource = if (sourceLinkInput.trim().isEmpty()) "Direct Ingestion" else sourceLinkInput.trim()
+                    val finalOrigin = originLinkInput.trim().ifEmpty { null }
+                    CommittedManager.commit(
+                        type = type,
+                        baseUrl = baseUrl,
+                        user = user,
+                        pass = pass,
+                        mac = mac,
+                        status = status,
+                        expires = expires,
+                        daysLeft = daysLeft,
+                        channels = channels,
+                        vods = vods,
+                        activeConn = activeConn,
+                        maxConn = maxConn,
+                        provider = resolvedProvider,
+                        serverTimezone = serverTimezone,
+                        notes = notes.trim(),
+                        rooms = selectedRooms.joinToString(", "),
+                        content = selectedContent.joinToString(", "),
+                        sourceLink = finalSource,
+                        originLink = finalOrigin,
+                        egressStatus = egressStatus,
+                        egressDetails = egressDetails
+                    )
+                    onCommitted()
+                }) {
+                    Text("Add Anyway")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDuplicateWarning = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+}
     
     // Auto-populate Source Link: check node sourceLink first, fallback to DataStore.scannerSourceLink
     var sourceLinkInput by remember {
@@ -76,7 +306,53 @@ fun CommitAccountDialog(
             DataStore.scannerSourceLink
         } else ""
         mutableStateOf(candidate)
+    
+    if (showDuplicateWarning) {
+        AlertDialog(
+            onDismissRequest = { showDuplicateWarning = false },
+            title = { Text("Duplicate Detected") },
+            text = { Text("An exact match for this connection already exists in the Committed Data. Are you sure you want to add a duplicate?") },
+            confirmButton = {
+                TextButton(onClick = {
+                    showDuplicateWarning = false
+                    val finalSource = if (sourceLinkInput.trim().isEmpty()) "Direct Ingestion" else sourceLinkInput.trim()
+                    val finalOrigin = originLinkInput.trim().ifEmpty { null }
+                    CommittedManager.commit(
+                        type = type,
+                        baseUrl = baseUrl,
+                        user = user,
+                        pass = pass,
+                        mac = mac,
+                        status = status,
+                        expires = expires,
+                        daysLeft = daysLeft,
+                        channels = channels,
+                        vods = vods,
+                        activeConn = activeConn,
+                        maxConn = maxConn,
+                        provider = resolvedProvider,
+                        serverTimezone = serverTimezone,
+                        notes = notes.trim(),
+                        rooms = selectedRooms.joinToString(", "),
+                        content = selectedContent.joinToString(", "),
+                        sourceLink = finalSource,
+                        originLink = finalOrigin,
+                        egressStatus = egressStatus,
+                        egressDetails = egressDetails
+                    )
+                    onCommitted()
+                }) {
+                    Text("Add Anyway")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDuplicateWarning = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
     }
+}
 
     // Auto-populate Origin Link: check node originLink first, fallback to DataStore.scannerOriginLink
     var originLinkInput by remember {
@@ -86,7 +362,53 @@ fun CommitAccountDialog(
             DataStore.scannerOriginLink
         } else ""
         mutableStateOf(candidate)
+    
+    if (showDuplicateWarning) {
+        AlertDialog(
+            onDismissRequest = { showDuplicateWarning = false },
+            title = { Text("Duplicate Detected") },
+            text = { Text("An exact match for this connection already exists in the Committed Data. Are you sure you want to add a duplicate?") },
+            confirmButton = {
+                TextButton(onClick = {
+                    showDuplicateWarning = false
+                    val finalSource = if (sourceLinkInput.trim().isEmpty()) "Direct Ingestion" else sourceLinkInput.trim()
+                    val finalOrigin = originLinkInput.trim().ifEmpty { null }
+                    CommittedManager.commit(
+                        type = type,
+                        baseUrl = baseUrl,
+                        user = user,
+                        pass = pass,
+                        mac = mac,
+                        status = status,
+                        expires = expires,
+                        daysLeft = daysLeft,
+                        channels = channels,
+                        vods = vods,
+                        activeConn = activeConn,
+                        maxConn = maxConn,
+                        provider = resolvedProvider,
+                        serverTimezone = serverTimezone,
+                        notes = notes.trim(),
+                        rooms = selectedRooms.joinToString(", "),
+                        content = selectedContent.joinToString(", "),
+                        sourceLink = finalSource,
+                        originLink = finalOrigin,
+                        egressStatus = egressStatus,
+                        egressDetails = egressDetails
+                    )
+                    onCommitted()
+                }) {
+                    Text("Add Anyway")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDuplicateWarning = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
     }
+}
 
     val resolvedProvider = remember(baseUrl, provider) {
         if (provider.isNotEmpty() && provider != "Unknown" && provider != "Unbranded") {
@@ -94,12 +416,154 @@ fun CommitAccountDialog(
         } else {
             val profile = com.projectstrong.iptv.data.ProviderIntelligenceManager.getProfile(baseUrl)
             if (profile?.isIdentified == true) profile.cleanBrand else "Unbranded"
-        }
+        
+    if (showDuplicateWarning) {
+        AlertDialog(
+            onDismissRequest = { showDuplicateWarning = false },
+            title = { Text("Duplicate Detected") },
+            text = { Text("An exact match for this connection already exists in the Committed Data. Are you sure you want to add a duplicate?") },
+            confirmButton = {
+                TextButton(onClick = {
+                    showDuplicateWarning = false
+                    val finalSource = if (sourceLinkInput.trim().isEmpty()) "Direct Ingestion" else sourceLinkInput.trim()
+                    val finalOrigin = originLinkInput.trim().ifEmpty { null }
+                    CommittedManager.commit(
+                        type = type,
+                        baseUrl = baseUrl,
+                        user = user,
+                        pass = pass,
+                        mac = mac,
+                        status = status,
+                        expires = expires,
+                        daysLeft = daysLeft,
+                        channels = channels,
+                        vods = vods,
+                        activeConn = activeConn,
+                        maxConn = maxConn,
+                        provider = resolvedProvider,
+                        serverTimezone = serverTimezone,
+                        notes = notes.trim(),
+                        rooms = selectedRooms.joinToString(", "),
+                        content = selectedContent.joinToString(", "),
+                        sourceLink = finalSource,
+                        originLink = finalOrigin,
+                        egressStatus = egressStatus,
+                        egressDetails = egressDetails
+                    )
+                    onCommitted()
+                }) {
+                    Text("Add Anyway")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDuplicateWarning = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
     }
+}
+    
+    if (showDuplicateWarning) {
+        AlertDialog(
+            onDismissRequest = { showDuplicateWarning = false },
+            title = { Text("Duplicate Detected") },
+            text = { Text("An exact match for this connection already exists in the Committed Data. Are you sure you want to add a duplicate?") },
+            confirmButton = {
+                TextButton(onClick = {
+                    showDuplicateWarning = false
+                    val finalSource = if (sourceLinkInput.trim().isEmpty()) "Direct Ingestion" else sourceLinkInput.trim()
+                    val finalOrigin = originLinkInput.trim().ifEmpty { null }
+                    CommittedManager.commit(
+                        type = type,
+                        baseUrl = baseUrl,
+                        user = user,
+                        pass = pass,
+                        mac = mac,
+                        status = status,
+                        expires = expires,
+                        daysLeft = daysLeft,
+                        channels = channels,
+                        vods = vods,
+                        activeConn = activeConn,
+                        maxConn = maxConn,
+                        provider = resolvedProvider,
+                        serverTimezone = serverTimezone,
+                        notes = notes.trim(),
+                        rooms = selectedRooms.joinToString(", "),
+                        content = selectedContent.joinToString(", "),
+                        sourceLink = finalSource,
+                        originLink = finalOrigin,
+                        egressStatus = egressStatus,
+                        egressDetails = egressDetails
+                    )
+                    onCommitted()
+                }) {
+                    Text("Add Anyway")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDuplicateWarning = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+}
 
     val rootFocusManager = androidx.compose.ui.platform.LocalFocusManager.current
 
+
+    var showDuplicateWarning by remember { mutableStateOf(false) 
+    if (showDuplicateWarning) {
+        AlertDialog(
+            onDismissRequest = { showDuplicateWarning = false },
+            title = { Text("Duplicate Detected") },
+            text = { Text("An exact match for this connection already exists in the Committed Data. Are you sure you want to add a duplicate?") },
+            confirmButton = {
+                TextButton(onClick = {
+                    showDuplicateWarning = false
+                    val finalSource = if (sourceLinkInput.trim().isEmpty()) "Direct Ingestion" else sourceLinkInput.trim()
+                    val finalOrigin = originLinkInput.trim().ifEmpty { null }
+                    CommittedManager.commit(
+                        type = type,
+                        baseUrl = baseUrl,
+                        user = user,
+                        pass = pass,
+                        mac = mac,
+                        status = status,
+                        expires = expires,
+                        daysLeft = daysLeft,
+                        channels = channels,
+                        vods = vods,
+                        activeConn = activeConn,
+                        maxConn = maxConn,
+                        provider = resolvedProvider,
+                        serverTimezone = serverTimezone,
+                        notes = notes.trim(),
+                        rooms = selectedRooms.joinToString(", "),
+                        content = selectedContent.joinToString(", "),
+                        sourceLink = finalSource,
+                        originLink = finalOrigin,
+                        egressStatus = egressStatus,
+                        egressDetails = egressDetails
+                    )
+                    onCommitted()
+                }) {
+                    Text("Add Anyway")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDuplicateWarning = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+}
+
     Dialog(onDismissRequest = onDismiss) {
+
         Card(
             shape = RoundedCornerShape(16.dp),
             colors = CardDefaults.cardColors(containerColor = AppSurface),
@@ -110,7 +574,53 @@ fun CommitAccountDialog(
         ) {
             Column(modifier = Modifier
                 .padding(20.dp)
-                .pointerInput(Unit) { detectTapGestures(onTap = { rootFocusManager.clearFocus() }) }
+                .pointerInput(Unit) { detectTapGestures(onTap = { rootFocusManager.clearFocus() }) 
+    if (showDuplicateWarning) {
+        AlertDialog(
+            onDismissRequest = { showDuplicateWarning = false },
+            title = { Text("Duplicate Detected") },
+            text = { Text("An exact match for this connection already exists in the Committed Data. Are you sure you want to add a duplicate?") },
+            confirmButton = {
+                TextButton(onClick = {
+                    showDuplicateWarning = false
+                    val finalSource = if (sourceLinkInput.trim().isEmpty()) "Direct Ingestion" else sourceLinkInput.trim()
+                    val finalOrigin = originLinkInput.trim().ifEmpty { null }
+                    CommittedManager.commit(
+                        type = type,
+                        baseUrl = baseUrl,
+                        user = user,
+                        pass = pass,
+                        mac = mac,
+                        status = status,
+                        expires = expires,
+                        daysLeft = daysLeft,
+                        channels = channels,
+                        vods = vods,
+                        activeConn = activeConn,
+                        maxConn = maxConn,
+                        provider = resolvedProvider,
+                        serverTimezone = serverTimezone,
+                        notes = notes.trim(),
+                        rooms = selectedRooms.joinToString(", "),
+                        content = selectedContent.joinToString(", "),
+                        sourceLink = finalSource,
+                        originLink = finalOrigin,
+                        egressStatus = egressStatus,
+                        egressDetails = egressDetails
+                    )
+                    onCommitted()
+                }) {
+                    Text("Add Anyway")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDuplicateWarning = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+}
                 .verticalScroll(androidx.compose.foundation.rememberScrollState())
             ) {
                 // Header
@@ -127,8 +637,100 @@ fun CommitAccountDialog(
                     )
                     IconButton(onClick = onDismiss, modifier = Modifier.size(24.dp)) {
                         Icon(Icons.Default.Close, contentDescription = "Close", tint = AppTextSecondary)
-                    }
+                    
+    if (showDuplicateWarning) {
+        AlertDialog(
+            onDismissRequest = { showDuplicateWarning = false },
+            title = { Text("Duplicate Detected") },
+            text = { Text("An exact match for this connection already exists in the Committed Data. Are you sure you want to add a duplicate?") },
+            confirmButton = {
+                TextButton(onClick = {
+                    showDuplicateWarning = false
+                    val finalSource = if (sourceLinkInput.trim().isEmpty()) "Direct Ingestion" else sourceLinkInput.trim()
+                    val finalOrigin = originLinkInput.trim().ifEmpty { null }
+                    CommittedManager.commit(
+                        type = type,
+                        baseUrl = baseUrl,
+                        user = user,
+                        pass = pass,
+                        mac = mac,
+                        status = status,
+                        expires = expires,
+                        daysLeft = daysLeft,
+                        channels = channels,
+                        vods = vods,
+                        activeConn = activeConn,
+                        maxConn = maxConn,
+                        provider = resolvedProvider,
+                        serverTimezone = serverTimezone,
+                        notes = notes.trim(),
+                        rooms = selectedRooms.joinToString(", "),
+                        content = selectedContent.joinToString(", "),
+                        sourceLink = finalSource,
+                        originLink = finalOrigin,
+                        egressStatus = egressStatus,
+                        egressDetails = egressDetails
+                    )
+                    onCommitted()
+                }) {
+                    Text("Add Anyway")
                 }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDuplicateWarning = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+}
+                
+    if (showDuplicateWarning) {
+        AlertDialog(
+            onDismissRequest = { showDuplicateWarning = false },
+            title = { Text("Duplicate Detected") },
+            text = { Text("An exact match for this connection already exists in the Committed Data. Are you sure you want to add a duplicate?") },
+            confirmButton = {
+                TextButton(onClick = {
+                    showDuplicateWarning = false
+                    val finalSource = if (sourceLinkInput.trim().isEmpty()) "Direct Ingestion" else sourceLinkInput.trim()
+                    val finalOrigin = originLinkInput.trim().ifEmpty { null }
+                    CommittedManager.commit(
+                        type = type,
+                        baseUrl = baseUrl,
+                        user = user,
+                        pass = pass,
+                        mac = mac,
+                        status = status,
+                        expires = expires,
+                        daysLeft = daysLeft,
+                        channels = channels,
+                        vods = vods,
+                        activeConn = activeConn,
+                        maxConn = maxConn,
+                        provider = resolvedProvider,
+                        serverTimezone = serverTimezone,
+                        notes = notes.trim(),
+                        rooms = selectedRooms.joinToString(", "),
+                        content = selectedContent.joinToString(", "),
+                        sourceLink = finalSource,
+                        originLink = finalOrigin,
+                        egressStatus = egressStatus,
+                        egressDetails = egressDetails
+                    )
+                    onCommitted()
+                }) {
+                    Text("Add Anyway")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDuplicateWarning = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+}
 
                 Spacer(modifier = Modifier.height(14.dp))
 
@@ -165,32 +767,400 @@ fun CommitAccountDialog(
                                         fontWeight = FontWeight.Bold,
                                         modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
                                     )
-                                }
-                            }
-                        }
+                                
+    if (showDuplicateWarning) {
+        AlertDialog(
+            onDismissRequest = { showDuplicateWarning = false },
+            title = { Text("Duplicate Detected") },
+            text = { Text("An exact match for this connection already exists in the Committed Data. Are you sure you want to add a duplicate?") },
+            confirmButton = {
+                TextButton(onClick = {
+                    showDuplicateWarning = false
+                    val finalSource = if (sourceLinkInput.trim().isEmpty()) "Direct Ingestion" else sourceLinkInput.trim()
+                    val finalOrigin = originLinkInput.trim().ifEmpty { null }
+                    CommittedManager.commit(
+                        type = type,
+                        baseUrl = baseUrl,
+                        user = user,
+                        pass = pass,
+                        mac = mac,
+                        status = status,
+                        expires = expires,
+                        daysLeft = daysLeft,
+                        channels = channels,
+                        vods = vods,
+                        activeConn = activeConn,
+                        maxConn = maxConn,
+                        provider = resolvedProvider,
+                        serverTimezone = serverTimezone,
+                        notes = notes.trim(),
+                        rooms = selectedRooms.joinToString(", "),
+                        content = selectedContent.joinToString(", "),
+                        sourceLink = finalSource,
+                        originLink = finalOrigin,
+                        egressStatus = egressStatus,
+                        egressDetails = egressDetails
+                    )
+                    onCommitted()
+                }) {
+                    Text("Add Anyway")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDuplicateWarning = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+}
+                            
+    if (showDuplicateWarning) {
+        AlertDialog(
+            onDismissRequest = { showDuplicateWarning = false },
+            title = { Text("Duplicate Detected") },
+            text = { Text("An exact match for this connection already exists in the Committed Data. Are you sure you want to add a duplicate?") },
+            confirmButton = {
+                TextButton(onClick = {
+                    showDuplicateWarning = false
+                    val finalSource = if (sourceLinkInput.trim().isEmpty()) "Direct Ingestion" else sourceLinkInput.trim()
+                    val finalOrigin = originLinkInput.trim().ifEmpty { null }
+                    CommittedManager.commit(
+                        type = type,
+                        baseUrl = baseUrl,
+                        user = user,
+                        pass = pass,
+                        mac = mac,
+                        status = status,
+                        expires = expires,
+                        daysLeft = daysLeft,
+                        channels = channels,
+                        vods = vods,
+                        activeConn = activeConn,
+                        maxConn = maxConn,
+                        provider = resolvedProvider,
+                        serverTimezone = serverTimezone,
+                        notes = notes.trim(),
+                        rooms = selectedRooms.joinToString(", "),
+                        content = selectedContent.joinToString(", "),
+                        sourceLink = finalSource,
+                        originLink = finalOrigin,
+                        egressStatus = egressStatus,
+                        egressDetails = egressDetails
+                    )
+                    onCommitted()
+                }) {
+                    Text("Add Anyway")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDuplicateWarning = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+}
+                        
+    if (showDuplicateWarning) {
+        AlertDialog(
+            onDismissRequest = { showDuplicateWarning = false },
+            title = { Text("Duplicate Detected") },
+            text = { Text("An exact match for this connection already exists in the Committed Data. Are you sure you want to add a duplicate?") },
+            confirmButton = {
+                TextButton(onClick = {
+                    showDuplicateWarning = false
+                    val finalSource = if (sourceLinkInput.trim().isEmpty()) "Direct Ingestion" else sourceLinkInput.trim()
+                    val finalOrigin = originLinkInput.trim().ifEmpty { null }
+                    CommittedManager.commit(
+                        type = type,
+                        baseUrl = baseUrl,
+                        user = user,
+                        pass = pass,
+                        mac = mac,
+                        status = status,
+                        expires = expires,
+                        daysLeft = daysLeft,
+                        channels = channels,
+                        vods = vods,
+                        activeConn = activeConn,
+                        maxConn = maxConn,
+                        provider = resolvedProvider,
+                        serverTimezone = serverTimezone,
+                        notes = notes.trim(),
+                        rooms = selectedRooms.joinToString(", "),
+                        content = selectedContent.joinToString(", "),
+                        sourceLink = finalSource,
+                        originLink = finalOrigin,
+                        egressStatus = egressStatus,
+                        egressDetails = egressDetails
+                    )
+                    onCommitted()
+                }) {
+                    Text("Add Anyway")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDuplicateWarning = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+}
                         if (user.isNotEmpty()) {
                             Text(
                                 text = "USER: $user | PASS: $pass",
                                 color = AppTextPrimary,
                                 style = MaterialTheme.typography.bodySmall
                             )
-                        }
+                        
+    if (showDuplicateWarning) {
+        AlertDialog(
+            onDismissRequest = { showDuplicateWarning = false },
+            title = { Text("Duplicate Detected") },
+            text = { Text("An exact match for this connection already exists in the Committed Data. Are you sure you want to add a duplicate?") },
+            confirmButton = {
+                TextButton(onClick = {
+                    showDuplicateWarning = false
+                    val finalSource = if (sourceLinkInput.trim().isEmpty()) "Direct Ingestion" else sourceLinkInput.trim()
+                    val finalOrigin = originLinkInput.trim().ifEmpty { null }
+                    CommittedManager.commit(
+                        type = type,
+                        baseUrl = baseUrl,
+                        user = user,
+                        pass = pass,
+                        mac = mac,
+                        status = status,
+                        expires = expires,
+                        daysLeft = daysLeft,
+                        channels = channels,
+                        vods = vods,
+                        activeConn = activeConn,
+                        maxConn = maxConn,
+                        provider = resolvedProvider,
+                        serverTimezone = serverTimezone,
+                        notes = notes.trim(),
+                        rooms = selectedRooms.joinToString(", "),
+                        content = selectedContent.joinToString(", "),
+                        sourceLink = finalSource,
+                        originLink = finalOrigin,
+                        egressStatus = egressStatus,
+                        egressDetails = egressDetails
+                    )
+                    onCommitted()
+                }) {
+                    Text("Add Anyway")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDuplicateWarning = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+}
                         if (mac.isNotEmpty()) {
                             Text(
                                 text = "MAC: $mac",
                                 color = AppTextPrimary,
                                 style = MaterialTheme.typography.bodySmall
                             )
-                        }
+                        
+    if (showDuplicateWarning) {
+        AlertDialog(
+            onDismissRequest = { showDuplicateWarning = false },
+            title = { Text("Duplicate Detected") },
+            text = { Text("An exact match for this connection already exists in the Committed Data. Are you sure you want to add a duplicate?") },
+            confirmButton = {
+                TextButton(onClick = {
+                    showDuplicateWarning = false
+                    val finalSource = if (sourceLinkInput.trim().isEmpty()) "Direct Ingestion" else sourceLinkInput.trim()
+                    val finalOrigin = originLinkInput.trim().ifEmpty { null }
+                    CommittedManager.commit(
+                        type = type,
+                        baseUrl = baseUrl,
+                        user = user,
+                        pass = pass,
+                        mac = mac,
+                        status = status,
+                        expires = expires,
+                        daysLeft = daysLeft,
+                        channels = channels,
+                        vods = vods,
+                        activeConn = activeConn,
+                        maxConn = maxConn,
+                        provider = resolvedProvider,
+                        serverTimezone = serverTimezone,
+                        notes = notes.trim(),
+                        rooms = selectedRooms.joinToString(", "),
+                        content = selectedContent.joinToString(", "),
+                        sourceLink = finalSource,
+                        originLink = finalOrigin,
+                        egressStatus = egressStatus,
+                        egressDetails = egressDetails
+                    )
+                    onCommitted()
+                }) {
+                    Text("Add Anyway")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDuplicateWarning = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+}
                         if (expires.isNotEmpty() && expires != "N/A") {
                             Text(
                                 text = "Expires: $expires ($daysLeft days left)",
                                 color = AppTextMuted,
                                 style = MaterialTheme.typography.labelSmall
                             )
-                        }
-                    }
+                        
+    if (showDuplicateWarning) {
+        AlertDialog(
+            onDismissRequest = { showDuplicateWarning = false },
+            title = { Text("Duplicate Detected") },
+            text = { Text("An exact match for this connection already exists in the Committed Data. Are you sure you want to add a duplicate?") },
+            confirmButton = {
+                TextButton(onClick = {
+                    showDuplicateWarning = false
+                    val finalSource = if (sourceLinkInput.trim().isEmpty()) "Direct Ingestion" else sourceLinkInput.trim()
+                    val finalOrigin = originLinkInput.trim().ifEmpty { null }
+                    CommittedManager.commit(
+                        type = type,
+                        baseUrl = baseUrl,
+                        user = user,
+                        pass = pass,
+                        mac = mac,
+                        status = status,
+                        expires = expires,
+                        daysLeft = daysLeft,
+                        channels = channels,
+                        vods = vods,
+                        activeConn = activeConn,
+                        maxConn = maxConn,
+                        provider = resolvedProvider,
+                        serverTimezone = serverTimezone,
+                        notes = notes.trim(),
+                        rooms = selectedRooms.joinToString(", "),
+                        content = selectedContent.joinToString(", "),
+                        sourceLink = finalSource,
+                        originLink = finalOrigin,
+                        egressStatus = egressStatus,
+                        egressDetails = egressDetails
+                    )
+                    onCommitted()
+                }) {
+                    Text("Add Anyway")
                 }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDuplicateWarning = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+}
+                    
+    if (showDuplicateWarning) {
+        AlertDialog(
+            onDismissRequest = { showDuplicateWarning = false },
+            title = { Text("Duplicate Detected") },
+            text = { Text("An exact match for this connection already exists in the Committed Data. Are you sure you want to add a duplicate?") },
+            confirmButton = {
+                TextButton(onClick = {
+                    showDuplicateWarning = false
+                    val finalSource = if (sourceLinkInput.trim().isEmpty()) "Direct Ingestion" else sourceLinkInput.trim()
+                    val finalOrigin = originLinkInput.trim().ifEmpty { null }
+                    CommittedManager.commit(
+                        type = type,
+                        baseUrl = baseUrl,
+                        user = user,
+                        pass = pass,
+                        mac = mac,
+                        status = status,
+                        expires = expires,
+                        daysLeft = daysLeft,
+                        channels = channels,
+                        vods = vods,
+                        activeConn = activeConn,
+                        maxConn = maxConn,
+                        provider = resolvedProvider,
+                        serverTimezone = serverTimezone,
+                        notes = notes.trim(),
+                        rooms = selectedRooms.joinToString(", "),
+                        content = selectedContent.joinToString(", "),
+                        sourceLink = finalSource,
+                        originLink = finalOrigin,
+                        egressStatus = egressStatus,
+                        egressDetails = egressDetails
+                    )
+                    onCommitted()
+                }) {
+                    Text("Add Anyway")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDuplicateWarning = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+}
+                
+    if (showDuplicateWarning) {
+        AlertDialog(
+            onDismissRequest = { showDuplicateWarning = false },
+            title = { Text("Duplicate Detected") },
+            text = { Text("An exact match for this connection already exists in the Committed Data. Are you sure you want to add a duplicate?") },
+            confirmButton = {
+                TextButton(onClick = {
+                    showDuplicateWarning = false
+                    val finalSource = if (sourceLinkInput.trim().isEmpty()) "Direct Ingestion" else sourceLinkInput.trim()
+                    val finalOrigin = originLinkInput.trim().ifEmpty { null }
+                    CommittedManager.commit(
+                        type = type,
+                        baseUrl = baseUrl,
+                        user = user,
+                        pass = pass,
+                        mac = mac,
+                        status = status,
+                        expires = expires,
+                        daysLeft = daysLeft,
+                        channels = channels,
+                        vods = vods,
+                        activeConn = activeConn,
+                        maxConn = maxConn,
+                        provider = resolvedProvider,
+                        serverTimezone = serverTimezone,
+                        notes = notes.trim(),
+                        rooms = selectedRooms.joinToString(", "),
+                        content = selectedContent.joinToString(", "),
+                        sourceLink = finalSource,
+                        originLink = finalOrigin,
+                        egressStatus = egressStatus,
+                        egressDetails = egressDetails
+                    )
+                    onCommitted()
+                }) {
+                    Text("Add Anyway")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDuplicateWarning = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+}
 
                 Spacer(modifier = Modifier.height(14.dp))
 
@@ -213,8 +1183,100 @@ fun CommitAccountDialog(
                             style = MaterialTheme.typography.labelSmall,
                             fontWeight = FontWeight.Bold
                         )
-                    }
+                    
+    if (showDuplicateWarning) {
+        AlertDialog(
+            onDismissRequest = { showDuplicateWarning = false },
+            title = { Text("Duplicate Detected") },
+            text = { Text("An exact match for this connection already exists in the Committed Data. Are you sure you want to add a duplicate?") },
+            confirmButton = {
+                TextButton(onClick = {
+                    showDuplicateWarning = false
+                    val finalSource = if (sourceLinkInput.trim().isEmpty()) "Direct Ingestion" else sourceLinkInput.trim()
+                    val finalOrigin = originLinkInput.trim().ifEmpty { null }
+                    CommittedManager.commit(
+                        type = type,
+                        baseUrl = baseUrl,
+                        user = user,
+                        pass = pass,
+                        mac = mac,
+                        status = status,
+                        expires = expires,
+                        daysLeft = daysLeft,
+                        channels = channels,
+                        vods = vods,
+                        activeConn = activeConn,
+                        maxConn = maxConn,
+                        provider = resolvedProvider,
+                        serverTimezone = serverTimezone,
+                        notes = notes.trim(),
+                        rooms = selectedRooms.joinToString(", "),
+                        content = selectedContent.joinToString(", "),
+                        sourceLink = finalSource,
+                        originLink = finalOrigin,
+                        egressStatus = egressStatus,
+                        egressDetails = egressDetails
+                    )
+                    onCommitted()
+                }) {
+                    Text("Add Anyway")
                 }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDuplicateWarning = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+}
+                
+    if (showDuplicateWarning) {
+        AlertDialog(
+            onDismissRequest = { showDuplicateWarning = false },
+            title = { Text("Duplicate Detected") },
+            text = { Text("An exact match for this connection already exists in the Committed Data. Are you sure you want to add a duplicate?") },
+            confirmButton = {
+                TextButton(onClick = {
+                    showDuplicateWarning = false
+                    val finalSource = if (sourceLinkInput.trim().isEmpty()) "Direct Ingestion" else sourceLinkInput.trim()
+                    val finalOrigin = originLinkInput.trim().ifEmpty { null }
+                    CommittedManager.commit(
+                        type = type,
+                        baseUrl = baseUrl,
+                        user = user,
+                        pass = pass,
+                        mac = mac,
+                        status = status,
+                        expires = expires,
+                        daysLeft = daysLeft,
+                        channels = channels,
+                        vods = vods,
+                        activeConn = activeConn,
+                        maxConn = maxConn,
+                        provider = resolvedProvider,
+                        serverTimezone = serverTimezone,
+                        notes = notes.trim(),
+                        rooms = selectedRooms.joinToString(", "),
+                        content = selectedContent.joinToString(", "),
+                        sourceLink = finalSource,
+                        originLink = finalOrigin,
+                        egressStatus = egressStatus,
+                        egressDetails = egressDetails
+                    )
+                    onCommitted()
+                }) {
+                    Text("Add Anyway")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDuplicateWarning = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+}
                 Spacer(modifier = Modifier.height(4.dp))
                 OutlinedTextField(
                     value = sourceLinkInput,
@@ -232,12 +1294,104 @@ fun CommitAccountDialog(
                                     ToastManager.info("Pasted Source Link from clipboard")
                                 } else {
                                     ToastManager.warning("Clipboard is empty")
-                                }
+                                
+    if (showDuplicateWarning) {
+        AlertDialog(
+            onDismissRequest = { showDuplicateWarning = false },
+            title = { Text("Duplicate Detected") },
+            text = { Text("An exact match for this connection already exists in the Committed Data. Are you sure you want to add a duplicate?") },
+            confirmButton = {
+                TextButton(onClick = {
+                    showDuplicateWarning = false
+                    val finalSource = if (sourceLinkInput.trim().isEmpty()) "Direct Ingestion" else sourceLinkInput.trim()
+                    val finalOrigin = originLinkInput.trim().ifEmpty { null }
+                    CommittedManager.commit(
+                        type = type,
+                        baseUrl = baseUrl,
+                        user = user,
+                        pass = pass,
+                        mac = mac,
+                        status = status,
+                        expires = expires,
+                        daysLeft = daysLeft,
+                        channels = channels,
+                        vods = vods,
+                        activeConn = activeConn,
+                        maxConn = maxConn,
+                        provider = resolvedProvider,
+                        serverTimezone = serverTimezone,
+                        notes = notes.trim(),
+                        rooms = selectedRooms.joinToString(", "),
+                        content = selectedContent.joinToString(", "),
+                        sourceLink = finalSource,
+                        originLink = finalOrigin,
+                        egressStatus = egressStatus,
+                        egressDetails = egressDetails
+                    )
+                    onCommitted()
+                }) {
+                    Text("Add Anyway")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDuplicateWarning = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+}
                             },
                             modifier = Modifier.size(24.dp)
                         ) {
                             Icon(Icons.Default.ContentPaste, contentDescription = "Paste", tint = AppPrimary, modifier = Modifier.size(16.dp))
-                        }
+                        
+    if (showDuplicateWarning) {
+        AlertDialog(
+            onDismissRequest = { showDuplicateWarning = false },
+            title = { Text("Duplicate Detected") },
+            text = { Text("An exact match for this connection already exists in the Committed Data. Are you sure you want to add a duplicate?") },
+            confirmButton = {
+                TextButton(onClick = {
+                    showDuplicateWarning = false
+                    val finalSource = if (sourceLinkInput.trim().isEmpty()) "Direct Ingestion" else sourceLinkInput.trim()
+                    val finalOrigin = originLinkInput.trim().ifEmpty { null }
+                    CommittedManager.commit(
+                        type = type,
+                        baseUrl = baseUrl,
+                        user = user,
+                        pass = pass,
+                        mac = mac,
+                        status = status,
+                        expires = expires,
+                        daysLeft = daysLeft,
+                        channels = channels,
+                        vods = vods,
+                        activeConn = activeConn,
+                        maxConn = maxConn,
+                        provider = resolvedProvider,
+                        serverTimezone = serverTimezone,
+                        notes = notes.trim(),
+                        rooms = selectedRooms.joinToString(", "),
+                        content = selectedContent.joinToString(", "),
+                        sourceLink = finalSource,
+                        originLink = finalOrigin,
+                        egressStatus = egressStatus,
+                        egressDetails = egressDetails
+                    )
+                    onCommitted()
+                }) {
+                    Text("Add Anyway")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDuplicateWarning = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+}
                     },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
@@ -273,8 +1427,100 @@ fun CommitAccountDialog(
                             style = MaterialTheme.typography.labelSmall,
                             fontWeight = FontWeight.Bold
                         )
-                    }
+                    
+    if (showDuplicateWarning) {
+        AlertDialog(
+            onDismissRequest = { showDuplicateWarning = false },
+            title = { Text("Duplicate Detected") },
+            text = { Text("An exact match for this connection already exists in the Committed Data. Are you sure you want to add a duplicate?") },
+            confirmButton = {
+                TextButton(onClick = {
+                    showDuplicateWarning = false
+                    val finalSource = if (sourceLinkInput.trim().isEmpty()) "Direct Ingestion" else sourceLinkInput.trim()
+                    val finalOrigin = originLinkInput.trim().ifEmpty { null }
+                    CommittedManager.commit(
+                        type = type,
+                        baseUrl = baseUrl,
+                        user = user,
+                        pass = pass,
+                        mac = mac,
+                        status = status,
+                        expires = expires,
+                        daysLeft = daysLeft,
+                        channels = channels,
+                        vods = vods,
+                        activeConn = activeConn,
+                        maxConn = maxConn,
+                        provider = resolvedProvider,
+                        serverTimezone = serverTimezone,
+                        notes = notes.trim(),
+                        rooms = selectedRooms.joinToString(", "),
+                        content = selectedContent.joinToString(", "),
+                        sourceLink = finalSource,
+                        originLink = finalOrigin,
+                        egressStatus = egressStatus,
+                        egressDetails = egressDetails
+                    )
+                    onCommitted()
+                }) {
+                    Text("Add Anyway")
                 }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDuplicateWarning = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+}
+                
+    if (showDuplicateWarning) {
+        AlertDialog(
+            onDismissRequest = { showDuplicateWarning = false },
+            title = { Text("Duplicate Detected") },
+            text = { Text("An exact match for this connection already exists in the Committed Data. Are you sure you want to add a duplicate?") },
+            confirmButton = {
+                TextButton(onClick = {
+                    showDuplicateWarning = false
+                    val finalSource = if (sourceLinkInput.trim().isEmpty()) "Direct Ingestion" else sourceLinkInput.trim()
+                    val finalOrigin = originLinkInput.trim().ifEmpty { null }
+                    CommittedManager.commit(
+                        type = type,
+                        baseUrl = baseUrl,
+                        user = user,
+                        pass = pass,
+                        mac = mac,
+                        status = status,
+                        expires = expires,
+                        daysLeft = daysLeft,
+                        channels = channels,
+                        vods = vods,
+                        activeConn = activeConn,
+                        maxConn = maxConn,
+                        provider = resolvedProvider,
+                        serverTimezone = serverTimezone,
+                        notes = notes.trim(),
+                        rooms = selectedRooms.joinToString(", "),
+                        content = selectedContent.joinToString(", "),
+                        sourceLink = finalSource,
+                        originLink = finalOrigin,
+                        egressStatus = egressStatus,
+                        egressDetails = egressDetails
+                    )
+                    onCommitted()
+                }) {
+                    Text("Add Anyway")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDuplicateWarning = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+}
                 Spacer(modifier = Modifier.height(4.dp))
                 OutlinedTextField(
                     value = originLinkInput,
@@ -292,12 +1538,104 @@ fun CommitAccountDialog(
                                     ToastManager.info("Pasted Origin Link from clipboard")
                                 } else {
                                     ToastManager.warning("Clipboard is empty")
-                                }
+                                
+    if (showDuplicateWarning) {
+        AlertDialog(
+            onDismissRequest = { showDuplicateWarning = false },
+            title = { Text("Duplicate Detected") },
+            text = { Text("An exact match for this connection already exists in the Committed Data. Are you sure you want to add a duplicate?") },
+            confirmButton = {
+                TextButton(onClick = {
+                    showDuplicateWarning = false
+                    val finalSource = if (sourceLinkInput.trim().isEmpty()) "Direct Ingestion" else sourceLinkInput.trim()
+                    val finalOrigin = originLinkInput.trim().ifEmpty { null }
+                    CommittedManager.commit(
+                        type = type,
+                        baseUrl = baseUrl,
+                        user = user,
+                        pass = pass,
+                        mac = mac,
+                        status = status,
+                        expires = expires,
+                        daysLeft = daysLeft,
+                        channels = channels,
+                        vods = vods,
+                        activeConn = activeConn,
+                        maxConn = maxConn,
+                        provider = resolvedProvider,
+                        serverTimezone = serverTimezone,
+                        notes = notes.trim(),
+                        rooms = selectedRooms.joinToString(", "),
+                        content = selectedContent.joinToString(", "),
+                        sourceLink = finalSource,
+                        originLink = finalOrigin,
+                        egressStatus = egressStatus,
+                        egressDetails = egressDetails
+                    )
+                    onCommitted()
+                }) {
+                    Text("Add Anyway")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDuplicateWarning = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+}
                             },
                             modifier = Modifier.size(24.dp)
                         ) {
                             Icon(Icons.Default.ContentPaste, contentDescription = "Paste", tint = Color(0xFFF59E0B), modifier = Modifier.size(16.dp))
-                        }
+                        
+    if (showDuplicateWarning) {
+        AlertDialog(
+            onDismissRequest = { showDuplicateWarning = false },
+            title = { Text("Duplicate Detected") },
+            text = { Text("An exact match for this connection already exists in the Committed Data. Are you sure you want to add a duplicate?") },
+            confirmButton = {
+                TextButton(onClick = {
+                    showDuplicateWarning = false
+                    val finalSource = if (sourceLinkInput.trim().isEmpty()) "Direct Ingestion" else sourceLinkInput.trim()
+                    val finalOrigin = originLinkInput.trim().ifEmpty { null }
+                    CommittedManager.commit(
+                        type = type,
+                        baseUrl = baseUrl,
+                        user = user,
+                        pass = pass,
+                        mac = mac,
+                        status = status,
+                        expires = expires,
+                        daysLeft = daysLeft,
+                        channels = channels,
+                        vods = vods,
+                        activeConn = activeConn,
+                        maxConn = maxConn,
+                        provider = resolvedProvider,
+                        serverTimezone = serverTimezone,
+                        notes = notes.trim(),
+                        rooms = selectedRooms.joinToString(", "),
+                        content = selectedContent.joinToString(", "),
+                        sourceLink = finalSource,
+                        originLink = finalOrigin,
+                        egressStatus = egressStatus,
+                        egressDetails = egressDetails
+                    )
+                    onCommitted()
+                }) {
+                    Text("Add Anyway")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDuplicateWarning = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+}
                     },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
@@ -346,14 +1684,106 @@ fun CommitAccountDialog(
                     label = "Rooms (Where is this used?)",
                     options = listOf("P", "LR", "MB", "MR", "M", "G", "O"),
                     selectedOptions = selectedRooms,
-                    onOptionToggled = { selectedRooms = it }
+                    onOptionToggled = { selectedRooms = it 
+    if (showDuplicateWarning) {
+        AlertDialog(
+            onDismissRequest = { showDuplicateWarning = false },
+            title = { Text("Duplicate Detected") },
+            text = { Text("An exact match for this connection already exists in the Committed Data. Are you sure you want to add a duplicate?") },
+            confirmButton = {
+                TextButton(onClick = {
+                    showDuplicateWarning = false
+                    val finalSource = if (sourceLinkInput.trim().isEmpty()) "Direct Ingestion" else sourceLinkInput.trim()
+                    val finalOrigin = originLinkInput.trim().ifEmpty { null }
+                    CommittedManager.commit(
+                        type = type,
+                        baseUrl = baseUrl,
+                        user = user,
+                        pass = pass,
+                        mac = mac,
+                        status = status,
+                        expires = expires,
+                        daysLeft = daysLeft,
+                        channels = channels,
+                        vods = vods,
+                        activeConn = activeConn,
+                        maxConn = maxConn,
+                        provider = resolvedProvider,
+                        serverTimezone = serverTimezone,
+                        notes = notes.trim(),
+                        rooms = selectedRooms.joinToString(", "),
+                        content = selectedContent.joinToString(", "),
+                        sourceLink = finalSource,
+                        originLink = finalOrigin,
+                        egressStatus = egressStatus,
+                        egressDetails = egressDetails
+                    )
+                    onCommitted()
+                }) {
+                    Text("Add Anyway")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDuplicateWarning = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+}
                 )
                 
                 MultiSelectToggles(
                     label = "Content Type",
                     options = listOf("NFL", "Pak", "A", "Philly", "S"),
                     selectedOptions = selectedContent,
-                    onOptionToggled = { selectedContent = it }
+                    onOptionToggled = { selectedContent = it 
+    if (showDuplicateWarning) {
+        AlertDialog(
+            onDismissRequest = { showDuplicateWarning = false },
+            title = { Text("Duplicate Detected") },
+            text = { Text("An exact match for this connection already exists in the Committed Data. Are you sure you want to add a duplicate?") },
+            confirmButton = {
+                TextButton(onClick = {
+                    showDuplicateWarning = false
+                    val finalSource = if (sourceLinkInput.trim().isEmpty()) "Direct Ingestion" else sourceLinkInput.trim()
+                    val finalOrigin = originLinkInput.trim().ifEmpty { null }
+                    CommittedManager.commit(
+                        type = type,
+                        baseUrl = baseUrl,
+                        user = user,
+                        pass = pass,
+                        mac = mac,
+                        status = status,
+                        expires = expires,
+                        daysLeft = daysLeft,
+                        channels = channels,
+                        vods = vods,
+                        activeConn = activeConn,
+                        maxConn = maxConn,
+                        provider = resolvedProvider,
+                        serverTimezone = serverTimezone,
+                        notes = notes.trim(),
+                        rooms = selectedRooms.joinToString(", "),
+                        content = selectedContent.joinToString(", "),
+                        sourceLink = finalSource,
+                        originLink = finalOrigin,
+                        egressStatus = egressStatus,
+                        egressDetails = egressDetails
+                    )
+                    onCommitted()
+                }) {
+                    Text("Add Anyway")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDuplicateWarning = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+}
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
@@ -384,7 +1814,53 @@ fun CommitAccountDialog(
                         onClick = {
                             rootFocusManager.clearFocus()
                             val finalSource = if (sourceLinkInput.trim().isEmpty()) "Direct Ingestion" else sourceLinkInput.trim()
-                            val finalOrigin = originLinkInput.trim().ifEmpty { null }
+                            val finalOrigin = originLinkInput.trim().ifEmpty { null 
+    if (showDuplicateWarning) {
+        AlertDialog(
+            onDismissRequest = { showDuplicateWarning = false },
+            title = { Text("Duplicate Detected") },
+            text = { Text("An exact match for this connection already exists in the Committed Data. Are you sure you want to add a duplicate?") },
+            confirmButton = {
+                TextButton(onClick = {
+                    showDuplicateWarning = false
+                    val finalSource = if (sourceLinkInput.trim().isEmpty()) "Direct Ingestion" else sourceLinkInput.trim()
+                    val finalOrigin = originLinkInput.trim().ifEmpty { null }
+                    CommittedManager.commit(
+                        type = type,
+                        baseUrl = baseUrl,
+                        user = user,
+                        pass = pass,
+                        mac = mac,
+                        status = status,
+                        expires = expires,
+                        daysLeft = daysLeft,
+                        channels = channels,
+                        vods = vods,
+                        activeConn = activeConn,
+                        maxConn = maxConn,
+                        provider = resolvedProvider,
+                        serverTimezone = serverTimezone,
+                        notes = notes.trim(),
+                        rooms = selectedRooms.joinToString(", "),
+                        content = selectedContent.joinToString(", "),
+                        sourceLink = finalSource,
+                        originLink = finalOrigin,
+                        egressStatus = egressStatus,
+                        egressDetails = egressDetails
+                    )
+                    onCommitted()
+                }) {
+                    Text("Add Anyway")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDuplicateWarning = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+}
                             CommittedManager.commit(
                                 type = type,
                                 baseUrl = baseUrl,
@@ -413,8 +1889,238 @@ fun CommitAccountDialog(
                         },
                         modifier = Modifier.weight(1f).height(44.dp)
                     )
+                
+    if (showDuplicateWarning) {
+        AlertDialog(
+            onDismissRequest = { showDuplicateWarning = false },
+            title = { Text("Duplicate Detected") },
+            text = { Text("An exact match for this connection already exists in the Committed Data. Are you sure you want to add a duplicate?") },
+            confirmButton = {
+                TextButton(onClick = {
+                    showDuplicateWarning = false
+                    val finalSource = if (sourceLinkInput.trim().isEmpty()) "Direct Ingestion" else sourceLinkInput.trim()
+                    val finalOrigin = originLinkInput.trim().ifEmpty { null }
+                    CommittedManager.commit(
+                        type = type,
+                        baseUrl = baseUrl,
+                        user = user,
+                        pass = pass,
+                        mac = mac,
+                        status = status,
+                        expires = expires,
+                        daysLeft = daysLeft,
+                        channels = channels,
+                        vods = vods,
+                        activeConn = activeConn,
+                        maxConn = maxConn,
+                        provider = resolvedProvider,
+                        serverTimezone = serverTimezone,
+                        notes = notes.trim(),
+                        rooms = selectedRooms.joinToString(", "),
+                        content = selectedContent.joinToString(", "),
+                        sourceLink = finalSource,
+                        originLink = finalOrigin,
+                        egressStatus = egressStatus,
+                        egressDetails = egressDetails
+                    )
+                    onCommitted()
+                }) {
+                    Text("Add Anyway")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDuplicateWarning = false }) {
+                    Text("Cancel")
                 }
             }
-        }
+        )
+    }
+}
+            
+    if (showDuplicateWarning) {
+        AlertDialog(
+            onDismissRequest = { showDuplicateWarning = false },
+            title = { Text("Duplicate Detected") },
+            text = { Text("An exact match for this connection already exists in the Committed Data. Are you sure you want to add a duplicate?") },
+            confirmButton = {
+                TextButton(onClick = {
+                    showDuplicateWarning = false
+                    val finalSource = if (sourceLinkInput.trim().isEmpty()) "Direct Ingestion" else sourceLinkInput.trim()
+                    val finalOrigin = originLinkInput.trim().ifEmpty { null }
+                    CommittedManager.commit(
+                        type = type,
+                        baseUrl = baseUrl,
+                        user = user,
+                        pass = pass,
+                        mac = mac,
+                        status = status,
+                        expires = expires,
+                        daysLeft = daysLeft,
+                        channels = channels,
+                        vods = vods,
+                        activeConn = activeConn,
+                        maxConn = maxConn,
+                        provider = resolvedProvider,
+                        serverTimezone = serverTimezone,
+                        notes = notes.trim(),
+                        rooms = selectedRooms.joinToString(", "),
+                        content = selectedContent.joinToString(", "),
+                        sourceLink = finalSource,
+                        originLink = finalOrigin,
+                        egressStatus = egressStatus,
+                        egressDetails = egressDetails
+                    )
+                    onCommitted()
+                }) {
+                    Text("Add Anyway")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDuplicateWarning = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+}
+        
+    if (showDuplicateWarning) {
+        AlertDialog(
+            onDismissRequest = { showDuplicateWarning = false },
+            title = { Text("Duplicate Detected") },
+            text = { Text("An exact match for this connection already exists in the Committed Data. Are you sure you want to add a duplicate?") },
+            confirmButton = {
+                TextButton(onClick = {
+                    showDuplicateWarning = false
+                    val finalSource = if (sourceLinkInput.trim().isEmpty()) "Direct Ingestion" else sourceLinkInput.trim()
+                    val finalOrigin = originLinkInput.trim().ifEmpty { null }
+                    CommittedManager.commit(
+                        type = type,
+                        baseUrl = baseUrl,
+                        user = user,
+                        pass = pass,
+                        mac = mac,
+                        status = status,
+                        expires = expires,
+                        daysLeft = daysLeft,
+                        channels = channels,
+                        vods = vods,
+                        activeConn = activeConn,
+                        maxConn = maxConn,
+                        provider = resolvedProvider,
+                        serverTimezone = serverTimezone,
+                        notes = notes.trim(),
+                        rooms = selectedRooms.joinToString(", "),
+                        content = selectedContent.joinToString(", "),
+                        sourceLink = finalSource,
+                        originLink = finalOrigin,
+                        egressStatus = egressStatus,
+                        egressDetails = egressDetails
+                    )
+                    onCommitted()
+                }) {
+                    Text("Add Anyway")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDuplicateWarning = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+}
+    
+    if (showDuplicateWarning) {
+        AlertDialog(
+            onDismissRequest = { showDuplicateWarning = false },
+            title = { Text("Duplicate Detected") },
+            text = { Text("An exact match for this connection already exists in the Committed Data. Are you sure you want to add a duplicate?") },
+            confirmButton = {
+                TextButton(onClick = {
+                    showDuplicateWarning = false
+                    val finalSource = if (sourceLinkInput.trim().isEmpty()) "Direct Ingestion" else sourceLinkInput.trim()
+                    val finalOrigin = originLinkInput.trim().ifEmpty { null }
+                    CommittedManager.commit(
+                        type = type,
+                        baseUrl = baseUrl,
+                        user = user,
+                        pass = pass,
+                        mac = mac,
+                        status = status,
+                        expires = expires,
+                        daysLeft = daysLeft,
+                        channels = channels,
+                        vods = vods,
+                        activeConn = activeConn,
+                        maxConn = maxConn,
+                        provider = resolvedProvider,
+                        serverTimezone = serverTimezone,
+                        notes = notes.trim(),
+                        rooms = selectedRooms.joinToString(", "),
+                        content = selectedContent.joinToString(", "),
+                        sourceLink = finalSource,
+                        originLink = finalOrigin,
+                        egressStatus = egressStatus,
+                        egressDetails = egressDetails
+                    )
+                    onCommitted()
+                }) {
+                    Text("Add Anyway")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDuplicateWarning = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+}
+
+    if (showDuplicateWarning) {
+        AlertDialog(
+            onDismissRequest = { showDuplicateWarning = false },
+            title = { Text("Duplicate Detected") },
+            text = { Text("An exact match for this connection already exists in the Committed Data. Are you sure you want to add a duplicate?") },
+            confirmButton = {
+                TextButton(onClick = {
+                    showDuplicateWarning = false
+                    val finalSource = if (sourceLinkInput.trim().isEmpty()) "Direct Ingestion" else sourceLinkInput.trim()
+                    val finalOrigin = originLinkInput.trim().ifEmpty { null }
+                    CommittedManager.commit(
+                        type = type,
+                        baseUrl = baseUrl,
+                        user = user,
+                        pass = pass,
+                        mac = mac,
+                        status = status,
+                        expires = expires,
+                        daysLeft = daysLeft,
+                        channels = channels,
+                        vods = vods,
+                        activeConn = activeConn,
+                        maxConn = maxConn,
+                        provider = resolvedProvider,
+                        serverTimezone = serverTimezone,
+                        notes = notes.trim(),
+                        rooms = selectedRooms.joinToString(", "),
+                        content = selectedContent.joinToString(", "),
+                        sourceLink = finalSource,
+                        originLink = finalOrigin,
+                        egressStatus = egressStatus,
+                        egressDetails = egressDetails
+                    )
+                    onCommitted()
+                }) {
+                    Text("Add Anyway")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDuplicateWarning = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
     }
 }

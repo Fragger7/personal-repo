@@ -57,6 +57,7 @@ class MainActivity : ComponentActivity() {
         )
         ToastManager.init(applicationContext)
         CommittedManager.init(applicationContext)
+        com.projectstrong.iptv.data.ArchiveManager.init(applicationContext)
         com.projectstrong.iptv.data.SettingsManager.init(applicationContext)
         com.projectstrong.iptv.data.ProviderIntelligenceManager.init(applicationContext)
 
@@ -164,14 +165,16 @@ fun MainDashboard() {
     val xtreamNodesCount = DataStore.scannedNodes.count { it.type == "Xtream" }
     val stalkerNodesCount = DataStore.scannedNodes.count { it.type == "Stalker" }
     val activeNodesCount = DataStore.scannedNodes.count { it.status.contains("Active", true) }
+
     val committedCount = CommittedManager.records.size
-    
+    val archivedCount = com.projectstrong.iptv.data.ArchiveManager.records.size
     val tabItems = listOf(
         TabItem("Base64", 0, Icons.Default.Code),
         TabItem("Scanner", 0, Icons.Default.Sensors),
         TabItem("Xtream", xtreamNodesCount, Icons.Default.LiveTv),
         TabItem("Stalker", stalkerNodesCount, Icons.Default.Dns),
         TabItem("Committed", committedCount, Icons.Default.FolderSpecial),
+        TabItem("Archive", archivedCount, Icons.Default.Archive),
         TabItem("Analytics", 0, Icons.Default.Analytics)
     )
 
@@ -428,7 +431,8 @@ fun MainDashboard() {
                 2 -> com.projectstrong.iptv.ui.tabs.XtreamTab(onNextTab = { selectedTab = 3 })
                 3 -> com.projectstrong.iptv.ui.tabs.StalkerTab(onNextTab = { selectedTab = 4 })
                 4 -> com.projectstrong.iptv.ui.tabs.CommittedTab()
-                5 -> com.projectstrong.iptv.ui.tabs.AnalyticsTab(onNavigateToCommitted = { selectedTab = 4 })
+                5 -> com.projectstrong.iptv.ui.tabs.ArchiveTab()
+                6 -> com.projectstrong.iptv.ui.tabs.AnalyticsTab(onNavigateToCommitted = { selectedTab = 4 })
             }
         }
     }
