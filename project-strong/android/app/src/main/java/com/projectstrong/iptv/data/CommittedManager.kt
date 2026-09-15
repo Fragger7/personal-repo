@@ -208,9 +208,9 @@ object CommittedManager {
             val typeMatches = it.type?.contains(type, ignoreCase = true) == true || type.contains(it.type ?: "", ignoreCase = true)
             if (!typeMatches) false
             else if (type.contains("Stalker", ignoreCase = true)) {
-                it.host == cleanBaseUrl && it.mac == cleanMac
+                it.safeBaseUrl == cleanBaseUrl && it.safeMac == cleanMac
             } else {
-                it.host == cleanBaseUrl && it.username == cleanUser && it.password == pass
+                it.safeBaseUrl == cleanBaseUrl && it.safeUser == cleanUser && it.safePass == pass
             }
         }
     }

@@ -29,97 +29,6 @@ import java.util.Date
 import java.util.Locale
 
 @androidx.annotation.Keep
-data class CommittedRecord(
-    @SerializedName("type") val type: String? = "Unknown",
-    @SerializedName("base_url") val baseUrl: String? = "",
-    @SerializedName("username") val user: String? = "",
-    @SerializedName("password") val pass: String? = "",
-    @SerializedName("mac") val mac: String? = "",
-    @SerializedName("Status") val status: String? = "🟢 Active",
-    @SerializedName("Expires") val expires: String? = "",
-    @SerializedName("Days Left") val daysLeft: Any? = null,
-    @SerializedName("Channels") val channels: Any? = null,
-    @SerializedName("VODs") val vods: Any? = null,
-    @SerializedName("Active Conns") val activeConn: Any? = null,
-    @SerializedName("Max Conns") val maxConn: Any? = null,
-    @SerializedName("Provider") val provider: String? = "Unknown",
-    @SerializedName("Server Timezone") val serverTimezone: String? = "",
-    @SerializedName("Server Time") val serverTime: String? = "",
-    @SerializedName("M3U Link") val m3uLink: String? = "",
-    @SerializedName("Source") val source: String? = "",
-    @SerializedName("Source Link") val sourceLink: String? = "Direct Ingestion",
-    @SerializedName("Origin Link", alternate = ["origin_link", "Origin", "origin", "Origin URL", "origin_url"]) val originLink: String? = null,
-    @SerializedName("source_archive_file") val sourceArchiveFile: String? = null,
-    @SerializedName("egress_status", alternate = ["Egress Status", "egressStatus", "stream_status", "Stream Status"]) val egressStatus: String? = null,
-    @SerializedName("egress_details", alternate = ["Egress Details", "egressDetails", "stream_details"]) val egressDetails: String? = null,
-    @SerializedName("Notes") val notes: String? = "",
-    @SerializedName("Rooms") val rooms: String? = "",
-    @SerializedName("Content") val content: String? = "",
-    @SerializedName("Date Selected") val dateAdded: String? = null,
-    @SerializedName("isLocalOnly") val isLocalOnly: Boolean? = false
-) {
-    val safeType get() = type ?: source ?: "Unknown"
-    val safeBaseUrl get() = baseUrl ?: ""
-    val safeUser get() = user ?: ""
-    val safePass get() = pass ?: ""
-    val safeMac get() = mac ?: ""
-    val safeStatus get() = status ?: "🟢 Active"
-    val safeExpires get() = expires ?: ""
-    val safeDaysLeft get() = daysLeft?.toString() ?: ""
-    val safeChannels get() = channels?.toString() ?: ""
-    val safeVods get() = vods?.toString() ?: ""
-    val safeActiveConn get() = activeConn?.toString() ?: ""
-    val safeMaxConn get() = maxConn?.toString() ?: ""
-    val safeSourceLink get() = if (sourceLink.isNullOrBlank()) "Direct Ingestion" else sourceLink
-    val safeOriginLink get() = originLink ?: ""
-    val hasOrigin get() = safeOriginLink.isNotBlank() && (safeOriginLink.startsWith("http://") || safeOriginLink.startsWith("https://"))
-    val safeSourceArchiveFile get() = sourceArchiveFile ?: ""
-    val safeEgressStatus get() = egressStatus ?: "Unchecked"
-    val safeEgressDetails get() = egressDetails ?: ""
-    val safeProvider: String
-        get() {
-            if (!provider.isNullOrEmpty() && provider != "Unknown" && provider != "Unbranded") {
-                if (ProviderIntelligenceManager.isDemonymOrCountry(provider)) {
-                    val intel = ProviderIntelligenceManager.getProfile(safeBaseUrl)
-                    if (intel != null && intel.isIdentified) {
-                        return intel.cleanBrand
-                    }
-                    return try {
-                        val uri = java.net.URI(safeBaseUrl)
-                        uri.host ?: "Unbranded"
-                    } catch (e: Exception) {
-                        "Unbranded"
-                    }
-                }
-                return provider
-            }
-            val intel = ProviderIntelligenceManager.getProfile(safeBaseUrl)
-            if (intel != null && intel.isIdentified) {
-                return intel.cleanBrand
-            }
-            return try {
-                val uri = java.net.URI(safeBaseUrl)
-                uri.host ?: "Unknown"
-            } catch (e: Exception) {
-                "Unknown"
-            }
-        }
-    val safeRegionalFocus: String?
-        get() {
-            if (!provider.isNullOrEmpty() && ProviderIntelligenceManager.isDemonymOrCountry(provider)) {
-                return ProviderIntelligenceManager.getRegionalFocusFor(provider)
-            }
-            val intel = ProviderIntelligenceManager.getProfile(safeBaseUrl)
-            return intel?.safeRegionalFocus
-        }
-    val safeTimezone get() = serverTimezone ?: ""
-    val safeNotes get() = notes ?: ""
-    val safeRooms get() = rooms ?: ""
-    val safeContent get() = content ?: ""
-    val safeDateAdded get() = dateAdded ?: ""
-    val isLocal get() = isLocalOnly == true
-}
-
 object ArchiveManager {
     val records = mutableStateListOf<CommittedRecord>()
     private lateinit var file: File
@@ -208,9 +117,9 @@ object ArchiveManager {
             val typeMatches = it.type?.contains(type, ignoreCase = true) == true || type.contains(it.type ?: "", ignoreCase = true)
             if (!typeMatches) false
             else if (type.contains("Stalker", ignoreCase = true)) {
-                it.host == cleanBaseUrl && it.mac == cleanMac
+                it.safeBaseUrl == cleanBaseUrl && it.safeMac == cleanMac
             } else {
-                it.host == cleanBaseUrl && it.username == cleanUser && it.password == pass
+                it.safeBaseUrl == cleanBaseUrl && it.safeUser == cleanUser && it.safePass == pass
             }
         }
     }
