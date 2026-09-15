@@ -215,15 +215,14 @@ object ArchiveManager {
         }
     }
 
-    
     fun addRecord(record: CommittedRecord) {
-        val cleanRecord = record.copy(isLocal = false)
-        if (!records.any { it.host == cleanRecord.host && it.username == cleanRecord.username && it.mac == cleanRecord.mac }) {
+        val cleanRecord = record.copy(isLocalOnly = true)
+        if (!records.any { it.safeBaseUrl == cleanRecord.safeBaseUrl && it.safeUser == cleanRecord.safeUser && it.safeMac == cleanRecord.safeMac }) {
             records.add(0, cleanRecord)
-            saveLocalOnly()
-            pushToCloud()
+            save()
         }
     }
+
 
     fun commit(
 
