@@ -265,6 +265,9 @@ Remove-Item -Recurse -Force "C:\Development\Apps\Project Strong\personal-repo-te
 | **Regional Bouquet & Demonym Filter Engine** | `ProviderIntelligence.kt`, `ProviderIntelligenceCard.kt`, `CommittedManager.kt`, `sync_provider_intel.py`, `app.py`, 30+ regional dictionaries, `regionalFocus` metadata, `🌍 Regional Bouquet` UI badge | 🟢 **Verified & Live** |
 | **Committed Filter Store & Nested Multi-Select** | `FilterDropdown.kt`, `CommittedFilterStore`, dynamic derived dropdown subsets | 🟢 **Verified & Live** |
 | **Operational Intelligence Analytics Dashboard** | `AnalyticsTab.kt`, `SegmentedProgressBar`, Canvas pie charts, interactive deep-linking | 🟢 **Verified & Live** |
+| **Atomic Git Sync Architecture & Conflict Mutex Locks** | `CommittedManager.kt`, `ArchiveManager.kt`, `cloudMutex`, union merges, background pull hooks | 🟢 **Verified & Live** |
+| **Archived Favorites Vault & Bi-Directional Transit** | `ArchiveTab.kt`, `ArchiveManager.kt`, 1-click archiving & restoring, independent `.json` lifecycle | 🟢 **Verified & Live** |
+| **Master Grid Scroll & State Memory Persistence** | `CommittedTab.kt`, `ArchiveTab.kt`, `rememberLazyListState` restoration, `Type` column realignment | 🟢 **Verified & Live** |
 
 ---
 
