@@ -32,38 +32,6 @@
     "time_left": null
   },
   {
-    "id": "ebay_407210105763",
-    "source": "ebay",
-    "title": "Dell Precision 5570 i7-12800H 32GB DDR5 1TB SSD RTX A1000 UHD+ 4K Touch Win11ProOpens in a new window or tab",
-    "price": 649.99,
-    "url": "https://www.ebay.com/itm/407210105763",
-    "specs": {
-      "cpu": "I7-12800H",
-      "ram_gb": 32,
-      "ssd_gb": 1024,
-      "gpu": "NVIDIA RTX A1000",
-      "screen": "16\" 4K UHD+ Display",
-      "condition": "Used / Refurbished"
-    },
-    "fair_market_value": 900.0,
-    "estimated_profit": 250.01,
-    "arbitrage_margin_pct": 38.5,
-    "deal_score": 7.2,
-    "summary": "Opportunistic target priced at $650 with +$196 margin spread. Configured with I7-12800H, 32GB RAM, 1024GB SSD, and NVIDIA RTX A1000. Excellent daily driver for full-stack engineering, multi-container development, and data analysis.",
-    "actionable_recommendation": "PASS / NO ARBITRAGE (Exceeds Strike Ceiling)",
-    "confidence_score": 0.95,
-    "seller": "eBay Seller",
-    "location": "US",
-    "created_utc": "2026-09-16T17:08:46.907881+00:00",
-    "evaluated_at": "2026-09-16T17:09:29.941938+00:00",
-    "alerted": false,
-    "is_high_yield": false,
-    "raw_payload": null,
-    "is_auction": false,
-    "bid_count": null,
-    "time_left": null
-  },
-  {
     "id": "microcenter_7_183563",
     "source": "microcenter",
     "title": "Micro Center Clearance: Open Boxes: LG gram Book 15: 15\" FHD IPS Touch, Intel Ultra 5 115U, 32GB LPDDR5, 512GB SSD $546.99",
