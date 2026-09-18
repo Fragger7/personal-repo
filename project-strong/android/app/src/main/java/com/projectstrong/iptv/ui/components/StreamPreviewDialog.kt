@@ -7,6 +7,8 @@ import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.net.Uri
 import android.view.ViewGroup
+import android.view.WindowManager
+
 import android.widget.FrameLayout
 import androidx.annotation.OptIn
 import androidx.compose.animation.*
@@ -39,10 +41,6 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import androidx.compose.ui.window.DialogWindowProvider
-import androidx.core.view.WindowCompat
-import androidx.core.view.WindowInsetsCompat
-import androidx.core.view.WindowInsetsControllerCompat
 import com.projectstrong.iptv.ui.theme.*
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
@@ -58,11 +56,6 @@ import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
 import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
-import androidx.media3.cast.CastPlayer
-import androidx.media3.cast.SessionAvailabilityListener
-import androidx.mediarouter.app.MediaRouteButton
-import com.google.android.gms.cast.framework.CastButtonFactory
-import com.google.android.gms.cast.framework.CastContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import okhttp3.OkHttpClient
@@ -200,57 +193,19 @@ fun StreamPreviewDialog(
             }
     }
 
-    var castPlayer by remember { mutableStateOf<CastPlayer?>(null) }
-    var isCasting by remember { mutableStateOf(false) }
 
-    DisposableEffect(context) {
-        var localCastPlayer: CastPlayer? = null
-        try {
-            val castContext = CastContext.getSharedInstance(context)
-            localCastPlayer = CastPlayer(castContext)
-            castPlayer = localCastPlayer
-        } catch (e: Exception) {
-            // GMS / Cast not available
-        }
-        onDispose {
-            localCastPlayer?.release()
-        }
-    }
-
-    DisposableEffect(castPlayer, exoPlayer) {
-        val listener = object : SessionAvailabilityListener {
-            override fun onCastSessionAvailable() {
-                isCasting = true
-                val currentPosition = exoPlayer.currentPosition
-                exoPlayer.stop()
-                castPlayer?.setMediaItem(MediaItem.fromUri(Uri.parse(streamUrl)))
-                castPlayer?.seekTo(currentPosition)
-                castPlayer?.prepare()
-                castPlayer?.play()
-            }
-            override fun onCastSessionUnavailable() {
-                isCasting = false
-                val currentPosition = castPlayer?.currentPosition ?: 0L
-                castPlayer?.stop()
-                exoPlayer.seekTo(currentPosition)
-                exoPlayer.prepare()
-                exoPlayer.play()
-            }
-        }
-        castPlayer?.setSessionAvailabilityListener(listener)
-        onDispose {
-            castPlayer?.setSessionAvailabilityListener(null)
-        }
-    }
-
-    val activePlayer: Player = if (isCasting) (castPlayer ?: exoPlayer) else exoPlayer
-
-    // Fullscreen Screen Orientation & Immersive UI Sync
     val activity = remember(context) { context.findActivity() }
-    val view = androidx.compose.ui.platform.LocalView.current
-    val dialogWindow = (view.parent as? DialogWindowProvider)?.window
+    // Keep Screen On while previewing stream
+    val window = activity?.window
+    DisposableEffect(Unit) {
+        window?.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        onDispose {
+            window?.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        }
+    }
 
-    DisposableEffect(isFullScreen, activity, dialogWindow) {
+    // Fullscreen Screen Orientation Sync
+    DisposableEffect(isFullScreen) {
         if (activity != null) {
             if (isFullScreen) {
                 activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
@@ -258,97 +213,40 @@ fun StreamPreviewDialog(
                 activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
             }
         }
-        
-        if (dialogWindow != null) {
-            // Force dialog to draw edge-to-edge ignoring system limits and cutouts
-            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P) {
-                dialogWindow.attributes = dialogWindow.attributes.apply {
-                    layoutInDisplayCutoutMode = android.view.WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
-                }
-            }
-            dialogWindow.setLayout(android.view.ViewGroup.LayoutParams.MATCH_PARENT, android.view.ViewGroup.LayoutParams.MATCH_PARENT)
-            dialogWindow.setBackgroundDrawable(android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT))
-            
-            // Keep screen on while playing
-            dialogWindow.addFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-            
-            // Absolutely force edge to edge drawing
-            WindowCompat.setDecorFitsSystemWindows(dialogWindow, false)
-            
-            val insetsController = WindowCompat.getInsetsController(dialogWindow, view)
-            if (isFullScreen) {
-                // Hardcore fullscreen flags to prevent any system UI peeking
-                dialogWindow.addFlags(android.view.WindowManager.LayoutParams.FLAG_FULLSCREEN)
-                dialogWindow.addFlags(android.view.WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS)
-                insetsController.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
-                insetsController.hide(WindowInsetsCompat.Type.systemBars())
-                
-                // Also apply to activity window as a fallback
-                activity?.window?.let { actWin ->
-                    WindowCompat.setDecorFitsSystemWindows(actWin, false)
-                    val actInsetsController = WindowCompat.getInsetsController(actWin, actWin.decorView)
-                    actInsetsController.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
-                    actInsetsController.hide(WindowInsetsCompat.Type.systemBars())
-                }
-            } else {
-                dialogWindow.clearFlags(android.view.WindowManager.LayoutParams.FLAG_FULLSCREEN)
-                dialogWindow.clearFlags(android.view.WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS)
-                insetsController.show(WindowInsetsCompat.Type.systemBars())
-                
-                activity?.window?.let { actWin ->
-                    WindowCompat.setDecorFitsSystemWindows(actWin, true)
-                    val actInsetsController = WindowCompat.getInsetsController(actWin, actWin.decorView)
-                    actInsetsController.show(WindowInsetsCompat.Type.systemBars())
-                }
-            }
-        }
-        
         onDispose {
             activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
-            if (dialogWindow != null) {
-                dialogWindow.clearFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-                val insetsController = WindowCompat.getInsetsController(dialogWindow, view)
-                insetsController.show(WindowInsetsCompat.Type.systemBars())
-            }
-            activity?.window?.let { actWin ->
-                WindowCompat.setDecorFitsSystemWindows(actWin, true)
-                val actInsetsController = WindowCompat.getInsetsController(actWin, actWin.decorView)
-                actInsetsController.show(WindowInsetsCompat.Type.systemBars())
-            }
         }
     }
 
     // Real-Time Polling for Bitrate, Buffer, Duration, and Position
-    LaunchedEffect(activePlayer) {
+    LaunchedEffect(exoPlayer) {
         while (isActive) {
             delay(500)
-            if (activePlayer.playbackState == Player.STATE_READY) {
+            if (exoPlayer.playbackState == Player.STATE_READY) {
                 // Buffer Health
-                val bufferedPosition = activePlayer.bufferedPosition
-                val currentPosition = activePlayer.currentPosition
+                val bufferedPosition = exoPlayer.bufferedPosition
+                val currentPosition = exoPlayer.currentPosition
                 val bufferDuration = (bufferedPosition - currentPosition).coerceAtLeast(0)
                 bufferHealthSeconds = bufferDuration / 1000f
 
                 if (!isUserScrubbing) {
                     currentPositionMs = currentPosition
                 }
-                val dur = activePlayer.duration
+                val dur = exoPlayer.duration
                 if (dur > 0 && dur != C.TIME_UNSET) {
                     durationMs = dur
-                    isLiveStream = activePlayer.isCurrentMediaItemLive
+                    isLiveStream = exoPlayer.isCurrentMediaItemLive
                 } else {
                     isLiveStream = true
                 }
 
                 // Real-time track format bitrate estimation
-                val videoFormat = if (activePlayer is androidx.media3.exoplayer.ExoPlayer) {
-                    (activePlayer as androidx.media3.exoplayer.ExoPlayer).videoFormat
-                } else null
+                val videoFormat = exoPlayer.videoFormat
                 if (videoFormat != null && videoFormat.bitrate > 0) {
                     currentBitrateKbps = (videoFormat.bitrate / 1000).toLong()
-                } else if (activePlayer.playbackParameters.speed > 0) {
-                    val w = activePlayer.videoSize.width
-                    val h = activePlayer.videoSize.height
+                } else if (exoPlayer.playbackParameters.speed > 0) {
+                    val w = exoPlayer.videoSize.width
+                    val h = exoPlayer.videoSize.height
                     if (w > 0 && h > 0) {
                         currentBitrateKbps = ((w * h * 30 * 0.07) / 1000).toLong()
                     }
@@ -357,16 +255,8 @@ fun StreamPreviewDialog(
         }
     }
 
-    // Lifecycle for ExoPlayer
-    DisposableEffect(exoPlayer) {
-        onDispose {
-            exoPlayer.stop()
-            exoPlayer.release()
-        }
-    }
-
     // Monitor Latency & Playback Events
-    DisposableEffect(streamUrl, activePlayer) {
+    DisposableEffect(streamUrl) {
         val startTime = System.currentTimeMillis()
 
         val listener = object : Player.Listener {
@@ -459,19 +349,16 @@ fun StreamPreviewDialog(
             }
         }
 
-        activePlayer.addListener(listener)
-        
-        if (!isCasting) {
-            val mediaItem = MediaItem.fromUri(Uri.parse(streamUrl))
-            activePlayer.setMediaItem(mediaItem)
-            activePlayer.prepare()
-        }
+        exoPlayer.addListener(listener)
+
+        val mediaItem = MediaItem.fromUri(Uri.parse(streamUrl))
+        exoPlayer.setMediaItem(mediaItem)
+        exoPlayer.prepare()
 
         onDispose {
-            activePlayer.removeListener(listener)
-            if (!isCasting) {
-                activePlayer.stop()
-            }
+            exoPlayer.removeListener(listener)
+            exoPlayer.stop()
+            exoPlayer.release()
         }
     }
 
@@ -633,7 +520,7 @@ fun StreamPreviewDialog(
                     AndroidView(
                         factory = { ctx ->
                             PlayerView(ctx).apply {
-                                player = activePlayer
+                                player = exoPlayer
                                 useController = false
                                 this.resizeMode = resizeMode
                                 layoutParams = FrameLayout.LayoutParams(
@@ -643,7 +530,6 @@ fun StreamPreviewDialog(
                             }
                         },
                         update = { view ->
-                            view.player = activePlayer
                             view.resizeMode = resizeMode
                         },
                         modifier = Modifier.fillMaxSize()
@@ -713,8 +599,8 @@ fun StreamPreviewDialog(
                                     onClick = {
                                         errorMessage = null
                                         playStatus = StreamPlayStatus.CONNECTING
-                                        activePlayer.prepare()
-                                        activePlayer.play()
+                                        exoPlayer.prepare()
+                                        exoPlayer.play()
                                     },
                                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1E293B)),
                                     shape = RoundedCornerShape(8.dp)
@@ -810,7 +696,7 @@ fun StreamPreviewDialog(
                                             controlsInteractionTrigger = System.currentTimeMillis()
                                         },
                                         onValueChangeFinished = {
-                                            activePlayer.seekTo(scrubPositionMs.toLong())
+                                            exoPlayer.seekTo(scrubPositionMs.toLong())
                                             isUserScrubbing = false
                                             controlsInteractionTrigger = System.currentTimeMillis()
                                         },
@@ -848,7 +734,7 @@ fun StreamPreviewDialog(
                                         tint = if (isPlaying) Color.White else Color(0xFF34D399),
                                         onClick = {
                                             controlsInteractionTrigger = System.currentTimeMillis()
-                                            if (isPlaying) activePlayer.pause() else activePlayer.play()
+                                            if (isPlaying) exoPlayer.pause() else exoPlayer.play()
                                         }
                                     )
 
@@ -859,7 +745,7 @@ fun StreamPreviewDialog(
                                         onClick = {
                                             controlsInteractionTrigger = System.currentTimeMillis()
                                             isMuted = !isMuted
-                                            activePlayer.volume = if (isMuted) 0f else 1f
+                                            exoPlayer.volume = if (isMuted) 0f else 1f
                                         }
                                     )
 
@@ -888,8 +774,8 @@ fun StreamPreviewDialog(
                                         tint = Color(0xFF34D399),
                                         onClick = {
                                             controlsInteractionTrigger = System.currentTimeMillis()
-                                            activePlayer.seekToDefaultPosition()
-                                            activePlayer.play()
+                                            exoPlayer.seekToDefaultPosition()
+                                            exoPlayer.play()
                                         }
                                     )
                                 }
@@ -909,40 +795,6 @@ fun StreamPreviewDialog(
                                             showCopiedToast = true
                                         }
                                     )
-
-                                    if (castPlayer != null) {
-                                        Surface(
-                                            shape = RoundedCornerShape(6.dp),
-                                            color = Color(0xFF1E293B).copy(alpha = 0.6f)
-                                        ) {
-                                            Column(
-                                                horizontalAlignment = Alignment.CenterHorizontally,
-                                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 4.dp)
-                                            ) {
-                                                AndroidView(
-                                                    factory = { ctx ->
-                                                        try {
-                                                            val themedCtx = androidx.appcompat.view.ContextThemeWrapper(ctx, androidx.appcompat.R.style.Theme_AppCompat_NoActionBar)
-                                                            MediaRouteButton(themedCtx).apply {
-                                                                CastButtonFactory.setUpMediaRouteButton(themedCtx, this)
-                                                            }
-                                                        } catch (e: Exception) {
-                                                            // Fallback dummy view
-                                                            android.view.View(ctx)
-                                                        }
-                                                    },
-                                                    modifier = Modifier.size(24.dp)
-                                                )
-                                                Text(
-                                                    text = "Cast",
-                                                    color = Color.White,
-                                                    fontSize = 9.sp,
-                                                    fontWeight = FontWeight.Medium,
-                                                    maxLines = 1
-                                                )
-                                            }
-                                        }
-                                    }
 
                                     PlayerLabeledButton(
                                         icon = Icons.Default.OpenInNew,
