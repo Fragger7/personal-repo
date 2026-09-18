@@ -269,11 +269,19 @@ fun StreamPreviewDialog(
             dialogWindow.setLayout(android.view.ViewGroup.LayoutParams.MATCH_PARENT, android.view.ViewGroup.LayoutParams.MATCH_PARENT)
             dialogWindow.setBackgroundDrawable(android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT))
             
+            // Absolutely force edge to edge drawing
+            WindowCompat.setDecorFitsSystemWindows(dialogWindow, false)
+            
             val insetsController = WindowCompat.getInsetsController(dialogWindow, view)
             if (isFullScreen) {
+                // Hardcore fullscreen flags to prevent any system UI peeking
+                dialogWindow.addFlags(android.view.WindowManager.LayoutParams.FLAG_FULLSCREEN)
+                dialogWindow.addFlags(android.view.WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS)
                 insetsController.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
                 insetsController.hide(WindowInsetsCompat.Type.systemBars())
             } else {
+                dialogWindow.clearFlags(android.view.WindowManager.LayoutParams.FLAG_FULLSCREEN)
+                dialogWindow.clearFlags(android.view.WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS)
                 insetsController.show(WindowInsetsCompat.Type.systemBars())
             }
         }
