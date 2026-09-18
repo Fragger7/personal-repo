@@ -36,13 +36,7 @@ data class ProviderProfile(
     @SerializedName("evidence") val evidence: String? = null,
     @SerializedName("regional_focus") val regionalFocus: String? = null,
     @SerializedName("first_seen") val firstSeen: String? = null,
-    @SerializedName("last_seen") val lastSeen: String? = null,
-    @SerializedName("sc_channels") val scChannels: String? = null,
-    @SerializedName("sc_series") val scSeries: String? = null,
-    @SerializedName("sc_movies") val scMovies: String? = null,
-    @SerializedName("sc_last_run") val scLastRun: String? = null,
-    @SerializedName("sc_dashboard_url") val scDashboardUrl: String? = null,
-    @SerializedName("watermark") val watermark: String? = null
+    @SerializedName("last_seen") val lastSeen: String? = null
 ) {
     val cleanBrand: String
         get() {
@@ -185,10 +179,9 @@ object ProviderIntelligenceManager {
         "russia" to "Russian", "russian" to "Russian",
         "albania" to "Albanian", "albanian" to "Albanian", "shqip" to "Albanian",
         "exyu" to "Ex-Yu / Balkan", "balkan" to "Ex-Yu / Balkan", "serbia" to "Balkan", "croatia" to "Balkan", "bosnia" to "Balkan",
-        "uk" to "UK / British", "british" to "UK / British", "england" to "UK / British", "united kingdom" to "UK / British", "english" to "UK / English",
+        "uk" to "UK / British", "british" to "UK / British", "england" to "UK / British", "united kingdom" to "UK / British",
         "usa" to "USA", "us" to "USA", "america" to "USA", "american" to "USA",
         "canada" to "Canadian", "canadian" to "Canadian",
-        "latino" to "Latino", "latin" to "Latino", "hispanic" to "Latino",
         "pakistan" to "Pakistani", "pak" to "Pakistani", "india" to "Indian", "hindi" to "Indian", "urdu" to "Pakistani / Urdu"
     )
 
@@ -198,8 +191,7 @@ object ProviderIntelligenceManager {
             "french", "france", "swedish", "sweden", "arabic", "arab", "italian", "italy",
             "german", "germany", "spanish", "spain", "portuguese", "portugal", "brazilian", "brazil",
             "dutch", "netherlands", "turkish", "turkey", "greek", "greece", "polish", "poland",
-            "romanian", "romania", "russian", "russia", "albanian", "albania", "nordic", "scandinavian",
-            "english", "uk", "british", "england"
+            "romanian", "romania", "russian", "russia", "albanian", "albania", "nordic", "scandinavian"
         )
     }
 
@@ -212,7 +204,7 @@ object ProviderIntelligenceManager {
         "vip", "vod", "series", "movies", "live", "channels", "channel",
         "sport", "sports", "kids", "news", "catchup", "all", "xxx", "adult",
         "4k", "fhd", "hd", "hevc", "sd", "h265", "raw", "premium", "ultra",
-        "usa", "us", "america", "american", "uk", "british", "england", "english", "latino",
+        "usa", "us", "america", "american", "uk", "british", "england", "latino",
         "arabic", "arab", "arabe", "france", "french", "francais", "francaise",
         "italy", "italian", "italia", "italiano", "germany", "german", "deutsch", "deutschland",
         "spain", "spanish", "espana", "espanol", "turkey", "turkish", "turkce", "turkiye",

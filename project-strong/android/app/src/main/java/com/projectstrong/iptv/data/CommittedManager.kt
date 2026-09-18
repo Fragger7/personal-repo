@@ -53,8 +53,6 @@ data class CommittedRecord(
     @SerializedName("egress_status", alternate = ["Egress Status", "egressStatus", "stream_status", "Stream Status"]) val egressStatus: String? = null,
     @SerializedName("egress_details", alternate = ["Egress Details", "egressDetails", "stream_details"]) val egressDetails: String? = null,
     @SerializedName("Notes") val notes: String? = "",
-    @SerializedName("Rooms") val rooms: String? = "",
-    @SerializedName("Content") val content: String? = "",
     @SerializedName("Date Selected") val dateAdded: String? = null,
     @SerializedName("isLocalOnly") val isLocalOnly: Boolean? = false
 ) {
@@ -114,8 +112,6 @@ data class CommittedRecord(
         }
     val safeTimezone get() = serverTimezone ?: ""
     val safeNotes get() = notes ?: ""
-    val safeRooms get() = rooms ?: ""
-    val safeContent get() = content ?: ""
     val safeDateAdded get() = dateAdded ?: ""
     val isLocal get() = isLocalOnly == true
 }
@@ -183,8 +179,6 @@ object CommittedManager {
         }
     }
 
-    private val cloudMutex = kotlinx.coroutines.sync.Mutex()
-    fun hasLocalChanges(): Boolean = records.any { it.isLocalOnly == true }
     private val saveMutex = kotlinx.coroutines.sync.Mutex()
     
     private fun save() {
@@ -201,33 +195,7 @@ object CommittedManager {
         }
     }
 
-
-    fun hasExactDuplicate(type: String, baseUrl: String, user: String, pass: String, mac: String): Boolean {
-        val cleanBaseUrl = normalizeUrl(baseUrl)
-        val cleanUser = user.trim()
-        val cleanMac = mac.trim().uppercase()
-        return records.any {
-            val typeMatches = it.type?.contains(type, ignoreCase = true) == true || type.contains(it.type ?: "", ignoreCase = true)
-            if (!typeMatches) false
-            else if (type.contains("Stalker", ignoreCase = true)) {
-                it.safeBaseUrl == cleanBaseUrl && it.safeMac == cleanMac
-            } else {
-                it.safeBaseUrl == cleanBaseUrl && it.safeUser == cleanUser && it.safePass == pass
-            }
-        }
-    }
-
-    fun addRecord(record: CommittedRecord) {
-        val cleanRecord = record.copy(isLocalOnly = true)
-        if (!records.any { it.safeBaseUrl == cleanRecord.safeBaseUrl && it.safeUser == cleanRecord.safeUser && it.safeMac == cleanRecord.safeMac }) {
-            records.add(0, cleanRecord)
-            save()
-        }
-    }
-
-
     fun commit(
-
         type: String,
         baseUrl: String,
         user: String = "",
@@ -243,8 +211,6 @@ object CommittedManager {
         provider: String = "Unknown",
         serverTimezone: String = "",
         notes: String = "",
-        rooms: String = "",
-        content: String = "",
         sourceLink: String = "Direct Ingestion",
         originLink: String? = null,
         sourceArchiveFile: String? = null,
@@ -294,8 +260,6 @@ object CommittedManager {
             egressStatus = egressStatus,
             egressDetails = egressDetails,
             notes = notes,
-            rooms = rooms,
-            content = content,
             dateAdded = nowStr,
             isLocalOnly = true
         )
@@ -311,9 +275,7 @@ object CommittedManager {
             val existing = records[existingIndex]
             records[existingIndex] = newRecord.copy(
                 dateAdded = if (existing.safeDateAdded.isNotEmpty()) existing.safeDateAdded else nowStr,
-                notes = notes,
-                rooms = rooms,
-                content = content,
+                notes = if (notes.isNotEmpty()) notes else existing.safeNotes,
                 originLink = cleanOrigin ?: existing.originLink,
                 sourceArchiveFile = finalArchiveFile ?: existing.sourceArchiveFile,
                 egressStatus = egressStatus ?: existing.egressStatus,
@@ -369,7 +331,7 @@ object CommittedManager {
     }
 
     fun delete(record: CommittedRecord, token: String = DataStore.githubToken, onComplete: ((Boolean) -> Unit)? = null) {
-        records.removeAll { it.safeBaseUrl == record.safeBaseUrl && it.safeUser == record.safeUser && it.safeMac == record.safeMac }
+        records.remove(record)
         save()
         ToastManager.info("Account removed from Saved Records")
 
@@ -392,7 +354,6 @@ object CommittedManager {
     }
 
     suspend fun deleteFromCloud(record: CommittedRecord, token: String): Boolean = withContext(Dispatchers.IO) {
-        cloudMutex.withLock {
         try {
             val authToken = token.filter { !it.isWhitespace() }
             val client = OkHttpClient.Builder().build()
@@ -477,7 +438,6 @@ object CommittedManager {
             android.util.Log.e("CommittedManager", "Network Exception: $msg", e)
             ToastManager.error("Delete Exception: $msg")
             return@withContext false
-        }
         }
     }
 
@@ -570,94 +530,7 @@ object CommittedManager {
         }
     }
 
-    
-    suspend fun pullFromCloud(token: String = DataStore.githubToken): Boolean = withContext(Dispatchers.IO) {
-        cloudMutex.withLock {
-            try {
-                val authToken = token.filter { !it.isWhitespace() }
-                if (authToken.isEmpty()) return@withContext false
-                
-                val client = OkHttpClient.Builder().build()
-                val getReq = Request.Builder()
-                    .url("https://api.github.com/repos/Fragger7/personal-repo/contents/project-strong/committed.json")
-                    .header("Accept", "application/vnd.github.v3+json")
-                    .header("Cache-Control", "no-cache")
-                    .header("User-Agent", "SherlockStreams/1.0")
-                    .header("Authorization", "Bearer $authToken")
-                    .build()
-                
-                val getResp = client.newCall(getReq).execute()
-                val getCode = getResp.code
-                
-                if (getCode != 200) {
-                    getResp.close()
-                    return@withContext false
-                }
-                
-                val jsonResponse = getResp.body?.string() ?: ""
-                getResp.close()
-                val jsonObj = org.json.JSONObject(jsonResponse)
-                val contentB64 = jsonObj.optString("content", "").filter { !it.isWhitespace() }
-                if (contentB64.isEmpty()) return@withContext false
-                
-                val decodedBytes = android.util.Base64.decode(contentB64, android.util.Base64.DEFAULT)
-                val remoteJson = String(decodedBytes, Charsets.UTF_8)
-                val list: List<CommittedRecord> = try {
-                    gson.fromJson(remoteJson, Array<CommittedRecord>::class.java)?.toList() ?: emptyList()
-                } catch (e: Exception) {
-                    val type = object : TypeToken<List<CommittedRecord>>() {}.type
-                    gson.fromJson(remoteJson, type) ?: emptyList()
-                }
-                
-                val remoteRecords = list.map {
-                    it.copy(
-                        baseUrl = normalizeUrl(it.safeBaseUrl),
-                        user = it.safeUser.trim(),
-                        mac = it.safeMac.trim().uppercase()
-                    )
-                }
-                
-                // Union Merge (Remote -> Local)
-                val mergedList = remoteRecords.toMutableList()
-                for (localRec in records) {
-                    val localBase = normalizeUrl(localRec.safeBaseUrl)
-                    val localUser = localRec.safeUser.trim()
-                    val localMac = localRec.safeMac.trim().uppercase()
-                    
-                    val matchIdx = mergedList.indexOfFirst { rem ->
-                        normalizeUrl(rem.safeBaseUrl).equals(localBase, ignoreCase = true) &&
-                        ((localRec.safeType == "Xtream" && rem.safeUser.trim() == localUser) ||
-                         (localRec.safeType == "Stalker" && rem.safeMac.trim().equals(localMac, ignoreCase = true)))
-                    }
-                    
-                    if (matchIdx != -1) {
-                        val existingRem = mergedList[matchIdx]
-                        mergedList[matchIdx] = localRec.copy(
-                            dateAdded = if (existingRem.safeDateAdded.isNotEmpty()) existingRem.safeDateAdded else localRec.safeDateAdded,
-                            notes = if (localRec.safeNotes.isNotEmpty()) localRec.safeNotes else existingRem.safeNotes,
-                            isLocalOnly = if (localRec.isLocalOnly == true) true else existingRem.isLocalOnly
-                        )
-                    } else {
-                        mergedList.add(0, localRec)
-                    }
-                }
-                
-                withContext(Dispatchers.Main) {
-                    records.clear()
-                    records.addAll(mergedList)
-                    sortByDateAddedDescending()
-                }
-                save()
-                return@withContext true
-            } catch (e: Exception) {
-                e.printStackTrace()
-                return@withContext false
-            }
-        }
-    }
-
     suspend fun pushToCloud(token: String = DataStore.githubToken): Boolean = withContext(Dispatchers.IO) {
-        cloudMutex.withLock {
         try {
             val authToken = token.filter { !it.isWhitespace() }
             if (authToken.isEmpty()) {
@@ -811,7 +684,6 @@ object CommittedManager {
             ToastManager.error("Sync Exception: $msg")
             return@withContext false
         }
-        }
     }
 
     suspend fun recheckAllStatus(): Int = withContext(Dispatchers.IO) {
@@ -889,12 +761,12 @@ object CommittedManager {
         return@withContext updatedCount
     }
 
-    fun updateDetails(record: CommittedRecord, newNotes: String, newRooms: String, newContent: String) {
-        val index = records.indexOfFirst { it.safeBaseUrl == record.safeBaseUrl && it.safeUser == record.safeUser && it.safeMac == record.safeMac }
+    fun updateNotes(record: CommittedRecord, newNotes: String) {
+        val index = records.indexOf(record)
         if (index != -1) {
-            records[index] = record.copy(notes = newNotes, rooms = newRooms, content = newContent, isLocalOnly = true)
+            records[index] = record.copy(notes = newNotes, isLocalOnly = true)
             save()
-            ToastManager.success("Details saved locally")
+            ToastManager.success("Notes saved locally")
             
             val token = DataStore.githubToken
             if (token.isNotEmpty()) {
@@ -902,7 +774,7 @@ object CommittedManager {
                     val success = pushToCloud(token)
                     withContext(Dispatchers.Main) {
                         if (success) {
-                            ToastManager.success("Details saved & synced to Git!")
+                            ToastManager.success("Notes saved & synced to Git!")
                         } else {
                             ToastManager.warning("Saved locally, but cloud push failed")
                         }

@@ -542,23 +542,6 @@ def mine_provider_branding_from_payloads(base_url, categories_data, streams_data
     branding_names = {}
     detected_regional_focus = None
     
-    local_intel = load_provider_intelligence()
-    watermark_providers = {}
-    for dom, info in local_intel.items():
-        wm_str = info.get("watermark", "")
-        if wm_str:
-            p_name = info.get("provider_name", "")
-            if "Unidentified" in p_name or "Unknown" in p_name or p_name.startswith("👤 Host:"): continue
-            if p_name.startswith("🎯 Identified: "):
-                p_name = p_name.replace("🎯 Identified: ", "").strip()
-            delims = wm_str.split(",")
-            for d in delims:
-                d = d.strip()
-                if not d: continue
-                if d not in watermark_providers:
-                    watermark_providers[d] = set()
-                watermark_providers[d].add(p_name)
-    
     country_demonym_map = {
         "france": "French", "french": "French", "francais": "French", "francaise": "French",
         "sweden": "Swedish / Nordic", "swedish": "Swedish / Nordic", "sverige": "Swedish / Nordic", "svenska": "Swedish / Nordic",
@@ -612,13 +595,6 @@ def mine_provider_branding_from_payloads(base_url, categories_data, streams_data
                     detected_regional_focus = label
                     break
         
-        # TF-IDF Watermarks
-        for wm, p_set in watermark_providers.items():
-            if wm in name:
-                points = max(1, 25 // len(p_set))
-                for p in p_set:
-                    branding_names[p] = branding_names.get(p, 0) + points
-
         # Contacts
         contacts = contact_pattern.findall(name)
         for c in contacts:
@@ -2027,19 +2003,7 @@ if st.session_state["playlist_results"] is not None:
             domain = base_url
             
         existing = local_intel.get(domain, {})
-        raw_prov = existing.get("provider_name", "Unknown Provider")
-        reg_focus = existing.get("regional_focus")
-        
-        if "unidentified" in raw_prov.lower() or "unknown" in raw_prov.lower() or "unbranded" in raw_prov.lower():
-            if reg_focus:
-                acc["Provider"] = f"🌍 {reg_focus} Bouquet"
-            else:
-                acc["Provider"] = "Unknown"
-        else:
-            if raw_prov.startswith("🎯 Identified:"):
-                acc["Provider"] = raw_prov.replace("🎯 Identified:", "").strip()
-            else:
-                acc["Provider"] = raw_prov
+        acc["Provider"] = existing.get("provider_name", "Unknown Provider")
 
     df = pd.DataFrame(st.session_state["playlist_results"])
     
@@ -2250,19 +2214,7 @@ with tab_committed:
             except:
                 domain = base_url
             existing = local_intel.get(domain, {})
-            raw_prov = existing.get("provider_name", "Unknown Provider")
-            reg_focus = existing.get("regional_focus")
-            
-            if "unidentified" in raw_prov.lower() or "unknown" in raw_prov.lower() or "unbranded" in raw_prov.lower() or "👤" in raw_prov:
-                if reg_focus:
-                    c_rec["Provider"] = f"🌍 {reg_focus} Bouquet"
-                else:
-                    c_rec["Provider"] = "Unknown"
-            else:
-                if raw_prov.startswith("🎯 Identified:"):
-                    c_rec["Provider"] = raw_prov.replace("🎯 Identified:", "").strip()
-                else:
-                    c_rec["Provider"] = raw_prov
+            c_rec["Provider"] = existing.get("provider_name", "Unknown Provider")
 
         comm_df = pd.DataFrame(committed_records)
         comm_df = comm_df.drop(columns=["fingerprint"], errors="ignore")

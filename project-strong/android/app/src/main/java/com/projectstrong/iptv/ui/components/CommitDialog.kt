@@ -12,9 +12,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -43,8 +40,6 @@ fun CommitAccountDialog(
     provider: String = "Unknown",
     serverTimezone: String = "",
     initialNotes: String = "",
-    initialRooms: String = "",
-    initialContent: String = "",
     sourceLink: String = "Direct Ingestion",
     originLink: String = "",
     egressStatus: String? = null,
@@ -55,19 +50,7 @@ fun CommitAccountDialog(
     val context = LocalContext.current
     val clipboardManager = LocalClipboardManager.current
 
-    val existingRecord = remember(baseUrl, user, mac) {
-        val cleanBase = baseUrl.trim().trimEnd('/')
-        com.projectstrong.iptv.data.CommittedManager.records.find {
-            it.safeBaseUrl.trim().trimEnd('/') == cleanBase &&
-            ((type == "Xtream" && it.safeUser.trim() == user.trim()) ||
-             (type == "Stalker" && it.safeMac.trim().equals(mac.trim(), ignoreCase = true)))
-        }
-    }
-
-    var showDuplicateWarning by remember { mutableStateOf(false) }
-    var notes by remember { mutableStateOf(existingRecord?.safeNotes?.ifEmpty { null } ?: initialNotes) }
-    var selectedRooms by remember { mutableStateOf((existingRecord?.safeRooms?.ifEmpty { null } ?: initialRooms).split(",").map { it.trim() }.filter { it.isNotEmpty() }.toSet()) }
-    var selectedContent by remember { mutableStateOf((existingRecord?.safeContent?.ifEmpty { null } ?: initialContent).split(",").map { it.trim() }.filter { it.isNotEmpty() }.toSet()) }
+    var notes by remember { mutableStateOf(initialNotes) }
     
     // Auto-populate Source Link: check node sourceLink first, fallback to DataStore.scannerSourceLink
     var sourceLinkInput by remember {
@@ -98,22 +81,14 @@ fun CommitAccountDialog(
         }
     }
 
-    val rootFocusManager = androidx.compose.ui.platform.LocalFocusManager.current
-
     Dialog(onDismissRequest = onDismiss) {
         Card(
             shape = RoundedCornerShape(16.dp),
             colors = CardDefaults.cardColors(containerColor = AppSurface),
             border = BorderStroke(1.dp, AppSurfaceBorder),
-            modifier = Modifier
-                .fillMaxWidth()
-                .fillMaxHeight(0.9f)
+            modifier = Modifier.fillMaxWidth().padding(16.dp)
         ) {
-            Column(modifier = Modifier
-                .padding(20.dp)
-                .pointerInput(Unit) { detectTapGestures(onTap = { rootFocusManager.clearFocus() }) }
-                .verticalScroll(androidx.compose.foundation.rememberScrollState())
-            ) {
+            Column(modifier = Modifier.padding(20.dp)) {
                 // Header
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -328,8 +303,6 @@ fun CommitAccountDialog(
                     onValueChange = { notes = it },
                     placeholder = { Text("e.g. Living room TV, US 4K channels, backup link...", color = AppTextMuted) },
                     modifier = Modifier.fillMaxWidth().height(80.dp),
-                    keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(imeAction = androidx.compose.ui.text.input.ImeAction.Default),
-                    keyboardActions = androidx.compose.foundation.text.KeyboardActions(onDone = { rootFocusManager.clearFocus() }),
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedTextColor = AppTextPrimary,
                         unfocusedTextColor = AppTextPrimary,
@@ -339,22 +312,6 @@ fun CommitAccountDialog(
                         unfocusedContainerColor = AppSurfaceVariant
                     ),
                     shape = RoundedCornerShape(8.dp)
-                )
-                
-                Spacer(modifier = Modifier.height(12.dp))
-                
-                MultiSelectToggles(
-                    label = "Rooms (Where is this used?)",
-                    options = listOf("P", "LR", "MB", "MR", "M", "G", "O"),
-                    selectedOptions = selectedRooms,
-                    onOptionToggled = { selectedRooms = it }
-                )
-                
-                MultiSelectToggles(
-                    label = "Content Type",
-                    options = listOf("NFL", "Pak", "A", "Philly", "S"),
-                    selectedOptions = selectedContent,
-                    onOptionToggled = { selectedContent = it }
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
@@ -373,17 +330,13 @@ fun CommitAccountDialog(
                 ) {
                     SecondaryButton(
                         text = "Cancel",
-                        onClick = {
-                            rootFocusManager.clearFocus()
-                            onDismiss()
-                        },
+                        onClick = onDismiss,
                         modifier = Modifier.weight(1f).height(44.dp)
                     )
                     PrimaryButton(
                         text = "Save & Commit",
                         color = AppSuccess,
                         onClick = {
-                            rootFocusManager.clearFocus()
                             val finalSource = if (sourceLinkInput.trim().isEmpty()) "Direct Ingestion" else sourceLinkInput.trim()
                             val finalOrigin = originLinkInput.trim().ifEmpty { null }
                             CommittedManager.commit(
@@ -402,8 +355,6 @@ fun CommitAccountDialog(
                                 provider = resolvedProvider,
                                 serverTimezone = serverTimezone,
                                 notes = notes.trim(),
-                                rooms = selectedRooms.joinToString(", "),
-                                content = selectedContent.joinToString(", "),
                                 sourceLink = finalSource,
                                 originLink = finalOrigin,
                                 egressStatus = egressStatus,
@@ -417,51 +368,5 @@ fun CommitAccountDialog(
                 }
             }
         }
-    }
-
-    if (showDuplicateWarning) {
-        AlertDialog(
-            onDismissRequest = { showDuplicateWarning = false },
-            title = { Text("Duplicate Detected") },
-            text = { Text("An exact match for this connection already exists in the Committed Data. Are you sure you want to add a duplicate?") },
-            confirmButton = {
-                TextButton(onClick = {
-                    showDuplicateWarning = false
-                    val finalSource = if (sourceLinkInput.trim().isEmpty()) "Direct Ingestion" else sourceLinkInput.trim()
-                    val finalOrigin = originLinkInput.trim().ifEmpty { null }
-                    CommittedManager.commit(
-                        type = type,
-                        baseUrl = baseUrl,
-                        user = user,
-                        pass = pass,
-                        mac = mac,
-                        status = status,
-                        expires = expires,
-                        daysLeft = daysLeft,
-                        channels = channels,
-                        vods = vods,
-                        activeConn = activeConn,
-                        maxConn = maxConn,
-                        provider = resolvedProvider,
-                        serverTimezone = serverTimezone,
-                        notes = notes.trim(),
-                        rooms = selectedRooms.joinToString(", "),
-                        content = selectedContent.joinToString(", "),
-                        sourceLink = finalSource,
-                        originLink = finalOrigin,
-                        egressStatus = egressStatus,
-                        egressDetails = egressDetails
-                    )
-                    onCommitted()
-                }) {
-                    Text("Add Anyway")
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showDuplicateWarning = false }) {
-                    Text("Cancel")
-                }
-            }
-        )
     }
 }
