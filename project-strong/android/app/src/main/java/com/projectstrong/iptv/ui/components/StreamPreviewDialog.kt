@@ -269,6 +269,9 @@ fun StreamPreviewDialog(
             dialogWindow.setLayout(android.view.ViewGroup.LayoutParams.MATCH_PARENT, android.view.ViewGroup.LayoutParams.MATCH_PARENT)
             dialogWindow.setBackgroundDrawable(android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT))
             
+            // Keep screen on while playing
+            dialogWindow.addFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+            
             // Absolutely force edge to edge drawing
             WindowCompat.setDecorFitsSystemWindows(dialogWindow, false)
             
@@ -279,18 +282,38 @@ fun StreamPreviewDialog(
                 dialogWindow.addFlags(android.view.WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS)
                 insetsController.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
                 insetsController.hide(WindowInsetsCompat.Type.systemBars())
+                
+                // Also apply to activity window as a fallback
+                activity?.window?.let { actWin ->
+                    WindowCompat.setDecorFitsSystemWindows(actWin, false)
+                    val actInsetsController = WindowCompat.getInsetsController(actWin, actWin.decorView)
+                    actInsetsController.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+                    actInsetsController.hide(WindowInsetsCompat.Type.systemBars())
+                }
             } else {
                 dialogWindow.clearFlags(android.view.WindowManager.LayoutParams.FLAG_FULLSCREEN)
                 dialogWindow.clearFlags(android.view.WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS)
                 insetsController.show(WindowInsetsCompat.Type.systemBars())
+                
+                activity?.window?.let { actWin ->
+                    WindowCompat.setDecorFitsSystemWindows(actWin, true)
+                    val actInsetsController = WindowCompat.getInsetsController(actWin, actWin.decorView)
+                    actInsetsController.show(WindowInsetsCompat.Type.systemBars())
+                }
             }
         }
         
         onDispose {
             activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
             if (dialogWindow != null) {
+                dialogWindow.clearFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
                 val insetsController = WindowCompat.getInsetsController(dialogWindow, view)
                 insetsController.show(WindowInsetsCompat.Type.systemBars())
+            }
+            activity?.window?.let { actWin ->
+                WindowCompat.setDecorFitsSystemWindows(actWin, true)
+                val actInsetsController = WindowCompat.getInsetsController(actWin, actWin.decorView)
+                actInsetsController.show(WindowInsetsCompat.Type.systemBars())
             }
         }
     }
