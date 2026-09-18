@@ -260,6 +260,15 @@ fun StreamPreviewDialog(
         }
         
         if (dialogWindow != null) {
+            // Force dialog to draw edge-to-edge ignoring system limits and cutouts
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P) {
+                dialogWindow.attributes = dialogWindow.attributes.apply {
+                    layoutInDisplayCutoutMode = android.view.WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
+                }
+            }
+            dialogWindow.setLayout(android.view.ViewGroup.LayoutParams.MATCH_PARENT, android.view.ViewGroup.LayoutParams.MATCH_PARENT)
+            dialogWindow.setBackgroundDrawable(android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT))
+            
             val insetsController = WindowCompat.getInsetsController(dialogWindow, view)
             if (isFullScreen) {
                 insetsController.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE

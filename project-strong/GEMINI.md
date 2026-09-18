@@ -148,6 +148,14 @@ This document contains the complete system architecture, operational decisions, 
 
 ---
 
+### K. Operational Intelligence Dashboard (`AnalyticsTab.kt`)
+* **Custom Compose Canvas Engineering**: Since Jetpack Compose lacks heavy built-in charting, the Analytics tab renders high-performance custom `Canvas` charts (`InteractivePieChart`, `SegmentedProgressBar`, `AnimatedHorizontalBarChart`) that strictly consume dynamic theme tokens (e.g. `AppPrimary`, `AppError`).
+* **Interactive Deep Linking**: Tapping any slice on a chart (e.g. "MaxOTT" or "Active") instantly modifies the shared `CommittedFilterStore` state and deep-routes the user back to `CommittedTab` with the exact filtered dataset isolated.
+
+### L. Dynamic Cascading Filters (`CommittedFilterStore`)
+* **Multi-Select Context-Aware Dropdowns**: Filters across `CommittedTab` use nested intersection logic to restrict dropdown choices dynamically based on the current active selections. 
+* **Global State Engine**: Filter state is hoisted into a `CommittedFilterStore` singleton, completely decoupling it from the UI layer so other tabs (`AnalyticsTab`) can dynamically alter the active data grid.
+
 ## 🎨 3. World-Class UI/UX Design Standards
 
 * **Typography Scale**: Pairing geometric display headers (`titleMedium`, `labelLarge`) with refined body fonts (`bodyMedium`, `bodySmall` in `#A0A0B0`). No amateur oversized fonts.
@@ -232,6 +240,8 @@ Remove-Item -Recurse -Force "C:\Development\Apps\Project Strong\personal-repo-te
 
 | Milestone | Subsystems Involved | Status |
 | :--- | :--- | :--- |
+| **TF-IDF Watermark Forensics & StreamCheck Index** | `sync_provider_intel.py`, `app.py`, `ProviderIntelligenceCard.kt` | 🟢 **Verified & Live** |
+| **Manual Connections & Connection Schema Upgrade** | `ManualAddDialog.kt`, `CommittedTab.kt`, `CommitDialog.kt` | 🟢 **Verified & Live** |
 | **Git-Native OTA Update Engine** | `AppUpdater.kt`, `UpdateDialog.kt`, `FileProvider`, `.github/workflows/android-build.yml` | 🟢 **Verified & Live** |
 | **"Forever Source" Snapshot Archive** | `SourceArchiveManager.kt`, `SourceArchiveViewerDialog.kt`, `committed.json`, `app.py` | 🟢 **Verified & Live** |
 | **Media3 / ExoPlayer In-App Stream Inspector** | `StreamPreviewDialog.kt`, ExoPlayer 1.3.1, OkHttp data source | 🟢 **Verified & Live** |
@@ -253,6 +263,11 @@ Remove-Item -Recurse -Force "C:\Development\Apps\Project Strong\personal-repo-te
 | **CI/CD Branded Release Artifacts & GitHub Releases** | `.github/workflows/android-build.yml`, `sherlock-streams-v1.10.{run}.apk` naming, `sherlock-streams-apk` artifact | 🟢 **Verified & Live** |
 | **Automated Weekly Provider Intelligence Sync** | `.github/workflows/scrape-provider-intel.yml`, `sync_provider_intel.py`, `permissions: contents: write`, cross-catalog auto-learning | 🟢 **Verified & Live** |
 | **Regional Bouquet & Demonym Filter Engine** | `ProviderIntelligence.kt`, `ProviderIntelligenceCard.kt`, `CommittedManager.kt`, `sync_provider_intel.py`, `app.py`, 30+ regional dictionaries, `regionalFocus` metadata, `🌍 Regional Bouquet` UI badge | 🟢 **Verified & Live** |
+| **Committed Filter Store & Nested Multi-Select** | `FilterDropdown.kt`, `CommittedFilterStore`, dynamic derived dropdown subsets | 🟢 **Verified & Live** |
+| **Operational Intelligence Analytics Dashboard** | `AnalyticsTab.kt`, `SegmentedProgressBar`, Canvas pie charts, interactive deep-linking | 🟢 **Verified & Live** |
+| **Atomic Git Sync Architecture & Conflict Mutex Locks** | `CommittedManager.kt`, `ArchiveManager.kt`, `cloudMutex`, union merges, background pull hooks | 🟢 **Verified & Live** |
+| **Archived Favorites Vault & Bi-Directional Transit** | `ArchiveTab.kt`, `ArchiveManager.kt`, 1-click archiving & restoring, independent `.json` lifecycle | 🟢 **Verified & Live** |
+| **Master Grid Scroll & State Memory Persistence** | `CommittedTab.kt`, `ArchiveTab.kt`, `rememberLazyListState` restoration, `Type` column realignment | 🟢 **Verified & Live** |
 
 ---
 

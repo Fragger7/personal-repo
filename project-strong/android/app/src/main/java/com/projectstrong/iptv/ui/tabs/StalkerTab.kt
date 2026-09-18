@@ -35,6 +35,9 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun StalkerTab(onNextTab: (() -> Unit)? = null) {
+    val listState = androidx.compose.foundation.lazy.rememberLazyListState()
+    val horizontalScrollState = androidx.compose.foundation.rememberScrollState()
+    var lastSelectedNodeId by androidx.compose.runtime.saveable.rememberSaveable { androidx.compose.runtime.mutableStateOf<String?>(null) }
     // Implement chunked/dynamic loading: only show nodes that have finished verifying
     val stalkerNodes = DataStore.scannedNodes.filter { it.type == "Stalker" && (!it.isVerifying && it.status.isNotEmpty()) }
     var selectedNode by remember { mutableStateOf<ParsedCredential?>(null) }
@@ -51,6 +54,10 @@ fun StalkerTab(onNextTab: (() -> Unit)? = null) {
             )
         } else {
             StalkerMasterGrid(
+                listState = listState,
+                horizontalScrollState = horizontalScrollState,
+                lastSelectedNodeId = lastSelectedNodeId,
+                onNodeIdSelected = { lastSelectedNodeId = it },
                 nodes = stalkerNodes,
                 onSelectNode = { selectedNode = it },
                 onNextTab = onNextTab
@@ -60,7 +67,11 @@ fun StalkerTab(onNextTab: (() -> Unit)? = null) {
 }
 
 @Composable
-fun StalkerMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCredential) -> Unit, onNextTab: (() -> Unit)? = null) {
+fun StalkerMasterGrid(
+    listState: androidx.compose.foundation.lazy.LazyListState,
+    horizontalScrollState: androidx.compose.foundation.ScrollState,
+    lastSelectedNodeId: String?,
+    onNodeIdSelected: (String) -> Unit,nodes: List<ParsedCredential>, onSelectNode: (ParsedCredential) -> Unit, onNextTab: (() -> Unit)? = null) {
     var sortColumn by remember { mutableStateOf("") }
     var sortAscending by remember { mutableStateOf(false) }
     var committingNode by remember { mutableStateOf<ParsedCredential?>(null) }
@@ -79,8 +90,6 @@ fun StalkerMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCreden
                 else -> list
             }
         }
-    val scrollState = rememberScrollState()
-    val listState = rememberLazyListState()
     val clipboardManager = LocalClipboardManager.current
     val coroutineScope = rememberCoroutineScope()
 
@@ -238,7 +247,7 @@ fun StalkerMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCreden
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
-                            .horizontalScroll(scrollState)
+                            .horizontalScroll(horizontalScrollState)
                     ) {
                         Column(modifier = Modifier.fillMaxHeight()) {
                             Row(
@@ -270,13 +279,19 @@ fun StalkerMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCreden
 
                             LazyColumn(modifier = Modifier.fillMaxWidth().weight(1f), state = listState) {
                                 items(filteredNodes) { node: ParsedCredential ->
+                                    val recordId = node.baseUrl + node.mac
+                                    val isSelectedRow = recordId == lastSelectedNodeId
                                     val profile = com.projectstrong.iptv.data.ProviderIntelligenceManager.getProfile(node.baseUrl)
                                     val displayBrand = if (profile?.isIdentified == true) profile.cleanBrand else node.provider.ifEmpty { "Unbranded" }
                                     Row(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .clickable { onSelectNode(node) }
-                                            .padding(horizontal = 16.dp, vertical = 10.dp),
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .background(if (isSelectedRow) AppPrimary.copy(alpha = 0.15f) else androidx.compose.ui.graphics.Color.Transparent)
+                                        .clickable { 
+                                            onNodeIdSelected(recordId)
+                                            onSelectNode(node) 
+                                        }
+                                        .padding(horizontal = 16.dp, vertical = 10.dp),
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
                                         GridCell(node.baseUrl, 250.dp, isBold = true)
@@ -289,7 +304,7 @@ fun StalkerMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCreden
                                         GridCell(node.sourceLink.ifEmpty { "-" }, 180.dp, color = if (node.sourceLink.startsWith("http")) AppPrimary else AppTextMuted)
 
                                         Row(
-                                            modifier = Modifier.width(110.dp),
+                                            modifier = Modifier.width(110.dp).padding(end = 8.dp),
                                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                                             verticalAlignment = Alignment.CenterVertically
                                         ) {

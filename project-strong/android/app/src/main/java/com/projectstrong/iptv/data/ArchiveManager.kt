@@ -29,98 +29,7 @@ import java.util.Date
 import java.util.Locale
 
 @androidx.annotation.Keep
-data class CommittedRecord(
-    @SerializedName("type") val type: String? = "Unknown",
-    @SerializedName("base_url") val baseUrl: String? = "",
-    @SerializedName("username") val user: String? = "",
-    @SerializedName("password") val pass: String? = "",
-    @SerializedName("mac") val mac: String? = "",
-    @SerializedName("Status") val status: String? = "🟢 Active",
-    @SerializedName("Expires") val expires: String? = "",
-    @SerializedName("Days Left") val daysLeft: Any? = null,
-    @SerializedName("Channels") val channels: Any? = null,
-    @SerializedName("VODs") val vods: Any? = null,
-    @SerializedName("Active Conns") val activeConn: Any? = null,
-    @SerializedName("Max Conns") val maxConn: Any? = null,
-    @SerializedName("Provider") val provider: String? = "Unknown",
-    @SerializedName("Server Timezone") val serverTimezone: String? = "",
-    @SerializedName("Server Time") val serverTime: String? = "",
-    @SerializedName("M3U Link") val m3uLink: String? = "",
-    @SerializedName("Source") val source: String? = "",
-    @SerializedName("Source Link") val sourceLink: String? = "Direct Ingestion",
-    @SerializedName("Origin Link", alternate = ["origin_link", "Origin", "origin", "Origin URL", "origin_url"]) val originLink: String? = null,
-    @SerializedName("source_archive_file") val sourceArchiveFile: String? = null,
-    @SerializedName("egress_status", alternate = ["Egress Status", "egressStatus", "stream_status", "Stream Status"]) val egressStatus: String? = null,
-    @SerializedName("egress_details", alternate = ["Egress Details", "egressDetails", "stream_details"]) val egressDetails: String? = null,
-    @SerializedName("Notes") val notes: String? = "",
-    @SerializedName("Rooms") val rooms: String? = "",
-    @SerializedName("Content") val content: String? = "",
-    @SerializedName("Date Selected") val dateAdded: String? = null,
-    @SerializedName("isLocalOnly") val isLocalOnly: Boolean? = false
-) {
-    val safeType get() = type ?: source ?: "Unknown"
-    val safeBaseUrl get() = baseUrl ?: ""
-    val safeUser get() = user ?: ""
-    val safePass get() = pass ?: ""
-    val safeMac get() = mac ?: ""
-    val safeStatus get() = status ?: "🟢 Active"
-    val safeExpires get() = expires ?: ""
-    val safeDaysLeft get() = daysLeft?.toString() ?: ""
-    val safeChannels get() = channels?.toString() ?: ""
-    val safeVods get() = vods?.toString() ?: ""
-    val safeActiveConn get() = activeConn?.toString() ?: ""
-    val safeMaxConn get() = maxConn?.toString() ?: ""
-    val safeSourceLink get() = if (sourceLink.isNullOrBlank()) "Direct Ingestion" else sourceLink
-    val safeOriginLink get() = originLink ?: ""
-    val hasOrigin get() = safeOriginLink.isNotBlank() && (safeOriginLink.startsWith("http://") || safeOriginLink.startsWith("https://"))
-    val safeSourceArchiveFile get() = sourceArchiveFile ?: ""
-    val safeEgressStatus get() = egressStatus ?: "Unchecked"
-    val safeEgressDetails get() = egressDetails ?: ""
-    val safeProvider: String
-        get() {
-            if (!provider.isNullOrEmpty() && provider != "Unknown" && provider != "Unbranded") {
-                if (ProviderIntelligenceManager.isDemonymOrCountry(provider)) {
-                    val intel = ProviderIntelligenceManager.getProfile(safeBaseUrl)
-                    if (intel != null && intel.isIdentified) {
-                        return intel.cleanBrand
-                    }
-                    return try {
-                        val uri = java.net.URI(safeBaseUrl)
-                        uri.host ?: "Unbranded"
-                    } catch (e: Exception) {
-                        "Unbranded"
-                    }
-                }
-                return provider
-            }
-            val intel = ProviderIntelligenceManager.getProfile(safeBaseUrl)
-            if (intel != null && intel.isIdentified) {
-                return intel.cleanBrand
-            }
-            return try {
-                val uri = java.net.URI(safeBaseUrl)
-                uri.host ?: "Unknown"
-            } catch (e: Exception) {
-                "Unknown"
-            }
-        }
-    val safeRegionalFocus: String?
-        get() {
-            if (!provider.isNullOrEmpty() && ProviderIntelligenceManager.isDemonymOrCountry(provider)) {
-                return ProviderIntelligenceManager.getRegionalFocusFor(provider)
-            }
-            val intel = ProviderIntelligenceManager.getProfile(safeBaseUrl)
-            return intel?.safeRegionalFocus
-        }
-    val safeTimezone get() = serverTimezone ?: ""
-    val safeNotes get() = notes ?: ""
-    val safeRooms get() = rooms ?: ""
-    val safeContent get() = content ?: ""
-    val safeDateAdded get() = dateAdded ?: ""
-    val isLocal get() = isLocalOnly == true
-}
-
-object CommittedManager {
+object ArchiveManager {
     val records = mutableStateListOf<CommittedRecord>()
     private lateinit var file: File
     private lateinit var prefs: SharedPreferences
@@ -132,7 +41,7 @@ object CommittedManager {
 
     fun init(context: Context) {
         appContext = context.applicationContext
-        file = File(context.filesDir, "committed.json")
+        file = File(context.filesDir, "archivedfavorites.json")
         prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         val savedToken = prefs.getString(KEY_GITHUB_TOKEN, "") ?: ""
         DataStore.githubToken = savedToken
@@ -396,7 +305,7 @@ object CommittedManager {
         try {
             val authToken = token.filter { !it.isWhitespace() }
             val client = OkHttpClient.Builder().build()
-            val getUrl = "https://api.github.com/repos/Fragger7/personal-repo/contents/project-strong/committed.json"
+            val getUrl = "https://api.github.com/repos/Fragger7/personal-repo/contents/project-strong/archivedfavorites.json"
             
             val getReq = Request.Builder()
                 .url(getUrl)
@@ -486,7 +395,7 @@ object CommittedManager {
             val safeToken = DataStore.githubToken.filter { !it.isWhitespace() }
             val client = OkHttpClient.Builder().build()
             val requestBuilder = Request.Builder()
-                .url("https://api.github.com/repos/Fragger7/personal-repo/contents/project-strong/committed.json")
+                .url("https://api.github.com/repos/Fragger7/personal-repo/contents/project-strong/archivedfavorites.json")
                 .header("Accept", "application/vnd.github.v3+json")
                 .header("Cache-Control", "no-cache")
                 .header("User-Agent", "SherlockStreams/1.0")
@@ -579,7 +488,7 @@ object CommittedManager {
                 
                 val client = OkHttpClient.Builder().build()
                 val getReq = Request.Builder()
-                    .url("https://api.github.com/repos/Fragger7/personal-repo/contents/project-strong/committed.json")
+                    .url("https://api.github.com/repos/Fragger7/personal-repo/contents/project-strong/archivedfavorites.json")
                     .header("Accept", "application/vnd.github.v3+json")
                     .header("Cache-Control", "no-cache")
                     .header("User-Agent", "SherlockStreams/1.0")
@@ -672,7 +581,7 @@ object CommittedManager {
             // 1. Get current SHA and fetch remote content to merge before pushing (Never Overwrite)
             val client = OkHttpClient.Builder().build()
             val getReq = Request.Builder()
-                .url("https://api.github.com/repos/Fragger7/personal-repo/contents/project-strong/committed.json")
+                .url("https://api.github.com/repos/Fragger7/personal-repo/contents/project-strong/archivedfavorites.json")
                 .header("Accept", "application/vnd.github.v3+json")
                 .header("Cache-Control", "no-cache")
                 .header("User-Agent", "SherlockStreams/1.0")
@@ -761,7 +670,7 @@ object CommittedManager {
             val requestBody = payload.toString().toRequestBody("application/json".toMediaType())
 
             val putReq = Request.Builder()
-                .url("https://api.github.com/repos/Fragger7/personal-repo/contents/project-strong/committed.json")
+                .url("https://api.github.com/repos/Fragger7/personal-repo/contents/project-strong/archivedfavorites.json")
                 .put(requestBody)
                 .header("Accept", "application/vnd.github.v3+json")
                 .header("User-Agent", "SherlockStreams/1.0")

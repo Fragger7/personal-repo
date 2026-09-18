@@ -48,6 +48,9 @@ import java.util.concurrent.atomic.AtomicInteger
 
 @Composable
 fun XtreamTab(onNextTab: (() -> Unit)? = null) {
+    val listState = androidx.compose.foundation.lazy.rememberLazyListState()
+    val horizontalScrollState = androidx.compose.foundation.rememberScrollState()
+    var lastSelectedNodeId by androidx.compose.runtime.saveable.rememberSaveable { androidx.compose.runtime.mutableStateOf<String?>(null) }
     // Implement chunked/dynamic loading: only show nodes that have finished verifying
     // This prevents rendering thousands of "Connecting..." items and massively improves performance.
     val xtreamNodes = DataStore.scannedNodes.filter { it.type == "Xtream" && (!it.isVerifying && it.status.isNotEmpty()) }
@@ -65,6 +68,10 @@ fun XtreamTab(onNextTab: (() -> Unit)? = null) {
             )
         } else {
             XtreamMasterGrid(
+                listState = listState,
+                horizontalScrollState = horizontalScrollState,
+                lastSelectedNodeId = lastSelectedNodeId,
+                onNodeIdSelected = { lastSelectedNodeId = it },
                 nodes = xtreamNodes,
                 onSelectNode = { selectedNode = it },
                 onNextTab = onNextTab
@@ -74,7 +81,11 @@ fun XtreamTab(onNextTab: (() -> Unit)? = null) {
 }
 
 @Composable
-fun XtreamMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCredential) -> Unit, onNextTab: (() -> Unit)? = null) {
+fun XtreamMasterGrid(
+    listState: androidx.compose.foundation.lazy.LazyListState,
+    horizontalScrollState: androidx.compose.foundation.ScrollState,
+    lastSelectedNodeId: String?,
+    onNodeIdSelected: (String) -> Unit,nodes: List<ParsedCredential>, onSelectNode: (ParsedCredential) -> Unit, onNextTab: (() -> Unit)? = null) {
     var sortColumn by remember { mutableStateOf("") }
     var sortAscending by remember { mutableStateOf(false) }
     var committingNode by remember { mutableStateOf<ParsedCredential?>(null) }
@@ -94,8 +105,6 @@ fun XtreamMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCredent
                 else -> list
             }
         }
-    val scrollState = rememberScrollState()
-    val listState = rememberLazyListState()
     val clipboardManager = LocalClipboardManager.current
     val coroutineScope = rememberCoroutineScope()
     var fetchingRows by remember { mutableStateOf(emptySet<String>()) }
@@ -520,7 +529,7 @@ fun XtreamMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCredent
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
-                            .horizontalScroll(scrollState)
+                            .horizontalScroll(horizontalScrollState)
                     ) {
                         Column(modifier = Modifier.fillMaxHeight()) {
                             // Header Row with Sort Indicators
@@ -557,13 +566,19 @@ fun XtreamMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCredent
 
                             LazyColumn(modifier = Modifier.fillMaxWidth().weight(1f), state = listState) {
                                 items(filteredNodes) { node: ParsedCredential ->
+                                    val recordId = node.baseUrl + node.user
+                                    val isSelectedRow = recordId == lastSelectedNodeId
                                     val profile = com.projectstrong.iptv.data.ProviderIntelligenceManager.getProfile(node.baseUrl)
                                     val displayBrand = if (profile?.isIdentified == true) profile.cleanBrand else node.provider.ifEmpty { "Unbranded" }
                                     Row(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .clickable { onSelectNode(node) }
-                                            .padding(horizontal = 16.dp, vertical = 10.dp),
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .background(if (isSelectedRow) AppPrimary.copy(alpha = 0.15f) else androidx.compose.ui.graphics.Color.Transparent)
+                                        .clickable { 
+                                            onNodeIdSelected(recordId)
+                                            onSelectNode(node) 
+                                        }
+                                        .padding(horizontal = 16.dp, vertical = 10.dp),
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
                                         GridCell(node.baseUrl, 250.dp, isBold = true)
@@ -580,7 +595,7 @@ fun XtreamMasterGrid(nodes: List<ParsedCredential>, onSelectNode: (ParsedCredent
                                         GridCell(node.sourceLink.ifEmpty { "-" }, 180.dp, color = if (node.sourceLink.startsWith("http")) AppPrimary else AppTextMuted)
 
                                         Row(
-                                            modifier = Modifier.width(140.dp),
+                                            modifier = Modifier.width(140.dp).padding(end = 8.dp),
                                             horizontalArrangement = Arrangement.spacedBy(6.dp),
                                             verticalAlignment = Alignment.CenterVertically
                                         ) {
