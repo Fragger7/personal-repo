@@ -301,7 +301,9 @@ fun StreamPreviewDialog(
                 }
 
                 // Real-time track format bitrate estimation
-                val videoFormat = activePlayer.videoFormat
+                val videoFormat = if (activePlayer is androidx.media3.exoplayer.ExoPlayer) {
+                    (activePlayer as androidx.media3.exoplayer.ExoPlayer).videoFormat
+                } else null
                 if (videoFormat != null && videoFormat.bitrate > 0) {
                     currentBitrateKbps = (videoFormat.bitrate / 1000).toLong()
                 } else if (activePlayer.playbackParameters.speed > 0) {
