@@ -317,6 +317,14 @@ fun StreamPreviewDialog(
         }
     }
 
+    // Lifecycle for ExoPlayer
+    DisposableEffect(exoPlayer) {
+        onDispose {
+            exoPlayer.stop()
+            exoPlayer.release()
+        }
+    }
+
     // Monitor Latency & Playback Events
     DisposableEffect(streamUrl, activePlayer) {
         val startTime = System.currentTimeMillis()
@@ -421,9 +429,8 @@ fun StreamPreviewDialog(
 
         onDispose {
             activePlayer.removeListener(listener)
-            activePlayer.stop()
-            if (activePlayer == exoPlayer) {
-                exoPlayer.release()
+            if (!isCasting) {
+                activePlayer.stop()
             }
         }
     }
@@ -874,13 +881,17 @@ fun StreamPreviewDialog(
                                             ) {
                                                 AndroidView(
                                                     factory = { ctx ->
-                                                        MediaRouteButton(ctx).apply {
-                                                            try {
-                                                                CastButtonFactory.setUpMediaRouteButton(ctx, this)
-                                                            } catch (e: Exception) {}
+                                                        try {
+                                                            val themedCtx = androidx.appcompat.view.ContextThemeWrapper(ctx, androidx.appcompat.R.style.Theme_AppCompat_NoActionBar)
+                                                            MediaRouteButton(themedCtx).apply {
+                                                                CastButtonFactory.setUpMediaRouteButton(themedCtx, this)
+                                                            }
+                                                        } catch (e: Exception) {
+                                                            // Fallback dummy view
+                                                            android.view.View(ctx)
                                                         }
                                                     },
-                                                    modifier = Modifier.size(16.dp)
+                                                    modifier = Modifier.size(24.dp)
                                                 )
                                                 Text(
                                                     text = "Cast",
