@@ -1,37 +1,5 @@
 [
   {
-    "id": "ebay_336800132982",
-    "source": "ebay",
-    "title": "New ListingDell Precision laptop 7720 i7-7820HQ 2.9-3.9Ghz 32GB 512GB NVIDIA \"P5000\" 4KOpens in a new window or tab",
-    "price": 449.0,
-    "url": "https://www.ebay.com/itm/336800132982",
-    "specs": {
-      "cpu": "I7-7820HQ",
-      "ram_gb": 32,
-      "ssd_gb": 512,
-      "gpu": "NVIDIA RTX / Workstation GPU",
-      "screen": "16\" 4K UHD+ Display",
-      "condition": "Used / Refurbished"
-    },
-    "fair_market_value": 870.0,
-    "estimated_profit": 421.0,
-    "arbitrage_margin_pct": 93.8,
-    "deal_score": 9.7,
-    "summary": "Rare halo opportunity priced at $449 with a massive +$384 (+44% ROI) spread below fair market clearing baseline ($870). Configured with I7-7820HQ, 32GB RAM, 512GB SSD, and NVIDIA RTX / Workstation GPU. Excellent daily driver for full-stack engineering, multi-container development, and data analysis.",
-    "actionable_recommendation": "🎯 HIGH-CONVICTION STRIKE",
-    "confidence_score": 0.95,
-    "seller": "eBay Seller",
-    "location": "US",
-    "created_utc": "2026-09-19T06:01:34.279987+00:00",
-    "evaluated_at": "2026-09-19T06:02:13.192856+00:00",
-    "alerted": true,
-    "is_high_yield": true,
-    "raw_payload": null,
-    "is_auction": false,
-    "bid_count": null,
-    "time_left": null
-  },
-  {
     "id": "ebay_178508853065",
     "source": "ebay",
     "title": "New ListingDell Precision 5680 16\" i7-13800H 32GB 1TB SSD RTX A1000 Win11 Pro LaptopOpens in a new window or tab",
