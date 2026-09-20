@@ -1,5 +1,37 @@
 [
   {
+    "id": "ebay_800667182936",
+    "source": "ebay",
+    "title": "Dell Precision 3561 15.6\" 32GB 512GB, Titan GrayOpens in a new window or tab",
+    "price": 423.0,
+    "url": "https://www.ebay.com/itm/800667182936",
+    "specs": {
+      "cpu": "Intel Core i7/i9 12th/13th-Gen H",
+      "ram_gb": 32,
+      "ssd_gb": 512,
+      "gpu": "NVIDIA RTX / Workstation GPU",
+      "screen": "15.6\" - 16\" Workstation Display",
+      "condition": "Used / Refurbished"
+    },
+    "fair_market_value": 750.0,
+    "estimated_profit": 327.0,
+    "arbitrage_margin_pct": 77.3,
+    "deal_score": 9.7,
+    "summary": "This listing is automatically rejected under Rule 1 as the Dell Precision 3561 is powered by a blacklisted 11th-Gen Intel CPU architecture. Despite meeting the display size (15.6\") and RAM baseline (32GB) criteria, 11th-Gen Intel chips lack the core density and architectural efficiency needed for modern heavy compilation and local AI workloads. Better developer value lies in 12th-Gen or newer platforms.",
+    "actionable_recommendation": "❌ PASS: Blacklisted legacy 11th-Gen Intel processor",
+    "confidence_score": 0.95,
+    "seller": "eBay Seller",
+    "location": "US",
+    "created_utc": "2026-09-20T01:18:50.121486+00:00",
+    "evaluated_at": "2026-09-20T01:19:21.371167+00:00",
+    "alerted": true,
+    "is_high_yield": true,
+    "raw_payload": null,
+    "is_auction": false,
+    "bid_count": null,
+    "time_left": null
+  },
+  {
     "id": "ebay_178508853065",
     "source": "ebay",
     "title": "New ListingDell Precision 5680 16\" i7-13800H 32GB 1TB SSD RTX A1000 Win11 Pro LaptopOpens in a new window or tab",
