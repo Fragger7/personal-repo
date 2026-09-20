@@ -480,38 +480,6 @@
     "time_left": null
   },
   {
-    "id": "ebay_336792465326",
-    "source": "ebay",
-    "title": "New ListingDell Precision M6800 17.3\" Touch Screen Laptop, i7, 32GB RAM, 1TB HD, w/ chargerOpens in a new window or tab",
-    "price": 425.0,
-    "url": "https://www.ebay.com/itm/336792465326",
-    "specs": {
-      "cpu": "Intel Core i7/i9 12th/13th-Gen H",
-      "ram_gb": 32,
-      "ssd_gb": 1024,
-      "gpu": "NVIDIA RTX / Workstation GPU",
-      "screen": "15.6\" - 16\" Workstation Display",
-      "condition": "Used / Refurbished"
-    },
-    "fair_market_value": 750.0,
-    "estimated_profit": 325.0,
-    "arbitrage_margin_pct": 76.5,
-    "deal_score": 9.7,
-    "summary": "The Dell Precision M6800 features a decade-old 4th-Gen Intel Core i7 processor (Haswell), triggering an immediate rejection under the directive's strict hardware blacklist (Intel 11th-Gen and older). Despite having 32GB RAM and a 17.3-inch display, its obsolete architecture and reliance on a mechanical hard drive render it unusable for modern developer workflows, compilation, or AI inference tasks. At an asking price of $425, this machine offers negative value and zero arbitrage potential.",
-    "actionable_recommendation": "❌ REJECT: Obsolete 4th-Gen Intel CPU blacklisted under system directive",
-    "confidence_score": 0.95,
-    "seller": "eBay Seller",
-    "location": "US",
-    "created_utc": "2026-09-13T22:29:47.449504+00:00",
-    "evaluated_at": "2026-09-13T22:30:23.078683+00:00",
-    "alerted": true,
-    "is_high_yield": true,
-    "raw_payload": null,
-    "is_auction": false,
-    "bid_count": null,
-    "time_left": null
-  },
-  {
     "id": "ebay_335333243508",
     "source": "ebay",
     "title": "Dell Latitude 15.6\" FHD Light Gaming Business Laptop Up to 64GB RAM 4TB SSD W11POpens in a new window or tab",
