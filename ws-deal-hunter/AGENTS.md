@@ -335,6 +335,11 @@ C:\Development\Apps\WS Deal Hunter\
 
 ---
 
+
+### Decision 44: Final Clean-Up of Root Directory & Strict Subdirectory Pathing
+* **Context**: Previously, `app.py`, `deals.json`, and `requirements.txt` were copied to the repository root as a hack to support Streamlit Cloud. This broke the clean monorepo structure and caused confusion.
+* **Resolution**: The redundant root files have been permanently deleted. Streamlit Cloud should now be natively configured to use `ws-deal-hunter/app.py` directly from the Streamlit settings, ensuring all WS Deal Hunter files remain strictly confined to the `ws-deal-hunter/` sub-directory.
+
 ## 📌 5. Project Backlog & Future Roadmap
 *See [`BACKLOG.md`](file:///Users/admin/Development/personal-repo/ws-deal-hunter/BACKLOG.md) for full technical task breakdown and UI/UX design specifications.*
 
