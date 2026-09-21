@@ -44,6 +44,7 @@ import {
 } from "recharts";
 
 import { WorkoutDay, LogEntry } from "./types";
+import { CustomCalendarDropdown } from "./components/CustomCalendarDropdown";
 
 // --- GOOGLE WORKSPACE CLIENT CONFIGURATION ---
 // Paste your Google OAuth 2.0 Client ID here to lock it permanently into your tracker code.
@@ -1527,12 +1528,10 @@ export default function App() {
                 >
                   ◀ PREV
                 </button>
-                <input
-                  type="date"
-                  required
+                <CustomCalendarDropdown
                   value={activeDate}
-                  onChange={(e) => setActiveDate(e.target.value)}
-                  className="flex-1 bg-white dark:bg-slate-950 border border-slate-300 dark:border-white/5 rounded-xl p-3 text-xs text-slate-900 dark:text-white text-center focus:outline-none focus:border-brand-primary font-mono cursor-pointer"
+                  onChange={(val) => setActiveDate(val)}
+                  dataFrame={dataFrame}
                 />
                 <button
                   type="button"
