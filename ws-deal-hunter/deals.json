@@ -352,38 +352,6 @@
     "time_left": null
   },
   {
-    "id": "ebay_227527479502",
-    "source": "ebay",
-    "title": "New ListingLenovo ThinkPad X1 Nano Gen 2 Intel i7-1280P 32GB RAM NO SSD NO OS MISSING DOTOpens in a new window or tab",
-    "price": 559.0,
-    "url": "https://www.ebay.com/itm/227527479502",
-    "specs": {
-      "cpu": "I7-1280P",
-      "ram_gb": 32,
-      "ssd_gb": 512,
-      "gpu": "NVIDIA RTX / Workstation GPU",
-      "screen": "15.6\" - 16\" Workstation Display",
-      "condition": "Used / Refurbished"
-    },
-    "fair_market_value": 750.0,
-    "estimated_profit": 191.0,
-    "arbitrage_margin_pct": 34.2,
-    "deal_score": 8.4,
-    "summary": "Opportunistic target priced at $559 with +$145 margin spread. Configured with I7-1280P, 32GB RAM, 512GB SSD, and NVIDIA RTX / Workstation GPU. Excellent daily driver for full-stack engineering, multi-container development, and data analysis.",
-    "actionable_recommendation": "⚡ STRONG VALUE BUY",
-    "confidence_score": 0.95,
-    "seller": "eBay Seller",
-    "location": "US",
-    "created_utc": "2026-09-18T16:33:50.438359+00:00",
-    "evaluated_at": "2026-09-18T16:34:14.232050+00:00",
-    "alerted": false,
-    "is_high_yield": false,
-    "raw_payload": null,
-    "is_auction": false,
-    "bid_count": null,
-    "time_left": null
-  },
-  {
     "id": "ebay_137740357595",
     "source": "ebay",
     "title": "Dell Precision 5680 Laptop Intel Core i7-13800H 32GB RAMOpens in a new window or tab",
