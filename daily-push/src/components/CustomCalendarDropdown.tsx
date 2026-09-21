@@ -41,6 +41,12 @@ export function CustomCalendarDropdown({ value, onChange, dataFrame }: Props) {
     };
   }, [isOpen]);
 
+  useEffect(() => {
+    if (isOpen) {
+      setCurrentMonth(getInitialMonth());
+    }
+  }, [isOpen, value]);
+
   const updateCoords = () => {
     if (dropdownRef.current) {
       const rect = dropdownRef.current.getBoundingClientRect();
@@ -162,9 +168,9 @@ export function CustomCalendarDropdown({ value, onChange, dataFrame }: Props) {
             >
               <span>{day}</span>
               <div className={`flex space-x-[3px] mt-[3px] ${hasData ? 'opacity-100' : 'opacity-0'}`}>
-                <div className={`w-1 h-1 rounded-full ${isSelected ? 'bg-white' : 'bg-cyan-500'}`} />
-                <div className={`w-1 h-1 rounded-full ${isSelected ? 'bg-white' : 'bg-cyan-500'}`} />
-                <div className={`w-1 h-1 rounded-full ${isSelected ? 'bg-white' : 'bg-cyan-500'}`} />
+                <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: isSelected ? '#ffffff' : '#06b6d4' }} />
+                <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: isSelected ? '#ffffff' : '#06b6d4' }} />
+                <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: isSelected ? '#ffffff' : '#06b6d4' }} />
               </div>
             </button>
           );
