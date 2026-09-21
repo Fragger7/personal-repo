@@ -7,7 +7,7 @@
 - **Frontend**: React 18, Vite, Tailwind CSS. Focuses on a clean, motivational UI.
 - **Backend**: **Vercel Serverless Functions**. API logic (like the Gemini AI insights) lives in the `/api` directory (e.g., `/api/insight.ts`) utilizing `@vercel/node`.
 - **Hosting & Deployment**: Hosted on Vercel at `https://personal-repo-xi-two.vercel.app/`. 
-- **Repository Pattern**: We use a `scripts/git_deploy.ts` script to compile the frontend and copy crucial source files (`/src`, `/public`, `/api`, `server.ts`, etc.) into a `daily-push` subdirectory within the `Fragger7/personal-repo` GitHub repository. Vercel automatically deploys based on those commits to GitHub.
+- **Repository Pattern & Vercel Deployment Trap [CRITICAL]**: We use a `scripts/git_deploy.ts` script (via `npm run deploy`) to compile the frontend locally and copy the compiled `dist/` assets (`index.html` and `/assets`) directly into the `daily-push` subdirectory within the `Fragger7/personal-repo` GitHub repository. **Vercel DOES NOT build the app; it only serves the statically pushed assets.** If you modify source code in `/src`, your changes will be completely invisible on Vercel unless you run `npm run build` and push the compiled artifacts. Be careful not to overwrite the local `index.html` with the compiled version!
 
 ## Core Integrations & Workflows
 1. **Gemini API (AI Insights)**: 

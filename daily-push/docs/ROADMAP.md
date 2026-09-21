@@ -54,3 +54,6 @@ This project is an ongoing, persistent full-stack environment in Google AI Studi
 3. **The "Memory Document" Restore:** When you open a fresh chat turn next time, simply start by saying:
    > *"I am back to work on Daily Push. Please scan files inside the `/docs` directory to restore your knowledge state and roadmap priorities."*
 4. **Resystemization:** A simple command like the one above ensures the agent instantly scans your history, goals, systems architecture, and roadmap without you having to re-copy and paste anything.
+
+*   **App v2.1 Calendar Data Viz & Polish:**
+    *   **Status: Completed.** Replaced native date inputs with a custom-built headless calendar dropdown matching the glassmorphic card aesthetic. Solved native timezone bugs by explicitly parsing string dates locally. Implemented resilient data-matching logic mapping logged sessions to days with high-visibility dynamic theme-matching dots (`bg-brand-accent`). Fixed Vercel deployment cache pipeline by documenting the static build pattern and busting the Service Worker cache (`nexus-v2.1`).
