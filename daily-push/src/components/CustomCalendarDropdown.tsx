@@ -102,12 +102,9 @@ export function CustomCalendarDropdown({ value, onChange, dataFrame }: Props) {
     const dd = String(day).padStart(2, "0");
     const dateString = `${yyyy}-${mm}-${dd}`;
     
-    // Check if the record exists and has at least one explicit number logged (even if it is 0)
-    return dataFrame.some(d => {
-      if (d.date !== dateString) return false;
-      const hasAnyValue = [...d.p, ...d.c].some(val => val !== null);
-      return hasAnyValue;
-    });
+    // Bulletproof check against the raw dataFrame JSON to avoid any edge cases with nested arrays
+    const rawData = JSON.stringify(dataFrame);
+    return rawData.includes(`"date":"${dateString}"`);
   };
 
   const monthNames = ["January", "February", "March", "April", "May", "June",
@@ -167,11 +164,13 @@ export function CustomCalendarDropdown({ value, onChange, dataFrame }: Props) {
               `}
             >
               <span>{day}</span>
-              <div className={`flex space-x-[3px] mt-[3px] ${hasData ? 'opacity-100' : 'opacity-0'}`}>
-                <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: isSelected ? '#ffffff' : '#06b6d4' }} />
-                <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: isSelected ? '#ffffff' : '#06b6d4' }} />
-                <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: isSelected ? '#ffffff' : '#06b6d4' }} />
-              </div>
+              {hasData && (
+                <div className="flex space-x-[3px] mt-[3px]">
+                  <div className={`w-1 h-1 rounded-full ${isSelected ? 'bg-white' : 'bg-cyan-500'}`} />
+                  <div className={`w-1 h-1 rounded-full ${isSelected ? 'bg-white' : 'bg-cyan-500'}`} />
+                  <div className={`w-1 h-1 rounded-full ${isSelected ? 'bg-white' : 'bg-cyan-500'}`} />
+                </div>
+              )}
             </button>
           );
         })}
