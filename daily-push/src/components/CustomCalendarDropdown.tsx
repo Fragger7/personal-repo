@@ -114,16 +114,16 @@ export function CustomCalendarDropdown({ value, onChange, dataFrame }: Props) {
     <div 
       ref={popoverRef}
       style={{ top: `${coords.top}px`, left: `${coords.left}px`, width: '300px' }}
-      className="absolute bg-white/95 dark:bg-slate-900/95 backdrop-blur-3xl border border-slate-200 dark:border-white/10 rounded-2xl shadow-2xl p-4 z-[9999]"
+      className="absolute bg-white/95 dark:bg-card-dark/95 backdrop-blur-3xl border border-slate-200 dark:border-white/10 rounded-2xl shadow-2xl p-4 z-[9999]"
     >
       <div className="flex justify-between items-center mb-4">
-        <button type="button" onClick={prevMonth} className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded transition-colors text-slate-700 dark:text-slate-300">
+        <button type="button" onClick={prevMonth} className="p-1 hover:bg-slate-100 dark:hover:bg-white/5 rounded transition-colors text-slate-700 dark:text-slate-300">
           <ChevronLeft size={16} />
         </button>
         <div className="text-xs font-bold text-slate-800 dark:text-white font-mono uppercase tracking-widest">
           {monthNames[currentMonth.getMonth()]} {currentMonth.getFullYear()}
         </div>
-        <button type="button" onClick={nextMonth} className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded transition-colors text-slate-700 dark:text-slate-300">
+        <button type="button" onClick={nextMonth} className="p-1 hover:bg-slate-100 dark:hover:bg-white/5 rounded transition-colors text-slate-700 dark:text-slate-300">
           <ChevronRight size={16} />
         </button>
       </div>
@@ -160,15 +160,15 @@ export function CustomCalendarDropdown({ value, onChange, dataFrame }: Props) {
                 flex flex-col items-center justify-center h-10 rounded-lg text-[13px] font-mono transition-colors cursor-pointer border
                 ${isSelected 
                   ? "bg-brand-primary border-brand-primary text-white font-bold shadow-md" 
-                  : "bg-transparent border-transparent text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"}
+                  : "bg-transparent border-transparent text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5"}
               `}
             >
               <span>{day}</span>
               {hasData && (
                 <div className="flex space-x-[3px] mt-[3px]">
-                  <div className={`w-1 h-1 rounded-full ${isSelected ? 'bg-white' : 'bg-cyan-500'}`} />
-                  <div className={`w-1 h-1 rounded-full ${isSelected ? 'bg-white' : 'bg-cyan-500'}`} />
-                  <div className={`w-1 h-1 rounded-full ${isSelected ? 'bg-white' : 'bg-cyan-500'}`} />
+                  <div className={`w-1 h-1 rounded-full ${isSelected ? 'bg-white' : 'bg-brand-accent'}`} />
+                  <div className={`w-1 h-1 rounded-full ${isSelected ? 'bg-white' : 'bg-brand-accent'}`} />
+                  <div className={`w-1 h-1 rounded-full ${isSelected ? 'bg-white' : 'bg-brand-accent'}`} />
                 </div>
               )}
             </button>
@@ -183,7 +183,7 @@ export function CustomCalendarDropdown({ value, onChange, dataFrame }: Props) {
       <button
         type="button"
         onClick={toggleOpen}
-        className="w-full bg-white dark:bg-slate-950 border border-slate-300 dark:border-white/5 rounded-xl p-3 text-xs text-slate-900 dark:text-white flex items-center justify-center focus:outline-none focus:border-brand-primary font-mono cursor-pointer transition-colors"
+        className="w-full bg-white dark:bg-page-dark/50 border border-slate-300 dark:border-white/5 rounded-xl p-3 text-xs text-slate-900 dark:text-white flex items-center justify-center focus:outline-none focus:border-brand-primary font-mono cursor-pointer transition-colors"
       >
         <span className="flex items-center gap-2">
           {value || "Select Date"}
