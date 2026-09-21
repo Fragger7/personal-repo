@@ -44,7 +44,7 @@ export function CustomCalendarDropdown({ value, onChange, dataFrame }: Props) {
   const updateCoords = () => {
     if (dropdownRef.current) {
       const rect = dropdownRef.current.getBoundingClientRect();
-      const popoverWidth = 280; 
+      const popoverWidth = 300; 
       let left = rect.left + window.scrollX + (rect.width / 2) - (popoverWidth / 2);
       
       if (left < 16) left = 16;
@@ -64,7 +64,6 @@ export function CustomCalendarDropdown({ value, onChange, dataFrame }: Props) {
     setIsOpen(!isOpen);
   };
 
-  // Safe parsing to avoid UTC timezone offset issues on some browsers
   const getInitialMonth = () => {
     if (!value) return new Date();
     const [year, month, day] = value.split("-").map(Number);
@@ -97,11 +96,11 @@ export function CustomCalendarDropdown({ value, onChange, dataFrame }: Props) {
     const dd = String(day).padStart(2, "0");
     const dateString = `${yyyy}-${mm}-${dd}`;
     
+    // Check if the record exists and has at least one explicit number logged (even if it is 0)
     return dataFrame.some(d => {
       if (d.date !== dateString) return false;
-      const pSum = d.p.reduce((acc, val) => acc + (val || 0), 0);
-      const cSum = d.c.reduce((acc, val) => acc + (val || 0), 0);
-      return pSum > 0 || cSum > 0;
+      const hasAnyValue = [...d.p, ...d.c].some(val => val !== null);
+      return hasAnyValue;
     });
   };
 
@@ -111,7 +110,7 @@ export function CustomCalendarDropdown({ value, onChange, dataFrame }: Props) {
   const popoverContent = isOpen ? (
     <div 
       ref={popoverRef}
-      style={{ top: `${coords.top}px`, left: `${coords.left}px`, width: '280px' }}
+      style={{ top: `${coords.top}px`, left: `${coords.left}px`, width: '300px' }}
       className="absolute bg-white/95 dark:bg-slate-900/95 backdrop-blur-3xl border border-slate-200 dark:border-white/10 rounded-2xl shadow-2xl p-4 z-[9999]"
     >
       <div className="flex justify-between items-center mb-4">
@@ -128,7 +127,7 @@ export function CustomCalendarDropdown({ value, onChange, dataFrame }: Props) {
       
       <div className="grid grid-cols-7 gap-1 mb-2">
         {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map(day => (
-          <div key={day} className="text-[10px] text-center text-slate-400 font-bold font-mono py-1">
+          <div key={day} className="text-[11px] text-center text-slate-400 font-bold font-mono py-1">
             {day}
           </div>
         ))}
@@ -155,21 +154,17 @@ export function CustomCalendarDropdown({ value, onChange, dataFrame }: Props) {
               type="button"
               onClick={() => handleDateClick(day)}
               className={`
-                relative flex flex-col items-center justify-center h-8 rounded-lg text-xs font-mono transition-colors cursor-pointer border
+                flex flex-col items-center justify-center h-10 rounded-lg text-[13px] font-mono transition-colors cursor-pointer border
                 ${isSelected 
                   ? "bg-brand-primary border-brand-primary text-white font-bold shadow-md" 
                   : "bg-transparent border-transparent text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"}
               `}
             >
-              <span className="mb-[2px]">{day}</span>
-              <div className="absolute bottom-[3px] flex space-x-[2px]">
-                {hasData && (
-                  <>
-                    <div className={`w-[3px] h-[3px] rounded-full ${isSelected ? 'bg-white' : 'bg-cyan-500'}`} />
-                    <div className={`w-[3px] h-[3px] rounded-full ${isSelected ? 'bg-white' : 'bg-cyan-500'}`} />
-                    <div className={`w-[3px] h-[3px] rounded-full ${isSelected ? 'bg-white' : 'bg-cyan-500'}`} />
-                  </>
-                )}
+              <span>{day}</span>
+              <div className={`flex space-x-[3px] mt-[3px] ${hasData ? 'opacity-100' : 'opacity-0'}`}>
+                <div className={`w-1 h-1 rounded-full ${isSelected ? 'bg-white' : 'bg-cyan-500'}`} />
+                <div className={`w-1 h-1 rounded-full ${isSelected ? 'bg-white' : 'bg-cyan-500'}`} />
+                <div className={`w-1 h-1 rounded-full ${isSelected ? 'bg-white' : 'bg-cyan-500'}`} />
               </div>
             </button>
           );
