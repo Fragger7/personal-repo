@@ -160,38 +160,6 @@
     "time_left": null
   },
   {
-    "id": "ebay_158322723493",
-    "source": "ebay",
-    "title": "New ListingHP Zbook Firefly 16 G9 16\" Laptop i7-1280P 32GB 512GB SSD W11P Low Batt HealthOpens in a new window or tab",
-    "price": 455.99,
-    "url": "https://www.ebay.com/itm/158322723493",
-    "specs": {
-      "cpu": "I7-1280P",
-      "ram_gb": 32,
-      "ssd_gb": 512,
-      "gpu": "NVIDIA RTX / Workstation GPU",
-      "screen": "15.6\" - 16\" Workstation Display",
-      "condition": "Used / Refurbished"
-    },
-    "fair_market_value": 750.0,
-    "estimated_profit": 294.01,
-    "arbitrage_margin_pct": 64.5,
-    "deal_score": 9.5,
-    "summary": "Although offered at a low sticker price of $455.99 with 32GB RAM and a 16-inch display, this system is powered by an Intel Core i7-1280P processor. Intel P-series chips are explicitly blacklisted under system directive rules due to aggressive thermal throttling under sustained multi-threaded compilation and heavy dev workloads. Coupled with a low battery health status requiring immediate hardware replacement, this machine fails core performance gatekeeping.",
-    "actionable_recommendation": "⛔ REJECT: Blacklisted Intel P-Series CPU and compromised battery health",
-    "confidence_score": 0.95,
-    "seller": "eBay Seller",
-    "location": "US",
-    "created_utc": "2026-09-22T21:29:37.571183+00:00",
-    "evaluated_at": "2026-09-22T21:30:20.192547+00:00",
-    "alerted": true,
-    "is_high_yield": true,
-    "raw_payload": null,
-    "is_auction": false,
-    "bid_count": null,
-    "time_left": null
-  },
-  {
     "id": "ebay_168661398881",
     "source": "ebay",
     "title": "HP ZBook Power G9 15.6\" FHD Intel i7-12800H 32GB 512GB SSD RTX A1000 W11P GrayOpens in a new window or tab",
