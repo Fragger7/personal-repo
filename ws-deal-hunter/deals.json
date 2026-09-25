@@ -160,38 +160,6 @@
     "time_left": null
   },
   {
-    "id": "ebay_298705283614",
-    "source": "ebay",
-    "title": "Lenovo ThinkPad L15 G3 16-inch 2022 - Ryzen 5 - 5000 Series U 32GB RAM 512GB SSDOpens in a new window or tab",
-    "price": 412.99,
-    "url": "https://www.ebay.com/itm/298705283614",
-    "specs": {
-      "cpu": "AMD Ryzen 7/9 Zen 4/5",
-      "ram_gb": 32,
-      "ssd_gb": 512,
-      "gpu": "NVIDIA RTX / Workstation GPU",
-      "screen": "15.6\" - 16\" Workstation Display",
-      "condition": "Used / Refurbished"
-    },
-    "fair_market_value": 750.0,
-    "estimated_profit": 337.01,
-    "arbitrage_margin_pct": 81.6,
-    "deal_score": 9.7,
-    "summary": "This unit is automatically rejected under system directives due to its blacklisted legacy AMD Zen 3 U-series low-power CPU. Although it features a 15.6-inch display and 32GB of RAM, the low-power processor lacks the multi-core performance required for heavy compilation or modern quantitative workloads.",
-    "actionable_recommendation": "❌ REJECT: Blacklisted AMD Zen 3 / U-Series CPU",
-    "confidence_score": 0.95,
-    "seller": "eBay Seller",
-    "location": "US",
-    "created_utc": "2026-09-25T07:58:54.605496+00:00",
-    "evaluated_at": "2026-09-25T07:59:23.609176+00:00",
-    "alerted": true,
-    "is_high_yield": true,
-    "raw_payload": null,
-    "is_auction": false,
-    "bid_count": null,
-    "time_left": null
-  },
-  {
     "id": "ebay_168718175414",
     "source": "ebay",
     "title": "Lenovo Business 15.6\" FHD Laptop, Intel Processor, 8GB DDR5, 128GB StorageOpens in a new window or tab",
