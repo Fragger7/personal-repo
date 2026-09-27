@@ -192,38 +192,6 @@
     "time_left": null
   },
   {
-    "id": "ebay_407198292239",
-    "source": "ebay",
-    "title": "DELL Precision M3510 i7-QUAD FAST 1TB SSD 32GB 15.6\" IPS W5130M 2GB + DOCKINGOpens in a new window or tab",
-    "price": 560.33,
-    "url": "https://www.ebay.com/itm/407198292239",
-    "specs": {
-      "cpu": "Apple Silicon",
-      "ram_gb": 32,
-      "ssd_gb": 1024,
-      "gpu": "Apple Silicon Unified GPU",
-      "screen": "15.6\" - 16\" Workstation Display",
-      "condition": "Used / Refurbished"
-    },
-    "fair_market_value": 750.0,
-    "estimated_profit": 189.67,
-    "arbitrage_margin_pct": 33.8,
-    "deal_score": 8.4,
-    "summary": "Opportunistic target priced at $560 with +$143 margin spread. Configured with Apple Silicon, 32GB RAM, 1024GB SSD, and Apple Silicon Unified GPU. Excellent daily driver for full-stack engineering, multi-container development, and data analysis.",
-    "actionable_recommendation": "⚡ STRONG VALUE BUY",
-    "confidence_score": 0.95,
-    "seller": "eBay Seller",
-    "location": "US",
-    "created_utc": "2026-09-25T18:44:30.250183+00:00",
-    "evaluated_at": "2026-09-25T18:45:21.049193+00:00",
-    "alerted": false,
-    "is_high_yield": false,
-    "raw_payload": null,
-    "is_auction": false,
-    "bid_count": null,
-    "time_left": null
-  },
-  {
     "id": "ebay_336797037712",
     "source": "ebay",
     "title": "Dell Precision 5680 Used 16\" (i9-13900H-64GB-2048GB NVMe)Opens in a new window or tab",
