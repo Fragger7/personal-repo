@@ -1,5 +1,37 @@
 [
   {
+    "id": "ebay_366694130155",
+    "source": "ebay",
+    "title": "New ListingDell Precision 7670 I7-12850HX / RTX A2000 / 32GB 4800MHz / 512GB NVME **READ**Opens in a new window or tab",
+    "price": 494.98,
+    "url": "https://www.ebay.com/itm/366694130155",
+    "specs": {
+      "cpu": "I7-12850HX",
+      "ram_gb": 32,
+      "ssd_gb": 512,
+      "gpu": "NVIDIA RTX A2000",
+      "screen": "15.6\" - 16\" Workstation Display",
+      "condition": "Used / Refurbished"
+    },
+    "fair_market_value": 980.0,
+    "estimated_profit": 485.02,
+    "arbitrage_margin_pct": 98.0,
+    "deal_score": 9.6,
+    "summary": "This Dell Precision 7670 is massively mispriced under $500 despite featuring a powerful 16-core i7-12850HX processor, 32GB DDR5 RAM, and dedicated RTX A2000 graphics. The robust 16-inch mobile workstation chassis offers top-tier thermal headroom, making it exceptionally well-suited for heavy compilation, Docker multi-container environments, and local AI model execution. With a landed cost of approximately $536 against an empirical FMV near $980, this deal yields a massive margin spread.",
+    "actionable_recommendation": "🎯 HIGH-CONVICTION STRIKE: Buy immediately at asking price",
+    "confidence_score": 0.95,
+    "seller": "eBay Seller",
+    "location": "US",
+    "created_utc": "2026-09-27T01:34:29.527580+00:00",
+    "evaluated_at": "2026-09-27T01:35:02.430828+00:00",
+    "alerted": true,
+    "is_high_yield": true,
+    "raw_payload": null,
+    "is_auction": false,
+    "bid_count": null,
+    "time_left": null
+  },
+  {
     "id": "microcenter_1_47614",
     "source": "microcenter",
     "title": "Micro Center Clearance: Open Boxes (YMMV): LG gram Book 15: 15\" FHD IPS Touch, Intel Ultra 5 115U, 32GB LPDDR5, 512GB SSD $487.99",
