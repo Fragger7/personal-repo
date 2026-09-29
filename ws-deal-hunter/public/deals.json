@@ -1,5 +1,37 @@
 [
   {
+    "id": "ebay_226510174971",
+    "source": "ebay",
+    "title": "Dell Precision 5570 15\" - i7-12800H - 32GB RAM - 1TB SSD - Grade DOpens in a new window or tab",
+    "price": 584.99,
+    "url": "https://www.ebay.com/itm/226510174971",
+    "specs": {
+      "cpu": "I7-12800H",
+      "ram_gb": 32,
+      "ssd_gb": 1024,
+      "gpu": "NVIDIA RTX / Workstation GPU",
+      "screen": "15.6\" - 16\" Workstation Display",
+      "condition": "Used / Refurbished"
+    },
+    "fair_market_value": 750.0,
+    "estimated_profit": 165.01,
+    "arbitrage_margin_pct": 28.2,
+    "deal_score": 8.4,
+    "summary": "This Dell Precision 5570 offers 14-core Intel 12th-Gen H-series processing power paired with 32GB RAM and 1TB storage for well under $600. Despite being flagged as Grade D cosmetic wear, the underlying hardware provides a robust workstation platform for compilation, dockerized environments, and light local AI workflows. Upgradable dual SODIMM slots also ensure an easy path to 64GB RAM if additional memory capacity is required later.",
+    "actionable_recommendation": "🔥 STRONG VALUE BUY: Excellent budget developer workstation if cosmetic wear is acceptable",
+    "confidence_score": 0.95,
+    "seller": "eBay Seller",
+    "location": "US",
+    "created_utc": "2026-09-29T20:54:29.394201+00:00",
+    "evaluated_at": "2026-09-29T20:54:52.029558+00:00",
+    "alerted": false,
+    "is_high_yield": false,
+    "raw_payload": null,
+    "is_auction": false,
+    "bid_count": null,
+    "time_left": null
+  },
+  {
     "id": "ebay_298716970972",
     "source": "ebay",
     "title": "Dell Latitude 7640 16\" FHD i7 32GB RAM 512GB SSD Win11 Gray Iris XeOpens in a new window or tab",
