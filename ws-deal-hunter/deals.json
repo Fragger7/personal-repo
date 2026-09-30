@@ -1,5 +1,37 @@
 [
   {
+    "id": "ebay_366700435706",
+    "source": "ebay",
+    "title": "Lenovo ThinkPad P15v Gen 3 15\" FHD i7-12800H 32GB DDR5 512GB SSD EXCELLENT BATT~Opens in a new window or tab",
+    "price": 519.98,
+    "url": "https://www.ebay.com/itm/366700435706",
+    "specs": {
+      "cpu": "I7-12800H",
+      "ram_gb": 32,
+      "ssd_gb": 512,
+      "gpu": "NVIDIA RTX / Workstation GPU",
+      "screen": "15.6\" - 16\" Workstation Display",
+      "condition": "Used / Refurbished"
+    },
+    "fair_market_value": 750.0,
+    "estimated_profit": 230.02,
+    "arbitrage_margin_pct": 44.2,
+    "deal_score": 8.9,
+    "summary": "High-conviction value buy at $520 offering +$187 (+25% ROI) profit spread below estimated FMV ($750). Configured with I7-12800H, 32GB RAM, 512GB SSD, and NVIDIA RTX / Workstation GPU. Excellent daily driver for full-stack engineering, multi-container development, and data analysis.",
+    "actionable_recommendation": "⚡ STRONG VALUE BUY",
+    "confidence_score": 0.95,
+    "seller": "eBay Seller",
+    "location": "US",
+    "created_utc": "2026-09-30T13:55:40.351469+00:00",
+    "evaluated_at": "2026-09-30T13:55:58.712951+00:00",
+    "alerted": true,
+    "is_high_yield": true,
+    "raw_payload": null,
+    "is_auction": false,
+    "bid_count": null,
+    "time_left": null
+  },
+  {
     "id": "ebay_128105675939",
     "source": "ebay",
     "title": "HP ZBook Firefly 15 G8 i7-1185G7 3.0GHz 64GB 1TB NVMe SSD NVIDIA T500Opens in a new window or tab",
