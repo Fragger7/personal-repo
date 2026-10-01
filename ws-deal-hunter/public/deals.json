@@ -1,5 +1,37 @@
 [
   {
+    "id": "ebay_128107906965",
+    "source": "ebay",
+    "title": "HP ZBook Firefly 15 G8 i7-1185G7 3.0GHz 64GB 512GB NVMe SSD NVIDIA T500Opens in a new window or tab",
+    "price": 449.0,
+    "url": "https://www.ebay.com/itm/128107906965",
+    "specs": {
+      "cpu": "Intel Core i7/i9 12th/13th-Gen H",
+      "ram_gb": 64,
+      "ssd_gb": 512,
+      "gpu": "NVIDIA RTX / Workstation GPU",
+      "screen": "15.6\" - 16\" Workstation Display",
+      "condition": "Used / Refurbished"
+    },
+    "fair_market_value": 850.0,
+    "estimated_profit": 401.0,
+    "arbitrage_margin_pct": 89.3,
+    "deal_score": 10.0,
+    "summary": "This listing is automatically rejected under system directives due to its blacklisted 11th-Gen Intel Core i7-1185G7 processor. Despite featuring 64GB RAM and a 15.6-inch display, the legacy 4-core G/U-series architecture severely bottlenecks modern developer workloads such as heavy compilation, virtualization, and local AI/LLM execution. The minor graphics upgrade of an entry-level NVIDIA T500 cannot offset the CPU architecture limitations.",
+    "actionable_recommendation": "❌ REJECT / PASS: Blacklisted 11th-Gen Intel quad-core CPU",
+    "confidence_score": 0.95,
+    "seller": "eBay Seller",
+    "location": "US",
+    "created_utc": "2026-10-01T13:33:11.310767+00:00",
+    "evaluated_at": "2026-10-01T13:33:24.941061+00:00",
+    "alerted": true,
+    "is_high_yield": true,
+    "raw_payload": null,
+    "is_auction": false,
+    "bid_count": null,
+    "time_left": null
+  },
+  {
     "id": "ebay_287614638719",
     "source": "ebay",
     "title": "Dell XPS 15 9530 i7-13th 32GB 1TB SSD Intel Arc A370M FHD+Opens in a new window or tab",
