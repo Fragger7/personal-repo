@@ -224,38 +224,6 @@
     "time_left": null
   },
   {
-    "id": "ebay_336818951090",
-    "source": "ebay",
-    "title": "Dell Precision 5680 Used 16\" (i9-13900H-64GB-2048GB NVMe)Opens in a new window or tab",
-    "price": 1000.0,
-    "url": "https://www.ebay.com/itm/336818951090",
-    "specs": {
-      "cpu": "I9-13900H",
-      "ram_gb": 64,
-      "ssd_gb": 512,
-      "gpu": "NVIDIA RTX / Workstation GPU",
-      "screen": "15.6\" - 16\" Workstation Display",
-      "condition": "Used / Refurbished"
-    },
-    "fair_market_value": 1420.76,
-    "estimated_profit": 420.76,
-    "arbitrage_margin_pct": 42.1,
-    "deal_score": 8.9,
-    "summary": "High-conviction value buy at $1000 offering +$338 (+24% ROI) profit spread below estimated FMV ($1421). Configured with I9-13900H, 64GB RAM, 512GB SSD, and NVIDIA RTX / Workstation GPU. Ideal for local AI/LLM fine-tuning, Docker virtualization, and heavy code compilation.",
-    "actionable_recommendation": "⚡ STRONG VALUE BUY",
-    "confidence_score": 0.95,
-    "seller": "eBay Seller",
-    "location": "US",
-    "created_utc": "2026-09-29T15:59:49.148619+00:00",
-    "evaluated_at": "2026-09-29T16:00:15.787312+00:00",
-    "alerted": false,
-    "is_high_yield": false,
-    "raw_payload": null,
-    "is_auction": false,
-    "bid_count": null,
-    "time_left": null
-  },
-  {
     "id": "ebay_366687977915",
     "source": "ebay",
     "title": "HP ZBook Power Mobile Workstation Laptop PC 15.6\" i7 32GB 256G SSD 4GB T1000 ProOpens in a new window or tab",
