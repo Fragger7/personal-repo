@@ -1,5 +1,37 @@
 [
   {
+    "id": "ebay_920002953043",
+    "source": "ebay",
+    "title": "Dell XPS 13 9340 Core Ultra 7 155H 16-Core 32GB RAM,1TB NVMe Intel Arc -Win 11Opens in a new window or tab",
+    "price": 497.0,
+    "url": "https://www.ebay.com/itm/920002953043",
+    "specs": {
+      "cpu": "ULTRA 7 155H",
+      "ram_gb": 32,
+      "ssd_gb": 1024,
+      "gpu": "NVIDIA RTX / Workstation GPU",
+      "screen": "15.6\" - 16\" Workstation Display",
+      "condition": "Used / Refurbished"
+    },
+    "fair_market_value": 750.0,
+    "estimated_profit": 253.0,
+    "arbitrage_margin_pct": 50.9,
+    "deal_score": 9.2,
+    "summary": "This listing is automatically rejected due to the hardware gatekeeper rule enforcing a minimum 15.0\" display for developer workstations; the Dell XPS 13 features a 13.4\" panel. Despite an aggressive $497 asking price for an Intel Core Ultra 7 155H and 32GB RAM, the sub-15\" form factor inherently restricts thermal headroom for sustained parallel compilation and lacks sufficient screen real estate. It fails core quantitative workload requirements regardless of price.",
+    "actionable_recommendation": "❌ REJECT: Sub-15.0\" display form factor (XPS 13)",
+    "confidence_score": 0.95,
+    "seller": "eBay Seller",
+    "location": "US",
+    "created_utc": "2026-10-03T08:18:28.250977+00:00",
+    "evaluated_at": "2026-10-03T08:18:50.065461+00:00",
+    "alerted": true,
+    "is_high_yield": true,
+    "raw_payload": null,
+    "is_auction": false,
+    "bid_count": null,
+    "time_left": null
+  },
+  {
     "id": "ebay_307210710146",
     "source": "ebay",
     "title": "Dell Precision 5570 15.6\"  i7-12700H 2.30GHz 32GB RAM 512GB SSD **READ**Opens in a new window or tab",
