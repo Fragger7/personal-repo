@@ -11,9 +11,9 @@ import android.view.WindowManager
 
 import android.os.Build
 import android.view.Window
-import androidx.core.view.WindowInsetsControllerCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.window.DialogWindowProvider
 
@@ -367,6 +367,7 @@ fun StreamPreviewDialog(
         )
     ) {
         val dialogView = LocalView.current
+        
         DisposableEffect(Unit) {
             var currentParent = dialogView.parent
             var dialogWindow: Window? = null
@@ -377,11 +378,10 @@ fun StreamPreviewDialog(
                 }
                 currentParent = currentParent.parent
             }
+            
             if (dialogWindow != null) {
-                // Completely purge Android's default Dialog margins, shadows, and padding
+                // Clear the default Android dialog background to remove padding/shadows without breaking Compose layout bounds
                 dialogWindow.setBackgroundDrawableResource(android.R.color.transparent)
-                dialogWindow.setLayout(WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.MATCH_PARENT)
-                
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
                     dialogWindow.attributes = dialogWindow.attributes.apply {
                         layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
@@ -404,40 +404,31 @@ fun StreamPreviewDialog(
             
             val targetWindow = dialogWindow ?: activity?.window
             if (targetWindow != null) {
-                // Use targetWindow.decorView for reliable system UI control, not just the compose view
                 val insetsController = WindowCompat.getInsetsController(targetWindow, targetWindow.decorView)
                 if (isFullScreen) {
                     insetsController.hide(WindowInsetsCompat.Type.systemBars())
                     insetsController.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+                    activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
                 } else {
                     insetsController.show(WindowInsetsCompat.Type.systemBars())
-                }
-            }
-            
-            if (activity != null) {
-                if (isFullScreen) {
-                    activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
-                } else {
-                    activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+                    activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
                 }
             }
             
             onDispose {
                 if (targetWindow != null) {
-                    val insetsController = WindowInsetsControllerCompat(targetWindow, dialogView)
+                    val insetsController = WindowCompat.getInsetsController(targetWindow, targetWindow.decorView)
                     insetsController.show(WindowInsetsCompat.Type.systemBars())
                 }
                 activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
             }
         }
-        
-        // Darken the background during fullscreen to prevent letterbox bleeding
 
         Surface(
             modifier = Modifier
                 .fillMaxSize()
-                .background(if (isFullScreen) Color.Black else AppBackground),
-            color = if (isFullScreen) Color.Black else AppBackground
+                .background(if (isFullScreen) androidx.compose.ui.graphics.Color.Black else AppBackground),
+            color = if (isFullScreen) androidx.compose.ui.graphics.Color.Black else AppBackground
         ) {
             Column(
                 modifier = Modifier
