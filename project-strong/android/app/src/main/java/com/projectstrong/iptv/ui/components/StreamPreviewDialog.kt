@@ -368,14 +368,14 @@ fun StreamPreviewDialog(
     ) {
         val dialogView = LocalView.current
         DisposableEffect(Unit) {
-            var parent = dialogView.parent
+            var currentParent = dialogView.parent
             var dialogWindow: Window? = null
-            while (parent != null) {
-                if (parent is DialogWindowProvider) {
-                    dialogWindow = parent.window
+            while (currentParent != null) {
+                if (currentParent is DialogWindowProvider) {
+                    dialogWindow = (currentParent as DialogWindowProvider).window
                     break
                 }
-                parent = parent.parent
+                currentParent = currentParent.parent
             }
             if (dialogWindow != null) {
                 // Completely purge Android's default Dialog margins, shadows, and padding
@@ -392,14 +392,14 @@ fun StreamPreviewDialog(
         }
         
         DisposableEffect(isFullScreen) {
-            var parent = dialogView.parent
+            var currentParent = dialogView.parent
             var dialogWindow: Window? = null
-            while (parent != null) {
-                if (parent is DialogWindowProvider) {
-                    dialogWindow = parent.window
+            while (currentParent != null) {
+                if (currentParent is DialogWindowProvider) {
+                    dialogWindow = (currentParent as DialogWindowProvider).window
                     break
                 }
-                parent = parent.parent
+                currentParent = currentParent.parent
             }
             
             val targetWindow = dialogWindow ?: activity?.window
