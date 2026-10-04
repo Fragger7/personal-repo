@@ -8,6 +8,12 @@ import android.content.pm.ActivityInfo
 import android.net.Uri
 import android.view.ViewGroup
 import android.view.WindowManager
+import android.os.Build
+import androidx.core.view.WindowInsetsControllerCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.window.DialogWindowProvider
+
 
 import android.widget.FrameLayout
 import androidx.annotation.OptIn
@@ -204,19 +210,7 @@ fun StreamPreviewDialog(
         }
     }
 
-    // Fullscreen Screen Orientation Sync
-    DisposableEffect(isFullScreen) {
-        if (activity != null) {
-            if (isFullScreen) {
-                activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
-            } else {
-                activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
-            }
-        }
-        onDispose {
-            activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
-        }
-    }
+
 
     // Real-Time Polling for Bitrate, Buffer, Duration, and Position
     LaunchedEffect(exoPlayer) {
@@ -369,6 +363,53 @@ fun StreamPreviewDialog(
             decorFitsSystemWindows = false
         )
     ) {
+        val view = LocalView.current
+        val dialogWindow = (view.parent as? DialogWindowProvider)?.window
+        
+        DisposableEffect(isFullScreen) {
+            val targetWindow = dialogWindow ?: activity?.window
+            if (targetWindow != null) {
+                val insetsController = WindowInsetsControllerCompat(targetWindow, view)
+                if (isFullScreen) {
+                    insetsController.hide(WindowInsetsCompat.Type.systemBars())
+                    insetsController.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                        targetWindow.attributes = targetWindow.attributes.apply {
+                            layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
+                        }
+                    }
+                } else {
+                    insetsController.show(WindowInsetsCompat.Type.systemBars())
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                        targetWindow.attributes = targetWindow.attributes.apply {
+                            layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_DEFAULT
+                        }
+                    }
+                }
+            }
+            
+            if (activity != null) {
+                if (isFullScreen) {
+                    activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
+                } else {
+                    activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+                }
+            }
+            
+            onDispose {
+                if (targetWindow != null) {
+                    val insetsController = WindowInsetsControllerCompat(targetWindow, view)
+                    insetsController.show(WindowInsetsCompat.Type.systemBars())
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                        targetWindow.attributes = targetWindow.attributes.apply {
+                            layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_DEFAULT
+                        }
+                    }
+                }
+                activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+            }
+        }
+
         Surface(
             modifier = Modifier
                 .fillMaxSize()
