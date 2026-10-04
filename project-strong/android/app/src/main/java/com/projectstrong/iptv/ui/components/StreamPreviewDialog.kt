@@ -212,28 +212,7 @@ fun StreamPreviewDialog(
         }
     }
 
-    // Fullscreen Screen Orientation Sync
-    val view = LocalView.current
-    DisposableEffect(isFullScreen) {
-        if (activity != null) {
-            val insetsController = WindowInsetsControllerCompat(activity.window, view)
-            if (isFullScreen) {
-                activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
-                insetsController.hide(WindowInsetsCompat.Type.systemBars())
-                insetsController.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
-            } else {
-                activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
-                insetsController.show(WindowInsetsCompat.Type.systemBars())
-            }
-        }
-        onDispose {
-            activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
-            activity?.window?.let { window ->
-                val insetsController = WindowInsetsControllerCompat(window, view)
-                insetsController.show(WindowInsetsCompat.Type.systemBars())
-            }
-        }
-    }
+
 
     // Real-Time Polling for Bitrate, Buffer, Duration, and Position
     LaunchedEffect(exoPlayer) {
@@ -403,6 +382,45 @@ fun StreamPreviewDialog(
                 }
             }
             onDispose {}
+        }
+        
+        DisposableEffect(isFullScreen) {
+            var parent = dialogView.parent
+            var dialogWindow: Window? = null
+            while (parent != null) {
+                if (parent is DialogWindowProvider) {
+                    dialogWindow = parent.window
+                    break
+                }
+                parent = parent.parent
+            }
+            
+            val targetWindow = dialogWindow ?: activity?.window
+            if (targetWindow != null) {
+                val insetsController = WindowInsetsControllerCompat(targetWindow, dialogView)
+                if (isFullScreen) {
+                    insetsController.hide(WindowInsetsCompat.Type.systemBars())
+                    insetsController.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+                } else {
+                    insetsController.show(WindowInsetsCompat.Type.systemBars())
+                }
+            }
+            
+            if (activity != null) {
+                if (isFullScreen) {
+                    activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
+                } else {
+                    activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+                }
+            }
+            
+            onDispose {
+                if (targetWindow != null) {
+                    val insetsController = WindowInsetsControllerCompat(targetWindow, dialogView)
+                    insetsController.show(WindowInsetsCompat.Type.systemBars())
+                }
+                activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+            }
         }
         
         // Darken the background during fullscreen to prevent letterbox bleeding
