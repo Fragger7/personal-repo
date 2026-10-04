@@ -9,15 +9,6 @@ import android.net.Uri
 import android.view.ViewGroup
 import android.view.WindowManager
 
-import android.os.Build
-import android.view.Window
-import androidx.core.view.WindowCompat
-import androidx.core.view.WindowInsetsCompat
-import androidx.core.view.WindowInsetsControllerCompat
-import androidx.compose.ui.platform.LocalView
-import androidx.compose.ui.window.DialogWindowProvider
-
-
 import android.widget.FrameLayout
 import androidx.annotation.OptIn
 import androidx.compose.animation.*
@@ -213,7 +204,19 @@ fun StreamPreviewDialog(
         }
     }
 
-
+    // Fullscreen Screen Orientation Sync
+    DisposableEffect(isFullScreen) {
+        if (activity != null) {
+            if (isFullScreen) {
+                activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
+            } else {
+                activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+            }
+        }
+        onDispose {
+            activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+        }
+    }
 
     // Real-Time Polling for Bitrate, Buffer, Duration, and Position
     LaunchedEffect(exoPlayer) {
@@ -366,69 +369,11 @@ fun StreamPreviewDialog(
             decorFitsSystemWindows = false
         )
     ) {
-        val dialogView = LocalView.current
-        
-        DisposableEffect(Unit) {
-            var currentParent = dialogView.parent
-            var dialogWindow: Window? = null
-            while (currentParent != null) {
-                if (currentParent is DialogWindowProvider) {
-                    dialogWindow = (currentParent as DialogWindowProvider).window
-                    break
-                }
-                currentParent = currentParent.parent
-            }
-            
-            if (dialogWindow != null) {
-                // Clear the default Android dialog background to remove padding/shadows without breaking Compose layout bounds
-                dialogWindow.setBackgroundDrawableResource(android.R.color.transparent)
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                    dialogWindow.attributes = dialogWindow.attributes.apply {
-                        layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
-                    }
-                }
-            }
-            onDispose {}
-        }
-        
-        DisposableEffect(isFullScreen) {
-            var currentParent = dialogView.parent
-            var dialogWindow: Window? = null
-            while (currentParent != null) {
-                if (currentParent is DialogWindowProvider) {
-                    dialogWindow = (currentParent as DialogWindowProvider).window
-                    break
-                }
-                currentParent = currentParent.parent
-            }
-            
-            val targetWindow = dialogWindow ?: activity?.window
-            if (targetWindow != null) {
-                val insetsController = WindowCompat.getInsetsController(targetWindow, targetWindow.decorView)
-                if (isFullScreen) {
-                    insetsController.hide(WindowInsetsCompat.Type.systemBars())
-                    insetsController.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
-                    activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
-                } else {
-                    insetsController.show(WindowInsetsCompat.Type.systemBars())
-                    activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
-                }
-            }
-            
-            onDispose {
-                if (targetWindow != null) {
-                    val insetsController = WindowCompat.getInsetsController(targetWindow, targetWindow.decorView)
-                    insetsController.show(WindowInsetsCompat.Type.systemBars())
-                }
-                activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
-            }
-        }
-
         Surface(
             modifier = Modifier
                 .fillMaxSize()
-                .background(if (isFullScreen) androidx.compose.ui.graphics.Color.Black else AppBackground),
-            color = if (isFullScreen) androidx.compose.ui.graphics.Color.Black else AppBackground
+                .background(AppBackground),
+            color = AppBackground
         ) {
             Column(
                 modifier = Modifier
