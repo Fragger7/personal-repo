@@ -1211,19 +1211,11 @@ fun CommittedDetailScreen(
     var currentNotes by remember(record) { mutableStateOf(record.safeNotes) }
     var currentRooms by remember(record) { mutableStateOf(record.safeRooms.split(",").map { it.trim() }.filter { it.isNotEmpty() }.toSet()) }
     var currentContent by remember(record) { mutableStateOf(record.safeContent.split(",").map { it.trim() }.filter { it.isNotEmpty() }.toSet()) }
-    var showCatalogExplorer by remember { mutableStateOf(false) }
+    val catalogExplorerState = com.projectstrong.iptv.ui.state.LocalCatalogExplorerState.current
     val rootFocusManager = androidx.compose.ui.platform.LocalFocusManager.current
     val detailScrollState = rememberScrollState()
 
-    if (showCatalogExplorer && record.safeType == "Xtream") {
-        FullScreenCatalogExplorer(
-            baseUrl = record.safeBaseUrl,
-            user = record.safeUser,
-            pass = record.safePass,
-            title = record.safeBaseUrl,
-            onDismiss = { showCatalogExplorer = false }
-        )
-    }
+
 
     Column(
         modifier = Modifier
@@ -1515,7 +1507,7 @@ fun CommittedDetailScreen(
             }
 
             Button(
-                onClick = { showCatalogExplorer = true },
+                onClick = { catalogExplorerState.show(record.safeBaseUrl, record.safeUser, record.safePass, record.safeBaseUrl) },
                 colors = ButtonDefaults.buttonColors(containerColor = AppPrimary),
                 shape = RoundedCornerShape(12.dp),
                 modifier = Modifier.fillMaxWidth().height(48.dp).padding(bottom = 12.dp)

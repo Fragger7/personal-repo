@@ -27,8 +27,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 import com.projectstrong.iptv.network.IPTVClient
 import com.projectstrong.iptv.ui.theme.*
 import kotlinx.coroutines.Dispatchers
@@ -172,10 +170,7 @@ fun FullScreenCatalogExplorer(
         categories.firstOrNull { it.id == selectedCategoryId }?.name ?: "All Channels"
     }
 
-    Dialog(
-        onDismissRequest = onDismiss,
-        properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)
-    ) {
+    Box(modifier = Modifier.fillMaxSize()) {
         BackHandler {
             if (previewChannel != null) {
                 previewChannel = null

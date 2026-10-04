@@ -677,7 +677,7 @@ fun XtreamMasterGrid(
 @Composable
 fun XtreamDetailScreen(node: ParsedCredential, onBack: () -> Unit) {
     val clipboardManager = LocalClipboardManager.current
-    var showCatalogExplorer by remember { mutableStateOf(false) }
+    val catalogExplorerState = com.projectstrong.iptv.ui.state.LocalCatalogExplorerState.current
     var showCommitDialog by remember { mutableStateOf(false) }
     val detailScrollState = rememberScrollState()
     val coroutineScope = rememberCoroutineScope()
@@ -713,15 +713,7 @@ fun XtreamDetailScreen(node: ParsedCredential, onBack: () -> Unit) {
         )
     }
 
-    if (showCatalogExplorer) {
-        FullScreenCatalogExplorer(
-            baseUrl = node.baseUrl,
-            user = node.user,
-            pass = node.pass,
-            title = node.baseUrl,
-            onDismiss = { showCatalogExplorer = false }
-        )
-    }
+
 
     Column(
         modifier = Modifier
@@ -999,7 +991,7 @@ fun XtreamDetailScreen(node: ParsedCredential, onBack: () -> Unit) {
         // Full Screen Catalog Button & Commit Action
         Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Button(
-                onClick = { showCatalogExplorer = true },
+                onClick = { catalogExplorerState.show(node.baseUrl, node.user, node.pass, node.baseUrl) },
                 colors = ButtonDefaults.buttonColors(containerColor = AppPrimary),
                 shape = RoundedCornerShape(12.dp),
                 modifier = Modifier.fillMaxWidth().height(52.dp)

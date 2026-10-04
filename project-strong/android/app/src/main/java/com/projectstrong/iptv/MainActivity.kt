@@ -43,6 +43,10 @@ import com.projectstrong.iptv.ui.components.ToastHost
 import com.projectstrong.iptv.ui.components.ToastManager
 import com.projectstrong.iptv.ui.components.UpdateDialog
 import com.projectstrong.iptv.ui.theme.*
+import com.projectstrong.iptv.ui.state.CatalogExplorerState
+import com.projectstrong.iptv.ui.state.LocalCatalogExplorerState
+import com.projectstrong.iptv.ui.components.FullScreenCatalogExplorer
+import androidx.compose.runtime.CompositionLocalProvider
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
@@ -113,18 +117,38 @@ class MainActivity : ComponentActivity() {
         }
 
         setContent {
-            AppTheme {
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = AppBackground
-                ) {
-                    Box(modifier = Modifier.fillMaxSize().systemBarsPadding()) {
-                        MainDashboard()
-                        ToastHost(
-                            modifier = Modifier
-                                .align(Alignment.BottomCenter)
-                                .padding(bottom = 24.dp, start = 16.dp, end = 16.dp)
-                        )
+            val catalogExplorerState = remember { CatalogExplorerState() }
+            
+            CompositionLocalProvider(
+                LocalCatalogExplorerState provides catalogExplorerState
+            ) {
+                AppTheme {
+                    Surface(
+                        modifier = Modifier.fillMaxSize(),
+                        color = AppBackground
+                    ) {
+                        Box(modifier = Modifier.fillMaxSize()) {
+                            // Main App UI (respects system bars)
+                            Box(modifier = Modifier.fillMaxSize().systemBarsPadding()) {
+                                MainDashboard()
+                                ToastHost(
+                                    modifier = Modifier
+                                        .align(Alignment.BottomCenter)
+                                        .padding(bottom = 24.dp, start = 16.dp, end = 16.dp)
+                                )
+                            }
+                            
+                            // True Edge-to-Edge Overlays (Ignores system padding, hides system bars natively)
+                            if (catalogExplorerState.isVisible) {
+                                FullScreenCatalogExplorer(
+                                    baseUrl = catalogExplorerState.baseUrl,
+                                    user = catalogExplorerState.user,
+                                    pass = catalogExplorerState.pass,
+                                    title = catalogExplorerState.title,
+                                    onDismiss = { catalogExplorerState.hide() }
+                                )
+                            }
+                        }
                     }
                 }
             }
