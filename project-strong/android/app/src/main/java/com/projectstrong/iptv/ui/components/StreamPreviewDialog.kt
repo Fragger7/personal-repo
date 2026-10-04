@@ -8,7 +8,9 @@ import android.content.pm.ActivityInfo
 import android.net.Uri
 import android.view.ViewGroup
 import android.view.WindowManager
+
 import android.os.Build
+import android.view.Window
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.compose.ui.platform.LocalView
@@ -210,7 +212,28 @@ fun StreamPreviewDialog(
         }
     }
 
-
+    // Fullscreen Screen Orientation Sync
+    val view = LocalView.current
+    DisposableEffect(isFullScreen) {
+        if (activity != null) {
+            val insetsController = WindowInsetsControllerCompat(activity.window, view)
+            if (isFullScreen) {
+                activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
+                insetsController.hide(WindowInsetsCompat.Type.systemBars())
+                insetsController.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+            } else {
+                activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+                insetsController.show(WindowInsetsCompat.Type.systemBars())
+            }
+        }
+        onDispose {
+            activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+            activity?.window?.let { window ->
+                val insetsController = WindowInsetsControllerCompat(window, view)
+                insetsController.show(WindowInsetsCompat.Type.systemBars())
+            }
+        }
+    }
 
     // Real-Time Polling for Bitrate, Buffer, Duration, and Position
     LaunchedEffect(exoPlayer) {
@@ -363,58 +386,32 @@ fun StreamPreviewDialog(
             decorFitsSystemWindows = false
         )
     ) {
-        val view = LocalView.current
-        val dialogWindow = (view.parent as? DialogWindowProvider)?.window
-        
-        DisposableEffect(isFullScreen) {
-            val targetWindow = dialogWindow ?: activity?.window
-            if (targetWindow != null) {
-                val insetsController = WindowInsetsControllerCompat(targetWindow, view)
-                if (isFullScreen) {
-                    insetsController.hide(WindowInsetsCompat.Type.systemBars())
-                    insetsController.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                        targetWindow.attributes = targetWindow.attributes.apply {
-                            layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
-                        }
-                    }
-                } else {
-                    insetsController.show(WindowInsetsCompat.Type.systemBars())
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                        targetWindow.attributes = targetWindow.attributes.apply {
-                            layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_DEFAULT
-                        }
-                    }
+        val dialogView = LocalView.current
+        DisposableEffect(Unit) {
+            var parent = dialogView.parent
+            var dialogWindow: Window? = null
+            while (parent != null) {
+                if (parent is DialogWindowProvider) {
+                    dialogWindow = parent.window
+                    break
+                }
+                parent = parent.parent
+            }
+            if (dialogWindow != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                dialogWindow.attributes = dialogWindow.attributes.apply {
+                    layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
                 }
             }
-            
-            if (activity != null) {
-                if (isFullScreen) {
-                    activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
-                } else {
-                    activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
-                }
-            }
-            
-            onDispose {
-                if (targetWindow != null) {
-                    val insetsController = WindowInsetsControllerCompat(targetWindow, view)
-                    insetsController.show(WindowInsetsCompat.Type.systemBars())
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                        targetWindow.attributes = targetWindow.attributes.apply {
-                            layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_DEFAULT
-                        }
-                    }
-                }
-                activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
-            }
+            onDispose {}
         }
+        
+        // Darken the background during fullscreen to prevent letterbox bleeding
 
         Surface(
             modifier = Modifier
                 .fillMaxSize()
-                .background(AppBackground),
-            color = AppBackground
+                .background(if (isFullScreen) Color.Black else AppBackground),
+            color = if (isFullScreen) Color.Black else AppBackground
         ) {
             Column(
                 modifier = Modifier
