@@ -12,6 +12,7 @@ import android.view.WindowManager
 import android.os.Build
 import android.view.Window
 import androidx.core.view.WindowInsetsControllerCompat
+import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.window.DialogWindowProvider
@@ -376,9 +377,15 @@ fun StreamPreviewDialog(
                 }
                 parent = parent.parent
             }
-            if (dialogWindow != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                dialogWindow.attributes = dialogWindow.attributes.apply {
-                    layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
+            if (dialogWindow != null) {
+                // Completely purge Android's default Dialog margins, shadows, and padding
+                dialogWindow.setBackgroundDrawableResource(android.R.color.transparent)
+                dialogWindow.setLayout(WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.MATCH_PARENT)
+                
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                    dialogWindow.attributes = dialogWindow.attributes.apply {
+                        layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
+                    }
                 }
             }
             onDispose {}
@@ -397,7 +404,8 @@ fun StreamPreviewDialog(
             
             val targetWindow = dialogWindow ?: activity?.window
             if (targetWindow != null) {
-                val insetsController = WindowInsetsControllerCompat(targetWindow, dialogView)
+                // Use targetWindow.decorView for reliable system UI control, not just the compose view
+                val insetsController = WindowCompat.getInsetsController(targetWindow, targetWindow.decorView)
                 if (isFullScreen) {
                     insetsController.hide(WindowInsetsCompat.Type.systemBars())
                     insetsController.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
