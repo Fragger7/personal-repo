@@ -1,5 +1,37 @@
 [
   {
+    "id": "ebay_227552259487",
+    "source": "ebay",
+    "title": "HP ZBook Studio G5 15.6\" Intel Xeon E-2176M 32GB RAM 1TB SSD WorkstationOpens in a new window or tab",
+    "price": 420.0,
+    "url": "https://www.ebay.com/itm/227552259487",
+    "specs": {
+      "cpu": "Intel Core i7/i9 12th/13th-Gen H",
+      "ram_gb": 32,
+      "ssd_gb": 1024,
+      "gpu": "NVIDIA RTX / Workstation GPU",
+      "screen": "15.6\" - 16\" Workstation Display",
+      "condition": "Used / Refurbished"
+    },
+    "fair_market_value": 750.0,
+    "estimated_profit": 330.0,
+    "arbitrage_margin_pct": 78.6,
+    "deal_score": 9.7,
+    "summary": "Rare halo opportunity priced at $420 with a massive +$295 (+39% ROI) spread below fair market clearing baseline ($750). Configured with Intel Core i7/i9 12th/13th-Gen H, 32GB RAM, 1024GB SSD, and NVIDIA RTX / Workstation GPU. Excellent daily driver for full-stack engineering, multi-container development, and data analysis.",
+    "actionable_recommendation": "🎯 HIGH-CONVICTION STRIKE",
+    "confidence_score": 0.95,
+    "seller": "eBay Seller",
+    "location": "US",
+    "created_utc": "2026-10-05T16:11:57.360240+00:00",
+    "evaluated_at": "2026-10-05T16:12:13.478104+00:00",
+    "alerted": true,
+    "is_high_yield": true,
+    "raw_payload": null,
+    "is_auction": false,
+    "bid_count": null,
+    "time_left": null
+  },
+  {
     "id": "ebay_298733084206",
     "source": "ebay",
     "title": "New ListingLenovo ThinkPad E16 Gen 1 FHD+ 2GHz Ryzen 5 7530U 24GB 256GB SSD ScratchesOpens in a new window or tab",
