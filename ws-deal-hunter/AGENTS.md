@@ -340,6 +340,14 @@ C:\Development\Apps\WS Deal Hunter\
 * **Context**: Previously, `app.py`, `deals.json`, and `requirements.txt` were copied to the repository root as a hack to support Streamlit Cloud. This broke the clean monorepo structure and caused confusion.
 * **Resolution**: The redundant root files have been permanently deleted. Streamlit Cloud should now be natively configured to use `ws-deal-hunter/app.py` directly from the Streamlit settings, ensuring all WS Deal Hunter files remain strictly confined to the `ws-deal-hunter/` sub-directory.
 
+### Decision 45: DataDome eBay Liveness CAPTCHA Trap (Failed Experiment)
+* **Context**: An attempt was made to forcefully automate liveness checks for stale/sold eBay items (`reap_dead_and_sold_deals` in `daemon.py`) using `curl_cffi` on `/itm/` endpoints. 
+* **Failure Analysis**: 
+  - Using an explicit `ebay_session` warmup on datacenter IPs (like GitHub Actions) triggers a `200 OK` CAPTCHA page containing `"pardon our interruption"`.
+  - Hitting the URL statelessly returns a hard `403 Forbidden` DataDome error page (`<title>Error Page | eBay</title>`).
+  - **CRITICAL TRAP**: The DataDome 403 error page HTML *also* contains the exact phrase `"something went wrong on our end"`. If a liveness checker looks for `"something went wrong"` before explicitly validating against `"error page | ebay"`, it will falsely flag the bot-block as a dead link and instantly purge the entire active eBay catalog (which accidentally occurred during a live session run).
+* **Resolution**: The evaluation order was explicitly fixed to ensure `"error page | ebay"` instantly returns `None` (safely skipping the block). Because datacenter IPs fundamentally cannot bypass DataDome for headless `/itm/` checks, stale eBay items must either be purged manually via the React UI Delete button, or rely strictly on API OAuth tokens.
+
 ## 📌 5. Project Backlog & Future Roadmap
 *See [`BACKLOG.md`](file:///Users/admin/Development/personal-repo/ws-deal-hunter/BACKLOG.md) for full technical task breakdown and UI/UX design specifications.*
 
