@@ -31,6 +31,8 @@ This document contains the complete system architecture, operational decisions, 
 * **Universal Credential Scanner**:
   * **Xtream Codes Layouts**: Matches player API structures (`player_api.php?username=...&password=...`) and direct fallback endpoints (`get.php?...`).
   * **Multi-Line & Unicode State Machine**: Scans unstructured text blocks, tabular combos (`host:port user:pass`, `host:user:pass`), and automated Hit Hunter scanner headers containing unicode characters (e.g., `ᴜꜱᴇʀ`, `ᴩᴀꜱꜱ`, `ʜᴏꜱᴛ`, `├● 🔌 ᴍᴀᴄ`).
+  * **Boxed Delimiter & Hit-Hunter Ingestion Engine**: Cleanses visual ASCII/Unicode box borders and sparkler glyphs (`|`, `│`, `║`, `├`, `└`, `─`, `━`, `*`, `✨`). Parses single-line combos (`Combo: user:pass`, `Account: user:pass`), discrete fields (`UserName:`, `PassWord:`), connection caps (`MaxCons:`, `Max_Cons:`, `Connections:`, `Cons:`), expiration timestamps (`Expire:`), and upstream server timezones (`Zone:`, `Timezone:`, `TZ:`).
+  * **Stateful Delimiter & Safe URL Retention**: Divider lines (`--------------------`, `====================`) within a multi-line credential card preserve active `currUrl` context (`retainUrl = true`), ensuring subsequent combo or credential rows associate with the active server without premature block flushes.
   * **Stalker Portals**: State-machine parser isolating MAC addresses (`00:1A:79:...`) and Portal URLs connected across fragmented text blocks.
 * **Tier 1: Asynchronous Handshake Verification**:
   * **Xtream Endpoint**: GET request to `/player_api.php` testing authentication, account expiration, max connections, active connections, and server timezone.
@@ -265,6 +267,7 @@ Remove-Item -Recurse -Force "C:\Development\Apps\Project Strong\personal-repo-te
 | **Regional Bouquet & Demonym Filter Engine** | `ProviderIntelligence.kt`, `ProviderIntelligenceCard.kt`, `CommittedManager.kt`, `sync_provider_intel.py`, `app.py`, 30+ regional dictionaries, `regionalFocus` metadata, `🌍 Regional Bouquet` UI badge | 🟢 **Verified & Live** |
 | **Committed Filter Store & Nested Multi-Select** | `FilterDropdown.kt`, `CommittedFilterStore`, dynamic derived dropdown subsets | 🟢 **Verified & Live** |
 | **Operational Intelligence Analytics Dashboard** | `AnalyticsTab.kt`, `SegmentedProgressBar`, Canvas pie charts, interactive deep-linking | 🟢 **Verified & Live** |
+| **Boxed Combo & Decorative Delimiter Parser Engine** | `Parser.kt`, `app.py`, Unicode border stripping, `Combo: user:pass`, `MaxCons`, `Zone:`, safe URL retention | 🟢 **Verified & Live** |
 
 ---
 
@@ -323,6 +326,9 @@ Remove-Item -Recurse -Force "C:\Development\Apps\Project Strong\personal-repo-te
 *   **Git Patching & State Regression Hazard**:
     *   *The Skeleton*: Using blind Bash/Python diff scripts (e.g. `sed`, `awk`, or outdated `.py` patchers) to inject features into complex UI files (`CommittedTab.kt`).
     *   *The Fix*: Blind patching often executes on outdated contexts, silently overwriting or deleting recent features (like scroll state memory, row highlighting, or layout paddings). Always pull the absolute latest state of the file, verify the AST/code structure visually, and apply edits atomically. If a regression occurs, perform a hard `git reset` to the last known stable commit rather than attempting to duct-tape over the corrupted file.
+*   **The Decorative Border & Box Separator Flush Trap (`Parser.kt`, `app.py`)**:
+    *   *The Skeleton*: In many raw IPTV dumps (e.g., Hit Hunter, Telegram channel pastes), accounts are formatted inside multi-line card boxes bounded by ASCII/Unicode borders and horizontal separators (e.g., `|✨Url:...`, `--------------------`, `|✨Combo: user:pass`, `|✨UserName:...`). Naively treating every dashed separator (`---`, `===`) as an unconditional block reset wipes `currUrl` to null before the combo or user/pass lines are reached. Furthermore, trailing decorative borders (`|`) or emojis (`✨`, `●`) stick to extracted values, creating corrupted URLs (e.g. `http://host:port/|`) or invalid usernames.
+    *   *The Fix*: Pre-strip decorative ASCII/Unicode box borders and glyphs (`|`, `│`, `║`, `├`, `└`, `─`, `━`, `*`, `✨`) from both ends of every line before pattern matching. When encountering internal box divider lines (`---` or `===`), execute a partial flush that preserves `currUrl` context (`flushCurrentBlock(force = false)` / `flush_block(retain_url=True)`), ensuring subsequent combo or credential rows remain properly bound to their host URL. Only fully clear `currUrl` when a valid account is committed or a distinct new server header arrives.
 
 ---
 

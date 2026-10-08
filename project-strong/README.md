@@ -68,6 +68,10 @@ The native Android app (`/android`) runs directly on mobile/residential IP conne
   * Full-width display (`1.0f`) across `CommittedTab`, `XtreamTab`, and `StalkerTab` to maximize horizontal column space for 16-column enterprise tables.
   * Dynamic compact single-row header action toolbars (`padding(vertical = 8.dp)`) that conserve precious vertical viewport space on landscape screens.
   * Rigid vertical scrolling anchor with `Column(modifier = Modifier.fillMaxHeight())` and `LazyColumn(modifier = Modifier.fillMaxWidth().weight(1f), state = listState)` enabling smooth top-to-bottom scrolling without truncation.
+* **Boxed Delimiter & Hit-Hunter Ingestion Engine**:
+  * Unstructured text ingestion for boxed cards with ASCII/Unicode borders (`|`, `│`, `║`, `├`, `└`, `─`, `━`, `*`, `✨`).
+  * Parses single-line combos (`Combo: user:pass`, `Account: user:pass`), discrete fields (`UserName:`, `PassWord:`), connection caps (`MaxCons:`, `Max_Cons:`), expiration timestamps (`Expire:`), and upstream server timezones (`Zone:`).
+  * Stateful delimiter logic with safe URL retention across inner card divider lines (`-------------------`).
 
 ---
 
@@ -120,4 +124,7 @@ A lightweight web application featuring multi-tiered async validation, automated
 *   **The Category Demonym / Country Provider Trap (`ProviderIntelligence.kt`, `sync_provider_intel.py`, `CommittedManager.kt`)**:
     *   *The Skeleton*: IPTV playlists heavily use country/demonym delimiter banners (e.g. `=== FRENCH ===`, `### SWEDISH ###`, `|AR| ARABIC |AR|`). Naive banner parsing mistakes these category headers for upstream infrastructure brand names, tagging unbranded nodes as `"🎯 Identified: FRENCH"`. When saved to `committed.json`, the weekly scraper ingests them as confirmed provider names, creating a self-reinforcing false-positive feedback loop.
     *   *The Fix*: Always filter candidate brand names through `COUNTRY_DEMONYM_MAP` / `isDemonymOrCountry`. Demote country names from "Provider Brand" to "Regional Bouquet" (`regional_focus`), display them as a separate `🌍 [Region] Bouquet` UI pill, keep the provider field as `Unidentified Provider` / domain, and preserve compound brand names (e.g., *French OTT*, *Viking IPTV*).
+*   **The Decorative Border & Box Separator Flush Trap (`Parser.kt`, `app.py`)**:
+    *   *The Skeleton*: In many raw IPTV dumps (e.g., Hit Hunter, Telegram channel pastes), accounts are formatted inside multi-line card boxes bounded by ASCII/Unicode borders and horizontal separators (e.g., `|✨Url:...`, `--------------------`, `|✨Combo: user:pass`, `|✨UserName:...`). Naively treating every dashed separator (`---`, `===`) as an unconditional block reset wipes `currUrl` to null before the combo or user/pass lines are reached. Furthermore, trailing decorative borders (`|`) or emojis (`✨`, `●`) stick to extracted values, creating corrupted URLs (e.g. `http://host:port/|`) or invalid usernames.
+    *   *The Fix*: Pre-strip decorative ASCII/Unicode box borders and glyphs (`|`, `│`, `║`, `├`, `└`, `─`, `━`, `*`, `✨`) from both ends of every line before pattern matching. When encountering internal box divider lines (`---` or `===`), execute a partial flush that preserves `currUrl` context (`flushCurrentBlock(force = false)` / `flush_block(retain_url=True)`), ensuring subsequent combo or credential rows remain properly bound to their host URL. Only fully clear `currUrl` when a valid account is committed or a distinct new server header arrives.
 
