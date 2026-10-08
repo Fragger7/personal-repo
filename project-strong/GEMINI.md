@@ -323,3 +323,28 @@ Remove-Item -Recurse -Force "C:\Development\Apps\Project Strong\personal-repo-te
 *   **Git Patching & State Regression Hazard**:
     *   *The Skeleton*: Using blind Bash/Python diff scripts (e.g. `sed`, `awk`, or outdated `.py` patchers) to inject features into complex UI files (`CommittedTab.kt`).
     *   *The Fix*: Blind patching often executes on outdated contexts, silently overwriting or deleting recent features (like scroll state memory, row highlighting, or layout paddings). Always pull the absolute latest state of the file, verify the AST/code structure visually, and apply edits atomically. If a regression occurs, perform a hard `git reset` to the last known stable commit rather than attempting to duct-tape over the corrupted file.
+
+---
+
+## 🎯 8. Backlog & Future Architectural Strategies (Oct 2026)
+
+### A. VOD & Series Explorer (Lazy Loading Architecture)
+* **Goal**: Add a toggle in `FullScreenCatalogExplorer` to switch between Live TV, Movies (VOD), and Series.
+* **The Constraint**: Xtream API's `get_vod_streams` can return 50MB+ of JSON (50,000+ movies), which blocks the network thread and consumes massive RAM.
+* **The Solution**: 
+  1. **Lazy Loading by Category**: Fetch `get_vod_categories` (instant), and only fetch streams by specific `category_id` when the user taps a category (~100 movies at a time).
+  2. **Background Prefetching**: Silently stream the full payload in a background coroutine using `android.util.JsonReader` while the user browses Live TV.
+  3. **Disk Caching**: Write the pre-fetched JSON payload to Android's `Context.cacheDir` for zero-latency loading on subsequent opens.
+* **Impact**: Zero impact on `committed.json` (credentials only). Near-zero RAM footprint due to `JsonReader`.
+
+### B. Stalker Portal Explorer Integration
+* **Goal**: Seamlessly render Stalker Portals (Ministra API) inside the `FullScreenCatalogExplorer` with search, browse, and watch capabilities.
+* **The Challenge**: Stalker Portals cannot construct video URLs locally. They require a handshake token, `get_genres`, `get_ordered_list`, and crucially, a just-in-time `create_link` request to generate a temporary expiring playback URL.
+* **The Solution**:
+  1. Write a Stalker engine in `IPTVClient.kt` that fetches Stalker JSON and normalizes it into our existing `CategoryNode` and `StreamNode` data classes.
+  2. Expand `CatalogExplorerState` to accept a `type` parameter (`Xtream` or `Stalker`).
+  3. On play click, if `type == "Stalker"`, fire an async `create_link` request, intercept the raw stream URL, and inject it into `StreamPreviewDialog`.
+
+### C. UI & Quality of Life Tweaks
+* **Keyboard Hiding Fix**: The `CommittedDetailScreen` uses `.imePadding()`, but Android's focus engine doesn't automatically scroll it. Requires attaching a `BringIntoViewRequester` to the text fields.
+* **Super-Playlist Export**: Consolidate all Active connections into a single `sherlock_super.m3u` file exported to local device storage.

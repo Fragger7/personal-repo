@@ -75,13 +75,16 @@ object Parser {
     private val portalHeaderPattern = Pattern.compile("(?i)^(?:portal|host|server|url|domain)[\\s:=]+(?:https?://|www\\.|[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,})")
     private val portExtractPattern = Pattern.compile("(?i)\\bport[\\s:=]+(\\d{2,5})\\b")
     private val macExtractPattern = Pattern.compile("([0-9a-fA-F]{2}(?::[0-9a-fA-F]{2}){5})", Pattern.CASE_INSENSITIVE)
-    private val userExtractPattern = Pattern.compile("(?i)(?:user|usr|username)[\\s:=]+([^\\s]+)")
-    private val passExtractPattern = Pattern.compile("(?i)(?:pass|password)[\\s:=]+([^\\s]+)")
-    private val expExtractPattern = Pattern.compile("(?i)(?:exp|expire|expires|expiry)[\\s:=]+([^\\s]+)")
+    private val userExtractPattern = Pattern.compile("(?i)(?:user|usr|username)[\\s:=]+([^\\s|]+)")
+    private val passExtractPattern = Pattern.compile("(?i)(?:pass|password)[\\s:=]+([^\\s|]+)")
+    private val comboExtractPattern = Pattern.compile("(?i)(?:combo|account)[\\s:=]+([^\\s:]+)[\\s:]([^\\s|]+)")
+    private val expExtractPattern = Pattern.compile("(?i)(?:exp|expire|expires|expiry|expiration)[\\s:=]+([^\\s|]+)")
     private val singleConnExtractPattern = Pattern.compile("(?i)\\b(?:conn|active)[\\s:=]+(\\d+)\\b")
-    private val singleMaxConnExtractPattern = Pattern.compile("(?i)\\b(?:maxconn|max_conn|max)[\\s:=]+(\\d+)\\b")
+    private val singleMaxConnExtractPattern = Pattern.compile("(?i)\\b(?:maxconn|max_conn|maxcons|max_cons|maxcon|max_con|max|connections?|cons?)[\\s:=]+(\\d+)\\b")
+    private val tzExtractPattern = Pattern.compile("(?i)(?:zone|timezone|time_zone|tz)[\\s:=]+([A-Za-z0-9_/+\\-]+)")
     private val statusEndPattern = Pattern.compile("(?i)status[\\s:=]+.*(?:ok|active|valid|✅)")
-    private val resetSeparatorRegex = Regex("[-=_*#]{4,}|[━─╭╰┌└\\|]{2,}")
+    private val lineDecorativePrefixRegex = Regex("^[\\s|│║├└┌┐┘+*•●✨🔥⚡🔌\\-—_~#]+")
+    private val lineDecorativeSuffixRegex = Regex("[\\s|│║├└┌┐┘+*•●✨🔥⚡🔌\\-—_~#]+$")
 
     fun normalizeText(raw: String): String {
         if (raw.isEmpty()) return raw
@@ -273,8 +276,9 @@ object Parser {
             var currExp: String? = null
             var currAct: String? = null
             var currMax: String? = null
+            var currTz: String? = null
 
-            fun flushCurrentBlock() {
+            fun flushCurrentBlock(retainUrl: Boolean = false) {
                 val u = currUrl?.trim() ?: return
                 var base = if (!u.startsWith("http")) "http://$u" else u
                 
@@ -300,6 +304,7 @@ object Parser {
                     currExp = null
                     currAct = null
                     currMax = null
+                    currTz = null
                     return
                 }
 
@@ -307,6 +312,7 @@ object Parser {
                 val user = currUser
                 val pass = currPass
 
+                var didAdd = false
                 if (!mac.isNullOrEmpty()) {
                     if (!extracted.any { it.type == "Stalker" && it.baseUrl == base && it.mac == mac }) {
                         extracted.add(
@@ -319,10 +325,12 @@ object Parser {
                                 expires = currExp ?: "N/A",
                                 activeConn = currAct ?: "N/A",
                                 maxConn = currMax ?: "N/A",
+                                serverTimezone = currTz ?: "N/A",
                                 sourceLink = effectiveSource,
                                 originLink = effectiveOrigin
                             )
                         )
+                        didAdd = true
                     }
                 } else if (!user.isNullOrEmpty() && !pass.isNullOrEmpty()) {
                     if (!(user.matches(macRegex) && pass.matches(macFullRegex))) {
@@ -337,44 +345,57 @@ object Parser {
                                     expires = currExp ?: "N/A",
                                     activeConn = currAct ?: "N/A",
                                     maxConn = currMax ?: "N/A",
+                                    serverTimezone = currTz ?: "N/A",
                                     sourceLink = effectiveSource,
                                     originLink = effectiveOrigin
                                 )
                             )
+                            didAdd = true
                         }
                     }
                 }
 
-                currUrl = null
-                currPort = null
+                if (!retainUrl || !didAdd) {
+                    currUrl = null
+                    currPort = null
+                }
                 currUser = null
                 currPass = null
                 currMac = null
                 currExp = null
                 currAct = null
                 currMax = null
+                currTz = null
             }
 
             for (line in cleanText.lines()) {
-                val lineTrim = line.trim()
-                if (lineTrim.isEmpty() || lineTrim.length > 800 || lineTrim.contains(resetSeparatorRegex) || lineTrim.contains("player_api.php") || lineTrim.contains("get.php")) {
-                    flushCurrentBlock()
+                val lineRaw = line.trim()
+                if (lineRaw.isEmpty() || lineRaw.length > 800) {
+                    continue
+                }
+
+                // Strip decorative box/border characters and symbols from line boundaries
+                var lineClean = lineRaw.replace(lineDecorativePrefixRegex, "")
+                lineClean = lineClean.replace(lineDecorativeSuffixRegex, "").trim()
+                if (lineClean.isEmpty() || lineClean.contains("player_api.php") || lineClean.contains("get.php")) {
                     continue
                 }
 
                 try {
-                    // Check if this line starts a new Portal / Host block
-                    val isNewPortalLine = portalHeaderPattern.matcher(lineTrim).find()
-                    if (isNewPortalLine && currUrl != null && (currUser != null || currMac != null)) {
+                    // Check if this line starts a new Portal / Host block or contains URL
+                    val isNewPortalLine = portalHeaderPattern.matcher(lineClean).find()
+                    val urlMatch = urlExtractPattern.matcher(lineClean)
+                    val hasUrl = urlMatch.find()
+
+                    // If a new URL or portal line arrives and we already have completed credentials, flush previous block
+                    if ((hasUrl || isNewPortalLine) && currUrl != null && (currUser != null || currMac != null)) {
                         flushCurrentBlock()
                     }
 
-                    // Extract URL
-                    val urlMatch = urlExtractPattern.matcher(lineTrim)
-                    if (urlMatch.find()) {
+                    if (hasUrl) {
                         val baseMatch = baseExtractPattern.matcher(urlMatch.group(1) ?: "")
                         if (baseMatch.find()) {
-                            val candidate = baseMatch.group(1) ?: ""
+                            val candidate = (baseMatch.group(1) ?: "").trimEnd('/', '|', '│', '║', ']', ')')
                             if (candidate.isNotEmpty() && !isBlacklistedHost(candidate)) {
                                 if (currUrl == null || isNewPortalLine) {
                                     currUrl = candidate
@@ -383,62 +404,89 @@ object Parser {
                         }
                     } else if (isNewPortalLine) {
                         // Portal without http prefix (e.g. Portal : fx2727.com)
-                        val hostPart = lineTrim.substringAfter(":").trim()
+                        val hostPart = lineClean.substringAfter(":").trim().trimEnd('/', '|', '│', '║', ']', ')')
                         if (hostPart.isNotEmpty() && !isBlacklistedHost(hostPart)) {
                             currUrl = "http://$hostPart"
                         }
                     }
 
                     // Extract Port
-                    val portMatch = portExtractPattern.matcher(lineTrim)
+                    val portMatch = portExtractPattern.matcher(lineClean)
                     if (portMatch.find()) {
                         currPort = portMatch.group(1)
                     }
 
                     // Extract MAC
-                    val macMatch = macExtractPattern.matcher(lineTrim)
+                    val macMatch = macExtractPattern.matcher(lineClean)
                     if (macMatch.find()) {
-                        currMac = macMatch.group(1)?.uppercase()
+                        val newMac = macMatch.group(1)?.uppercase()
+                        if (currMac != null && newMac != null && newMac != currMac) {
+                            flushCurrentBlock(retainUrl = true)
+                        }
+                        currMac = newMac
+                    }
+
+                    // Extract Combo (e.g. Combo: user:pass)
+                    val comboMatch = comboExtractPattern.matcher(lineClean)
+                    if (comboMatch.find()) {
+                        val uVal = comboMatch.group(1)?.trim()?.trimEnd('|', '│', '║') ?: ""
+                        val pVal = comboMatch.group(2)?.trim()?.trimEnd('|', '│', '║') ?: ""
+                        if (!skipKeywords.contains(uVal.lowercase()) && !skipKeywords.contains(pVal.lowercase())) {
+                            if (currUser != null && currPass != null && (uVal != currUser || pVal != currPass)) {
+                                flushCurrentBlock(retainUrl = true)
+                            }
+                            currUser = uVal
+                            currPass = pVal
+                        }
                     }
 
                     // Extract User
-                    val userMatch = userExtractPattern.matcher(lineTrim)
+                    val userMatch = userExtractPattern.matcher(lineClean)
                     if (userMatch.find()) {
-                        val uVal = userMatch.group(1)?.trim() ?: ""
+                        val uVal = userMatch.group(1)?.trim()?.trimEnd('|', '│', '║') ?: ""
                         if (!skipKeywords.contains(uVal.lowercase())) {
+                            if (currUser != null && currPass != null && uVal != currUser) {
+                                flushCurrentBlock(retainUrl = true)
+                            }
                             currUser = uVal
                         }
                     }
 
                     // Extract Pass
-                    val passMatch = passExtractPattern.matcher(lineTrim)
+                    val passMatch = passExtractPattern.matcher(lineClean)
                     if (passMatch.find()) {
-                        val pVal = passMatch.group(1)?.trim() ?: ""
+                        val pVal = passMatch.group(1)?.trim()?.trimEnd('|', '│', '║') ?: ""
                         if (!skipKeywords.contains(pVal.lowercase())) {
                             currPass = pVal
                         }
                     }
 
                     // Extract Exp
-                    val expMatch = expExtractPattern.matcher(lineTrim)
+                    val expMatch = expExtractPattern.matcher(lineClean)
                     if (expMatch.find()) {
-                        currExp = expMatch.group(1)?.trim()
+                        currExp = expMatch.group(1)?.trim()?.trimEnd('|', '│', '║')
                     }
 
                     // Extract Conn
-                    val connMatch = singleConnExtractPattern.matcher(lineTrim)
+                    val connMatch = singleConnExtractPattern.matcher(lineClean)
                     if (connMatch.find()) {
                         currAct = connMatch.group(1)
                     }
 
                     // Extract MaxConn
-                    val maxConnMatch = singleMaxConnExtractPattern.matcher(lineTrim)
+                    val maxConnMatch = singleMaxConnExtractPattern.matcher(lineClean)
                     if (maxConnMatch.find()) {
                         currMax = maxConnMatch.group(1)
                     }
 
+                    // Extract Timezone / Zone
+                    val tzMatch = tzExtractPattern.matcher(lineClean)
+                    if (tzMatch.find()) {
+                        currTz = tzMatch.group(1)?.trim()?.trimEnd('|', '│', '║')
+                    }
+
                     // Check if line indicates status / block completion
-                    if (statusEndPattern.matcher(lineTrim).find()) {
+                    if (statusEndPattern.matcher(lineClean).find()) {
                         flushCurrentBlock()
                     }
                 } catch (e: Throwable) {}

@@ -148,6 +148,14 @@ This document contains the complete system architecture, operational decisions, 
 
 ---
 
+### K. Operational Intelligence Dashboard (`AnalyticsTab.kt`)
+* **Custom Compose Canvas Engineering**: Since Jetpack Compose lacks heavy built-in charting, the Analytics tab renders high-performance custom `Canvas` charts (`InteractivePieChart`, `SegmentedProgressBar`, `AnimatedHorizontalBarChart`) that strictly consume dynamic theme tokens (e.g. `AppPrimary`, `AppError`).
+* **Interactive Deep Linking**: Tapping any slice on a chart (e.g. "MaxOTT" or "Active") instantly modifies the shared `CommittedFilterStore` state and deep-routes the user back to `CommittedTab` with the exact filtered dataset isolated.
+
+### L. Dynamic Cascading Filters (`CommittedFilterStore`)
+* **Multi-Select Context-Aware Dropdowns**: Filters across `CommittedTab` use nested intersection logic to restrict dropdown choices dynamically based on the current active selections. 
+* **Global State Engine**: Filter state is hoisted into a `CommittedFilterStore` singleton, completely decoupling it from the UI layer so other tabs (`AnalyticsTab`) can dynamically alter the active data grid.
+
 ## 🎨 3. World-Class UI/UX Design Standards
 
 * **Typography Scale**: Pairing geometric display headers (`titleMedium`, `labelLarge`) with refined body fonts (`bodyMedium`, `bodySmall` in `#A0A0B0`). No amateur oversized fonts.
@@ -232,6 +240,8 @@ Remove-Item -Recurse -Force "C:\Development\Apps\Project Strong\personal-repo-te
 
 | Milestone | Subsystems Involved | Status |
 | :--- | :--- | :--- |
+| **TF-IDF Watermark Forensics & StreamCheck Index** | `sync_provider_intel.py`, `app.py`, `ProviderIntelligenceCard.kt` | 🟢 **Verified & Live** |
+| **Manual Connections & Connection Schema Upgrade** | `ManualAddDialog.kt`, `CommittedTab.kt`, `CommitDialog.kt` | 🟢 **Verified & Live** |
 | **Git-Native OTA Update Engine** | `AppUpdater.kt`, `UpdateDialog.kt`, `FileProvider`, `.github/workflows/android-build.yml` | 🟢 **Verified & Live** |
 | **"Forever Source" Snapshot Archive** | `SourceArchiveManager.kt`, `SourceArchiveViewerDialog.kt`, `committed.json`, `app.py` | 🟢 **Verified & Live** |
 | **Media3 / ExoPlayer In-App Stream Inspector** | `StreamPreviewDialog.kt`, ExoPlayer 1.3.1, OkHttp data source | 🟢 **Verified & Live** |
@@ -253,6 +263,8 @@ Remove-Item -Recurse -Force "C:\Development\Apps\Project Strong\personal-repo-te
 | **CI/CD Branded Release Artifacts & GitHub Releases** | `.github/workflows/android-build.yml`, `sherlock-streams-v1.10.{run}.apk` naming, `sherlock-streams-apk` artifact | 🟢 **Verified & Live** |
 | **Automated Weekly Provider Intelligence Sync** | `.github/workflows/scrape-provider-intel.yml`, `sync_provider_intel.py`, `permissions: contents: write`, cross-catalog auto-learning | 🟢 **Verified & Live** |
 | **Regional Bouquet & Demonym Filter Engine** | `ProviderIntelligence.kt`, `ProviderIntelligenceCard.kt`, `CommittedManager.kt`, `sync_provider_intel.py`, `app.py`, 30+ regional dictionaries, `regionalFocus` metadata, `🌍 Regional Bouquet` UI badge | 🟢 **Verified & Live** |
+| **Committed Filter Store & Nested Multi-Select** | `FilterDropdown.kt`, `CommittedFilterStore`, dynamic derived dropdown subsets | 🟢 **Verified & Live** |
+| **Operational Intelligence Analytics Dashboard** | `AnalyticsTab.kt`, `SegmentedProgressBar`, Canvas pie charts, interactive deep-linking | 🟢 **Verified & Live** |
 
 ---
 
@@ -299,3 +311,40 @@ Remove-Item -Recurse -Force "C:\Development\Apps\Project Strong\personal-repo-te
     *   *The Skeleton*: IPTV playlists heavily use country/demonym delimiter banners (e.g. `=== FRENCH ===`, `### SWEDISH ###`, `|AR| ARABIC |AR|`). Naive banner parsing mistakes these category headers for upstream infrastructure brand names, tagging unbranded nodes as `"🎯 Identified: FRENCH"`. When saved to `committed.json`, the weekly scraper ingests them as confirmed provider names, creating a self-reinforcing false-positive feedback loop.
     *   *The Fix*: Always filter candidate brand names through `COUNTRY_DEMONYM_MAP` / `isDemonymOrCountry`. Demote country names from "Provider Brand" to "Regional Bouquet" (`regional_focus`), display them as a separate `🌍 [Region] Bouquet` UI pill, keep the provider field as `Unidentified Provider` / domain, and preserve compound brand names (e.g., *French OTT*, *Viking IPTV*).
 
+*   **Android Compose Dialog Immersive Fullscreen Constraints (`StreamPreviewDialog.kt`)**:
+    *   *The Skeleton*: Attempting to force true edge-to-edge immersive mode inside a Jetpack Compose `Dialog` by combining aggressive window flags (`FLAG_FULLSCREEN`, `LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES`, `setDecorFitsSystemWindows(false)`) is highly volatile across OEM devices (Samsung, Xiaomi, etc.). Because a `Dialog` floats in a sub-window constrained by the parent `Activity` decor, aggressive overrides can cause layout clipping, "peeking" system bars, or complete UI state corruption.
+    *   *The Fix*: Avoid brute-force window manipulation inside composable Dialogs. Rely strictly on `DialogProperties(usePlatformDefaultWidth = false)` and standard `systemBarsPadding()` modifiers. If immersive video is critical, it must be architected as a full-screen `Activity` or a top-level Compose navigation route, not a floating `Dialog`.
+*   **Media3 Cast SDK Theme Crash (Chromecast)**:
+    *   *The Skeleton*: Adding ExoPlayer Cast SDK components (like `CastOptionsProvider` or `MediaRouteButton`) to a modern Jetpack Compose application crashing immediately on launch with theme-related `IllegalArgumentException`.
+    *   *The Fix*: Google Cast UI components strictly require an `AppCompat` context. If the app uses `ComponentActivity`, `AndroidManifest.xml` must define an AppCompat theme (e.g., `@style/Theme.AppCompat.Light.NoActionBar`) for the application or activity, otherwise the Cast dialog instantiation will crash the app.
+*   **Keep Screen On Lifecycle (`FLAG_KEEP_SCREEN_ON`)**:
+    *   *The Skeleton*: Video streaming dialogs going to sleep/timing out during playback.
+    *   *The Fix*: Set `dialogWindow.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)` safely within a `DisposableEffect` when the video player launches, and strictly call `clearFlags` in the `onDispose` block. Never apply it globally without cleanup, as it will cause severe battery drain.
+*   **Git Patching & State Regression Hazard**:
+    *   *The Skeleton*: Using blind Bash/Python diff scripts (e.g. `sed`, `awk`, or outdated `.py` patchers) to inject features into complex UI files (`CommittedTab.kt`).
+    *   *The Fix*: Blind patching often executes on outdated contexts, silently overwriting or deleting recent features (like scroll state memory, row highlighting, or layout paddings). Always pull the absolute latest state of the file, verify the AST/code structure visually, and apply edits atomically. If a regression occurs, perform a hard `git reset` to the last known stable commit rather than attempting to duct-tape over the corrupted file.
+
+---
+
+## 🎯 8. Backlog & Future Architectural Strategies (Oct 2026)
+
+### A. VOD & Series Explorer (Lazy Loading Architecture)
+* **Goal**: Add a toggle in `FullScreenCatalogExplorer` to switch between Live TV, Movies (VOD), and Series.
+* **The Constraint**: Xtream API's `get_vod_streams` can return 50MB+ of JSON (50,000+ movies), which blocks the network thread and consumes massive RAM.
+* **The Solution**: 
+  1. **Lazy Loading by Category**: Fetch `get_vod_categories` (instant), and only fetch streams by specific `category_id` when the user taps a category (~100 movies at a time).
+  2. **Background Prefetching**: Silently stream the full payload in a background coroutine using `android.util.JsonReader` while the user browses Live TV.
+  3. **Disk Caching**: Write the pre-fetched JSON payload to Android's `Context.cacheDir` for zero-latency loading on subsequent opens.
+* **Impact**: Zero impact on `committed.json` (credentials only). Near-zero RAM footprint due to `JsonReader`.
+
+### B. Stalker Portal Explorer Integration
+* **Goal**: Seamlessly render Stalker Portals (Ministra API) inside the `FullScreenCatalogExplorer` with search, browse, and watch capabilities.
+* **The Challenge**: Stalker Portals cannot construct video URLs locally. They require a handshake token, `get_genres`, `get_ordered_list`, and crucially, a just-in-time `create_link` request to generate a temporary expiring playback URL.
+* **The Solution**:
+  1. Write a Stalker engine in `IPTVClient.kt` that fetches Stalker JSON and normalizes it into our existing `CategoryNode` and `StreamNode` data classes.
+  2. Expand `CatalogExplorerState` to accept a `type` parameter (`Xtream` or `Stalker`).
+  3. On play click, if `type == "Stalker"`, fire an async `create_link` request, intercept the raw stream URL, and inject it into `StreamPreviewDialog`.
+
+### C. UI & Quality of Life Tweaks
+* **Keyboard Hiding Fix**: The `CommittedDetailScreen` uses `.imePadding()`, but Android's focus engine doesn't automatically scroll it. Requires attaching a `BringIntoViewRequester` to the text fields.
+* **Super-Playlist Export**: Consolidate all Active connections into a single `sherlock_super.m3u` file exported to local device storage.

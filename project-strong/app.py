@@ -1159,9 +1159,10 @@ def parse_credentials(text_block):
     curr_exp = None
     curr_act = None
     curr_max = None
+    curr_tz = None
 
-    def flush_block():
-        nonlocal curr_url, curr_port, curr_user, curr_pass, curr_mac, curr_exp, curr_act, curr_max
+    def flush_block(retain_url=False):
+        nonlocal curr_url, curr_port, curr_user, curr_pass, curr_mac, curr_exp, curr_act, curr_max, curr_tz
         if not curr_url:
             return
         base = curr_url.strip()
@@ -1189,8 +1190,10 @@ def parse_credentials(text_block):
             curr_exp = None
             curr_act = None
             curr_max = None
+            curr_tz = None
             return
 
+        did_add = False
         if curr_mac:
             if not any(a.get("type") == "Stalker" and a["base_url"] == base and a.get("mac") == curr_mac for a in extracted):
                 extracted.append({
@@ -1201,8 +1204,10 @@ def parse_credentials(text_block):
                     "password": "MAC",
                     "expires": curr_exp or "N/A",
                     "activeConn": curr_act or "N/A",
-                    "maxConn": curr_max or "N/A"
+                    "maxConn": curr_max or "N/A",
+                    "serverTimezone": curr_tz or "N/A"
                 })
+                did_add = True
         elif curr_user and curr_pass:
             if not (re.match(r'^[0-9a-fA-F]{2}$', curr_user) and re.match(r'^(?:[0-9a-fA-F]{2}:){4}[0-9a-fA-F]{2}$', curr_pass)):
                 if not any(a.get("type") == "Xtream" and a["base_url"] == base and a["username"] == curr_user for a in extracted):
@@ -1213,82 +1218,113 @@ def parse_credentials(text_block):
                         "password": curr_pass,
                         "expires": curr_exp or "N/A",
                         "activeConn": curr_act or "N/A",
-                        "maxConn": curr_max or "N/A"
+                        "maxConn": curr_max or "N/A",
+                        "serverTimezone": curr_tz or "N/A"
                     })
+                    did_add = True
         
-        curr_url = None
-        curr_port = None
+        if not retain_url or not did_add:
+            curr_url = None
+            curr_port = None
         curr_user = None
         curr_pass = None
         curr_mac = None
         curr_exp = None
         curr_act = None
         curr_max = None
+        curr_tz = None
 
     portal_header_pat = re.compile(r'(?i)^(?:portal|host|server|url|domain)[\s:=]+(?:https?://|www\.|[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})')
     port_pat = re.compile(r'(?i)\bport[\s:=]+(\d{2,5})\b')
     mac_pat = re.compile(r'([0-9a-fA-F]{2}(?::[0-9a-fA-F]{2}){5})', re.IGNORECASE)
-    user_pat = re.compile(r'(?i)(?:user|usr|username)[\s:=]+([^\s]+)')
-    pass_pat = re.compile(r'(?i)(?:pass|password)[\s:=]+([^\s]+)')
-    exp_pat = re.compile(r'(?i)(?:exp|expire|expires|expiry)[\s:=]+([^\s]+)')
+    user_pat = re.compile(r'(?i)(?:user|usr|username)[\s:=]+([^\s|]+)')
+    pass_pat = re.compile(r'(?i)(?:pass|password)[\s:=]+([^\s|]+)')
+    combo_pat = re.compile(r'(?i)(?:combo|account)[\s:=]+([^\s:]+)[\s:]([^\s|]+)')
+    exp_pat = re.compile(r'(?i)(?:exp|expire|expires|expiry|expiration)[\s:=]+([^\s|]+)')
     conn_pat = re.compile(r'(?i)\b(?:conn|active)[\s:=]+(\d+)\b')
-    max_conn_pat = re.compile(r'(?i)\b(?:maxconn|max_conn|max)[\s:=]+(\d+)\b')
+    max_conn_pat = re.compile(r'(?i)\b(?:maxconn|max_conn|maxcons|max_cons|maxcon|max_con|max|connections?|cons?)[\s:=]+(\d+)\b')
+    tz_pat = re.compile(r'(?i)(?:zone|timezone|time_zone|tz)[\s:=]+([A-Za-z0-9_/+\-]+)')
     status_end_pat = re.compile(r'(?i)status[\s:=]+.*(?:ok|active|valid|✅)')
 
     for line in clean_text.splitlines():
-        line_trim = line.strip()
-        if not line_trim or re.search(r'[-=_*#]{4,}|[━─╭╰┌└\|]{2,}', line_trim) or "player_api.php" in line_trim or "get.php" in line_trim:
-            flush_block()
+        line_raw = line.strip()
+        if not line_raw:
+            continue
+        line_clean = re.sub(r'^[\s|│║├└┌┐┘+*•●✨🔥⚡🔌\-—_~#]+', '', line_raw)
+        line_clean = re.sub(r'[\s|│║├└┌┐┘+*•●✨🔥⚡🔌\-—_~#]+$', '', line_clean).strip()
+        if not line_clean or "player_api.php" in line_clean or "get.php" in line_clean:
             continue
 
-        is_new_portal = bool(portal_header_pat.search(line_trim))
-        if is_new_portal and curr_url and (curr_user or curr_mac):
+        is_new_portal = bool(portal_header_pat.search(line_clean))
+        url_match = re.search(r'(https?://[^/\s|]+(?:/[^/\s|]*)?)', line_clean)
+        if (url_match or is_new_portal) and curr_url and (curr_user or curr_mac):
             flush_block()
 
-        url_match = re.search(r'(https?://[^/\s]+(?:/[^/\s]*)?)', line_trim)
         if url_match:
             base_match = re.match(r'(https?://[^/:]+(?::\d+)?)', url_match.group(1))
-            if base_match and not is_blacklisted_host(base_match.group(1)):
-                if curr_url is None or is_new_portal:
-                    curr_url = base_match.group(1)
+            if base_match:
+                candidate = base_match.group(1).rstrip('/|│║])')
+                if candidate and not is_blacklisted_host(candidate):
+                    if curr_url is None or is_new_portal:
+                        curr_url = candidate
         elif is_new_portal:
-            host_part = line_trim.split(":", 1)[-1].strip()
+            host_part = line_clean.split(":", 1)[-1].strip().rstrip('/|│║])')
             if host_part and not is_blacklisted_host(host_part):
                 curr_url = "http://" + host_part
 
-        p_match = port_pat.search(line_trim)
+        p_match = port_pat.search(line_clean)
         if p_match:
             curr_port = p_match.group(1)
 
-        m_match = mac_pat.search(line_trim)
+        m_match = mac_pat.search(line_clean)
         if m_match:
-            curr_mac = m_match.group(1).upper()
+            new_mac = m_match.group(1).upper()
+            if curr_mac and new_mac != curr_mac:
+                flush_block(retain_url=True)
+            curr_mac = new_mac
 
-        u_match = user_pat.search(line_trim)
+        cm_match = combo_pat.search(line_clean)
+        if cm_match:
+            u_val = cm_match.group(1).strip().rstrip('|│║')
+            p_val = cm_match.group(2).strip().rstrip('|│║')
+            if u_val.lower() not in ["mac", "active", "activa", "expired", "http", "https", "user", "pass", "username", "password"] and \
+               p_val.lower() not in ["mac", "active", "activa", "expired", "http", "https", "user", "pass", "username", "password"]:
+                if curr_user and curr_pass and (u_val != curr_user or p_val != curr_pass):
+                    flush_block(retain_url=True)
+                curr_user = u_val
+                curr_pass = p_val
+
+        u_match = user_pat.search(line_clean)
         if u_match:
-            u_val = u_match.group(1).strip()
+            u_val = u_match.group(1).strip().rstrip('|│║')
             if u_val.lower() not in ["mac", "active", "activa", "expired", "http", "https", "user", "pass", "username", "password"]:
+                if curr_user and curr_pass and u_val != curr_user:
+                    flush_block(retain_url=True)
                 curr_user = u_val
 
-        pass_match = pass_pat.search(line_trim)
+        pass_match = pass_pat.search(line_clean)
         if pass_match:
-            p_val = pass_match.group(1).strip()
+            p_val = pass_match.group(1).strip().rstrip('|│║')
             if p_val.lower() not in ["mac", "active", "activa", "expired", "http", "https", "user", "pass", "username", "password"]:
                 curr_pass = p_val
 
-        e_match = exp_pat.search(line_trim)
+        e_match = exp_pat.search(line_clean)
         if e_match:
-            curr_exp = e_match.group(1).strip()
+            curr_exp = e_match.group(1).strip().rstrip('|│║')
 
-        c_match = conn_pat.search(line_trim)
+        c_match = conn_pat.search(line_clean)
         if c_match:
             curr_act = c_match.group(1)
 
-        mc_match = max_conn_pat.search(line_trim)
+        mc_match = max_conn_pat.search(line_clean)
         if mc_match:
             curr_max = mc_match.group(1)
 
-        if status_end_pat.search(line_trim):
+        tz_match = tz_pat.search(line_clean)
+        if tz_match:
+            curr_tz = tz_match.group(1).strip().rstrip('|│║')
+
+        if status_end_pat.search(line_clean):
             flush_block()
 
     flush_block()
