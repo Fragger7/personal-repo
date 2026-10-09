@@ -1,5 +1,37 @@
 [
   {
+    "id": "ebay_960039171443",
+    "source": "ebay",
+    "title": "Dell Precision 5570 i7 32GB - A1000 Part or Repair **READ**Opens in a new window or tab",
+    "price": 450.0,
+    "url": "https://www.ebay.com/itm/960039171443",
+    "specs": {
+      "cpu": "Intel Core i7/i9 12th/13th-Gen H",
+      "ram_gb": 32,
+      "ssd_gb": 512,
+      "gpu": "NVIDIA RTX / Workstation GPU",
+      "screen": "15.6\" - 16\" Workstation Display",
+      "condition": "Used / Refurbished"
+    },
+    "fair_market_value": 780.0,
+    "estimated_profit": 330.0,
+    "arbitrage_margin_pct": 73.3,
+    "deal_score": 9.7,
+    "summary": "Rare halo opportunity priced at $450 with a massive +$293 (+38% ROI) spread below fair market clearing baseline ($780). Configured with Intel Core i7/i9 12th/13th-Gen H, 32GB RAM, 512GB SSD, and NVIDIA RTX / Workstation GPU. Excellent daily driver for full-stack engineering, multi-container development, and data analysis.",
+    "actionable_recommendation": "🎯 HIGH-CONVICTION STRIKE",
+    "confidence_score": 0.95,
+    "seller": "eBay Seller",
+    "location": "US",
+    "created_utc": "2026-10-09T02:18:18.181955+00:00",
+    "evaluated_at": "2026-10-09T02:18:38.009377+00:00",
+    "alerted": true,
+    "is_high_yield": true,
+    "raw_payload": null,
+    "is_auction": false,
+    "bid_count": null,
+    "time_left": null
+  },
+  {
     "id": "ebay_198270785326",
     "source": "ebay",
     "title": "Clean Tested Dell Venue 10 Pro 2GB RAM 32GB SSD Intel Atom Z3735F 10.1\" Win10Opens in a new window or tab",
