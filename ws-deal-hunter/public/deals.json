@@ -1,5 +1,37 @@
 [
   {
+    "id": "ebay_227543721827",
+    "source": "ebay",
+    "title": "HP ZBook Fury 15 Mobile Workstation Laptop PC 15.6\" i7 64GB 256GB SSD T1000 ProOpens in a new window or tab",
+    "price": 569.45,
+    "url": "https://www.ebay.com/itm/227543721827",
+    "specs": {
+      "cpu": "Intel Core i7/i9 12th/13th-Gen H",
+      "ram_gb": 64,
+      "ssd_gb": 256,
+      "gpu": "NVIDIA RTX / Workstation GPU",
+      "screen": "15.6\" - 16\" Workstation Display",
+      "condition": "Used / Refurbished"
+    },
+    "fair_market_value": 850.0,
+    "estimated_profit": 280.55,
+    "arbitrage_margin_pct": 49.3,
+    "deal_score": 8.5,
+    "summary": "High-conviction value buy at $569 offering +$169 (+20% ROI) profit spread below estimated FMV ($850). Configured with Intel Core i7/i9 12th/13th-Gen H, 64GB RAM, 256GB SSD, and NVIDIA RTX / Workstation GPU. Ideal for local AI/LLM fine-tuning, Docker virtualization, and heavy code compilation.",
+    "actionable_recommendation": "⚡ STRONG VALUE BUY",
+    "confidence_score": 0.95,
+    "seller": "eBay Seller",
+    "location": "US",
+    "created_utc": "2026-10-10T13:52:19.817755+00:00",
+    "evaluated_at": "2026-10-10T13:52:36.369908+00:00",
+    "alerted": true,
+    "is_high_yield": true,
+    "raw_payload": null,
+    "is_auction": false,
+    "bid_count": null,
+    "time_left": null
+  },
+  {
     "id": "ebay_920024105899",
     "source": "ebay",
     "title": "New ListingHP ZBook Studio x360 G5 15.6\" Xeon E-2176M 32GB RAM 512GB SSD NO OS *Tested*Opens in a new window or tab",
