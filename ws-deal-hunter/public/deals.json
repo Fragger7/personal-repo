@@ -288,38 +288,6 @@
     "time_left": null
   },
   {
-    "id": "ebay_407278887414",
-    "source": "ebay",
-    "title": "Dell Precision 5680 i7-13800H 2.5GHz 32GB RAM 512GB SSD 16\" RTX 2000Opens in a new window or tab",
-    "price": 900.0,
-    "url": "https://www.ebay.com/itm/407278887414",
-    "specs": {
-      "cpu": "I7-13800H",
-      "ram_gb": 32,
-      "ssd_gb": 512,
-      "gpu": "NVIDIA RTX / Workstation GPU",
-      "screen": "15.6\" - 16\" Workstation Display",
-      "condition": "Used / Refurbished"
-    },
-    "fair_market_value": 1250.0,
-    "estimated_profit": 350.0,
-    "arbitrage_margin_pct": 38.9,
-    "deal_score": 7.2,
-    "summary": "Opportunistic target priced at $900 with +$276 margin spread. Configured with I7-13800H, 32GB RAM, 512GB SSD, and NVIDIA RTX / Workstation GPU. Excellent daily driver for full-stack engineering, multi-container development, and data analysis.",
-    "actionable_recommendation": "PASS / NO ARBITRAGE (Exceeds Strike Ceiling)",
-    "confidence_score": 0.95,
-    "seller": "eBay Seller",
-    "location": "US",
-    "created_utc": "2026-10-09T21:04:19.563018+00:00",
-    "evaluated_at": "2026-10-09T21:04:56.445384+00:00",
-    "alerted": false,
-    "is_high_yield": false,
-    "raw_payload": null,
-    "is_auction": false,
-    "bid_count": null,
-    "time_left": null
-  },
-  {
     "id": "ebay_860027391444",
     "source": "ebay",
     "title": "Dell Precision 5680 i7-13800H 2.5GHz 32GB DDR5 512GB SSD  16\" Laptop with chargeOpens in a new window or tab",
