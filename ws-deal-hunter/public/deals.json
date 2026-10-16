@@ -1,5 +1,37 @@
 [
   {
+    "id": "ebay_287652514816",
+    "source": "ebay",
+    "title": "New ListingDell XPS 15 9530 i7-13th 32GB 1TB SSD Intel Arc A370M FHD+Opens in a new window or tab",
+    "price": 700.0,
+    "url": "https://www.ebay.com/itm/287652514816",
+    "specs": {
+      "cpu": "Intel Core i7/i9 12th/13th-Gen H",
+      "ram_gb": 32,
+      "ssd_gb": 1024,
+      "gpu": "NVIDIA RTX / Workstation GPU",
+      "screen": "15.6\" - 16\" Workstation Display",
+      "condition": "Used / Refurbished"
+    },
+    "fair_market_value": 950.0,
+    "estimated_profit": 250.0,
+    "arbitrage_margin_pct": 35.7,
+    "deal_score": 8.5,
+    "summary": "High-conviction value buy at $700 offering +$192 (+20% ROI) profit spread below estimated FMV ($950). Configured with Intel Core i7/i9 12th/13th-Gen H, 32GB RAM, 1024GB SSD, and NVIDIA RTX / Workstation GPU. Excellent daily driver for full-stack engineering, multi-container development, and data analysis.",
+    "actionable_recommendation": "⚡ STRONG VALUE BUY",
+    "confidence_score": 0.95,
+    "seller": "eBay Seller",
+    "location": "US",
+    "created_utc": "2026-10-16T17:32:21.230490+00:00",
+    "evaluated_at": "2026-10-16T17:32:44.411148+00:00",
+    "alerted": true,
+    "is_high_yield": true,
+    "raw_payload": null,
+    "is_auction": false,
+    "bid_count": null,
+    "time_left": null
+  },
+  {
     "id": "ebay_820243057455",
     "source": "ebay",
     "title": "New ListingLenovo ThinkPad L14 Gen 5 AMD Ryzen 5 PRO 7535U 32GB RAM SSD Full OfficeOpens in a new window or tab",
