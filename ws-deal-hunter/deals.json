@@ -1,5 +1,37 @@
 [
   {
+    "id": "woot_0_50074",
+    "source": "woot",
+    "title": "Woot Refurbished: Apple MacBook Pro 16\" M1 Pro (2021) 32GB 512GB Space Gray | Refurbished - Good $720.00",
+    "price": 720.0,
+    "url": "https://slickdeals.net/f/20172141-apple-macbook-pro-16-m1-pro-2021-32gb-512gb-space-gray-refurbished-good-720-00?utm_source=rss&utm_content=def&utm_medium=RSS2",
+    "specs": {
+      "cpu": "M1 PRO",
+      "ram_gb": 32,
+      "ssd_gb": 512,
+      "gpu": "Apple Silicon Unified GPU",
+      "screen": "15.6\" - 16\" Workstation Display",
+      "condition": "Factory Refurbished / Off-Lease"
+    },
+    "fair_market_value": 1050.0,
+    "estimated_profit": 330.0,
+    "arbitrage_margin_pct": 45.8,
+    "deal_score": 9.0,
+    "summary": "High-conviction value buy at $720 offering +$271 (+26% ROI) profit spread below estimated FMV ($1050). Configured with M1 PRO, 32GB RAM, 512GB SSD, and Apple Silicon Unified GPU. Excellent daily driver for full-stack engineering, multi-container development, and data analysis.",
+    "actionable_recommendation": "🎯 HIGH-CONVICTION STRIKE",
+    "confidence_score": 0.95,
+    "seller": "Woot! (Amazon)",
+    "location": "US (Free Prime Shipping)",
+    "created_utc": "2026-10-17T17:20:13.039780+00:00",
+    "evaluated_at": "2026-10-17T17:20:41.995479+00:00",
+    "alerted": true,
+    "is_high_yield": true,
+    "raw_payload": null,
+    "is_auction": false,
+    "bid_count": null,
+    "time_left": null
+  },
+  {
     "id": "ebay_960075703614",
     "source": "ebay",
     "title": "New ListingHP Zbook Firefly 16 G9 16\" Laptop i7-1280P 32GB Ram 512GB SSD Windows 11 ProOpens in a new window or tab",
