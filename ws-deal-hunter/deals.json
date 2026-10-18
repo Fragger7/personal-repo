@@ -864,38 +864,6 @@
     "time_left": null
   },
   {
-    "id": "ebay_278292800632",
-    "source": "ebay",
-    "title": "Dell Precision 5680 16 FHD+ 2.5GHz i7-13800H 32GB 1TB SSD NVIDIA RTX 2000 AdaOpens in a new window or tab",
-    "price": 849.99,
-    "url": "https://www.ebay.com/itm/278292800632",
-    "specs": {
-      "cpu": "I7-13800H",
-      "ram_gb": 32,
-      "ssd_gb": 1024,
-      "gpu": "NVIDIA RTX / Workstation GPU",
-      "screen": "15.6\" - 16\" Workstation Display",
-      "condition": "Used / Refurbished"
-    },
-    "fair_market_value": 1250.0,
-    "estimated_profit": 400.01,
-    "arbitrage_margin_pct": 47.1,
-    "deal_score": 9.1,
-    "summary": "High-conviction value buy at $850 offering +$330 (+26% ROI) profit spread below estimated FMV ($1250). Configured with I7-13800H, 32GB RAM, 1024GB SSD, and NVIDIA RTX / Workstation GPU. Excellent daily driver for full-stack engineering, multi-container development, and data analysis.",
-    "actionable_recommendation": "🎯 HIGH-CONVICTION STRIKE",
-    "confidence_score": 0.95,
-    "seller": "eBay Seller",
-    "location": "US",
-    "created_utc": "2026-10-06T17:17:49.958149+00:00",
-    "evaluated_at": "2026-10-12T18:03:03.774728+00:00",
-    "alerted": true,
-    "is_high_yield": true,
-    "raw_payload": null,
-    "is_auction": false,
-    "bid_count": null,
-    "time_left": null
-  },
-  {
     "id": "ebay_298735633525",
     "source": "ebay",
     "title": "Dell Precision 5680 16 Gray FHD+ 2.4 GHz i7-13700H 32GB 1TB SSD RTX A1000 GoodOpens in a new window or tab",
