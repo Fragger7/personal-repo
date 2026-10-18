@@ -1,5 +1,37 @@
 [
   {
+    "id": "ebay_298707552530",
+    "source": "ebay",
+    "title": "HP Zbook Firefly 15 G8 15.6 in i7-1185G7 32GB RAM 512GB SSD W11 ProOpens in a new window or tab",
+    "price": 523.99,
+    "url": "https://www.ebay.com/itm/298707552530",
+    "specs": {
+      "cpu": "Intel Core i7/i9 12th/13th-Gen H",
+      "ram_gb": 32,
+      "ssd_gb": 512,
+      "gpu": "NVIDIA RTX / Workstation GPU",
+      "screen": "15.6\" - 16\" Workstation Display",
+      "condition": "Used / Refurbished"
+    },
+    "fair_market_value": 750.0,
+    "estimated_profit": 226.01,
+    "arbitrage_margin_pct": 43.1,
+    "deal_score": 8.9,
+    "summary": "High-conviction value buy at $524 offering +$183 (+24% ROI) profit spread below estimated FMV ($750). Configured with Intel Core i7/i9 12th/13th-Gen H, 32GB RAM, 512GB SSD, and NVIDIA RTX / Workstation GPU. Excellent daily driver for full-stack engineering, multi-container development, and data analysis.",
+    "actionable_recommendation": "⚡ STRONG VALUE BUY",
+    "confidence_score": 0.95,
+    "seller": "eBay Seller",
+    "location": "US",
+    "created_utc": "2026-10-18T16:00:15.018305+00:00",
+    "evaluated_at": "2026-10-18T16:00:33.461680+00:00",
+    "alerted": true,
+    "is_high_yield": true,
+    "raw_payload": null,
+    "is_auction": false,
+    "bid_count": null,
+    "time_left": null
+  },
+  {
     "id": "ebay_298525832162",
     "source": "ebay",
     "title": "Dell Precision 5680 16\" FHD+ 13TH I7-13800H 512GB SSD 32GB W11P RTX A1000 6GBOpens in a new window or tab",
