@@ -171,70 +171,36 @@ fun SettingsDialog(
                         style = MaterialTheme.typography.bodySmall
                     )
 
-                    val incognitoPasswordKeyboardOptions = remember {
-                        KeyboardOptions(
-                            capitalization = KeyboardCapitalization.None,
-                            autoCorrect = false,
-                            keyboardType = KeyboardType.Password,
-                            imeAction = ImeAction.Done,
-                            platformImeOptions = PlatformImeOptions(privateImeOptions = "com.touchtype.swiftkey.incognito=true,incognito=true")
-                        )
-                    }
-
                     if (hasExisting) {
-                        OutlinedTextField(
+                        IncognitoPasswordTextField(
                             value = currentPwd,
                             onValueChange = { currentPwd = it; errorMsg = null },
-                            label = { Text("Current Password") },
-                            singleLine = true,
-                            modifier = Modifier.fillMaxWidth(),
-                            visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation(),
-                            keyboardOptions = incognitoPasswordKeyboardOptions,
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = AppPrimary,
-                                unfocusedBorderColor = AppSurfaceBorder,
-                                focusedTextColor = AppTextPrimary,
-                                unfocusedTextColor = AppTextPrimary,
-                                focusedContainerColor = AppSurfaceVariant,
-                                unfocusedContainerColor = AppSurfaceVariant
-                            )
+                            label = "Current Password",
+                            placeholder = "Enter current password",
+                            isError = errorMsg != null,
+                            imeAction = android.view.inputmethod.EditorInfo.IME_ACTION_NEXT,
+                            modifier = Modifier.fillMaxWidth()
                         )
                     }
 
-                    OutlinedTextField(
+                    IncognitoPasswordTextField(
                         value = newPwd,
                         onValueChange = { newPwd = it; errorMsg = null },
-                        label = { Text("New Password") },
-                        singleLine = true,
-                        modifier = Modifier.fillMaxWidth(),
-                        visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation(),
-                        keyboardOptions = incognitoPasswordKeyboardOptions,
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = AppPrimary,
-                            unfocusedBorderColor = AppSurfaceBorder,
-                            focusedTextColor = AppTextPrimary,
-                            unfocusedTextColor = AppTextPrimary,
-                            focusedContainerColor = AppSurfaceVariant,
-                            unfocusedContainerColor = AppSurfaceVariant
-                        )
+                        label = "New Password",
+                        placeholder = "Enter new master password",
+                        isError = errorMsg != null,
+                        imeAction = android.view.inputmethod.EditorInfo.IME_ACTION_NEXT,
+                        modifier = Modifier.fillMaxWidth()
                     )
 
-                    OutlinedTextField(
+                    IncognitoPasswordTextField(
                         value = confirmPwd,
                         onValueChange = { confirmPwd = it; errorMsg = null },
-                        label = { Text("Confirm New Password") },
-                        singleLine = true,
-                        modifier = Modifier.fillMaxWidth(),
-                        visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation(),
-                        keyboardOptions = incognitoPasswordKeyboardOptions,
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = AppPrimary,
-                            unfocusedBorderColor = AppSurfaceBorder,
-                            focusedTextColor = AppTextPrimary,
-                            unfocusedTextColor = AppTextPrimary,
-                            focusedContainerColor = AppSurfaceVariant,
-                            unfocusedContainerColor = AppSurfaceVariant
-                        )
+                        label = "Confirm New Password",
+                        placeholder = "Re-enter new password",
+                        isError = errorMsg != null,
+                        imeAction = android.view.inputmethod.EditorInfo.IME_ACTION_DONE,
+                        modifier = Modifier.fillMaxWidth()
                     )
 
                     if (errorMsg != null) {

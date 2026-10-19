@@ -46,6 +46,7 @@ import com.projectstrong.iptv.ui.theme.*
 import com.projectstrong.iptv.ui.state.CatalogExplorerState
 import com.projectstrong.iptv.ui.state.LocalCatalogExplorerState
 import com.projectstrong.iptv.ui.components.FullScreenCatalogExplorer
+import com.projectstrong.iptv.ui.components.IncognitoPasswordTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.KeyboardCapitalization
@@ -304,16 +305,6 @@ fun MainDashboard() {
             },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    val incognitoPasswordKeyboardOptions = remember {
-                        KeyboardOptions(
-                            capitalization = KeyboardCapitalization.None,
-                            autoCorrect = false,
-                            keyboardType = KeyboardType.Password,
-                            imeAction = ImeAction.Done,
-                            platformImeOptions = PlatformImeOptions(privateImeOptions = "com.touchtype.swiftkey.incognito=true,incognito=true")
-                        )
-                    }
-
                     if (isCheckingCloudVault) {
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             CircularProgressIndicator(modifier = Modifier.size(16.dp), color = AppPrimary, strokeWidth = 2.dp)
@@ -325,22 +316,25 @@ fun MainDashboard() {
                             color = AppTextSecondary,
                             style = MaterialTheme.typography.bodySmall
                         )
-                        OutlinedTextField(
+                        IncognitoPasswordTextField(
                             value = enteredPwd,
                             onValueChange = { enteredPwd = it; unlockError = null },
-                            label = { Text("Vault Password") },
-                            singleLine = true,
+                            label = "Vault Password",
+                            placeholder = "Enter master password",
+                            isError = unlockError != null,
                             modifier = Modifier.fillMaxWidth(),
-                            visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation(),
-                            keyboardOptions = incognitoPasswordKeyboardOptions,
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = AppPrimary,
-                                unfocusedBorderColor = AppSurfaceBorder,
-                                focusedTextColor = AppTextPrimary,
-                                unfocusedTextColor = AppTextPrimary,
-                                focusedContainerColor = AppSurfaceVariant,
-                                unfocusedContainerColor = AppSurfaceVariant
-                            )
+                            onImeAction = {
+                                val trimmed = enteredPwd.trim()
+                                if (trimmed.isNotEmpty()) {
+                                    if (com.projectstrong.iptv.data.VaultManager.unlock(trimmed)) {
+                                        showVaultUnlockDialog = false
+                                        previousTab = selectedTab
+                                        selectedTab = 5
+                                    } else {
+                                        unlockError = "Incorrect password. Please try again."
+                                    }
+                                }
+                            }
                         )
                     } else if (hasCloudVault) {
                         Text(
@@ -348,22 +342,13 @@ fun MainDashboard() {
                             color = AppTextSecondary,
                             style = MaterialTheme.typography.bodySmall
                         )
-                        OutlinedTextField(
+                        IncognitoPasswordTextField(
                             value = enteredPwd,
                             onValueChange = { enteredPwd = it; unlockError = null },
-                            label = { Text("Vault Password") },
-                            singleLine = true,
-                            modifier = Modifier.fillMaxWidth(),
-                            visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation(),
-                            keyboardOptions = incognitoPasswordKeyboardOptions,
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = AppPrimary,
-                                unfocusedBorderColor = AppSurfaceBorder,
-                                focusedTextColor = AppTextPrimary,
-                                unfocusedTextColor = AppTextPrimary,
-                                focusedContainerColor = AppSurfaceVariant,
-                                unfocusedContainerColor = AppSurfaceVariant
-                            )
+                            label = "Vault Password",
+                            placeholder = "Enter master password",
+                            isError = unlockError != null,
+                            modifier = Modifier.fillMaxWidth()
                         )
                     } else {
                         Text(
@@ -371,39 +356,23 @@ fun MainDashboard() {
                             color = AppTextSecondary,
                             style = MaterialTheme.typography.bodySmall
                         )
-                        OutlinedTextField(
+                        IncognitoPasswordTextField(
                             value = enteredPwd,
                             onValueChange = { enteredPwd = it; unlockError = null },
-                            label = { Text("New Password") },
-                            singleLine = true,
-                            modifier = Modifier.fillMaxWidth(),
-                            visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation(),
-                            keyboardOptions = incognitoPasswordKeyboardOptions,
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = AppPrimary,
-                                unfocusedBorderColor = AppSurfaceBorder,
-                                focusedTextColor = AppTextPrimary,
-                                unfocusedTextColor = AppTextPrimary,
-                                focusedContainerColor = AppSurfaceVariant,
-                                unfocusedContainerColor = AppSurfaceVariant
-                            )
+                            label = "New Password",
+                            placeholder = "Enter new password",
+                            isError = unlockError != null,
+                            imeAction = android.view.inputmethod.EditorInfo.IME_ACTION_NEXT,
+                            modifier = Modifier.fillMaxWidth()
                         )
-                        OutlinedTextField(
+                        IncognitoPasswordTextField(
                             value = confirmPwd,
                             onValueChange = { confirmPwd = it; unlockError = null },
-                            label = { Text("Confirm Password") },
-                            singleLine = true,
-                            modifier = Modifier.fillMaxWidth(),
-                            visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation(),
-                            keyboardOptions = incognitoPasswordKeyboardOptions,
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = AppPrimary,
-                                unfocusedBorderColor = AppSurfaceBorder,
-                                focusedTextColor = AppTextPrimary,
-                                unfocusedTextColor = AppTextPrimary,
-                                focusedContainerColor = AppSurfaceVariant,
-                                unfocusedContainerColor = AppSurfaceVariant
-                            )
+                            label = "Confirm Password",
+                            placeholder = "Re-enter new password",
+                            isError = unlockError != null,
+                            imeAction = android.view.inputmethod.EditorInfo.IME_ACTION_DONE,
+                            modifier = Modifier.fillMaxWidth()
                         )
                     }
 
