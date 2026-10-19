@@ -53,19 +53,20 @@ class IncognitoEditText @JvmOverloads constructor(
     var onImeActionCallback: (() -> Unit)? = null
 
     init {
-        // Enforce incognito flags directly on platform view
-        applyImeFlags()
-        inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
-        transformationMethod = PasswordTransformationMethod.getInstance()
         background = null // Remove default Android underline
         setPadding(0, 0, 0, 0)
         gravity = Gravity.CENTER_VERTICAL
         maxLines = 1
-        isSingleLine = true
+        setLines(1)
+        // DO NOT call isSingleLine = true, as Android's setSingleLine() resets
+        // transformationMethod to SingleLineTransformationMethod (revealing plain text).
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             importantForAutofill = View.IMPORTANT_FOR_AUTOFILL_NO
         }
+
+        // Enforce initial masked state and incognito flags
+        setPasswordVisibility(visible = false, force = true)
 
         setOnEditorActionListener { _, actionId, _ ->
             if (actionId == customImeAction || actionId == EditorInfo.IME_ACTION_DONE || actionId == EditorInfo.IME_NULL) {
@@ -102,20 +103,24 @@ class IncognitoEditText @JvmOverloads constructor(
         return connection
     }
 
-    fun setPasswordVisibility(visible: Boolean) {
-        if (isPasswordVisible == visible) return
+    fun setPasswordVisibility(visible: Boolean, force: Boolean = false) {
+        if (!force && isPasswordVisible == visible && (transformationMethod == null) == visible) return
         isPasswordVisible = visible
 
         val start = selectionStart
         val end = selectionEnd
 
         if (visible) {
-            transformationMethod = null
             inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD
+            transformationMethod = null
         } else {
-            transformationMethod = PasswordTransformationMethod.getInstance()
+            // Crucial: set inputType FIRST, then transformationMethod SECOND
             inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
+            transformationMethod = PasswordTransformationMethod.getInstance()
         }
+
+        // Retain clean sans-serif font instead of monospace typewriter font
+        typeface = android.graphics.Typeface.DEFAULT
 
         // Re-apply IME options to prevent inputType change from resetting them
         applyImeFlags()
@@ -224,6 +229,7 @@ fun IncognitoPasswordTextField(
                                 }
                                 setCustomImeAction(imeAction)
                                 onImeActionCallback = onImeAction
+                                setPasswordVisibility(passwordVisible, force = true)
                                 setOnFocusChangeListener { _, hasFocus ->
                                     isFocused = hasFocus
                                 }
