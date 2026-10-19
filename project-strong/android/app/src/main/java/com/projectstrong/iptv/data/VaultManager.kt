@@ -9,12 +9,19 @@ import androidx.compose.runtime.setValue
 import com.google.gson.Gson
 import com.google.gson.annotations.SerializedName
 import com.google.gson.reflect.TypeToken
+import com.projectstrong.iptv.network.IPTVClient
+import com.projectstrong.iptv.network.VerificationResult
 import com.projectstrong.iptv.ui.components.ToastManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.sync.withPermit
 import kotlinx.coroutines.withContext
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
@@ -46,6 +53,7 @@ data class VaultItem(
     @SerializedName("password") val pass: String = "",
     @SerializedName("parent_playlist") val parentPlaylist: String = "",
     @SerializedName("date_added") val dateAdded: String = "",
+    @SerializedName("status") val status: String = "🟢 Active",
     @SerializedName("is_synced") val isSynced: Boolean = false
 ) {
     val displayName: String get() = if (name.isNotBlank()) name else (if (originalName.isNotBlank()) originalName else "Stream #$streamId")
@@ -395,6 +403,154 @@ object VaultManager {
         }
     }
 
+    /**
+     * Pulls latest vault from the cloud and merges with local channels.
+     * Preserves unpushed local changes.
+     */
+    suspend fun syncFromCloud(password: String = currentSessionPassword ?: "", token: String = DataStore.githubToken): Result<Int> = withContext(Dispatchers.IO) {
+        val pwd = password.trim()
+        if (pwd.isEmpty()) return@withContext Result.failure(Exception("Password is required to decrypt vault."))
+        val authToken = token.trim()
+        if (authToken.isEmpty()) return@withContext Result.failure(Exception("GitHub Token is required to sync from Cloud."))
+
+        isSyncing = true
+        try {
+            val url = "https://api.github.com/repos/$GITHUB_REPO/contents/$GITHUB_PATH"
+            val req = Request.Builder()
+                .url(url)
+                .header("Accept", "application/vnd.github.v3+json")
+                .header("Authorization", "Bearer $authToken")
+                .header("Cache-Control", "no-cache")
+                .header("User-Agent", "SherlockStreams/1.0")
+                .build()
+
+            val resp = httpClient.newCall(req).execute()
+            if (resp.code != 200) {
+                val err = resp.body?.string() ?: "HTTP ${resp.code}"
+                resp.close()
+                return@withContext Result.failure(Exception("Cloud vault not found ($err)"))
+            }
+
+            val body = resp.body?.string() ?: ""
+            resp.close()
+
+            val jsonObj = org.json.JSONObject(body)
+            val contentB64 = jsonObj.optString("content", "").filter { !it.isWhitespace() }
+            val decodedJson = String(android.util.Base64.decode(contentB64, android.util.Base64.DEFAULT), Charsets.UTF_8)
+
+            val cloudVault = gson.fromJson(decodedJson, EncryptedCloudVault::class.java)
+                ?: return@withContext Result.failure(Exception("Invalid Cloud Vault structure"))
+
+            val decryptedJson = decryptPayload(
+                ciphertextB64 = cloudVault.ciphertext,
+                saltB64 = cloudVault.salt,
+                ivB64 = cloudVault.iv,
+                password = pwd
+            ) ?: return@withContext Result.failure(Exception("Incorrect Password. Decryption failed."))
+
+            val wrapper = gson.fromJson(decryptedJson, VaultPayloadWrapper::class.java)
+            if (wrapper == null || wrapper.magic != "SHERLOCK_VAULT_PAYLOAD") {
+                return@withContext Result.failure(Exception("Decrypted data corrupted or invalid signature."))
+            }
+
+            withContext(Dispatchers.Main) {
+                val remoteItems = wrapper.items.map { it.copy(isSynced = true) }
+                val mergedList = mutableListOf<VaultItem>()
+                val handledKeys = mutableSetOf<String>()
+
+                for (local in items) {
+                    val key = "${local.streamId}_${local.baseUrl.trim().trimEnd('/')}"
+                    handledKeys.add(key)
+                    val matchingRemote = remoteItems.find { "${it.streamId}_${it.baseUrl.trim().trimEnd('/')}" == key }
+                    if (!local.isSynced || matchingRemote == null) {
+                        mergedList.add(local)
+                    } else {
+                        mergedList.add(matchingRemote.copy(status = local.status))
+                    }
+                }
+
+                for (remote in remoteItems) {
+                    val key = "${remote.streamId}_${remote.baseUrl.trim().trimEnd('/')}"
+                    if (!handledKeys.contains(key)) {
+                        mergedList.add(remote)
+                    }
+                }
+
+                items.clear()
+                items.addAll(mergedList)
+                saveLocal()
+            }
+
+            Result.success(items.size)
+        } catch (e: Exception) {
+            Result.failure(e)
+        } finally {
+            isSyncing = false
+        }
+    }
+
+    /**
+     * Verifies the live connection status of all saved channels in the Vault.
+     * Deduplicates requests by server credentials (baseUrl, user, pass).
+     */
+    suspend fun recheckAllStatus(): Int = withContext(Dispatchers.IO) {
+        val currentItems = items.toList()
+        if (currentItems.isEmpty()) return@withContext 0
+
+        val credMap = currentItems.groupBy { "${it.baseUrl.trim()}|${it.user.trim()}|${it.pass.trim()}" }
+        val semaphore = Semaphore(6)
+        val statusResults = java.util.concurrent.ConcurrentHashMap<String, String>()
+
+        coroutineScope {
+            val deferreds = credMap.keys.map { credKey ->
+                async {
+                    semaphore.withPermit {
+                        val parts = credKey.split("|")
+                        if (parts.size >= 3) {
+                            val baseUrl = parts[0]
+                            val user = parts[1]
+                            val pass = parts[2]
+                            try {
+                                val res = IPTVClient.verifyXtream(baseUrl, user, pass)
+                                val statusStr = when (res) {
+                                    is VerificationResult.Success -> {
+                                        if (res.status.equals("Active", ignoreCase = true)) "🟢 Active" else "🟡 ${res.status}"
+                                    }
+                                    is VerificationResult.Failed -> {
+                                        when {
+                                            res.reason.contains("Expired", ignoreCase = true) || res.reason.contains("Inactive", ignoreCase = true) -> "🟡 Expired"
+                                            res.reason.contains("403", ignoreCase = true) || res.reason.contains("Cloud Blocked", ignoreCase = true) -> "🛡️ Blocked"
+                                            res.reason.contains("521", ignoreCase = true) || res.reason.contains("Dead", ignoreCase = true) || res.reason.contains("Offline", ignoreCase = true) -> "🔴 Offline"
+                                            else -> "🔴 ${res.reason.take(18)}"
+                                        }
+                                    }
+                                }
+                                statusResults[credKey] = statusStr
+                            } catch (e: Exception) {
+                                statusResults[credKey] = "🔴 Error"
+                            }
+                        }
+                    }
+                }
+            }
+            deferreds.awaitAll()
+        }
+
+        withContext(Dispatchers.Main) {
+            for (i in 0 until items.size) {
+                val it = items[i]
+                val key = "${it.baseUrl.trim()}|${it.user.trim()}|${it.pass.trim()}"
+                val newStatus = statusResults[key]
+                if (newStatus != null && newStatus != it.status) {
+                    items[i] = it.copy(status = newStatus)
+                }
+            }
+            saveLocal()
+        }
+
+        currentItems.size
+    }
+
     suspend fun commitToCloud(password: String, token: String = DataStore.githubToken): Boolean = withContext(Dispatchers.IO) {
         mutex.withLock {
             val authToken = token.trim()
@@ -462,6 +618,7 @@ object VaultManager {
                         for (i in 0 until items.size) {
                             items[i] = items[i].copy(isSynced = true)
                         }
+                        saveLocal()
                     }
                 }
                 success
