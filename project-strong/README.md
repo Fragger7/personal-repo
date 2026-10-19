@@ -72,6 +72,15 @@ The native Android app (`/android`) runs directly on mobile/residential IP conne
   * Unstructured text ingestion for boxed cards with ASCII/Unicode borders (`|`, `│`, `║`, `├`, `└`, `─`, `━`, `*`, `✨`).
   * Parses single-line combos (`Combo: user:pass`, `Account: user:pass`), discrete fields (`UserName:`, `PassWord:`), connection caps (`MaxCons:`, `Max_Cons:`), expiration timestamps (`Expire:`), and upstream server timezones (`Zone:`).
   * Stateful delimiter logic with safe URL retention across inner card divider lines (`-------------------`).
+* **Zero-Knowledge AES-256 Encrypted Channel Vault (`VaultTab.kt`)**:
+  * Client-side zero-knowledge encrypted storage for private bookmarked channels across any playlist with PBKDF2-HMAC-SHA256 key derivation and AES-256-GCM.
+  * Encrypted GitHub cloud synchronization (`project-strong/vault.json`) with fresh-install password restore.
+  * Configurable auto-lock timeout (1-30 min), tab navigation lock, and manual lock action.
+  * 8-column enterprise data grid with in-row rename, stream check, copy URL, full-screen playback, and bulk multi-select command bar.
+* **Native SwiftKey Incognito Password Engine (`IncognitoPasswordTextField.kt`)**:
+  * Native Android `EditText` bridge bypassing Compose 1.6's missing `IME_FLAG_NO_PERSONALIZED_LEARNING` bitmask.
+  * Deep platform hooking injecting `IME_FLAG_NO_PERSONALIZED_LEARNING` (`0x01000000`) and private IME options into `onCreateInputConnection` to force SwiftKey, Gboard, and Samsung Keyboard into Incognito mode.
+  * Bypasses Android's legacy `setSingleLine()` transformation reset bug using `maxLines = 1` and `setLines(1)` to ensure immediate bullet dot masking (`•••••`) with clean system typography.
 
 ---
 

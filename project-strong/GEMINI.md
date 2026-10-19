@@ -158,6 +158,20 @@ This document contains the complete system architecture, operational decisions, 
 * **Multi-Select Context-Aware Dropdowns**: Filters across `CommittedTab` use nested intersection logic to restrict dropdown choices dynamically based on the current active selections. 
 * **Global State Engine**: Filter state is hoisted into a `CommittedFilterStore` singleton, completely decoupling it from the UI layer so other tabs (`AnalyticsTab`) can dynamically alter the active data grid.
 
+### M. Zero-Knowledge Encrypted Channel Vault (`VaultManager.kt` & `VaultTab.kt`)
+* **Client-Side Cryptography**: Authenticated encryption using PBKDF2WithHmacSHA256 (65,536 iterations, 16-byte random salt) and AES-256-GCM (12-byte IV, 128-bit authentication tag).
+* **Zero-Knowledge Architecture**: The master password is never stored locally or in the cloud. Password correctness is verified through AEAD tag authenticity.
+* **Bidirectional GitHub Cloud Sync**: Encrypted payload (`project-strong/vault.json`) syncs securely with GitHub via REST API. Fresh installs automatically detect and restore existing cloud vaults.
+* **Enterprise 8-Column Vault Grid**: Features true full-screen video playback, in-row channel renaming, dynamic URL copying, live Active/Inactive stream check, and individual cloud push.
+* **Bulk Multi-Select & Floating Action Bar**: Checkbox multi-select with "Select All" and floating bottom command bar (`⚡ Check (N)`, `☁️ Push`, `🗑️ Delete (N)`).
+* **Session Security**: Auto-locks on configurable timeout (1–30 min), when navigating away from the tab, or upon app termination.
+
+### N. Native Incognito Password Field & IME Isolation (`IncognitoPasswordTextField.kt`)
+* **The Compose Platform Limitation**: Jetpack Compose 1.6's `KeyboardOptions` does not pass `EditorInfo.IME_FLAG_NO_PERSONALIZED_LEARNING` to Android's Input Method Framework, preventing keyboards like Microsoft SwiftKey from activating Incognito mode.
+* **Platform Bridge Architecture**: Hosts an `IncognitoEditText` (subclass of Android's `EditText`) inside an `AndroidView`, styled to match Material 3 `OutlinedTextField`.
+* **Deep IME Hooking**: Overrides `onCreateInputConnection(EditorInfo)` to enforce `EditorInfo.IME_FLAG_NO_PERSONALIZED_LEARNING` (`0x01000000`), `EditorInfo.IME_FLAG_NO_EXTRACT_UI`, and vendor private IME strings (`com.touchtype.swiftkey.incognito=true,incognito=true,nm,com.samsung.android.inputmethod.incognito=true`).
+* **The `setSingleLine()` Transformation Reset Shield**: Avoids Android's legacy `setSingleLine(true)` which silently replaces `PasswordTransformationMethod` with plain text `SingleLineTransformationMethod`. Uses `maxLines = 1`, `setLines(1)`, and enforces `PasswordTransformationMethod.getInstance()` to ensure bullet dot masking (`•••••`) from the very first keystroke.
+
 ## 🎨 3. World-Class UI/UX Design Standards
 
 * **Typography Scale**: Pairing geometric display headers (`titleMedium`, `labelLarge`) with refined body fonts (`bodyMedium`, `bodySmall` in `#A0A0B0`). No amateur oversized fonts.
@@ -268,6 +282,9 @@ Remove-Item -Recurse -Force "C:\Development\Apps\Project Strong\personal-repo-te
 | **Committed Filter Store & Nested Multi-Select** | `FilterDropdown.kt`, `CommittedFilterStore`, dynamic derived dropdown subsets | 🟢 **Verified & Live** |
 | **Operational Intelligence Analytics Dashboard** | `AnalyticsTab.kt`, `SegmentedProgressBar`, Canvas pie charts, interactive deep-linking | 🟢 **Verified & Live** |
 | **Boxed Combo & Decorative Delimiter Parser Engine** | `Parser.kt`, `app.py`, Unicode border stripping, `Combo: user:pass`, `MaxCons`, `Zone:`, safe URL retention | 🟢 **Verified & Live** |
+| **Zero-Knowledge AES-256 Encrypted Channel Vault** | `VaultManager.kt`, `VaultTab.kt`, `vault.json`, PBKDF2-HMAC-SHA256, GCM auth tag integrity, auto-lock | 🟢 **Verified & Live** |
+| **Enterprise Vault Data Grid & Bulk Multi-Select** | `VaultTab.kt`, `GridActionIconButton`, in-row cloud push, row selection, bulk check/delete/push floating bar | 🟢 **Verified & Live** |
+| **Native SwiftKey Incognito & IME Privacy Isolation** | `IncognitoPasswordTextField.kt`, `IncognitoEditText`, `IME_FLAG_NO_PERSONALIZED_LEARNING`, `setLines(1)` masking | 🟢 **Verified & Live** |
 
 ---
 
@@ -326,9 +343,11 @@ Remove-Item -Recurse -Force "C:\Development\Apps\Project Strong\personal-repo-te
 *   **Git Patching & State Regression Hazard**:
     *   *The Skeleton*: Using blind Bash/Python diff scripts (e.g. `sed`, `awk`, or outdated `.py` patchers) to inject features into complex UI files (`CommittedTab.kt`).
     *   *The Fix*: Blind patching often executes on outdated contexts, silently overwriting or deleting recent features (like scroll state memory, row highlighting, or layout paddings). Always pull the absolute latest state of the file, verify the AST/code structure visually, and apply edits atomically. If a regression occurs, perform a hard `git reset` to the last known stable commit rather than attempting to duct-tape over the corrupted file.
-*   **The Decorative Border & Box Separator Flush Trap (`Parser.kt`, `app.py`)**:
-    *   *The Skeleton*: In many raw IPTV dumps (e.g., Hit Hunter, Telegram channel pastes), accounts are formatted inside multi-line card boxes bounded by ASCII/Unicode borders and horizontal separators (e.g., `|✨Url:...`, `--------------------`, `|✨Combo: user:pass`, `|✨UserName:...`). Naively treating every dashed separator (`---`, `===`) as an unconditional block reset wipes `currUrl` to null before the combo or user/pass lines are reached. Furthermore, trailing decorative borders (`|`) or emojis (`✨`, `●`) stick to extracted values, creating corrupted URLs (e.g. `http://host:port/|`) or invalid usernames.
-    *   *The Fix*: Pre-strip decorative ASCII/Unicode box borders and glyphs (`|`, `│`, `║`, `├`, `└`, `─`, `━`, `*`, `✨`) from both ends of every line before pattern matching. When encountering internal box divider lines (`---` or `===`), execute a partial flush that preserves `currUrl` context (`flushCurrentBlock(force = false)` / `flush_block(retain_url=True)`), ensuring subsequent combo or credential rows remain properly bound to their host URL. Only fully clear `currUrl` when a valid account is committed or a distinct new server header arrives.
+*   **The Jetpack Compose IME & `setSingleLine()` Password Masking Trap (`IncognitoPasswordTextField.kt`)**:
+    *   *The Skeleton*: Two separate, severe platform traps occur when implementing secure password entry in Compose:
+        1. **Compose IME Flag Stripping**: Jetpack Compose 1.6's `KeyboardOptions` does NOT pass `EditorInfo.IME_FLAG_NO_PERSONALIZED_LEARNING` (`0x01000000`) to the underlying input connection. Virtual keyboards like Microsoft SwiftKey and Gboard strictly inspect `(editorInfo.imeOptions & EditorInfo.IME_FLAG_NO_PERSONALIZED_LEARNING) != 0` to trigger Incognito/Masked mode, causing standard Compose `OutlinedTextField` to leak sensitive passwords into typing dictionaries.
+        2. **The `setSingleLine()` Transformation Reset**: When bridging an Android `EditText` via `AndroidView`, calling `setSingleLine(true)` (or property `isSingleLine = true`) executes Android's internal `TextView.setTransformationMethod(SingleLineTransformationMethod.getInstance())`. This silently deletes and replaces any active `PasswordTransformationMethod`, displaying entered password characters in plain, unmasked text until the visibility toggle is clicked twice!
+    *   *The Fix*: Wrap a native `EditText` subclass in an `AndroidView`. Override `onCreateInputConnection(EditorInfo)` to explicitly inject `outAttrs.imeOptions = outAttrs.imeOptions or EditorInfo.IME_FLAG_NO_PERSONALIZED_LEARNING or EditorInfo.IME_FLAG_NO_EXTRACT_UI` and vendor private strings (`com.touchtype.swiftkey.incognito=true,incognito=true,nm`). In the `EditText` setup, **NEVER** call `isSingleLine = true`; instead use `maxLines = 1` and `setLines(1)`. Always set `inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD` *before* `transformationMethod = PasswordTransformationMethod.getInstance()`, and set `typeface = Typeface.DEFAULT` to avoid typewriter monospace distortion.
 
 ---
 
@@ -354,3 +373,16 @@ Remove-Item -Recurse -Force "C:\Development\Apps\Project Strong\personal-repo-te
 ### C. UI & Quality of Life Tweaks
 * **Keyboard Hiding Fix**: The `CommittedDetailScreen` uses `.imePadding()`, but Android's focus engine doesn't automatically scroll it. Requires attaching a `BringIntoViewRequester` to the text fields.
 * **Super-Playlist Export**: Consolidate all Active connections into a single `sherlock_super.m3u` file exported to local device storage.
+
+### D. Zero-Knowledge Encrypted Channel Vault (`VaultManager.kt` & `VaultTab.kt`)
+* **Core Mission**: Allow users to bookmark and save specific channels across any connection/playlist into an encrypted, password-protected Vault tab.
+* **Security & Cryptography**:
+  * **Zero-Knowledge AES-256-GCM**: Client-side authenticated encryption derived from user's alphanumeric password using PBKDF2WithHmacSHA256 (65,536 iterations).
+  * **Built-in Integrity Check**: AEAD tag mismatch automatically validates passwords without storing plaintext passwords anywhere.
+  * **Cloud Sync**: 2-way sync to GitHub (`project-strong/vault.json`). Anyone reading GitHub only sees opaque ciphertext.
+  * **Fresh Install Restore**: Upon reinstalling, the app detects existing cloud vault and prompts for password to decrypt and restore channels locally.
+* **Architecture**:
+  * Positioned at tab index 5 (immediately after Committed tab).
+  * Auto-locks on configurable timeout (1-30 min), when navigating away from tab, and on app pause/stop.
+  * Fast-action "Save to Vault" button in `FullScreenCatalogExplorer` with optional channel renaming.
+  * 8-column enterprise data grid in `VaultTab` with Play (true-fullscreen), Rename, Copy URL, and Delete.
