@@ -1,5 +1,37 @@
 [
   {
+    "id": "ebay_287657178545",
+    "source": "ebay",
+    "title": "New ListingDell Precision 5570 15.6\" i7-12700H 2.3GHz 32GB 512GB NVMe SSD RTX A1000 Win11HOpens in a new window or tab",
+    "price": 550.0,
+    "url": "https://www.ebay.com/itm/287657178545",
+    "specs": {
+      "cpu": "I7-12700H",
+      "ram_gb": 32,
+      "ssd_gb": 512,
+      "gpu": "NVIDIA RTX A1000",
+      "screen": "15.6\" - 16\" Workstation Display",
+      "condition": "Used / Refurbished"
+    },
+    "fair_market_value": 780.0,
+    "estimated_profit": 230.0,
+    "arbitrage_margin_pct": 41.8,
+    "deal_score": 8.9,
+    "summary": "High-conviction value buy at $550 offering +$185 (+24% ROI) profit spread below estimated FMV ($780). Configured with I7-12700H, 32GB RAM, 512GB SSD, and NVIDIA RTX A1000. Excellent daily driver for full-stack engineering, multi-container development, and data analysis.",
+    "actionable_recommendation": "⚡ STRONG VALUE BUY",
+    "confidence_score": 0.95,
+    "seller": "eBay Seller",
+    "location": "US",
+    "created_utc": "2026-10-19T00:15:40.230807+00:00",
+    "evaluated_at": "2026-10-19T00:16:02.629991+00:00",
+    "alerted": true,
+    "is_high_yield": true,
+    "raw_payload": null,
+    "is_auction": false,
+    "bid_count": null,
+    "time_left": null
+  },
+  {
     "id": "ebay_298707552530",
     "source": "ebay",
     "title": "HP Zbook Firefly 15 G8 15.6 in i7-1185G7 32GB RAM 512GB SSD W11 ProOpens in a new window or tab",
