@@ -62,6 +62,7 @@ class MainActivity : ComponentActivity() {
         ToastManager.init(applicationContext)
         CommittedManager.init(applicationContext)
         com.projectstrong.iptv.data.ArchiveManager.init(applicationContext)
+        com.projectstrong.iptv.data.VaultManager.init(applicationContext)
         com.projectstrong.iptv.data.SettingsManager.init(applicationContext)
         com.projectstrong.iptv.data.ProviderIntelligenceManager.init(applicationContext)
 
@@ -163,6 +164,11 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    override fun onStop() {
+        super.onStop()
+        com.projectstrong.iptv.data.VaultManager.lock()
+    }
+
     override fun onDestroy() {
         super.onDestroy()
         networkCallback?.let {
@@ -190,7 +196,11 @@ fun MainDashboard() {
     }
 
     val context = androidx.compose.ui.platform.LocalContext.current
+    var previousTab by remember { mutableIntStateOf(0) }
     var selectedTab by remember { mutableIntStateOf(0) }
+    var showVaultUnlockDialog by remember { mutableStateOf(false) }
+    var isCheckingCloudVault by remember { mutableStateOf(false) }
+    var hasCloudVault by remember { mutableStateOf(false) }
     
     androidx.compose.runtime.LaunchedEffect(selectedTab) {
         if (selectedTab == 4) { // CommittedTab
@@ -198,7 +208,7 @@ fun MainDashboard() {
             if (token.isNotEmpty() && com.projectstrong.iptv.data.CommittedManager.hasLocalChanges()) {
                 launch(kotlinx.coroutines.Dispatchers.IO) { com.projectstrong.iptv.data.CommittedManager.pushToCloud(token) }
             }
-        } else if (selectedTab == 5) { // ArchiveTab
+        } else if (selectedTab == 6) { // ArchiveTab
             val token = com.projectstrong.iptv.data.DataStore.githubToken
             if (token.isNotEmpty() && com.projectstrong.iptv.data.ArchiveManager.hasLocalChanges()) {
                 launch(kotlinx.coroutines.Dispatchers.IO) { com.projectstrong.iptv.data.ArchiveManager.pushToCloud(token) }
@@ -215,12 +225,14 @@ fun MainDashboard() {
 
     val committedCount = CommittedManager.records.size
     val archivedCount = com.projectstrong.iptv.data.ArchiveManager.records.size
+    val vaultCount = com.projectstrong.iptv.data.VaultManager.items.size
     val tabItems = listOf(
         TabItem("Base64", 0, Icons.Default.Code),
         TabItem("Scanner", 0, Icons.Default.Sensors),
         TabItem("Xtream", xtreamNodesCount, Icons.Default.LiveTv),
         TabItem("Stalker", stalkerNodesCount, Icons.Default.Dns),
         TabItem("Committed", committedCount, Icons.Default.FolderSpecial),
+        TabItem("Vault", vaultCount, Icons.Default.Lock),
         TabItem("Archive", archivedCount, Icons.Default.Archive),
         TabItem("Analytics", 0, Icons.Default.Analytics)
     )
@@ -249,12 +261,211 @@ fun MainDashboard() {
         SettingsDialog(onDismiss = { showSettingsDialog = false })
     }
 
+    if (showVaultUnlockDialog) {
+        val hasLocalPwd = com.projectstrong.iptv.data.VaultManager.hasConfiguredPassword()
+        var enteredPwd by remember { mutableStateOf("") }
+        var confirmPwd by remember { mutableStateOf("") }
+        var unlockError by remember { mutableStateOf<String?>(null) }
+        var isRestoring by remember { mutableStateOf(false) }
+
+        LaunchedEffect(Unit) {
+            if (!hasLocalPwd) {
+                isCheckingCloudVault = true
+                hasCloudVault = com.projectstrong.iptv.data.VaultManager.checkCloudVaultExists()
+                isCheckingCloudVault = false
+            }
+        }
+
+        AlertDialog(
+            onDismissRequest = {
+                showVaultUnlockDialog = false
+            },
+            containerColor = AppSurface,
+            title = {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Icon(Icons.Default.Security, contentDescription = null, tint = AppPrimary)
+                    Text(
+                        text = if (hasLocalPwd) "Unlock Channel Vault" else if (hasCloudVault) "Restore Cloud Vault" else "Create Vault Password",
+                        color = AppTextPrimary,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    if (isCheckingCloudVault) {
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            CircularProgressIndicator(modifier = Modifier.size(16.dp), color = AppPrimary, strokeWidth = 2.dp)
+                            Text("Checking for cloud vault on GitHub...", color = AppTextSecondary, style = MaterialTheme.typography.bodySmall)
+                        }
+                    } else if (hasLocalPwd) {
+                        Text(
+                            "Enter your alphanumeric Vault password to decrypt and view your private channel bookmarks.",
+                            color = AppTextSecondary,
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                        OutlinedTextField(
+                            value = enteredPwd,
+                            onValueChange = { enteredPwd = it; unlockError = null },
+                            label = { Text("Vault Password") },
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth(),
+                            visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation(),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = AppPrimary,
+                                unfocusedBorderColor = AppSurfaceBorder,
+                                focusedTextColor = AppTextPrimary,
+                                unfocusedTextColor = AppTextPrimary,
+                                focusedContainerColor = AppSurfaceVariant,
+                                unfocusedContainerColor = AppSurfaceVariant
+                            )
+                        )
+                    } else if (hasCloudVault) {
+                        Text(
+                            "An encrypted Cloud Vault was detected in your GitHub repository! Enter your password to decrypt and restore all your channels.",
+                            color = AppTextSecondary,
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                        OutlinedTextField(
+                            value = enteredPwd,
+                            onValueChange = { enteredPwd = it; unlockError = null },
+                            label = { Text("Vault Password") },
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth(),
+                            visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation(),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = AppPrimary,
+                                unfocusedBorderColor = AppSurfaceBorder,
+                                focusedTextColor = AppTextPrimary,
+                                unfocusedTextColor = AppTextPrimary,
+                                focusedContainerColor = AppSurfaceVariant,
+                                unfocusedContainerColor = AppSurfaceVariant
+                            )
+                        )
+                    } else {
+                        Text(
+                            "Set an alphanumeric master password for your Vault. It will be used to protect and encrypt your bookmarked channels.",
+                            color = AppTextSecondary,
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                        OutlinedTextField(
+                            value = enteredPwd,
+                            onValueChange = { enteredPwd = it; unlockError = null },
+                            label = { Text("New Password") },
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth(),
+                            visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation(),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = AppPrimary,
+                                unfocusedBorderColor = AppSurfaceBorder,
+                                focusedTextColor = AppTextPrimary,
+                                unfocusedTextColor = AppTextPrimary,
+                                focusedContainerColor = AppSurfaceVariant,
+                                unfocusedContainerColor = AppSurfaceVariant
+                            )
+                        )
+                        OutlinedTextField(
+                            value = confirmPwd,
+                            onValueChange = { confirmPwd = it; unlockError = null },
+                            label = { Text("Confirm Password") },
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth(),
+                            visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation(),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = AppPrimary,
+                                unfocusedBorderColor = AppSurfaceBorder,
+                                focusedTextColor = AppTextPrimary,
+                                unfocusedTextColor = AppTextPrimary,
+                                focusedContainerColor = AppSurfaceVariant,
+                                unfocusedContainerColor = AppSurfaceVariant
+                            )
+                        )
+                    }
+
+                    if (unlockError != null) {
+                        Text(unlockError!!, color = AppError, style = MaterialTheme.typography.bodySmall)
+                    }
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        val trimmed = enteredPwd.trim()
+                        if (trimmed.isEmpty()) {
+                            unlockError = "Password cannot be empty."
+                            return@Button
+                        }
+
+                        if (hasLocalPwd) {
+                            if (com.projectstrong.iptv.data.VaultManager.unlock(trimmed)) {
+                                showVaultUnlockDialog = false
+                                previousTab = selectedTab
+                                selectedTab = 5
+                            } else {
+                                unlockError = "Incorrect password. Please try again."
+                            }
+                        } else if (hasCloudVault) {
+                            isRestoring = true
+                            DataStore.scanScope.launch {
+                                val res = com.projectstrong.iptv.data.VaultManager.restoreFromCloud(trimmed)
+                                isRestoring = false
+                                if (res.isSuccess) {
+                                    showVaultUnlockDialog = false
+                                    previousTab = selectedTab
+                                    selectedTab = 5
+                                    ToastManager.success("Restored ${res.getOrNull()} channels from Cloud Vault!")
+                                } else {
+                                    unlockError = res.exceptionOrNull()?.message ?: "Decryption failed."
+                                }
+                            }
+                        } else {
+                            val trimmedConfirm = confirmPwd.trim()
+                            if (trimmed.length < 3) {
+                                unlockError = "Password must be at least 3 characters."
+                                return@Button
+                            }
+                            if (trimmed != trimmedConfirm) {
+                                unlockError = "Passwords do not match."
+                                return@Button
+                            }
+                            com.projectstrong.iptv.data.VaultManager.setPassword(trimmed)
+                            showVaultUnlockDialog = false
+                            previousTab = selectedTab
+                            selectedTab = 5
+                            ToastManager.success("Vault password initialized securely!")
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = AppPrimary),
+                    enabled = !isRestoring && !isCheckingCloudVault
+                ) {
+                    if (isRestoring) {
+                        CircularProgressIndicator(modifier = Modifier.size(16.dp), color = Color.White, strokeWidth = 2.dp)
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text("Decrypting...")
+                    } else {
+                        Text(if (hasLocalPwd) "Unlock" else if (hasCloudVault) "Restore" else "Set & Open")
+                    }
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showVaultUnlockDialog = false }) {
+                    Text("Cancel", color = AppTextSecondary)
+                }
+            }
+        )
+    }
+
     // Intercept back navigation: close open root dialogs, or transition back to previous tab in pipeline
-    BackHandler(enabled = showConnectionDialog || showSettingsDialog || selectedTab > 0) {
+    BackHandler(enabled = showConnectionDialog || showSettingsDialog || showVaultUnlockDialog || selectedTab > 0) {
         if (showConnectionDialog) {
             showConnectionDialog = false
         } else if (showSettingsDialog) {
             showSettingsDialog = false
+        } else if (showVaultUnlockDialog) {
+            showVaultUnlockDialog = false
+        } else if (selectedTab == 5) {
+            com.projectstrong.iptv.data.VaultManager.lock()
+            selectedTab = previousTab
         } else if (selectedTab > 0) {
             selectedTab -= 1
         }
@@ -407,7 +618,22 @@ fun MainDashboard() {
                     val isSelected = selectedTab == index
                     Tab(
                         selected = isSelected,
-                        onClick = { selectedTab = index },
+                        onClick = {
+                            if (index == 5) {
+                                if (com.projectstrong.iptv.data.VaultManager.isUnlocked) {
+                                    previousTab = selectedTab
+                                    selectedTab = 5
+                                } else {
+                                    showVaultUnlockDialog = true
+                                }
+                            } else {
+                                if (selectedTab == 5) {
+                                    com.projectstrong.iptv.data.VaultManager.lock()
+                                }
+                                previousTab = selectedTab
+                                selectedTab = index
+                            }
+                        },
                         modifier = Modifier.padding(horizontal = 2.dp, vertical = 4.dp)
                     ) {
                         // High-contrast, tactile pill for unselected and selected tabs
@@ -479,8 +705,9 @@ fun MainDashboard() {
                     2 -> com.projectstrong.iptv.ui.tabs.XtreamTab(onNextTab = { selectedTab = 3 })
                     3 -> com.projectstrong.iptv.ui.tabs.StalkerTab(onNextTab = { selectedTab = 4 })
                     4 -> com.projectstrong.iptv.ui.tabs.CommittedTab()
-                    5 -> com.projectstrong.iptv.ui.tabs.ArchiveTab()
-                    6 -> com.projectstrong.iptv.ui.tabs.AnalyticsTab(onNavigateToCommitted = { selectedTab = 4 })
+                    5 -> com.projectstrong.iptv.ui.tabs.VaultTab(onLock = { selectedTab = previousTab })
+                    6 -> com.projectstrong.iptv.ui.tabs.ArchiveTab()
+                    7 -> com.projectstrong.iptv.ui.tabs.AnalyticsTab(onNavigateToCommitted = { selectedTab = 4 })
                 }
             }
         }

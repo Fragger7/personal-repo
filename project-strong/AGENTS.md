@@ -354,3 +354,16 @@ Remove-Item -Recurse -Force "C:\Development\Apps\Project Strong\personal-repo-te
 ### C. UI & Quality of Life Tweaks
 * **Keyboard Hiding Fix**: The `CommittedDetailScreen` uses `.imePadding()`, but Android's focus engine doesn't automatically scroll it. Requires attaching a `BringIntoViewRequester` to the text fields.
 * **Super-Playlist Export**: Consolidate all Active connections into a single `sherlock_super.m3u` file exported to local device storage.
+
+### D. Zero-Knowledge Encrypted Channel Vault (`VaultManager.kt` & `VaultTab.kt`)
+* **Core Mission**: Allow users to bookmark and save specific channels across any connection/playlist into an encrypted, password-protected Vault tab.
+* **Security & Cryptography**:
+  * **Zero-Knowledge AES-256-GCM**: Client-side authenticated encryption derived from user's alphanumeric password using PBKDF2WithHmacSHA256 (65,536 iterations).
+  * **Built-in Integrity Check**: AEAD tag mismatch automatically validates passwords without storing plaintext passwords anywhere.
+  * **Cloud Sync**: 2-way sync to GitHub (`project-strong/vault.json`). Anyone reading GitHub only sees opaque ciphertext.
+  * **Fresh Install Restore**: Upon reinstalling, the app detects existing cloud vault and prompts for password to decrypt and restore channels locally.
+* **Architecture**:
+  * Positioned at tab index 5 (immediately after Committed tab).
+  * Auto-locks on configurable timeout (1-30 min), when navigating away from tab, and on app pause/stop.
+  * Fast-action "Save to Vault" button in `FullScreenCatalogExplorer` with optional channel renaming.
+  * 8-column enterprise data grid in `VaultTab` with Play (true-fullscreen), Rename, Copy URL, and Delete.

@@ -32,6 +32,7 @@ object SettingsManager {
     private const val KEY_EGRESS_SAMPLE_COUNT = "egress_sample_count"
     private const val KEY_STREAM_FORMAT = "stream_output_format"
     private const val KEY_TLS_EVASION = "tls_evasion_enabled"
+    private const val KEY_VAULT_TIMEOUT = "vault_timeout_minutes"
 
     private lateinit var prefs: SharedPreferences
 
@@ -47,6 +48,7 @@ object SettingsManager {
     var egressSampleCount by mutableIntStateOf(2)
     var streamOutputFormat by mutableStateOf("ts")
     var tlsEvasionEnabled by mutableStateOf(false)
+    var vaultTimeoutMinutes by mutableIntStateOf(5)
 
     fun init(context: Context) {
         prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -61,12 +63,20 @@ object SettingsManager {
         egressSampleCount = prefs.getInt(KEY_EGRESS_SAMPLE_COUNT, 2)
         streamOutputFormat = prefs.getString(KEY_STREAM_FORMAT, "ts") ?: "ts"
         tlsEvasionEnabled = prefs.getBoolean(KEY_TLS_EVASION, false)
+        vaultTimeoutMinutes = prefs.getInt(KEY_VAULT_TIMEOUT, 5)
         
         val savedThemeName = prefs.getString(KEY_THEME_MODE, AppThemeMode.SHERLOCK_AMBER.name)
         currentTheme = try {
             AppThemeMode.valueOf(savedThemeName ?: AppThemeMode.SHERLOCK_AMBER.name)
         } catch (e: Exception) {
             AppThemeMode.SHERLOCK_AMBER
+        }
+    }
+
+    fun saveVaultTimeout(minutes: Int) {
+        vaultTimeoutMinutes = minutes
+        if (::prefs.isInitialized) {
+            prefs.edit().putInt(KEY_VAULT_TIMEOUT, minutes).apply()
         }
     }
 

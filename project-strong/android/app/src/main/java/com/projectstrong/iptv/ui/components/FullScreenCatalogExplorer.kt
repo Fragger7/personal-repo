@@ -28,6 +28,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.projectstrong.iptv.network.IPTVClient
+import com.projectstrong.iptv.data.VaultManager
 import com.projectstrong.iptv.ui.theme.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -63,6 +64,8 @@ fun FullScreenCatalogExplorer(
     var showCopiedToast by remember { mutableStateOf(false) }
     var toastText by remember { mutableStateOf("") }
     var previewChannel by remember { mutableStateOf<ChannelItem?>(null) }
+    var channelToVault by remember { mutableStateOf<ChannelItem?>(null) }
+    var vaultCustomName by remember { mutableStateOf("") }
 
     // Fetch catalog data concurrently
     LaunchedEffect(baseUrl, user, pass) {
@@ -608,6 +611,23 @@ fun FullScreenCatalogExplorer(
                                                                 modifier = Modifier.size(16.dp)
                                                             )
                                                         }
+
+                                                        // Save to Vault
+                                                        val isVaulted = VaultManager.isChannelSaved(channel.streamId, baseUrl)
+                                                        IconButton(
+                                                            onClick = {
+                                                                vaultCustomName = channel.name
+                                                                channelToVault = channel
+                                                            },
+                                                            modifier = Modifier.size(34.dp)
+                                                        ) {
+                                                            Icon(
+                                                                if (isVaulted) Icons.Default.Security else Icons.Default.Lock,
+                                                                contentDescription = if (isVaulted) "In Vault" else "Save to Vault",
+                                                                tint = if (isVaulted) AppPrimary else AppTextSecondary,
+                                                                modifier = Modifier.size(16.dp)
+                                                            )
+                                                        }
                                                     }
                                                 }
                                             }
@@ -675,6 +695,94 @@ fun FullScreenCatalogExplorer(
             streamId = channel.streamId,
             categoryName = catName,
             onDismiss = { previewChannel = null }
+        )
+    }
+
+    // Save to Vault Confirmation & Custom Naming Modal
+    channelToVault?.let { channel ->
+        val catName = categoryNameMap[channel.categoryId] ?: "Live Channel"
+        AlertDialog(
+            onDismissRequest = { channelToVault = null },
+            containerColor = AppSurface,
+            title = {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Icon(Icons.Default.Security, contentDescription = null, tint = AppPrimary)
+                    Text("Save to Vault", color = AppTextPrimary, fontWeight = FontWeight.Bold)
+                }
+            },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Text(
+                        "Bookmark this channel into your private, encrypted Vault. You can assign an optional custom name.",
+                        color = AppTextSecondary,
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                    OutlinedTextField(
+                        value = vaultCustomName,
+                        onValueChange = { vaultCustomName = it },
+                        label = { Text("Channel Name (Optional)") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = AppPrimary,
+                            unfocusedBorderColor = AppSurfaceBorder,
+                            focusedTextColor = AppTextPrimary,
+                            unfocusedTextColor = AppTextPrimary,
+                            focusedContainerColor = AppSurfaceVariant,
+                            unfocusedContainerColor = AppSurfaceVariant
+                        )
+                    )
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(4.dp))
+                                .background(AppPrimary.copy(alpha = 0.15f))
+                                .padding(horizontal = 6.dp, vertical = 2.dp)
+                        ) {
+                            Text("📁 $catName", color = AppPrimary, style = MaterialTheme.typography.labelSmall)
+                        }
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(4.dp))
+                                .background(AppSurfaceVariant)
+                                .padding(horizontal = 6.dp, vertical = 2.dp)
+                        ) {
+                            Text("ID: ${channel.streamId}", color = AppTextMuted, style = MaterialTheme.typography.labelSmall)
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        VaultManager.addChannel(
+                            streamId = channel.streamId,
+                            name = vaultCustomName.trim(),
+                            originalName = channel.name,
+                            categoryId = channel.categoryId,
+                            categoryName = catName,
+                            iconUrl = channel.iconUrl,
+                            directUrl = channel.directUrl,
+                            baseUrl = baseUrl,
+                            user = user,
+                            pass = pass,
+                            parentPlaylist = title.ifBlank { baseUrl }
+                        )
+                        channelToVault = null
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = AppPrimary)
+                ) {
+                    Text("Save to Vault")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { channelToVault = null }) {
+                    Text("Cancel", color = AppTextSecondary)
+                }
+            }
         )
     }
 }

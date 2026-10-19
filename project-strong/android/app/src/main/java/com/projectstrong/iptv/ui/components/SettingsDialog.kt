@@ -44,6 +44,8 @@ fun SettingsDialog(
     var tokenInput by remember { mutableStateOf(DataStore.githubToken) }
     var showPurgeConfirmDialog by remember { mutableStateOf(false) }
     var isVerifyingToken by remember { mutableStateOf(false) }
+    var showVaultPasswordDialog by remember { mutableStateOf(false) }
+    var showVaultResetDialog by remember { mutableStateOf(false) }
 
     // Dialog for GitHub Personal Access Token
     if (showTokenDialog) {
@@ -133,6 +135,162 @@ fun SettingsDialog(
             },
             dismissButton = {
                 TextButton(onClick = { showPurgeConfirmDialog = false }) {
+                    Text("Cancel", color = AppTextSecondary)
+                }
+            }
+        )
+    }
+
+    // Dialog for Set/Change Vault Password
+    if (showVaultPasswordDialog) {
+        val hasExisting = VaultManager.hasConfiguredPassword()
+        var currentPwd by remember { mutableStateOf("") }
+        var newPwd by remember { mutableStateOf("") }
+        var confirmPwd by remember { mutableStateOf("") }
+        var errorMsg by remember { mutableStateOf<String?>(null) }
+
+        AlertDialog(
+            onDismissRequest = { showVaultPasswordDialog = false },
+            containerColor = AppSurface,
+            title = {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Icon(Icons.Default.Security, contentDescription = null, tint = AppPrimary)
+                    Text(if (hasExisting) "Change Vault Password" else "Set Vault Password", color = AppTextPrimary, fontWeight = FontWeight.Bold)
+                }
+            },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Text(
+                        "Your Vault password encrypts your saved channels with zero-knowledge AES-256-GCM before syncing to GitHub.",
+                        color = AppTextSecondary,
+                        style = MaterialTheme.typography.bodySmall
+                    )
+
+                    if (hasExisting) {
+                        OutlinedTextField(
+                            value = currentPwd,
+                            onValueChange = { currentPwd = it; errorMsg = null },
+                            label = { Text("Current Password") },
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth(),
+                            visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation(),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = AppPrimary,
+                                unfocusedBorderColor = AppSurfaceBorder,
+                                focusedTextColor = AppTextPrimary,
+                                unfocusedTextColor = AppTextPrimary,
+                                focusedContainerColor = AppSurfaceVariant,
+                                unfocusedContainerColor = AppSurfaceVariant
+                            )
+                        )
+                    }
+
+                    OutlinedTextField(
+                        value = newPwd,
+                        onValueChange = { newPwd = it; errorMsg = null },
+                        label = { Text("New Password") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth(),
+                        visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation(),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = AppPrimary,
+                            unfocusedBorderColor = AppSurfaceBorder,
+                            focusedTextColor = AppTextPrimary,
+                            unfocusedTextColor = AppTextPrimary,
+                            focusedContainerColor = AppSurfaceVariant,
+                            unfocusedContainerColor = AppSurfaceVariant
+                        )
+                    )
+
+                    OutlinedTextField(
+                        value = confirmPwd,
+                        onValueChange = { confirmPwd = it; errorMsg = null },
+                        label = { Text("Confirm New Password") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth(),
+                        visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation(),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = AppPrimary,
+                            unfocusedBorderColor = AppSurfaceBorder,
+                            focusedTextColor = AppTextPrimary,
+                            unfocusedTextColor = AppTextPrimary,
+                            focusedContainerColor = AppSurfaceVariant,
+                            unfocusedContainerColor = AppSurfaceVariant
+                        )
+                    )
+
+                    if (errorMsg != null) {
+                        Text(errorMsg!!, color = AppError, style = MaterialTheme.typography.bodySmall)
+                    }
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        val trimmedNew = newPwd.trim()
+                        val trimmedConfirm = confirmPwd.trim()
+
+                        if (hasExisting && !VaultManager.unlock(currentPwd.trim())) {
+                            errorMsg = "Current password is incorrect."
+                            return@Button
+                        }
+                        if (trimmedNew.length < 3) {
+                            errorMsg = "Password must be at least 3 characters."
+                            return@Button
+                        }
+                        if (trimmedNew != trimmedConfirm) {
+                            errorMsg = "Passwords do not match."
+                            return@Button
+                        }
+
+                        VaultManager.setPassword(trimmedNew)
+                        showVaultPasswordDialog = false
+                        ToastManager.success("Vault password updated securely!")
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = AppPrimary)
+                ) {
+                    Text("Save Password")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showVaultPasswordDialog = false }) {
+                    Text("Cancel", color = AppTextSecondary)
+                }
+            }
+        )
+    }
+
+    // Dialog for Confirmation to Reset/Destroy Vault
+    if (showVaultResetDialog) {
+        AlertDialog(
+            onDismissRequest = { showVaultResetDialog = false },
+            containerColor = AppSurface,
+            title = {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Icon(Icons.Default.Warning, contentDescription = null, tint = AppError)
+                    Text("Destroy Vault?", color = AppTextPrimary, fontWeight = FontWeight.Bold)
+                }
+            },
+            text = {
+                Text(
+                    "This will permanently wipe all local vaulted channels, remove your password, and delete the encrypted vault from your GitHub cloud repository. This action cannot be undone.",
+                    color = AppTextSecondary,
+                    style = MaterialTheme.typography.bodySmall
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        VaultManager.resetVault()
+                        showVaultResetDialog = false
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = AppError)
+                ) {
+                    Text("Yes, Destroy Vault")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showVaultResetDialog = false }) {
                     Text("Cancel", color = AppTextSecondary)
                 }
             }
@@ -937,6 +1095,118 @@ fun SettingsDialog(
                             }
                         }
                     }
+
+                    // Section: Vault Security & Auto-Lock
+                    SettingsDialogSectionHeader(title = "Vault Security & Auto-Lock", icon = Icons.Default.Security)
+                    Surface(
+                        shape = RoundedCornerShape(16.dp),
+                        color = AppSurface,
+                        border = BorderStroke(1.dp, AppSurfaceBorder),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(14.dp)
+                        ) {
+                            SettingInfoCard(
+                                title = "Zero-Knowledge Encrypted Vault",
+                                description = "Your channel bookmarks are protected by client-side AES-256-GCM encryption derived from your alphanumeric password. GitHub only stores an opaque encrypted payload."
+                            )
+
+                            // Password Action Row
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = if (VaultManager.hasConfiguredPassword()) "Vault Password Configured" else "No Password Configured",
+                                        color = AppTextPrimary,
+                                        fontWeight = FontWeight.SemiBold,
+                                        style = MaterialTheme.typography.bodyMedium
+                                    )
+                                    Text(
+                                        text = if (VaultManager.hasConfiguredPassword()) "Alphanumeric key active. Tap to update." else "Set a master password to encrypt your vault.",
+                                        color = AppTextSecondary,
+                                        style = MaterialTheme.typography.bodySmall
+                                    )
+                                }
+                                Button(
+                                    onClick = { showVaultPasswordDialog = true },
+                                    colors = ButtonDefaults.buttonColors(containerColor = AppPrimary),
+                                    shape = RoundedCornerShape(10.dp),
+                                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
+                                ) {
+                                    Icon(Icons.Default.Password, contentDescription = null, modifier = Modifier.size(16.dp))
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text(if (VaultManager.hasConfiguredPassword()) "Change" else "Set Key", fontWeight = FontWeight.Bold)
+                                }
+                            }
+
+                            Divider(color = AppSurfaceBorder.copy(alpha = 0.5f))
+
+                            // Auto-Lock Timeout
+                            var vaultTimeout by remember { mutableFloatStateOf(SettingsManager.vaultTimeoutMinutes.toFloat()) }
+                            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text("Auto-Lock Timeout", color = AppTextPrimary, fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.bodyMedium)
+                                        Text("Lock vault after inactivity or when leaving the tab.", color = AppTextSecondary, style = MaterialTheme.typography.bodySmall)
+                                    }
+                                    Text(
+                                        text = if (vaultTimeout.toInt() == 0) "Immediate" else "${vaultTimeout.toInt()} min",
+                                        color = AppPrimary,
+                                        fontWeight = FontWeight.Bold,
+                                        style = MaterialTheme.typography.bodyMedium
+                                    )
+                                }
+                                Slider(
+                                    value = vaultTimeout,
+                                    onValueChange = {
+                                        vaultTimeout = it
+                                        SettingsManager.saveVaultTimeout(it.toInt())
+                                    },
+                                    valueRange = 1f..30f,
+                                    steps = 28,
+                                    colors = SliderDefaults.colors(
+                                        thumbColor = AppPrimary,
+                                        activeTrackColor = AppPrimary,
+                                        inactiveTrackColor = AppSurfaceVariant
+                                    )
+                                )
+                            }
+
+                            Divider(color = AppSurfaceBorder.copy(alpha = 0.5f))
+
+                            // Reset/Destroy Vault Row
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text("Destroy & Wipe Vault", color = AppTextPrimary, fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.bodyMedium)
+                                    Text("Permanently erase vaulted channels and reset password.", color = AppTextSecondary, style = MaterialTheme.typography.bodySmall)
+                                }
+                                OutlinedButton(
+                                    onClick = { showVaultResetDialog = true },
+                                    border = BorderStroke(1.dp, AppError.copy(alpha = 0.5f)),
+                                    colors = ButtonDefaults.outlinedButtonColors(contentColor = AppError),
+                                    contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp)
+                                ) {
+                                    Icon(Icons.Default.DeleteForever, contentDescription = null, modifier = Modifier.size(16.dp))
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text("Destroy")
+                                }
+                            }
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(16.dp))
 
                     // Section 4: Data Management & Maintenance
                     SettingsDialogSectionHeader(title = "Data Management & Cache", icon = Icons.Default.FolderDelete)
