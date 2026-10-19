@@ -24,6 +24,11 @@ import androidx.compose.ui.window.DialogProperties
 import com.projectstrong.iptv.data.*
 import com.projectstrong.iptv.network.NetworkMonitor
 import com.projectstrong.iptv.ui.theme.*
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.PlatformImeOptions
 import kotlinx.coroutines.launch
 import java.util.Locale
 
@@ -166,6 +171,16 @@ fun SettingsDialog(
                         style = MaterialTheme.typography.bodySmall
                     )
 
+                    val incognitoPasswordKeyboardOptions = remember {
+                        KeyboardOptions(
+                            capitalization = KeyboardCapitalization.None,
+                            autoCorrect = false,
+                            keyboardType = KeyboardType.Password,
+                            imeAction = ImeAction.Done,
+                            platformImeOptions = PlatformImeOptions(privateImeOptions = "com.touchtype.swiftkey.incognito=true,incognito=true")
+                        )
+                    }
+
                     if (hasExisting) {
                         OutlinedTextField(
                             value = currentPwd,
@@ -174,6 +189,7 @@ fun SettingsDialog(
                             singleLine = true,
                             modifier = Modifier.fillMaxWidth(),
                             visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation(),
+                            keyboardOptions = incognitoPasswordKeyboardOptions,
                             colors = OutlinedTextFieldDefaults.colors(
                                 focusedBorderColor = AppPrimary,
                                 unfocusedBorderColor = AppSurfaceBorder,
@@ -192,6 +208,7 @@ fun SettingsDialog(
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth(),
                         visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation(),
+                        keyboardOptions = incognitoPasswordKeyboardOptions,
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = AppPrimary,
                             unfocusedBorderColor = AppSurfaceBorder,
@@ -209,6 +226,7 @@ fun SettingsDialog(
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth(),
                         visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation(),
+                        keyboardOptions = incognitoPasswordKeyboardOptions,
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = AppPrimary,
                             unfocusedBorderColor = AppSurfaceBorder,

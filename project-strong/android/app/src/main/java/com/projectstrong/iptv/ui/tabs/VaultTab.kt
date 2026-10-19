@@ -64,11 +64,16 @@ fun VaultTab(
         }
     }
 
+    // Row selection and Multi-select state
+    var selectedItemId by remember { mutableStateOf<String?>(null) }
+    val checkedItemIds = remember { mutableStateListOf<String>() }
+
     var previewChannel by remember { mutableStateOf<VaultItem?>(null) }
     var renameTarget by remember { mutableStateOf<VaultItem?>(null) }
     var renameInput by remember { mutableStateOf("") }
     var deleteTarget by remember { mutableStateOf<VaultItem?>(null) }
     var showPushConfirmDialog by remember { mutableStateOf(false) }
+    var showBulkDeleteDialog by remember { mutableStateOf(false) }
 
     var isRechecking by remember { mutableStateOf(false) }
     var isRefreshing by remember { mutableStateOf(false) }
@@ -349,6 +354,48 @@ fun VaultTab(
         )
     }
 
+    // Bulk Delete Confirmation Dialog
+    if (showBulkDeleteDialog) {
+        val count = checkedItemIds.size
+        AlertDialog(
+            onDismissRequest = { showBulkDeleteDialog = false },
+            containerColor = AppSurface,
+            shape = RoundedCornerShape(16.dp),
+            title = {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Icon(Icons.Default.Delete, contentDescription = null, tint = AppError)
+                    Text("Delete $count Selected Channels?", color = AppTextPrimary, fontWeight = FontWeight.Bold)
+                }
+            },
+            text = {
+                Text(
+                    "Are you sure you want to permanently remove $count channels from your Vault?",
+                    color = AppTextSecondary,
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        VaultManager.bulkDeleteChannels(checkedItemIds.toList())
+                        checkedItemIds.clear()
+                        showBulkDeleteDialog = false
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = AppError),
+                    shape = RoundedCornerShape(10.dp)
+                ) {
+                    Text("Delete ($count)", color = Color.White, fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                SecondaryButton(
+                    text = "Cancel",
+                    onClick = { showBulkDeleteDialog = false }
+                )
+            }
+        )
+    }
+
     // Rename Modal Dialog
     if (renameTarget != null) {
         val item = renameTarget!!
@@ -433,6 +480,7 @@ fun VaultTab(
                 Button(
                     onClick = {
                         VaultManager.deleteChannel(item)
+                        checkedItemIds.remove(item.id)
                         deleteTarget = null
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = AppError),
@@ -727,7 +775,90 @@ fun VaultTab(
                     }
                 }
             }
+        }
 
+        // Multi-Select Floating Bulk Action Bar (When 1+ channels are selected)
+        if (checkedItemIds.isNotEmpty()) {
+            Surface(
+                shape = RoundedCornerShape(12.dp),
+                color = AppSurfaceVariant,
+                border = BorderStroke(1.dp, AppPrimary.copy(alpha = 0.5f)),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 14.dp, vertical = 8.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        Text(
+                            text = "${checkedItemIds.size} Selected",
+                            color = AppPrimary,
+                            fontWeight = FontWeight.Bold,
+                            style = MaterialTheme.typography.titleSmall
+                        )
+                        TextButton(
+                            onClick = { checkedItemIds.clear() },
+                            contentPadding = PaddingValues(0.dp)
+                        ) {
+                            Text("Deselect All", color = AppTextSecondary, style = MaterialTheme.typography.labelSmall)
+                        }
+                    }
+
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        // Bulk Status Check
+                        SecondaryButton(
+                            text = "⚡ Check (${checkedItemIds.size})",
+                            onClick = {
+                                val targets = items.filter { checkedItemIds.contains(it.id) }
+                                if (targets.isNotEmpty()) {
+                                    coroutineScope.launch {
+                                        isRechecking = true
+                                        actionMessage = "Checking status for ${targets.size} channels..."
+                                        ToastManager.info("Probing ${targets.size} channels...")
+                                        val count = VaultManager.recheckStatusForItems(targets)
+                                        isRechecking = false
+                                        ToastManager.success("Checked $count channels")
+                                        delay(2000)
+                                        actionMessage = ""
+                                    }
+                                }
+                            },
+                            modifier = Modifier.height(34.dp)
+                        )
+
+                        // Bulk Push to Cloud
+                        PrimaryButton(
+                            text = "☁️ Push",
+                            color = AppSuccess,
+                            onClick = onPushAction,
+                            modifier = Modifier.height(34.dp)
+                        )
+
+                        // Bulk Delete Button
+                        Button(
+                            onClick = { showBulkDeleteDialog = true },
+                            colors = ButtonDefaults.buttonColors(containerColor = AppError),
+                            shape = RoundedCornerShape(8.dp),
+                            contentPadding = PaddingValues(horizontal = 10.dp, vertical = 0.dp),
+                            modifier = Modifier.height(34.dp)
+                        ) {
+                            Icon(Icons.Default.Delete, contentDescription = "Delete Selected", tint = Color.White, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("Delete (${checkedItemIds.size})", color = Color.White, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.labelMedium)
+                        }
+                    }
+                }
+            }
+        } else if (items.isNotEmpty()) {
             Text(
                 text = "Showing ${sortedItems.size} of ${items.size}",
                 color = AppTextMuted,
@@ -790,13 +921,37 @@ fun VaultTab(
                             .horizontalScroll(horizontalScrollState)
                     ) {
                         Column(modifier = Modifier.fillMaxHeight()) {
-                            // Table Headers with clickable sorting
+                            // Table Headers with Multi-select Checkbox & clickable sorting
                             Row(
                                 modifier = Modifier
                                     .background(AppSurfaceVariant)
-                                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                                    .padding(horizontal = 16.dp, vertical = 10.dp),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
+                                // Multi-select Checkbox Header
+                                val allChecked = sortedItems.isNotEmpty() && sortedItems.all { checkedItemIds.contains(it.id) }
+                                Box(
+                                    modifier = Modifier.width(48.dp),
+                                    contentAlignment = Alignment.CenterStart
+                                ) {
+                                    Checkbox(
+                                        checked = allChecked,
+                                        onCheckedChange = { isChecked ->
+                                            if (isChecked) {
+                                                checkedItemIds.clear()
+                                                checkedItemIds.addAll(sortedItems.map { it.id })
+                                            } else {
+                                                checkedItemIds.clear()
+                                            }
+                                        },
+                                        colors = CheckboxDefaults.colors(
+                                            checkedColor = AppPrimary,
+                                            uncheckedColor = AppTextMuted,
+                                            checkmarkColor = Color.White
+                                        )
+                                    )
+                                }
+
                                 GridHeader("Date Added", 130.dp, onClick = { toggleSort(VaultSortColumn.DATE_ADDED) }, isSorted = sortColumn == VaultSortColumn.DATE_ADDED, isAscending = sortAscending)
                                 GridHeader("Channel Name", 210.dp, onClick = { toggleSort(VaultSortColumn.NAME) }, isSorted = sortColumn == VaultSortColumn.NAME, isAscending = sortAscending)
                                 GridHeader("Status", 110.dp, onClick = { toggleSort(VaultSortColumn.STATUS) }, isSorted = sortColumn == VaultSortColumn.STATUS, isAscending = sortAscending)
@@ -805,7 +960,7 @@ fun VaultTab(
                                 GridHeader("Stream ID", 90.dp, onClick = { toggleSort(VaultSortColumn.STREAM_ID) }, isSorted = sortColumn == VaultSortColumn.STREAM_ID, isAscending = sortAscending)
                                 GridHeader("Parent Playlist / Host", 220.dp, onClick = { toggleSort(VaultSortColumn.HOST) }, isSorted = sortColumn == VaultSortColumn.HOST, isAscending = sortAscending)
                                 GridHeader("Category", 140.dp, onClick = { toggleSort(VaultSortColumn.CATEGORY) }, isSorted = sortColumn == VaultSortColumn.CATEGORY, isAscending = sortAscending)
-                                GridHeader("Actions", 170.dp)
+                                GridHeader("Actions", 230.dp)
                             }
 
                             Box(
@@ -823,12 +978,49 @@ fun VaultTab(
                                 state = listState
                             ) {
                                 items(sortedItems, key = { it.id }) { item ->
+                                    val isRowChecked = checkedItemIds.contains(item.id)
+                                    val isRowHighlighted = item.id == selectedItemId
+
+                                    val rowBg = when {
+                                        isRowChecked -> AppPrimary.copy(alpha = 0.22f)
+                                        isRowHighlighted -> AppPrimary.copy(alpha = 0.12f)
+                                        else -> Color.Transparent
+                                    }
+
                                     Row(
                                         modifier = Modifier
                                             .fillMaxWidth()
-                                            .padding(horizontal = 16.dp, vertical = 8.dp),
+                                            .background(rowBg)
+                                            .clickable {
+                                                if (checkedItemIds.isNotEmpty()) {
+                                                    if (isRowChecked) checkedItemIds.remove(item.id)
+                                                    else checkedItemIds.add(item.id)
+                                                } else {
+                                                    selectedItemId = if (selectedItemId == item.id) null else item.id
+                                                }
+                                            }
+                                            .padding(horizontal = 16.dp, vertical = 6.dp),
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
+                                        // 0. Row Checkbox
+                                        Box(
+                                            modifier = Modifier.width(48.dp),
+                                            contentAlignment = Alignment.CenterStart
+                                        ) {
+                                            Checkbox(
+                                                checked = isRowChecked,
+                                                onCheckedChange = { isChecked ->
+                                                    if (isChecked) checkedItemIds.add(item.id)
+                                                    else checkedItemIds.remove(item.id)
+                                                },
+                                                colors = CheckboxDefaults.colors(
+                                                    checkedColor = AppPrimary,
+                                                    uncheckedColor = AppTextMuted,
+                                                    checkmarkColor = Color.White
+                                                )
+                                            )
+                                        }
+
                                         // 1. Date Added
                                         GridCell(item.dateAdded.ifEmpty { "-" }, 130.dp, color = AppTextSecondary)
 
@@ -897,81 +1089,76 @@ fun VaultTab(
                                             }
                                         }
 
-                                        // 9. Actions
+                                        // 9. Actions Column (Using standard GridActionIconButton to match other tabs)
                                         Row(
-                                            modifier = Modifier.width(170.dp),
-                                            horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                            modifier = Modifier.width(230.dp),
+                                            horizontalArrangement = Arrangement.spacedBy(6.dp),
                                             verticalAlignment = Alignment.CenterVertically
                                         ) {
-                                            // Play Stream
-                                            IconButton(
-                                                onClick = { previewChannel = item },
-                                                modifier = Modifier
-                                                    .size(32.dp)
-                                                    .clip(CircleShape)
-                                                    .background(AppSuccessContainer)
-                                            ) {
-                                                Icon(
-                                                    Icons.Default.PlayArrow,
-                                                    contentDescription = "Play",
-                                                    tint = AppSuccess,
-                                                    modifier = Modifier.size(18.dp)
-                                                )
-                                            }
+                                            // 1. Play Stream
+                                            GridActionIconButton(
+                                                icon = Icons.Default.PlayArrow,
+                                                tooltip = "Play Stream",
+                                                color = AppSuccess,
+                                                onClick = { previewChannel = item }
+                                            )
 
-                                            // Rename
-                                            IconButton(
+                                            // 2. Push / Sync to Cloud
+                                            GridActionIconButton(
+                                                icon = if (item.isSynced) Icons.Default.CloudDone else Icons.Default.CloudUpload,
+                                                tooltip = if (item.isSynced) "Synced with Cloud" else "Push to Cloud",
+                                                color = if (item.isSynced) AppSuccess else Color(0xFFFBBF24),
+                                                onClick = {
+                                                    val pwd = VaultManager.currentSessionPassword
+                                                    if (pwd != null) {
+                                                        coroutineScope.launch {
+                                                            isPushing = true
+                                                            actionMessage = "Syncing '${item.displayName}' with Cloud..."
+                                                            val ok = VaultManager.commitToCloud(pwd)
+                                                            isPushing = false
+                                                            if (ok) {
+                                                                ToastManager.success("Synced '${item.displayName}' to Cloud")
+                                                            } else {
+                                                                ToastManager.error("Push failed. Check GitHub Token.")
+                                                            }
+                                                            delay(2000)
+                                                            actionMessage = ""
+                                                        }
+                                                    } else {
+                                                        ToastManager.error("Please unlock Vault to push.")
+                                                    }
+                                                }
+                                            )
+
+                                            // 3. Rename Channel
+                                            GridActionIconButton(
+                                                icon = Icons.Default.Edit,
+                                                tooltip = "Rename Channel",
+                                                color = AppPrimary,
                                                 onClick = {
                                                     renameInput = item.displayName
                                                     renameTarget = item
-                                                },
-                                                modifier = Modifier
-                                                    .size(32.dp)
-                                                    .clip(CircleShape)
-                                                    .background(AppSurfaceVariant)
-                                            ) {
-                                                Icon(
-                                                    Icons.Default.Edit,
-                                                    contentDescription = "Rename",
-                                                    tint = AppTextSecondary,
-                                                    modifier = Modifier.size(16.dp)
-                                                )
-                                            }
+                                                }
+                                            )
 
-                                            // Copy Stream URL
-                                            IconButton(
+                                            // 4. Copy Direct Stream URL
+                                            GridActionIconButton(
+                                                icon = Icons.Default.Link,
+                                                tooltip = "Copy Direct Stream URL",
+                                                color = Color(0xFFA78BFA),
                                                 onClick = {
                                                     clipboardManager.setText(AnnotatedString(item.directUrl))
                                                     ToastManager.success("Copied Direct Stream URL")
-                                                },
-                                                modifier = Modifier
-                                                    .size(32.dp)
-                                                    .clip(CircleShape)
-                                                    .background(AppSurfaceVariant)
-                                            ) {
-                                                Icon(
-                                                    Icons.Default.Link,
-                                                    contentDescription = "Copy URL",
-                                                    tint = AppTextSecondary,
-                                                    modifier = Modifier.size(16.dp)
-                                                )
-                                            }
+                                                }
+                                            )
 
-                                            // Delete
-                                            IconButton(
-                                                onClick = { deleteTarget = item },
-                                                modifier = Modifier
-                                                    .size(32.dp)
-                                                    .clip(CircleShape)
-                                                    .background(AppErrorContainer)
-                                            ) {
-                                                Icon(
-                                                    Icons.Default.Delete,
-                                                    contentDescription = "Delete",
-                                                    tint = AppError,
-                                                    modifier = Modifier.size(16.dp)
-                                                )
-                                            }
+                                            // 5. Delete Channel
+                                            GridActionIconButton(
+                                                icon = Icons.Default.Delete,
+                                                tooltip = "Remove from Vault",
+                                                color = AppError,
+                                                onClick = { deleteTarget = item }
+                                            )
                                         }
                                     }
 

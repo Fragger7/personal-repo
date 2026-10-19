@@ -46,6 +46,11 @@ import com.projectstrong.iptv.ui.theme.*
 import com.projectstrong.iptv.ui.state.CatalogExplorerState
 import com.projectstrong.iptv.ui.state.LocalCatalogExplorerState
 import com.projectstrong.iptv.ui.components.FullScreenCatalogExplorer
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.PlatformImeOptions
 import androidx.compose.runtime.CompositionLocalProvider
 import kotlinx.coroutines.launch
 
@@ -162,11 +167,17 @@ class MainActivity : ComponentActivity() {
         DataStore.scanScope.launch {
             NetworkMonitor.refreshNetworkState(applicationContext)
         }
+        if (com.projectstrong.iptv.data.VaultManager.isUnlocked) {
+            com.projectstrong.iptv.data.VaultManager.checkTimeout()
+        }
     }
 
     override fun onStop() {
         super.onStop()
-        com.projectstrong.iptv.data.VaultManager.lock()
+        // Do not immediately lock vault; session timer will be checked upon return based on vaultTimeoutMinutes
+        if (com.projectstrong.iptv.data.VaultManager.isUnlocked) {
+            com.projectstrong.iptv.data.VaultManager.updateLastActive()
+        }
     }
 
     override fun onDestroy() {
@@ -293,6 +304,16 @@ fun MainDashboard() {
             },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    val incognitoPasswordKeyboardOptions = remember {
+                        KeyboardOptions(
+                            capitalization = KeyboardCapitalization.None,
+                            autoCorrect = false,
+                            keyboardType = KeyboardType.Password,
+                            imeAction = ImeAction.Done,
+                            platformImeOptions = PlatformImeOptions(privateImeOptions = "com.touchtype.swiftkey.incognito=true,incognito=true")
+                        )
+                    }
+
                     if (isCheckingCloudVault) {
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             CircularProgressIndicator(modifier = Modifier.size(16.dp), color = AppPrimary, strokeWidth = 2.dp)
@@ -311,6 +332,7 @@ fun MainDashboard() {
                             singleLine = true,
                             modifier = Modifier.fillMaxWidth(),
                             visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation(),
+                            keyboardOptions = incognitoPasswordKeyboardOptions,
                             colors = OutlinedTextFieldDefaults.colors(
                                 focusedBorderColor = AppPrimary,
                                 unfocusedBorderColor = AppSurfaceBorder,
@@ -333,6 +355,7 @@ fun MainDashboard() {
                             singleLine = true,
                             modifier = Modifier.fillMaxWidth(),
                             visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation(),
+                            keyboardOptions = incognitoPasswordKeyboardOptions,
                             colors = OutlinedTextFieldDefaults.colors(
                                 focusedBorderColor = AppPrimary,
                                 unfocusedBorderColor = AppSurfaceBorder,
@@ -355,6 +378,7 @@ fun MainDashboard() {
                             singleLine = true,
                             modifier = Modifier.fillMaxWidth(),
                             visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation(),
+                            keyboardOptions = incognitoPasswordKeyboardOptions,
                             colors = OutlinedTextFieldDefaults.colors(
                                 focusedBorderColor = AppPrimary,
                                 unfocusedBorderColor = AppSurfaceBorder,
@@ -371,6 +395,7 @@ fun MainDashboard() {
                             singleLine = true,
                             modifier = Modifier.fillMaxWidth(),
                             visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation(),
+                            keyboardOptions = incognitoPasswordKeyboardOptions,
                             colors = OutlinedTextFieldDefaults.colors(
                                 focusedBorderColor = AppPrimary,
                                 unfocusedBorderColor = AppSurfaceBorder,
@@ -464,7 +489,6 @@ fun MainDashboard() {
         } else if (showVaultUnlockDialog) {
             showVaultUnlockDialog = false
         } else if (selectedTab == 5) {
-            com.projectstrong.iptv.data.VaultManager.lock()
             selectedTab = previousTab
         } else if (selectedTab > 0) {
             selectedTab -= 1
@@ -620,16 +644,14 @@ fun MainDashboard() {
                         selected = isSelected,
                         onClick = {
                             if (index == 5) {
-                                if (com.projectstrong.iptv.data.VaultManager.isUnlocked) {
+                                if (com.projectstrong.iptv.data.VaultManager.isUnlocked && !com.projectstrong.iptv.data.VaultManager.checkTimeout()) {
+                                    com.projectstrong.iptv.data.VaultManager.updateLastActive()
                                     previousTab = selectedTab
                                     selectedTab = 5
                                 } else {
                                     showVaultUnlockDialog = true
                                 }
                             } else {
-                                if (selectedTab == 5) {
-                                    com.projectstrong.iptv.data.VaultManager.lock()
-                                }
                                 previousTab = selectedTab
                                 selectedTab = index
                             }

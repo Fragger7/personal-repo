@@ -255,6 +255,15 @@ object VaultManager {
         ToastManager.info("Removed channel from Vault")
     }
 
+    fun bulkDeleteChannels(ids: List<String>) {
+        val idSet = ids.toSet()
+        if (idSet.isEmpty()) return
+        items.removeAll { idSet.contains(it.id) }
+        saveLocal()
+        syncToCloudAsync()
+        ToastManager.info("Removed ${idSet.size} channels from Vault")
+    }
+
     fun isChannelSaved(streamId: String, baseUrl: String): Boolean {
         return items.any { it.streamId == streamId && it.baseUrl.equals(baseUrl, ignoreCase = true) }
     }
@@ -490,14 +499,13 @@ object VaultManager {
     }
 
     /**
-     * Verifies the live connection status of all saved channels in the Vault.
+     * Verifies the live connection status of specified channels in the Vault.
      * Deduplicates requests by server credentials (baseUrl, user, pass).
      */
-    suspend fun recheckAllStatus(): Int = withContext(Dispatchers.IO) {
-        val currentItems = items.toList()
-        if (currentItems.isEmpty()) return@withContext 0
+    suspend fun recheckStatusForItems(targetItems: List<VaultItem>): Int = withContext(Dispatchers.IO) {
+        if (targetItems.isEmpty()) return@withContext 0
 
-        val credMap = currentItems.groupBy { "${it.baseUrl.trim()}|${it.user.trim()}|${it.pass.trim()}" }
+        val credMap = targetItems.groupBy { "${it.baseUrl.trim()}|${it.user.trim()}|${it.pass.trim()}" }
         val semaphore = Semaphore(6)
         val statusResults = java.util.concurrent.ConcurrentHashMap<String, String>()
 
@@ -537,18 +545,28 @@ object VaultManager {
         }
 
         withContext(Dispatchers.Main) {
+            val targetIds = targetItems.map { it.id }.toSet()
             for (i in 0 until items.size) {
                 val it = items[i]
-                val key = "${it.baseUrl.trim()}|${it.user.trim()}|${it.pass.trim()}"
-                val newStatus = statusResults[key]
-                if (newStatus != null && newStatus != it.status) {
-                    items[i] = it.copy(status = newStatus)
+                if (targetIds.contains(it.id)) {
+                    val key = "${it.baseUrl.trim()}|${it.user.trim()}|${it.pass.trim()}"
+                    val newStatus = statusResults[key]
+                    if (newStatus != null && newStatus != it.status) {
+                        items[i] = it.copy(status = newStatus)
+                    }
                 }
             }
             saveLocal()
         }
 
-        currentItems.size
+        targetItems.size
+    }
+
+    /**
+     * Verifies the live connection status of all saved channels in the Vault.
+     */
+    suspend fun recheckAllStatus(): Int = withContext(Dispatchers.IO) {
+        recheckStatusForItems(items.toList())
     }
 
     suspend fun commitToCloud(password: String, token: String = DataStore.githubToken): Boolean = withContext(Dispatchers.IO) {
