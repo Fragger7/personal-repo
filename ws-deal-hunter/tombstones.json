@@ -1,14 +1,4 @@
 {
-  "ebay_237060240193": {
-    "url": "https://www.ebay.com/itm/237060240193",
-    "reaped_at": "2026-09-22T18:10:20.913600+00:00",
-    "reason": "reaped"
-  },
-  "ebay_267773944030": {
-    "url": "https://www.ebay.com/itm/267773944030",
-    "reaped_at": "2026-09-22T18:10:20.914345+00:00",
-    "reason": "reaped"
-  },
   "ebay_168673905314": {
     "url": "https://www.ebay.com/itm/168673905314",
     "reaped_at": "2026-09-22T21:29:53.792324+00:00",
@@ -572,6 +562,21 @@
   "ebay_198270785326": {
     "url": "https://www.ebay.com/itm/198270785326",
     "reaped_at": "2026-10-22T13:56:05.124320+00:00",
+    "reason": "reaped"
+  },
+  "ebay_287639756340": {
+    "url": "https://www.ebay.com/itm/287639756340",
+    "reaped_at": "2026-10-22T18:39:35.703421+00:00",
+    "reason": "reaped"
+  },
+  "ebay_227546499622": {
+    "url": "https://www.ebay.com/itm/227546499622",
+    "reaped_at": "2026-10-22T18:39:35.704609+00:00",
+    "reason": "reaped"
+  },
+  "ebay_116402562064": {
+    "url": "https://www.ebay.com/itm/116402562064",
+    "reaped_at": "2026-10-22T18:39:35.705505+00:00",
     "reason": "reaped"
   }
 }
