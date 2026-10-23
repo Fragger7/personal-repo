@@ -72,6 +72,7 @@ class MainActivity : ComponentActivity() {
         CommittedManager.init(applicationContext)
         com.projectstrong.iptv.data.ArchiveManager.init(applicationContext)
         com.projectstrong.iptv.data.VaultManager.init(applicationContext)
+        com.projectstrong.iptv.data.FavoritesManager.init(applicationContext)
         com.projectstrong.iptv.data.SettingsManager.init(applicationContext)
         com.projectstrong.iptv.data.ProviderIntelligenceManager.init(applicationContext)
 
@@ -117,10 +118,15 @@ class MainActivity : ComponentActivity() {
             NetworkMonitor.refreshNetworkState(applicationContext)
         }
 
-        // Auto-sync committed records from cloud in background to guarantee fresh state
+        // Auto-sync committed records and favorites from cloud in background to guarantee fresh state
         DataStore.scanScope.launch(kotlinx.coroutines.Dispatchers.IO) {
             try {
                 CommittedManager.syncFromCloud()
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+            try {
+                com.projectstrong.iptv.data.FavoritesManager.pullFromCloud()
             } catch (e: Exception) {
                 e.printStackTrace()
             }
@@ -219,6 +225,7 @@ fun MainDashboard() {
         if (token.isNotEmpty()) {
             launch(kotlinx.coroutines.Dispatchers.IO) { com.projectstrong.iptv.data.CommittedManager.pullFromCloud(token) }
             launch(kotlinx.coroutines.Dispatchers.IO) { com.projectstrong.iptv.data.ArchiveManager.pullFromCloud(token) }
+            launch(kotlinx.coroutines.Dispatchers.IO) { com.projectstrong.iptv.data.FavoritesManager.pullFromCloud(token) }
         }
     }
 
@@ -237,7 +244,7 @@ fun MainDashboard() {
                 if (com.projectstrong.iptv.data.VaultManager.isUnlocked) {
                     com.projectstrong.iptv.data.VaultManager.lock()
                 }
-                if (selectedTab == 5) {
+                if (selectedTab == 6) {
                     selectedTab = previousTab
                 }
             }
@@ -249,7 +256,7 @@ fun MainDashboard() {
                     if (com.projectstrong.iptv.data.VaultManager.isUnlocked) {
                         com.projectstrong.iptv.data.VaultManager.lock()
                     }
-                    if (selectedTab == 5) {
+                    if (selectedTab == 6) {
                         selectedTab = previousTab
                     }
                 }
@@ -271,7 +278,7 @@ fun MainDashboard() {
             if (token.isNotEmpty() && com.projectstrong.iptv.data.CommittedManager.hasLocalChanges()) {
                 launch(kotlinx.coroutines.Dispatchers.IO) { com.projectstrong.iptv.data.CommittedManager.pushToCloud(token) }
             }
-        } else if (selectedTab == 6) { // ArchiveTab
+        } else if (selectedTab == 7) { // ArchiveTab
             val token = com.projectstrong.iptv.data.DataStore.githubToken
             if (token.isNotEmpty() && com.projectstrong.iptv.data.ArchiveManager.hasLocalChanges()) {
                 launch(kotlinx.coroutines.Dispatchers.IO) { com.projectstrong.iptv.data.ArchiveManager.pushToCloud(token) }
@@ -287,6 +294,7 @@ fun MainDashboard() {
     val activeNodesCount = DataStore.scannedNodes.count { it.status.contains("Active", true) }
 
     val committedCount = CommittedManager.records.size
+    val favoritesCount = com.projectstrong.iptv.data.FavoritesManager.items.size
     val archivedCount = com.projectstrong.iptv.data.ArchiveManager.records.size
     val vaultCount = com.projectstrong.iptv.data.VaultManager.items.size
     val tabItems = listOf(
@@ -295,6 +303,7 @@ fun MainDashboard() {
         TabItem("Xtream", xtreamNodesCount, Icons.Default.LiveTv),
         TabItem("Stalker", stalkerNodesCount, Icons.Default.Dns),
         TabItem("Committed", committedCount, Icons.Default.FolderSpecial),
+        TabItem("Favorites", favoritesCount, Icons.Default.Star),
         TabItem("Vault", vaultCount, Icons.Default.Lock),
         TabItem("Archive", archivedCount, Icons.Default.Archive),
         TabItem("Analytics", 0, Icons.Default.Analytics)
@@ -445,7 +454,7 @@ fun MainDashboard() {
                             if (com.projectstrong.iptv.data.VaultManager.unlock(trimmed)) {
                                 showVaultUnlockDialog = false
                                 previousTab = selectedTab
-                                selectedTab = 5
+                                selectedTab = 6
                             } else {
                                 unlockError = "Incorrect password. Please try again."
                             }
@@ -457,7 +466,7 @@ fun MainDashboard() {
                                 if (res.isSuccess) {
                                     showVaultUnlockDialog = false
                                     previousTab = selectedTab
-                                    selectedTab = 5
+                                    selectedTab = 6
                                     ToastManager.success("Restored ${res.getOrNull()} channels from Cloud Vault!")
                                 } else {
                                     unlockError = res.exceptionOrNull()?.message ?: "Decryption failed."
@@ -476,7 +485,7 @@ fun MainDashboard() {
                             com.projectstrong.iptv.data.VaultManager.setPassword(trimmed)
                             showVaultUnlockDialog = false
                             previousTab = selectedTab
-                            selectedTab = 5
+                            selectedTab = 6
                             ToastManager.success("Vault password initialized securely!")
                         }
                     },
@@ -508,7 +517,7 @@ fun MainDashboard() {
             showSettingsDialog = false
         } else if (showVaultUnlockDialog) {
             showVaultUnlockDialog = false
-        } else if (selectedTab == 5) {
+        } else if (selectedTab == 6) {
             if (com.projectstrong.iptv.data.VaultManager.isSessionExpired()) {
                 com.projectstrong.iptv.data.VaultManager.lock()
             }
@@ -666,16 +675,16 @@ fun MainDashboard() {
                     Tab(
                         selected = isSelected,
                         onClick = {
-                            if (index == 5) {
+                            if (index == 6) {
                                 if (com.projectstrong.iptv.data.VaultManager.isUnlocked && !com.projectstrong.iptv.data.VaultManager.checkTimeout()) {
                                     com.projectstrong.iptv.data.VaultManager.updateLastActive()
                                     previousTab = selectedTab
-                                    selectedTab = 5
+                                    selectedTab = 6
                                 } else {
                                     showVaultUnlockDialog = true
                                 }
                             } else {
-                                if (selectedTab == 5) {
+                                if (selectedTab == 6) {
                                     if (com.projectstrong.iptv.data.VaultManager.isSessionExpired()) {
                                         com.projectstrong.iptv.data.VaultManager.lock()
                                     }
@@ -755,9 +764,10 @@ fun MainDashboard() {
                     2 -> com.projectstrong.iptv.ui.tabs.XtreamTab(onNextTab = { selectedTab = 3 })
                     3 -> com.projectstrong.iptv.ui.tabs.StalkerTab(onNextTab = { selectedTab = 4 })
                     4 -> com.projectstrong.iptv.ui.tabs.CommittedTab()
-                    5 -> com.projectstrong.iptv.ui.tabs.VaultTab(onLock = { selectedTab = previousTab })
-                    6 -> com.projectstrong.iptv.ui.tabs.ArchiveTab()
-                    7 -> com.projectstrong.iptv.ui.tabs.AnalyticsTab(onNavigateToCommitted = { selectedTab = 4 })
+                    5 -> com.projectstrong.iptv.ui.tabs.FavoritesTab()
+                    6 -> com.projectstrong.iptv.ui.tabs.VaultTab(onLock = { selectedTab = previousTab })
+                    7 -> com.projectstrong.iptv.ui.tabs.ArchiveTab()
+                    8 -> com.projectstrong.iptv.ui.tabs.AnalyticsTab(onNavigateToCommitted = { selectedTab = 4 })
                 }
             }
         }

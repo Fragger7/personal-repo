@@ -29,6 +29,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.projectstrong.iptv.network.IPTVClient
 import com.projectstrong.iptv.data.VaultManager
+import com.projectstrong.iptv.data.FavoritesManager
 import com.projectstrong.iptv.ui.theme.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -66,6 +67,8 @@ fun FullScreenCatalogExplorer(
     var previewChannel by remember { mutableStateOf<ChannelItem?>(null) }
     var channelToVault by remember { mutableStateOf<ChannelItem?>(null) }
     var vaultCustomName by remember { mutableStateOf("") }
+    var channelToFavorite by remember { mutableStateOf<ChannelItem?>(null) }
+    var favoriteCustomName by remember { mutableStateOf("") }
 
     // Fetch catalog data concurrently
     LaunchedEffect(baseUrl, user, pass) {
@@ -612,6 +615,23 @@ fun FullScreenCatalogExplorer(
                                                             )
                                                         }
 
+                                                        // Save to Favorites
+                                                        val isFavorited = FavoritesManager.isChannelSaved(channel.streamId, baseUrl)
+                                                        IconButton(
+                                                            onClick = {
+                                                                favoriteCustomName = channel.name
+                                                                channelToFavorite = channel
+                                                            },
+                                                            modifier = Modifier.size(34.dp)
+                                                        ) {
+                                                            Icon(
+                                                                if (isFavorited) Icons.Default.Star else Icons.Default.StarBorder,
+                                                                contentDescription = if (isFavorited) "In Favorites" else "Save to Favorites",
+                                                                tint = if (isFavorited) Color(0xFFF59E0B) else AppTextSecondary,
+                                                                modifier = Modifier.size(17.dp)
+                                                            )
+                                                        }
+
                                                         // Save to Vault
                                                         val isVaulted = VaultManager.isChannelSaved(channel.streamId, baseUrl)
                                                         IconButton(
@@ -780,6 +800,94 @@ fun FullScreenCatalogExplorer(
             },
             dismissButton = {
                 TextButton(onClick = { channelToVault = null }) {
+                    Text("Cancel", color = AppTextSecondary)
+                }
+            }
+        )
+    }
+
+    // Save to Favorites Confirmation & Custom Naming Modal
+    channelToFavorite?.let { channel ->
+        val catName = categoryNameMap[channel.categoryId] ?: "Live Channel"
+        AlertDialog(
+            onDismissRequest = { channelToFavorite = null },
+            containerColor = AppSurface,
+            title = {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Icon(Icons.Default.Star, contentDescription = null, tint = Color(0xFFF59E0B))
+                    Text("Add to Favorites", color = AppTextPrimary, fontWeight = FontWeight.Bold)
+                }
+            },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Text(
+                        "Bookmark this channel into your Favorites collection. You can assign an optional custom name.",
+                        color = AppTextSecondary,
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                    OutlinedTextField(
+                        value = favoriteCustomName,
+                        onValueChange = { favoriteCustomName = it },
+                        label = { Text("Channel Name (Optional)") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = Color(0xFFF59E0B),
+                            unfocusedBorderColor = AppSurfaceBorder,
+                            focusedTextColor = AppTextPrimary,
+                            unfocusedTextColor = AppTextPrimary,
+                            focusedContainerColor = AppSurfaceVariant,
+                            unfocusedContainerColor = AppSurfaceVariant
+                        )
+                    )
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(4.dp))
+                                .background(Color(0xFFF59E0B).copy(alpha = 0.15f))
+                                .padding(horizontal = 6.dp, vertical = 2.dp)
+                        ) {
+                            Text("📁 $catName", color = Color(0xFFF59E0B), style = MaterialTheme.typography.labelSmall)
+                        }
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(4.dp))
+                                .background(AppSurfaceVariant)
+                                .padding(horizontal = 6.dp, vertical = 2.dp)
+                        ) {
+                            Text("ID: ${channel.streamId}", color = AppTextMuted, style = MaterialTheme.typography.labelSmall)
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        FavoritesManager.addChannel(
+                            streamId = channel.streamId,
+                            name = favoriteCustomName.trim(),
+                            originalName = channel.name,
+                            categoryId = channel.categoryId,
+                            categoryName = catName,
+                            iconUrl = channel.iconUrl,
+                            directUrl = channel.directUrl,
+                            baseUrl = baseUrl,
+                            user = user,
+                            pass = pass,
+                            parentPlaylist = title.ifBlank { baseUrl }
+                        )
+                        channelToFavorite = null
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF59E0B))
+                ) {
+                    Text("Add to Favorites", color = Color.Black, fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { channelToFavorite = null }) {
                     Text("Cancel", color = AppTextSecondary)
                 }
             }
