@@ -28,6 +28,7 @@ import com.projectstrong.iptv.data.DataStore
 import com.projectstrong.iptv.data.VaultItem
 import com.projectstrong.iptv.data.VaultManager
 import com.projectstrong.iptv.ui.components.*
+import com.projectstrong.iptv.ui.state.LocalStreamPreviewState
 import com.projectstrong.iptv.ui.theme.*
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -43,6 +44,7 @@ fun VaultTab(
 ) {
     val clipboardManager = LocalClipboardManager.current
     val coroutineScope = rememberCoroutineScope()
+    val streamPreviewState = LocalStreamPreviewState.current
     val listState = rememberLazyListState()
     val horizontalScrollState = rememberScrollState()
 
@@ -68,7 +70,6 @@ fun VaultTab(
     var selectedItemId by remember { mutableStateOf<String?>(null) }
     val checkedItemIds = remember { mutableStateListOf<String>() }
 
-    var previewChannel by remember { mutableStateOf<VaultItem?>(null) }
     var renameTarget by remember { mutableStateOf<VaultItem?>(null) }
     var renameInput by remember { mutableStateOf("") }
     var deleteTarget by remember { mutableStateOf<VaultItem?>(null) }
@@ -81,17 +82,6 @@ fun VaultTab(
     var actionMessage by remember { mutableStateOf("") }
 
     val isBusy = isRechecking || isRefreshing || isPushing || VaultManager.isSyncing
-
-    // Check timeout periodically while VaultTab is visible
-    LaunchedEffect(Unit) {
-        while (true) {
-            delay(10_000)
-            if (VaultManager.checkTimeout()) {
-                onLock()
-                break
-            }
-        }
-    }
 
     val items = VaultManager.items
     val unpushedCount = items.count { !it.isSynced }
@@ -954,13 +944,10 @@ fun VaultTab(
 
                                 GridHeader("Date Added", 130.dp, onClick = { toggleSort(VaultSortColumn.DATE_ADDED) }, isSorted = sortColumn == VaultSortColumn.DATE_ADDED, isAscending = sortAscending)
                                 GridHeader("Channel Name", 210.dp, onClick = { toggleSort(VaultSortColumn.NAME) }, isSorted = sortColumn == VaultSortColumn.NAME, isAscending = sortAscending)
+                                GridHeader("Actions", 230.dp)
                                 GridHeader("Status", 110.dp, onClick = { toggleSort(VaultSortColumn.STATUS) }, isSorted = sortColumn == VaultSortColumn.STATUS, isAscending = sortAscending)
                                 GridHeader("Sync", 110.dp, onClick = { toggleSort(VaultSortColumn.SYNC) }, isSorted = sortColumn == VaultSortColumn.SYNC, isAscending = sortAscending)
-                                GridHeader("Original Name", 190.dp, onClick = { toggleSort(VaultSortColumn.ORIGINAL_NAME) }, isSorted = sortColumn == VaultSortColumn.ORIGINAL_NAME, isAscending = sortAscending)
-                                GridHeader("Stream ID", 90.dp, onClick = { toggleSort(VaultSortColumn.STREAM_ID) }, isSorted = sortColumn == VaultSortColumn.STREAM_ID, isAscending = sortAscending)
                                 GridHeader("Parent Playlist / Host", 220.dp, onClick = { toggleSort(VaultSortColumn.HOST) }, isSorted = sortColumn == VaultSortColumn.HOST, isAscending = sortAscending)
-                                GridHeader("Category", 140.dp, onClick = { toggleSort(VaultSortColumn.CATEGORY) }, isSorted = sortColumn == VaultSortColumn.CATEGORY, isAscending = sortAscending)
-                                GridHeader("Actions", 230.dp)
                             }
 
                             Box(
@@ -1055,52 +1042,25 @@ fun VaultTab(
                                             }
                                         }
 
-                                        // 3. Status Badge
-                                        StatusBadge(item.status, 110.dp)
-
-                                        // 4. Sync Badge
-                                        SyncBadge(!item.isSynced, 110.dp)
-
-                                        // 5. Original Name
-                                        GridCell(item.originalName.ifEmpty { "-" }, 190.dp, color = AppTextSecondary)
-
-                                        // 6. Stream ID
-                                        GridCell(item.streamId, 90.dp, color = AppPrimary, isBold = true)
-
-                                        // 7. Parent Playlist / Host
-                                        GridCell(item.parentPlaylist.ifEmpty { item.baseUrl }, 220.dp, color = AppTextPrimary)
-
-                                        // 8. Category
-                                        Box(modifier = Modifier.width(140.dp).padding(end = 8.dp)) {
-                                            Surface(
-                                                shape = RoundedCornerShape(6.dp),
-                                                color = AppPrimary.copy(alpha = 0.12f),
-                                                border = BorderStroke(1.dp, AppPrimary.copy(alpha = 0.25f))
-                                            ) {
-                                                Text(
-                                                    text = item.categoryName.ifEmpty { "Live" },
-                                                    color = AppPrimary,
-                                                    style = MaterialTheme.typography.labelSmall,
-                                                    fontWeight = FontWeight.SemiBold,
-                                                    maxLines = 1,
-                                                    overflow = TextOverflow.Ellipsis,
-                                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
-                                                )
-                                            }
-                                        }
-
-                                        // 9. Actions Column (Using standard GridActionIconButton to match other tabs)
+                                        // 3. Actions Column (Moved right next to Channel Name)
                                         Row(
                                             modifier = Modifier.width(230.dp),
                                             horizontalArrangement = Arrangement.spacedBy(6.dp),
                                             verticalAlignment = Alignment.CenterVertically
                                         ) {
-                                            // 1. Play Stream
+                                            // 1. Play Stream (Uses root-level overlay for true full-screen parity)
                                             GridActionIconButton(
                                                 icon = Icons.Default.PlayArrow,
                                                 tooltip = "Play Stream",
                                                 color = AppSuccess,
-                                                onClick = { previewChannel = item }
+                                                onClick = {
+                                                    streamPreviewState.show(
+                                                        streamUrl = item.directUrl,
+                                                        streamName = item.displayName,
+                                                        streamId = item.streamId,
+                                                        categoryName = item.categoryName.ifEmpty { "Vault Channel" }
+                                                    )
+                                                }
                                             )
 
                                             // 2. Push / Sync to Cloud
@@ -1160,6 +1120,15 @@ fun VaultTab(
                                                 onClick = { deleteTarget = item }
                                             )
                                         }
+
+                                        // 4. Status Badge
+                                        StatusBadge(item.status, 110.dp)
+
+                                        // 5. Sync Badge
+                                        SyncBadge(!item.isSynced, 110.dp)
+
+                                        // 6. Parent Playlist / Host
+                                        GridCell(item.parentPlaylist.ifEmpty { item.baseUrl }, 220.dp, color = AppTextPrimary)
                                     }
 
                                     Box(
@@ -1181,16 +1150,5 @@ fun VaultTab(
                 }
             }
         }
-    }
-
-    // Floating Live Stream Video Player
-    previewChannel?.let { item ->
-        StreamPreviewDialog(
-            streamUrl = item.directUrl,
-            streamName = item.displayName,
-            streamId = item.streamId,
-            categoryName = item.categoryName.ifEmpty { "Vault Channel" },
-            onDismiss = { previewChannel = null }
-        )
     }
 }

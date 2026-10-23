@@ -43,10 +43,13 @@ import com.projectstrong.iptv.ui.components.ToastHost
 import com.projectstrong.iptv.ui.components.ToastManager
 import com.projectstrong.iptv.ui.components.UpdateDialog
 import com.projectstrong.iptv.ui.theme.*
-import com.projectstrong.iptv.ui.state.CatalogExplorerState
-import com.projectstrong.iptv.ui.state.LocalCatalogExplorerState
 import com.projectstrong.iptv.ui.components.FullScreenCatalogExplorer
 import com.projectstrong.iptv.ui.components.IncognitoPasswordTextField
+import com.projectstrong.iptv.ui.components.StreamPreviewDialog
+import com.projectstrong.iptv.ui.state.CatalogExplorerState
+import com.projectstrong.iptv.ui.state.LocalCatalogExplorerState
+import com.projectstrong.iptv.ui.state.LocalStreamPreviewState
+import com.projectstrong.iptv.ui.state.StreamPreviewState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.KeyboardCapitalization
@@ -125,9 +128,11 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             val catalogExplorerState = remember { CatalogExplorerState() }
+            val streamPreviewState = remember { StreamPreviewState() }
             
             CompositionLocalProvider(
-                LocalCatalogExplorerState provides catalogExplorerState
+                LocalCatalogExplorerState provides catalogExplorerState,
+                LocalStreamPreviewState provides streamPreviewState
             ) {
                 AppTheme {
                     Surface(
@@ -155,6 +160,16 @@ class MainActivity : ComponentActivity() {
                                     onDismiss = { catalogExplorerState.hide() }
                                 )
                             }
+
+                            if (streamPreviewState.isVisible) {
+                                StreamPreviewDialog(
+                                    streamUrl = streamPreviewState.streamUrl,
+                                    streamName = streamPreviewState.streamName,
+                                    streamId = streamPreviewState.streamId,
+                                    categoryName = streamPreviewState.categoryName,
+                                    onDismiss = { streamPreviewState.hide() }
+                                )
+                            }
                         }
                     }
                 }
@@ -175,9 +190,9 @@ class MainActivity : ComponentActivity() {
 
     override fun onStop() {
         super.onStop()
-        // Do not immediately lock vault; session timer will be checked upon return based on vaultTimeoutMinutes
+        // Log vault session out on screen off / background
         if (com.projectstrong.iptv.data.VaultManager.isUnlocked) {
-            com.projectstrong.iptv.data.VaultManager.updateLastActive()
+            com.projectstrong.iptv.data.VaultManager.lock()
         }
     }
 
@@ -213,6 +228,42 @@ fun MainDashboard() {
     var showVaultUnlockDialog by remember { mutableStateOf(false) }
     var isCheckingCloudVault by remember { mutableStateOf(false) }
     var hasCloudVault by remember { mutableStateOf(false) }
+
+    // Screen off and Lifecycle monitor: Lock vault and return to previously used tab when screen is off or app backgrounds
+    val lifecycleOwner = androidx.compose.ui.platform.LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
+            if (event == androidx.lifecycle.Lifecycle.Event.ON_STOP) {
+                if (com.projectstrong.iptv.data.VaultManager.isUnlocked) {
+                    com.projectstrong.iptv.data.VaultManager.lock()
+                }
+                if (selectedTab == 5) {
+                    selectedTab = previousTab
+                }
+            }
+        }
+        val screenOffFilter = android.content.IntentFilter(android.content.Intent.ACTION_SCREEN_OFF)
+        val screenOffReceiver = object : android.content.BroadcastReceiver() {
+            override fun onReceive(c: Context?, intent: android.content.Intent?) {
+                if (intent?.action == android.content.Intent.ACTION_SCREEN_OFF) {
+                    if (com.projectstrong.iptv.data.VaultManager.isUnlocked) {
+                        com.projectstrong.iptv.data.VaultManager.lock()
+                    }
+                    if (selectedTab == 5) {
+                        selectedTab = previousTab
+                    }
+                }
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        context.registerReceiver(screenOffReceiver, screenOffFilter)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+            try {
+                context.unregisterReceiver(screenOffReceiver)
+            } catch (e: Exception) {}
+        }
+    }
     
     androidx.compose.runtime.LaunchedEffect(selectedTab) {
         if (selectedTab == 4) { // CommittedTab
@@ -458,6 +509,9 @@ fun MainDashboard() {
         } else if (showVaultUnlockDialog) {
             showVaultUnlockDialog = false
         } else if (selectedTab == 5) {
+            if (com.projectstrong.iptv.data.VaultManager.isSessionExpired()) {
+                com.projectstrong.iptv.data.VaultManager.lock()
+            }
             selectedTab = previousTab
         } else if (selectedTab > 0) {
             selectedTab -= 1
@@ -621,6 +675,11 @@ fun MainDashboard() {
                                     showVaultUnlockDialog = true
                                 }
                             } else {
+                                if (selectedTab == 5) {
+                                    if (com.projectstrong.iptv.data.VaultManager.isSessionExpired()) {
+                                        com.projectstrong.iptv.data.VaultManager.lock()
+                                    }
+                                }
                                 previousTab = selectedTab
                                 selectedTab = index
                             }

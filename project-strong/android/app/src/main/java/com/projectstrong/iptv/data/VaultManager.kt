@@ -176,10 +176,21 @@ object VaultManager {
         lastActiveTimestamp = System.currentTimeMillis()
     }
 
+    fun isSessionExpired(): Boolean {
+        if (!isUnlocked) return true
+        val timeoutMin = SettingsManager.vaultTimeoutMinutes
+        if (timeoutMin <= 0) return true // 0 means Immediate lock upon leaving tab or screen off
+        val elapsedMs = System.currentTimeMillis() - lastActiveTimestamp
+        return elapsedMs > timeoutMin * 60 * 1000L
+    }
+
     fun checkTimeout(): Boolean {
         if (!isUnlocked) return true
         val timeoutMin = SettingsManager.vaultTimeoutMinutes
-        if (timeoutMin <= 0) return false // 0 means no timeout
+        if (timeoutMin <= 0) {
+            lock()
+            return true
+        }
 
         val elapsedMs = System.currentTimeMillis() - lastActiveTimestamp
         if (elapsedMs > timeoutMin * 60 * 1000L) {
