@@ -152,7 +152,16 @@ This document contains the complete system architecture, operational decisions, 
 
 ### K. Operational Intelligence Dashboard (`AnalyticsTab.kt`)
 * **Custom Compose Canvas Engineering**: Since Jetpack Compose lacks heavy built-in charting, the Analytics tab renders high-performance custom `Canvas` charts (`InteractivePieChart`, `SegmentedProgressBar`, `AnimatedHorizontalBarChart`) that strictly consume dynamic theme tokens (e.g. `AppPrimary`, `AppError`).
-* **Interactive Deep Linking**: Tapping any slice on a chart (e.g. "MaxOTT" or "Active") instantly modifies the shared `CommittedFilterStore` state and deep-routes the user back to `CommittedTab` with the exact filtered dataset isolated.
+* **Interactive Deep Linking**: Tapping any KPI card, media tag, bouquet bar, or pie slice (e.g. "MaxOTT" or "Active") instantly modifies the shared `CommittedFilterStore` state and deep-routes the user back to `CommittedTab` with the exact filtered dataset isolated.
+* **Memoized High-Performance Engine**: All aggregations are calculated once inside a single `remember(records.toList(), favoritesCount, vaultCount, archiveCount)` computation, ensuring zero frame drops or recomposition churn during scrolling.
+* **Telemetry & Forensic Metric Additions**:
+  * **Hero KPI Grid**: 4 interactive overview cards (Active Nodes with liveness %, Dead Weight, Total Catalog Assets with Live/VOD breakdown, and Max Hardware Concurrency Load).
+  * **Stream Egress & Ghost Line Inspector**: Segmented telemetry bar showing Verified Streams, HTTP 456 Ghost lines, HTTP 884 Anti-dump lockouts, and round-trip socket latency benchmarking.
+  * **Media Balance Bar**: Proportional Live Channels vs VOD ratio with quick-filter chips.
+  * **Subscription Expiry Horizon**: 7-tier distribution (Lifetime, MAC/No Expiry, Expired, <30d, 30-90d, 90-180d, 180d+).
+  * **Regional Bouquet Specialization**: Interactive horizontal distribution of regional bouquets (French, Arabic, Nordic, UK/US, etc.).
+  * **Euclidean Donut Tap Filtering**: Canvas touch events compute Euclidean radius ($r \in [r_{inner}, r_{outer}]$) to eliminate center-hole misclicks.
+  * **Adaptive Landscape Mode**: Dual-column layout on landscape orientation to maximize screen utilization.
 
 ### L. Dynamic Cascading Filters (`CommittedFilterStore`)
 * **Multi-Select Context-Aware Dropdowns**: Filters across `CommittedTab` use nested intersection logic to restrict dropdown choices dynamically based on the current active selections. 
@@ -171,6 +180,16 @@ This document contains the complete system architecture, operational decisions, 
 * **Platform Bridge Architecture**: Hosts an `IncognitoEditText` (subclass of Android's `EditText`) inside an `AndroidView`, styled to match Material 3 `OutlinedTextField`.
 * **Deep IME Hooking**: Overrides `onCreateInputConnection(EditorInfo)` to enforce `EditorInfo.IME_FLAG_NO_PERSONALIZED_LEARNING` (`0x01000000`), `EditorInfo.IME_FLAG_NO_EXTRACT_UI`, and vendor private IME strings (`com.touchtype.swiftkey.incognito=true,incognito=true,nm,com.samsung.android.inputmethod.incognito=true`).
 * **The `setSingleLine()` Transformation Reset Shield**: Avoids Android's legacy `setSingleLine(true)` which silently replaces `PasswordTransformationMethod` with plain text `SingleLineTransformationMethod`. Uses `maxLines = 1`, `setLines(1)`, and enforces `PasswordTransformationMethod.getInstance()` to ensure bullet dot masking (`•••••`) from the very first keystroke.
+
+### O. Instant-Access Favorites Collection & Cloud Replication (`FavoritesManager.kt` & `FavoritesTab.kt`)
+* **Core Mission**: Allow users to instantly bookmark favorite channels across any connection/playlist with zero UI password friction, while maintaining strong cloud encryption.
+* **Architecture & Distinctions from Vault**:
+  * **Position**: Placed immediately after Committed Data at tab index 5 (`Base64`=0, `Scanner`=1, `Xtream`=2, `Stalker`=3, `Committed`=4, `Favorites`=5, `Vault`=6, `Archive`=7, `Analytics`=8).
+  * **Zero UI Password Gate**: Open access without password prompts or session timeout kicks.
+  * **Automated Cloud AES-256-GCM Encryption**: The remote backup (`project-strong/favorites.json`) is end-to-end encrypted using an internal cryptographic key before uploading to GitHub, shielding playlist credentials and stream endpoints.
+  * **Restored Enterprise Data Columns**: 8-column layout with restored `Original Name` (190dp) and `Category` (140dp, positioned right after Original Name), `Actions` column placed right next to `Channel Name`, and `Stream ID` omitted.
+  * **Stream Inspection Integration**: Dedicated ⭐ Favorite button inside `FullScreenCatalogExplorer` with custom naming modal and real-time state reflection.
+  * **Bulk Operations & Status Recheck**: Multi-select checkbox support with floating command bar (`⚡ Check (N)`, `☁️ Push`, `🗑️ Delete (N)`).
 
 ## 🎨 3. World-Class UI/UX Design Standards
 
@@ -382,7 +401,16 @@ Remove-Item -Recurse -Force "C:\Development\Apps\Project Strong\personal-repo-te
   * **Cloud Sync**: 2-way sync to GitHub (`project-strong/vault.json`). Anyone reading GitHub only sees opaque ciphertext.
   * **Fresh Install Restore**: Upon reinstalling, the app detects existing cloud vault and prompts for password to decrypt and restore channels locally.
 * **Architecture**:
-  * Positioned at tab index 5 (immediately after Committed tab).
+  * Positioned at tab index 6 (immediately after Favorites tab).
   * Auto-locks on configurable timeout (1-30 min), when navigating away from tab, and on app pause/stop.
   * Fast-action "Save to Vault" button in `FullScreenCatalogExplorer` with optional channel renaming.
-  * 8-column enterprise data grid in `VaultTab` with Play (true-fullscreen), Rename, Copy URL, and Delete.
+  * Enterprise data grid in `VaultTab` with Play (true-fullscreen), Rename, Copy URL, and Delete.
+
+### E. Instant-Access Favorites Collection (`FavoritesManager.kt` & `FavoritesTab.kt`)
+* **Completed**:
+  1. Positioned at tab index 5 (between Committed and Vault).
+  2. Zero UI password friction with instant access.
+  3. Replicated AES-256-GCM authenticated cloud encryption (`project-strong/favorites.json`) via internal key.
+  4. Enterprise data table with restored `Original Name` and `Category` columns (right after Original Name), Actions column next to Channel Name, and Stream ID omitted.
+  5. Dedicated ⭐ Favorite action with custom naming modal in `FullScreenCatalogExplorer`.
+  6. Bulk status probing, GitHub cloud sync, and channel deletion.
