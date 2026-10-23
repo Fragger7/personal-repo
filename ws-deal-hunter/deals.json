@@ -64,38 +64,6 @@
     "time_left": null
   },
   {
-    "id": "ebay_336429944282",
-    "source": "ebay",
-    "title": "Lenovo ThinkPad AMD Ryzen 7 Pro 4.40GHz Laptop 48GB RAM 4TB SSD Windows 11 ProOpens in a new window or tab",
-    "price": 369.99,
-    "url": "https://www.ebay.com/itm/336429944282",
-    "specs": {
-      "cpu": "AMD Ryzen 7/9 Zen 4/5",
-      "ram_gb": 48,
-      "ssd_gb": 4096,
-      "gpu": "NVIDIA RTX / Workstation GPU",
-      "screen": "15.6\" - 16\" Workstation Display",
-      "condition": "Used / Refurbished"
-    },
-    "fair_market_value": 830.0,
-    "estimated_profit": 460.01,
-    "arbitrage_margin_pct": 124.3,
-    "deal_score": 9.7,
-    "summary": "This listing features a legacy AMD Ryzen 7 PRO processor paired with Radeon Vega 8 graphics, placing it directly on the AMD Zen 2/3 hard blacklist. While the 48GB RAM and 4TB SSD offer generous storage and memory capacity, the outdated CPU architecture fails to meet baseline performance criteria for high-throughput developer workloads or local AI inference. Per system directives, legacy pre-Zen 4 AMD silicon triggers an automatic rejection regardless of price.",
-    "actionable_recommendation": "❌ REJECT / PASS: Blacklisted legacy AMD Zen 2/3 architecture with Radeon Vega 8 graphics.",
-    "confidence_score": 0.95,
-    "seller": "eBay Seller",
-    "location": "US",
-    "created_utc": "2026-10-21T13:57:12.551210+00:00",
-    "evaluated_at": "2026-10-21T13:57:32.540139+00:00",
-    "alerted": true,
-    "is_high_yield": true,
-    "raw_payload": null,
-    "is_auction": false,
-    "bid_count": null,
-    "time_left": null
-  },
-  {
     "id": "ebay_287661459388",
     "source": "ebay",
     "title": "New ListingLenovo P1 Gen3 Intel Xeon W-10855M 2.81GHz 32GB RAM 1TB SSD W11P *touchscreen***Opens in a new window or tab",
