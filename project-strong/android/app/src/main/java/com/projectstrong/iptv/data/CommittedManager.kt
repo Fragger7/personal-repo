@@ -118,6 +118,12 @@ data class CommittedRecord(
     val safeContent get() = content ?: ""
     val safeDateAdded get() = dateAdded ?: ""
     val isLocal get() = isLocalOnly == true
+    val isAuthenticActive: Boolean
+        get() {
+            val s = safeStatus
+            if (s.startsWith("🔴") || s.contains("Inactive", ignoreCase = true) || s.contains("Expired", ignoreCase = true) || s.contains("Blocked", ignoreCase = true) || s.contains("Dead", ignoreCase = true) || s.contains("Offline", ignoreCase = true) || s.contains("Error", ignoreCase = true)) return false
+            return s.startsWith("🟢") || s.contains("Active", ignoreCase = true)
+        }
 }
 
 object CommittedManager {

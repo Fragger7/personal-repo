@@ -69,8 +69,8 @@ fun GridCell(
 @Composable
 fun StatusBadge(status: String, width: Dp) {
     val (bgColor, textColor, borderColor) = when {
-        status.contains("Active", true) -> Triple(AppSuccessContainer, Color(0xFF34D399), AppSuccess.copy(alpha = 0.4f))
-        status.contains("Block", true) || status.contains("Fail", true) || status.contains("Expired", true) -> Triple(AppErrorContainer, Color(0xFFF87171), AppError.copy(alpha = 0.4f))
+        status.startsWith("🟢") || (status.contains("Active", true) && !status.contains("Inactive", true)) -> Triple(AppSuccessContainer, Color(0xFF34D399), AppSuccess.copy(alpha = 0.4f))
+        status.contains("Block", true) || status.contains("Fail", true) || status.contains("Expired", true) || status.contains("Inactive", true) -> Triple(AppErrorContainer, Color(0xFFF87171), AppError.copy(alpha = 0.4f))
         else -> Triple(AppWarningContainer, Color(0xFFFBBF24), AppWarning.copy(alpha = 0.4f))
     }
     
