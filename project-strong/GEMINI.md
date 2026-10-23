@@ -152,7 +152,16 @@ This document contains the complete system architecture, operational decisions, 
 
 ### K. Operational Intelligence Dashboard (`AnalyticsTab.kt`)
 * **Custom Compose Canvas Engineering**: Since Jetpack Compose lacks heavy built-in charting, the Analytics tab renders high-performance custom `Canvas` charts (`InteractivePieChart`, `SegmentedProgressBar`, `AnimatedHorizontalBarChart`) that strictly consume dynamic theme tokens (e.g. `AppPrimary`, `AppError`).
-* **Interactive Deep Linking**: Tapping any slice on a chart (e.g. "MaxOTT" or "Active") instantly modifies the shared `CommittedFilterStore` state and deep-routes the user back to `CommittedTab` with the exact filtered dataset isolated.
+* **Interactive Deep Linking**: Tapping any KPI card, media tag, bouquet bar, or pie slice (e.g. "MaxOTT" or "Active") instantly modifies the shared `CommittedFilterStore` state and deep-routes the user back to `CommittedTab` with the exact filtered dataset isolated.
+* **Memoized High-Performance Engine**: All aggregations are calculated once inside a single `remember(records.toList(), favoritesCount, vaultCount, archiveCount)` computation, ensuring zero frame drops or recomposition churn during scrolling.
+* **Telemetry & Forensic Metric Additions**:
+  * **Hero KPI Grid**: 4 interactive overview cards (Active Nodes with liveness %, Dead Weight, Total Catalog Assets with Live/VOD breakdown, and Max Hardware Concurrency Load).
+  * **Stream Egress & Ghost Line Inspector**: Segmented telemetry bar showing Verified Streams, HTTP 456 Ghost lines, HTTP 884 Anti-dump lockouts, and round-trip socket latency benchmarking.
+  * **Media Balance Bar**: Proportional Live Channels vs VOD ratio with quick-filter chips.
+  * **Subscription Expiry Horizon**: 7-tier distribution (Lifetime, MAC/No Expiry, Expired, <30d, 30-90d, 90-180d, 180d+).
+  * **Regional Bouquet Specialization**: Interactive horizontal distribution of regional bouquets (French, Arabic, Nordic, UK/US, etc.).
+  * **Euclidean Donut Tap Filtering**: Canvas touch events compute Euclidean radius ($r \in [r_{inner}, r_{outer}]$) to eliminate center-hole misclicks.
+  * **Adaptive Landscape Mode**: Dual-column layout on landscape orientation to maximize screen utilization.
 
 ### L. Dynamic Cascading Filters (`CommittedFilterStore`)
 * **Multi-Select Context-Aware Dropdowns**: Filters across `CommittedTab` use nested intersection logic to restrict dropdown choices dynamically based on the current active selections. 
