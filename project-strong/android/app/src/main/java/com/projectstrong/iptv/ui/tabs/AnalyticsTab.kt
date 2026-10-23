@@ -140,7 +140,7 @@ fun AnalyticsTab(onNavigateToCommitted: () -> Unit) {
 
         // Content Vectors
         val contentCounts = records.flatMap { it.safeContent.split(",").map { c -> c.trim() }.filter { c -> c.isNotEmpty() } }
-            .groupingBy { it }.eachCount().toList().sortedByDescending { it.second }.take(6)
+            .groupingBy { it }.eachCount().toList().sortedByDescending { it.second }.take(8)
 
         // Regional Bouquet Specialization (Demonym Intelligence)
         val regionalBouquets = records.mapNotNull { it.safeRegionalFocus }
@@ -421,7 +421,7 @@ fun AnalyticsTab(onNavigateToCommitted: () -> Unit) {
                             Box(modifier = Modifier.weight(1f)) {
                                 AnalyticsCard("Content Tags") {
                                     MiniDonutChart(
-                                        data = analytics.contentCounts.take(4),
+                                        data = analytics.contentCounts,
                                         onItemClick = { contentTag ->
                                             CommittedFilterStore.clear()
                                             CommittedFilterStore.content.value = setOf(contentTag)
@@ -540,7 +540,7 @@ fun AnalyticsTab(onNavigateToCommitted: () -> Unit) {
                     Box(modifier = Modifier.weight(1f)) {
                         AnalyticsCard("Content Tags") {
                             MiniDonutChart(
-                                data = analytics.contentCounts.take(4),
+                                data = analytics.contentCounts,
                                 onItemClick = { contentTag ->
                                     CommittedFilterStore.clear()
                                     CommittedFilterStore.content.value = setOf(contentTag)
@@ -983,7 +983,16 @@ fun MiniDonutChart(
     onItemClick: ((String) -> Unit)? = null
 ) {
     val total = data.sumOf { it.second }.toFloat()
-    val colors = listOf(AppPrimary, Color(0xFF14B8A6), Color(0xFF8B5CF6), Color(0xFFF59E0B), Color(0xFFEC4899))
+    val colors = listOf(
+        AppPrimary,
+        Color(0xFF14B8A6),
+        Color(0xFF8B5CF6),
+        Color(0xFFF59E0B),
+        Color(0xFFEC4899),
+        Color(0xFF3B82F6),
+        Color(0xFF10B981),
+        Color(0xFFF97316)
+    )
 
     val animationProgress = remember { Animatable(0f) }
     LaunchedEffect(data) {
@@ -1002,7 +1011,36 @@ fun MiniDonutChart(
 
     Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
         Box(modifier = Modifier.size(90.dp), contentAlignment = Alignment.Center) {
-            Canvas(modifier = Modifier.fillMaxSize()) {
+            Canvas(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .then(
+                        if (onItemClick != null) {
+                            Modifier.pointerInput(angles) {
+                                detectTapGestures { offset ->
+                                    val center = Offset(size.width / 2f, size.height / 2f)
+                                    val dx = offset.x - center.x
+                                    val dy = offset.y - center.y
+                                    val r = hypot(dx.toDouble(), dy.toDouble()).toFloat()
+                                    val outerR = min(size.width, size.height).toFloat() / 2f
+                                    val strokePx = 18.dp.toPx()
+                                    val innerR = outerR - strokePx
+
+                                    if (r in innerR..outerR) {
+                                        var tapAngle = Math.toDegrees(atan2(dy.toDouble(), dx.toDouble())).toFloat()
+                                        if (tapAngle < -90f) tapAngle += 360f
+
+                                        angles.forEach { (name, start, sweep) ->
+                                            if (tapAngle >= start && tapAngle < start + sweep) {
+                                                onItemClick(name)
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        } else Modifier
+                    )
+            ) {
                 val canvasSize = size.minDimension
                 val strokeWidth = 18.dp.toPx()
                 angles.forEachIndexed { index, (_, startAngle, sweepAngle) ->
