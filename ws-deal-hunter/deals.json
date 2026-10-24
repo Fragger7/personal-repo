@@ -704,38 +704,6 @@
     "time_left": null
   },
   {
-    "id": "ebay_335720448847",
-    "source": "ebay",
-    "title": "Dell 15.6\" FHD Touchscreen Light Gaming Business Laptop Up To 64GB RAM 4TB SSDOpens in a new window or tab",
-    "price": 269.99,
-    "url": "https://www.ebay.com/itm/335720448847",
-    "specs": {
-      "cpu": "Intel Core i7/i9 12th/13th-Gen H",
-      "ram_gb": 64,
-      "ssd_gb": 4096,
-      "gpu": "NVIDIA RTX / Workstation GPU",
-      "screen": "15.6\" - 16\" Workstation Display",
-      "condition": "Used / Refurbished"
-    },
-    "fair_market_value": 930.0,
-    "estimated_profit": 660.01,
-    "arbitrage_margin_pct": 244.5,
-    "deal_score": 10.0,
-    "summary": "This listing is a standard customizable eBay drop-down offer where the $269.99 base price applies to an under-spec entry tier with a legacy 11th-Gen or older low-power U-series CPU and sub-32GB RAM. Older U-series chips fail the modern CPU whitelist and lack sufficient throughput for compilation or local AI LLM workloads. Upgrading to 32GB+ RAM and higher SSD storage within the listing drop-down inflates the total cost well beyond the fair market value of the aging chassis.",
-    "actionable_recommendation": "❌ REJECT: Legacy CPU and sub-spec base configuration",
-    "confidence_score": 0.95,
-    "seller": "eBay Seller",
-    "location": "US",
-    "created_utc": "2026-09-11T18:39:47.723773+00:00",
-    "evaluated_at": "2026-09-11T18:40:30.522051+00:00",
-    "alerted": true,
-    "is_high_yield": true,
-    "raw_payload": null,
-    "is_auction": false,
-    "bid_count": null,
-    "time_left": null
-  },
-  {
     "id": "microcenter_5_463812",
     "source": "microcenter",
     "title": "Micro Center Clearance: Motherboard, CPU and 32gb DDR5 bundle 250K $499.99 or 270K $599.99 at Micro Center instore only",
