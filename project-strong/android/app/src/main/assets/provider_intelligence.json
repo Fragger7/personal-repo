@@ -2837,5 +2837,23 @@
         "regional_focus": null,
         "first_seen": "2026-10-04 05:36:02",
         "last_seen": "2026-10-04 05:36:02"
+    },
+    "kricket.avro.to": {
+        "domain": "kricket.avro.to",
+        "provider_name": "\ud83c\udfaf Identified: Magnum OTT (Golden)",
+        "server": null,
+        "cloudflare": "No",
+        "timezone": "UTC",
+        "metadata_message": null,
+        "server_protocol": "http",
+        "https_port": "443",
+        "rtmp_port": "25462",
+        "allowed_formats": "['m3u8', 'ts']",
+        "community_link": null,
+        "confidence": "Verified Brand (Committed Catalog)",
+        "evidence": "Discovered via verified committed node Magnum OTT (Golden)",
+        "regional_focus": null,
+        "first_seen": "2026-10-25 04:23:24",
+        "last_seen": "2026-10-25 04:23:24"
     }
 }
