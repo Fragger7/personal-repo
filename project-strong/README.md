@@ -108,6 +108,19 @@ A lightweight web application featuring multi-tiered async validation, automated
   * Instantly publishes formal GitHub Releases containing the raw unzipped binary (`app-release.apk`) to feed the in-app OTA Update Engine.
 
 
+## 🚀 Upcoming Active Backlog & Future Migration Plans
+
+1. **Dedicated Private Repository Migration (`project-strong` / Sherlock Streams)**:
+   * Decouple Sherlock Streams into a standalone private GitHub repository (`Fragger7/sherlock-streams`), following the successful TVMime migration blueprint.
+   * Eliminates the 2,000 min/mo Actions collision with `ws-deal-hunter` (which runs a 24/7 hourly cron scraper consuming ~1,800 min/mo).
+   * Grants total code & snapshot privacy while flattening directories from `personal-repo/project-strong/android` to standard `/android` root.
+2. **Foldable / Large-Screen Dual-Pane Adaptation**:
+   * For tablets and foldables exceeding 840dp width (`WindowWidthSizeClass.Expanded`), provide an optional layout toggle for side-by-side master-detail inspector.
+3. **Advanced Stream Output Formats & TLS Evasion**:
+   * Add custom TLS cipher suites and alternative stream format switching (`/live/{u}/{p}/{id}.ts` vs `.m3u8` vs `/play/`).
+
+---
+
 ## ☠️ 9. Buried Skeletons & Deep Engineering Constraints (AI Context)
 
 **CRITICAL**: Any AI agent or developer modifying this codebase MUST read this section to prevent introducing regressions into highly tuned, fragile subsystems.

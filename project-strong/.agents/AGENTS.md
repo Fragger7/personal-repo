@@ -310,9 +310,20 @@ Remove-Item -Recurse -Force "C:\Development\Apps\Project Strong\personal-repo-te
 
 ## 🚀 8. Upcoming Active Backlog & Next Implementation Tasks
 
-1. **Foldable / Large-Screen Dual-Pane Adaptation**:
+1. **Dedicated Private Repository Migration (`project-strong` / Sherlock Streams)**:
+   * **Core Objective**: Decouple Sherlock Streams from the `personal-repo` monorepo into its own dedicated private GitHub repository (following the successful `tvmime` standalone migration pattern).
+   * **Solves the Actions Quota Collision**: Leaves `ws-deal-hunter` in public `personal-repo` to freely consume ~1,800 min/mo for its 24/7 hourly cron scraper, while Sherlock Streams' private repo consumes only ~30–50 min/mo for on-demand APK compilation and weekly provider scrapes.
+   * **Full Code & Snapshot Privacy**: Secures forensic scrapers, raw source text archives (`sources/`), provider intelligence hashes, and app code in a private repository.
+   * **Flattens Directory Hierarchy**: Migrates from nested `personal-repo/project-strong/android` to standard top-level `/android` and `/app.py`.
+   * **Migration Architecture Checklist**:
+     * **Git Remote & Workflows**: Provision `Fragger7/sherlock-streams`, migrate CI/CD workflows (`android-build.yml`, `scrape-provider-intel.yml`) to repo root `.github/workflows/`, and update path triggers from `project-strong/android/**` to `android/**`.
+     * **GitHub Secrets & Keystores**: Transfer `RELEASE_KEYSTORE` and build secrets to the new private repository.
+     * **In-App Sync & Updater Slugs**: Update target repository slug in `AppUpdater.kt`, `CommittedManager.kt`, `VaultManager.kt`, and `FavoritesManager.kt` from `Fragger7/personal-repo` to the new repository name.
+     * **Private OTA Token Handling**: Update `AppUpdater.kt` to ensure OTA release queries authenticate cleanly with a fine-grained GitHub token (scoped strictly to `contents:read`), preventing HTTP 404 unauthenticated errors.
+     * **Agentic Directives & Workspace Root**: Update root `personal-repo/AGENTS.md` with the new canonical local path (e.g., `/Users/admin/Development/sherlock-streams`) and remote URL, ensuring all autonomous AI workflows seamlessly recognize the new boundary.
+2. **Foldable / Large-Screen Dual-Pane Adaptation**:
    * For tablets and foldables with screen width exceeding 840dp (`WindowWidthSizeClass.Expanded`), provide an optional layout toggle to enable side-by-side master-detail inspector layout, while preserving full-width mode for standard phone landscape displays.
-2. **Advanced Stream Output Formats & TLS Evasion**:
+3. **Advanced Stream Output Formats & TLS Evasion**:
    * Add options for custom TLS cipher suites and alternative stream format switching (`/live/{u}/{p}/{id}.ts` vs `.m3u8` vs `/play/`).
 
 
