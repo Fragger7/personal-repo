@@ -4,25 +4,24 @@ import android.app.Activity
 import android.content.Context
 import android.content.ContextWrapper
 import android.content.Intent
-import androidx.activity.compose.BackHandler
-import androidx.compose.ui.platform.LocalView
-import androidx.core.view.WindowCompat
-import androidx.core.view.WindowInsetsCompat
-import androidx.core.view.WindowInsetsControllerCompat
 import android.content.pm.ActivityInfo
 import android.net.Uri
 import android.view.ViewGroup
 import android.view.WindowManager
-
 import android.widget.FrameLayout
-import androidx.annotation.OptIn
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.*
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -38,6 +37,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -45,7 +45,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
-import com.projectstrong.iptv.ui.theme.*
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackException
@@ -60,6 +62,10 @@ import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
 import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
+import com.projectstrong.iptv.data.HistoryItem
+import com.projectstrong.iptv.data.PlayerHistoryManager
+import com.projectstrong.iptv.data.PlayerScope
+import com.projectstrong.iptv.ui.theme.*
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import okhttp3.OkHttpClient
@@ -95,17 +101,29 @@ private fun formatTime(millis: Long): String {
     }
 }
 
-@OptIn(UnstableApi::class)
+@androidx.annotation.OptIn(UnstableApi::class)
+@kotlin.OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun StreamPreviewDialog(
     streamUrl: String,
     streamName: String,
     streamId: String = "",
     categoryName: String = "",
+    scope: PlayerScope = PlayerScope.INSPECTOR,
     onDismiss: () -> Unit
 ) {
     val context = LocalContext.current
     val clipboardManager = LocalClipboardManager.current
+
+    // Reactive State for Active Channel (supports seamless in-player channel switching)
+    var currentStreamUrl by remember(streamUrl) { mutableStateOf(streamUrl) }
+    var currentStreamName by remember(streamName) { mutableStateOf(streamName) }
+    var currentStreamId by remember(streamId) { mutableStateOf(streamId) }
+    var currentCategoryName by remember(categoryName) { mutableStateOf(categoryName) }
+    var streamLoadStartTime by remember { mutableLongStateOf(System.currentTimeMillis()) }
+
+    // Watch History Overlay Sheet State
+    var showHistorySheet by remember { mutableStateOf(false) }
 
     var playStatus by remember { mutableStateOf(StreamPlayStatus.CONNECTING) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
@@ -133,8 +151,8 @@ fun StreamPreviewDialog(
     var controlsInteractionTrigger by remember { mutableLongStateOf(System.currentTimeMillis()) }
 
     // Auto-hide timer: Hides controls after 3 seconds of no interaction while video is playing
-    LaunchedEffect(showControls, controlsInteractionTrigger, isPlaying, playStatus) {
-        if (showControls && isPlaying && playStatus == StreamPlayStatus.PLAYING) {
+    LaunchedEffect(showControls, controlsInteractionTrigger, isPlaying, playStatus, showHistorySheet) {
+        if (showControls && isPlaying && playStatus == StreamPlayStatus.PLAYING && !showHistorySheet) {
             delay(3000)
             if (!isUserScrubbing) {
                 showControls = false
@@ -142,12 +160,12 @@ fun StreamPreviewDialog(
         }
     }
 
-    val streamFormat = remember(streamUrl) {
+    val streamFormat = remember(currentStreamUrl) {
         when {
-            streamUrl.contains(".m3u8", ignoreCase = true) -> "HLS Multi-Bitrate (.m3u8)"
-            streamUrl.contains(".ts", ignoreCase = true) -> "MPEG-TS Live Stream (.ts)"
-            streamUrl.contains(".mp4", ignoreCase = true) -> "MPEG-4 Container (.mp4)"
-            streamUrl.contains(".mkv", ignoreCase = true) -> "Matroska Video (.mkv)"
+            currentStreamUrl.contains(".m3u8", ignoreCase = true) -> "HLS Multi-Bitrate (.m3u8)"
+            currentStreamUrl.contains(".ts", ignoreCase = true) -> "MPEG-TS Live Stream (.ts)"
+            currentStreamUrl.contains(".mp4", ignoreCase = true) -> "MPEG-4 Container (.mp4)"
+            currentStreamUrl.contains(".mkv", ignoreCase = true) -> "Matroska Video (.mkv)"
             else -> "IPTV Transport Stream"
         }
     }
@@ -197,6 +215,56 @@ fun StreamPreviewDialog(
             }
     }
 
+    // Channel Switching Handler
+    val switchChannel: (HistoryItem) -> Unit = { targetItem ->
+        if (targetItem.streamUrl.isNotBlank() && targetItem.streamUrl != currentStreamUrl) {
+            currentStreamUrl = targetItem.streamUrl
+            currentStreamName = targetItem.streamName
+            currentStreamId = targetItem.streamId
+            currentCategoryName = targetItem.categoryName
+            controlsInteractionTrigger = System.currentTimeMillis()
+        }
+    }
+
+    // Manage Media Loading & History Recording when active channel URL changes
+    LaunchedEffect(currentStreamUrl) {
+        if (currentStreamUrl.isBlank()) return@LaunchedEffect
+
+        // 1. Record into PlayerHistoryManager for active scope
+        PlayerHistoryManager.recordChannel(
+            scope = scope,
+            item = HistoryItem(
+                streamUrl = currentStreamUrl,
+                streamName = currentStreamName,
+                streamId = currentStreamId,
+                categoryName = currentCategoryName
+            )
+        )
+
+        // 2. Reset diagnostic telemetry
+        playStatus = StreamPlayStatus.CONNECTING
+        errorMessage = null
+        connectionLatencyMs = 0L
+        streamLoadStartTime = System.currentTimeMillis()
+        currentBitrateKbps = 0L
+        bufferHealthSeconds = 0f
+        videoResolution = "Detecting..."
+        videoCodec = "Analyzing..."
+        audioCodec = "Analyzing..."
+        currentPositionMs = 0L
+        durationMs = 0L
+
+        // 3. Prepare and stream via ExoPlayer
+        try {
+            val mediaItem = MediaItem.fromUri(Uri.parse(currentStreamUrl))
+            exoPlayer.setMediaItem(mediaItem)
+            exoPlayer.prepare()
+            exoPlayer.play()
+        } catch (e: Exception) {
+            playStatus = StreamPlayStatus.ERROR
+            errorMessage = e.localizedMessage ?: "Failed to load stream"
+        }
+    }
 
     val activity = remember(context) { context.findActivity() }
     // Keep Screen On while previewing stream
@@ -268,10 +336,8 @@ fun StreamPreviewDialog(
         }
     }
 
-    // Monitor Latency & Playback Events
-    DisposableEffect(streamUrl) {
-        val startTime = System.currentTimeMillis()
-
+    // Monitor Latency & Playback Events on ExoPlayer
+    DisposableEffect(exoPlayer) {
         val listener = object : Player.Listener {
             override fun onPlaybackStateChanged(playbackState: Int) {
                 when (playbackState) {
@@ -281,7 +347,7 @@ fun StreamPreviewDialog(
                     Player.STATE_READY -> {
                         playStatus = StreamPlayStatus.PLAYING
                         if (connectionLatencyMs == 0L) {
-                            connectionLatencyMs = System.currentTimeMillis() - startTime
+                            connectionLatencyMs = (System.currentTimeMillis() - streamLoadStartTime).coerceAtLeast(1L)
                         }
                     }
                     Player.STATE_ENDED -> {
@@ -364,10 +430,6 @@ fun StreamPreviewDialog(
 
         exoPlayer.addListener(listener)
 
-        val mediaItem = MediaItem.fromUri(Uri.parse(streamUrl))
-        exoPlayer.setMediaItem(mediaItem)
-        exoPlayer.prepare()
-
         onDispose {
             exoPlayer.removeListener(listener)
             exoPlayer.stop()
@@ -376,8 +438,13 @@ fun StreamPreviewDialog(
     }
 
     BackHandler {
-        onDismiss()
+        if (showHistorySheet) {
+            showHistorySheet = false
+        } else {
+            onDismiss()
+        }
     }
+
     Box(modifier = Modifier.fillMaxSize()) {
         Surface(
             modifier = Modifier
@@ -423,14 +490,18 @@ fun StreamPreviewDialog(
                             Column {
                                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                                     Text(
-                                        text = "Stream Inspector",
+                                        text = when (scope) {
+                                            PlayerScope.INSPECTOR -> "Stream Inspector"
+                                            PlayerScope.VAULT -> "Vault Player"
+                                            PlayerScope.FAVORITES -> "Favorites Player"
+                                        },
                                         color = AppPrimary,
                                         style = MaterialTheme.typography.labelMedium,
                                         fontWeight = FontWeight.Bold
                                     )
-                                    if (categoryName.isNotEmpty()) {
+                                    if (currentCategoryName.isNotEmpty()) {
                                         Text(
-                                            text = "• $categoryName",
+                                            text = "• $currentCategoryName",
                                             color = AppTextSecondary,
                                             style = MaterialTheme.typography.labelSmall,
                                             maxLines = 1,
@@ -439,7 +510,7 @@ fun StreamPreviewDialog(
                                     }
                                 }
                                 Text(
-                                    text = streamName,
+                                    text = currentStreamName,
                                     color = AppTextPrimary,
                                     style = MaterialTheme.typography.titleMedium,
                                     fontWeight = FontWeight.Bold,
@@ -449,56 +520,56 @@ fun StreamPreviewDialog(
                             }
                         }
 
-                        // Live Status Pill
+                        // Live Play Status Pill
                         Surface(
-                            shape = RoundedCornerShape(12.dp),
+                            shape = RoundedCornerShape(16.dp),
                             color = when (playStatus) {
                                 StreamPlayStatus.PLAYING -> AppSuccess.copy(alpha = 0.15f)
                                 StreamPlayStatus.CONNECTING, StreamPlayStatus.BUFFERING -> AppWarning.copy(alpha = 0.15f)
                                 StreamPlayStatus.ERROR -> AppError.copy(alpha = 0.15f)
-                                StreamPlayStatus.IDLE -> AppSurfaceBorder.copy(alpha = 0.3f)
+                                else -> AppSurfaceBorder
                             },
-                            border = androidx.compose.foundation.BorderStroke(
+                            border = BorderStroke(
                                 1.dp,
                                 when (playStatus) {
-                                    StreamPlayStatus.PLAYING -> AppSuccess
-                                    StreamPlayStatus.CONNECTING, StreamPlayStatus.BUFFERING -> AppWarning
-                                    StreamPlayStatus.ERROR -> AppError
-                                    StreamPlayStatus.IDLE -> AppSurfaceBorder
+                                    StreamPlayStatus.PLAYING -> AppSuccess.copy(alpha = 0.5f)
+                                    StreamPlayStatus.CONNECTING, StreamPlayStatus.BUFFERING -> AppWarning.copy(alpha = 0.5f)
+                                    StreamPlayStatus.ERROR -> AppError.copy(alpha = 0.5f)
+                                    else -> AppSurfaceBorder
                                 }
                             )
                         ) {
                             Row(
-                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.spacedBy(6.dp)
                             ) {
                                 Box(
                                     modifier = Modifier
-                                        .size(8.dp)
+                                        .size(7.dp)
                                         .clip(CircleShape)
                                         .background(
                                             when (playStatus) {
                                                 StreamPlayStatus.PLAYING -> AppSuccess
                                                 StreamPlayStatus.CONNECTING, StreamPlayStatus.BUFFERING -> AppWarning
                                                 StreamPlayStatus.ERROR -> AppError
-                                                StreamPlayStatus.IDLE -> AppTextMuted
+                                                else -> Color.Gray
                                             }
                                         )
                                 )
                                 Text(
                                     text = when (playStatus) {
-                                        StreamPlayStatus.PLAYING -> "LIVE PLAYING"
-                                        StreamPlayStatus.CONNECTING -> "CONNECTING"
-                                        StreamPlayStatus.BUFFERING -> "BUFFERING"
-                                        StreamPlayStatus.ERROR -> "STREAM FAILED"
-                                        StreamPlayStatus.IDLE -> "PAUSED"
+                                        StreamPlayStatus.PLAYING -> "LIVE"
+                                        StreamPlayStatus.CONNECTING -> "SYNCING"
+                                        StreamPlayStatus.BUFFERING -> "BUFFER"
+                                        StreamPlayStatus.ERROR -> "FAILED"
+                                        StreamPlayStatus.IDLE -> "IDLE"
                                     },
                                     color = when (playStatus) {
                                         StreamPlayStatus.PLAYING -> AppSuccess
                                         StreamPlayStatus.CONNECTING, StreamPlayStatus.BUFFERING -> AppWarning
                                         StreamPlayStatus.ERROR -> AppError
-                                        StreamPlayStatus.IDLE -> AppTextSecondary
+                                        else -> Color.Gray
                                     },
                                     style = MaterialTheme.typography.labelSmall,
                                     fontWeight = FontWeight.Bold
@@ -508,13 +579,11 @@ fun StreamPreviewDialog(
                     }
                 }
 
-                // Video Player Stage (Expands to fill entire screen in Full-Screen Mode)
+                // Video Display Canvas with Floating Overlay Controls
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .then(
-                            if (isFullScreen) Modifier.fillMaxSize() else Modifier.height(240.dp)
-                        )
+                        .then(if (isFullScreen) Modifier.fillMaxSize() else Modifier.height(280.dp))
                         .background(Color.Black)
                         .clickable(
                             interactionSource = remember { MutableInteractionSource() },
@@ -598,32 +667,36 @@ fun StreamPreviewDialog(
                                     style = MaterialTheme.typography.titleMedium
                                 )
                                 Text(
-                                    text = errorMessage ?: "Unable to establish video pipe.",
+                                    text = errorMessage ?: "Unknown error while attempting to decode stream.",
                                     color = Color(0xFFCBD5E1),
                                     style = MaterialTheme.typography.bodySmall,
-                                    lineHeight = 16.sp,
-                                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                                    maxLines = 3,
+                                    overflow = TextOverflow.Ellipsis
                                 )
-                                Spacer(modifier = Modifier.height(4.dp))
                                 Button(
                                     onClick = {
-                                        errorMessage = null
+                                        controlsInteractionTrigger = System.currentTimeMillis()
                                         playStatus = StreamPlayStatus.CONNECTING
+                                        errorMessage = null
+                                        connectionLatencyMs = 0L
+                                        streamLoadStartTime = System.currentTimeMillis()
+                                        val mediaItem = MediaItem.fromUri(Uri.parse(currentStreamUrl))
+                                        exoPlayer.setMediaItem(mediaItem)
                                         exoPlayer.prepare()
                                         exoPlayer.play()
                                     },
-                                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1E293B)),
+                                    colors = ButtonDefaults.buttonColors(containerColor = AppPrimary),
                                     shape = RoundedCornerShape(8.dp)
                                 ) {
-                                    Icon(Icons.Default.Refresh, contentDescription = null, tint = Color.White, modifier = Modifier.size(16.dp))
+                                    Icon(Icons.Default.Refresh, contentDescription = "Retry", modifier = Modifier.size(16.dp))
                                     Spacer(modifier = Modifier.width(6.dp))
-                                    Text("Retry Connection", color = Color.White, style = MaterialTheme.typography.labelMedium)
+                                    Text("Retry Connection", fontSize = 12.sp)
                                 }
                             }
                         }
                     }
 
-                    // Top Floating Controls in Fullscreen (Auto-hides with smooth animation)
+                    // Floating Fullscreen Top Info HUD
                     if (isFullScreen) {
                         androidx.compose.animation.AnimatedVisibility(
                             visible = showControls,
@@ -651,7 +724,7 @@ fun StreamPreviewDialog(
                                             .background(Color(0xFF34D399))
                                     )
                                     Text(
-                                        text = streamName,
+                                        text = currentStreamName,
                                         color = Color.White,
                                         fontWeight = FontWeight.Bold,
                                         style = MaterialTheme.typography.titleSmall,
@@ -672,7 +745,274 @@ fun StreamPreviewDialog(
                         }
                     }
 
-                    // Rich Bottom Player Action & Track Bar Bar (Auto-hides with smooth animation)
+                    // Watch History Bottom Overlay Card (Option A)
+                    if (showHistorySheet) {
+                        // Dismiss scrim
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(Color.Black.copy(alpha = 0.5f))
+                                .clickable(
+                                    interactionSource = remember { MutableInteractionSource() },
+                                    indication = null
+                                ) {
+                                    showHistorySheet = false
+                                    controlsInteractionTrigger = System.currentTimeMillis()
+                                }
+                        )
+                    }
+
+                    androidx.compose.animation.AnimatedVisibility(
+                        visible = showHistorySheet,
+                        enter = fadeIn() + slideInVertically { it / 2 },
+                        exit = fadeOut() + slideOutVertically { it / 2 },
+                        modifier = Modifier
+                            .align(Alignment.BottomCenter)
+                            .fillMaxWidth()
+                            .padding(horizontal = 12.dp, vertical = 6.dp)
+                            .padding(bottom = 54.dp) // Sits neatly above the bottom controls bar
+                    ) {
+                        Surface(
+                            shape = RoundedCornerShape(16.dp),
+                            color = Color(0xFF0F172A).copy(alpha = 0.96f),
+                            border = BorderStroke(1.dp, Color(0xFF334155)),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable(
+                                    interactionSource = remember { MutableInteractionSource() },
+                                    indication = null
+                                ) { /* Consume tap inside sheet */ }
+                        ) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(14.dp)
+                            ) {
+                                // Header: Title, Scope Badge, Clear All, Close
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                    ) {
+                                        Icon(
+                                            Icons.Default.History,
+                                            contentDescription = "Watch History",
+                                            tint = Color(0xFF38BDF8),
+                                            modifier = Modifier.size(20.dp)
+                                        )
+                                        Text(
+                                            text = "Watch History",
+                                            color = Color.White,
+                                            style = MaterialTheme.typography.titleMedium,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                        Surface(
+                                            shape = RoundedCornerShape(6.dp),
+                                            color = Color(0xFF1E293B)
+                                        ) {
+                                            Text(
+                                                text = when (scope) {
+                                                    PlayerScope.INSPECTOR -> "Inspector"
+                                                    PlayerScope.VAULT -> "Vault"
+                                                    PlayerScope.FAVORITES -> "Favorites"
+                                                },
+                                                color = Color(0xFF94A3B8),
+                                                fontSize = 11.sp,
+                                                fontWeight = FontWeight.SemiBold,
+                                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                            )
+                                        }
+                                    }
+
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                    ) {
+                                        val currentHistory = PlayerHistoryManager.getHistory(scope)
+                                        if (currentHistory.isNotEmpty()) {
+                                            TextButton(
+                                                onClick = {
+                                                    PlayerHistoryManager.clearHistory(scope)
+                                                    ToastManager.info("Watch history cleared")
+                                                    controlsInteractionTrigger = System.currentTimeMillis()
+                                                },
+                                                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
+                                                colors = ButtonDefaults.textButtonColors(contentColor = Color(0xFFF87171))
+                                            ) {
+                                                Icon(
+                                                    Icons.Default.DeleteSweep,
+                                                    contentDescription = "Clear All",
+                                                    modifier = Modifier.size(16.dp)
+                                                )
+                                                Spacer(modifier = Modifier.width(4.dp))
+                                                Text(
+                                                    text = "Clear All",
+                                                    fontSize = 12.sp,
+                                                    fontWeight = FontWeight.Bold
+                                                )
+                                            }
+                                        }
+
+                                        IconButton(
+                                            onClick = {
+                                                showHistorySheet = false
+                                                controlsInteractionTrigger = System.currentTimeMillis()
+                                            },
+                                            modifier = Modifier.size(28.dp)
+                                        ) {
+                                            Icon(
+                                                Icons.Default.Close,
+                                                contentDescription = "Close",
+                                                tint = Color(0xFF94A3B8),
+                                                modifier = Modifier.size(18.dp)
+                                            )
+                                        }
+                                    }
+                                }
+
+                                Spacer(modifier = Modifier.height(8.dp))
+
+                                val historyItems = PlayerHistoryManager.getHistory(scope)
+                                if (historyItems.isEmpty()) {
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(vertical = 24.dp),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Text(
+                                            text = "No channels in watch history yet for this section.",
+                                            color = Color(0xFF64748B),
+                                            style = MaterialTheme.typography.bodySmall
+                                        )
+                                    }
+                                } else {
+                                    Text(
+                                        text = "Tap to switch • Long-press to remove",
+                                        color = Color(0xFF64748B),
+                                        fontSize = 10.sp,
+                                        modifier = Modifier.padding(bottom = 6.dp)
+                                    )
+
+                                    LazyColumn(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .heightIn(max = 240.dp),
+                                        verticalArrangement = Arrangement.spacedBy(6.dp)
+                                    ) {
+                                        items(historyItems, key = { it.streamUrl }) { item ->
+                                            val isCurrent = item.streamUrl == currentStreamUrl
+                                            Surface(
+                                                shape = RoundedCornerShape(8.dp),
+                                                color = if (isCurrent) Color(0xFF1E293B) else Color(0xFF161E2E),
+                                                border = BorderStroke(
+                                                    1.dp,
+                                                    if (isCurrent) Color(0xFF38BDF8) else Color(0xFF334155).copy(alpha = 0.5f)
+                                                ),
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .combinedClickable(
+                                                        onClick = {
+                                                            switchChannel(item)
+                                                            showHistorySheet = false
+                                                            controlsInteractionTrigger = System.currentTimeMillis()
+                                                        },
+                                                        onLongClick = {
+                                                            PlayerHistoryManager.removeChannel(scope, item)
+                                                            ToastManager.info("Removed '${item.streamName}' from history")
+                                                            controlsInteractionTrigger = System.currentTimeMillis()
+                                                        }
+                                                    )
+                                            ) {
+                                                Row(
+                                                    modifier = Modifier
+                                                        .fillMaxWidth()
+                                                        .padding(horizontal = 10.dp, vertical = 8.dp),
+                                                    verticalAlignment = Alignment.CenterVertically,
+                                                    horizontalArrangement = Arrangement.SpaceBetween
+                                                ) {
+                                                    Row(
+                                                        verticalAlignment = Alignment.CenterVertically,
+                                                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                                        modifier = Modifier.weight(1f)
+                                                    ) {
+                                                        if (isCurrent) {
+                                                            Box(
+                                                                modifier = Modifier
+                                                                    .size(8.dp)
+                                                                    .clip(CircleShape)
+                                                                    .background(Color(0xFF34D399))
+                                                            )
+                                                        }
+                                                        Column(modifier = Modifier.weight(1f)) {
+                                                            Text(
+                                                                text = item.streamName,
+                                                                color = if (isCurrent) Color(0xFF38BDF8) else Color.White,
+                                                                fontWeight = if (isCurrent) FontWeight.Bold else FontWeight.Medium,
+                                                                fontSize = 13.sp,
+                                                                maxLines = 1,
+                                                                overflow = TextOverflow.Ellipsis
+                                                            )
+                                                            if (item.categoryName.isNotBlank()) {
+                                                                Text(
+                                                                    text = item.categoryName,
+                                                                    color = Color(0xFF94A3B8),
+                                                                    fontSize = 11.sp,
+                                                                    maxLines = 1,
+                                                                    overflow = TextOverflow.Ellipsis
+                                                                )
+                                                            }
+                                                        }
+                                                    }
+
+                                                    Row(
+                                                        verticalAlignment = Alignment.CenterVertically,
+                                                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                                    ) {
+                                                        if (isCurrent) {
+                                                            Surface(
+                                                                shape = RoundedCornerShape(4.dp),
+                                                                color = Color(0xFF065F46).copy(alpha = 0.7f)
+                                                            ) {
+                                                                Text(
+                                                                    text = "PLAYING",
+                                                                    color = Color(0xFF34D399),
+                                                                    fontSize = 9.sp,
+                                                                    fontWeight = FontWeight.Bold,
+                                                                    modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
+                                                                )
+                                                            }
+                                                        }
+                                                        IconButton(
+                                                            onClick = {
+                                                                PlayerHistoryManager.removeChannel(scope, item)
+                                                                ToastManager.info("Removed '${item.streamName}' from history")
+                                                                controlsInteractionTrigger = System.currentTimeMillis()
+                                                            },
+                                                            modifier = Modifier.size(24.dp)
+                                                        ) {
+                                                            Icon(
+                                                                Icons.Default.Close,
+                                                                contentDescription = "Remove",
+                                                                tint = Color(0xFF64748B),
+                                                                modifier = Modifier.size(14.dp)
+                                                            )
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // Rich Bottom Player Action & Track Bar (Auto-hides with smooth animation)
                     androidx.compose.animation.AnimatedVisibility(
                         visible = showControls,
                         enter = fadeIn() + slideInVertically { it },
@@ -733,10 +1073,11 @@ fun StreamPreviewDialog(
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
-                                // Left Actions: Play/Pause, Mute, Aspect, Sync
+                                // Left Actions: Play/Pause, Mute, Aspect, Sync, Last Channel, Watch History
                                 Row(
                                     verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                    modifier = Modifier.weight(1f, fill = false).horizontalScroll(rememberScrollState())
                                 ) {
                                     PlayerLabeledButton(
                                         icon = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
@@ -788,6 +1129,36 @@ fun StreamPreviewDialog(
                                             exoPlayer.play()
                                         }
                                     )
+
+                                    // 1. Last Channel Button (Immediately to the Right of Sync)
+                                    val lastChannel = PlayerHistoryManager.getLastChannel(scope, currentStreamUrl)
+                                    PlayerLabeledButton(
+                                        icon = Icons.Default.FastRewind,
+                                        label = "Last",
+                                        tint = if (lastChannel != null) Color(0xFFFBBF24) else Color(0xFF64748B),
+                                        enabled = lastChannel != null,
+                                        onClick = {
+                                            controlsInteractionTrigger = System.currentTimeMillis()
+                                            if (lastChannel != null) {
+                                                switchChannel(lastChannel)
+                                                ToastManager.info("Switched to: ${lastChannel.streamName}")
+                                            } else {
+                                                ToastManager.info("No previous channel")
+                                            }
+                                        }
+                                    )
+
+                                    // 2. Watch History Button (Immediately to the Right of Last Channel)
+                                    val historyCount = PlayerHistoryManager.getHistory(scope).size
+                                    PlayerLabeledButton(
+                                        icon = Icons.Default.History,
+                                        label = if (historyCount > 0) "History ($historyCount)" else "History",
+                                        tint = if (showHistorySheet) Color(0xFF38BDF8) else Color.White,
+                                        onClick = {
+                                            controlsInteractionTrigger = System.currentTimeMillis()
+                                            showHistorySheet = !showHistorySheet
+                                        }
+                                    )
                                 }
 
                                 // Right Actions: Copy, External, Fullscreen
@@ -801,7 +1172,7 @@ fun StreamPreviewDialog(
                                         tint = Color(0xFF94A3B8),
                                         onClick = {
                                             controlsInteractionTrigger = System.currentTimeMillis()
-                                            clipboardManager.setText(AnnotatedString(streamUrl))
+                                            clipboardManager.setText(AnnotatedString(currentStreamUrl))
                                             showCopiedToast = true
                                         }
                                     )
@@ -814,7 +1185,7 @@ fun StreamPreviewDialog(
                                             controlsInteractionTrigger = System.currentTimeMillis()
                                             try {
                                                 val intent = Intent(Intent.ACTION_VIEW).apply {
-                                                    setDataAndType(Uri.parse(streamUrl), "video/*")
+                                                    setDataAndType(Uri.parse(currentStreamUrl), "video/*")
                                                     addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                                                 }
                                                 context.startActivity(Intent.createChooser(intent, "Play with External Player"))
@@ -861,7 +1232,7 @@ fun StreamPreviewDialog(
                         Surface(
                             shape = RoundedCornerShape(12.dp),
                             color = AppSurface,
-                            border = androidx.compose.foundation.BorderStroke(1.dp, AppSurfaceBorder),
+                            border = BorderStroke(1.dp, AppSurfaceBorder),
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -924,7 +1295,7 @@ fun StreamPreviewDialog(
                         Surface(
                             shape = RoundedCornerShape(10.dp),
                             color = AppSurface,
-                            border = androidx.compose.foundation.BorderStroke(1.dp, AppSurfaceBorder),
+                            border = BorderStroke(1.dp, AppSurfaceBorder),
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             Column(modifier = Modifier.padding(10.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -940,14 +1311,14 @@ fun StreamPreviewDialog(
                                         fontWeight = FontWeight.Bold
                                     )
                                     Text(
-                                        text = "ID: $streamId",
+                                        text = "ID: $currentStreamId",
                                         color = AppPrimary,
                                         style = MaterialTheme.typography.labelSmall,
                                         fontFamily = FontFamily.Monospace
                                     )
                                 }
                                 Text(
-                                    text = streamUrl,
+                                    text = currentStreamUrl,
                                     color = AppTextPrimary,
                                     style = MaterialTheme.typography.bodySmall,
                                     fontFamily = FontFamily.Monospace,
@@ -968,12 +1339,13 @@ private fun PlayerLabeledButton(
     icon: ImageVector,
     label: String,
     tint: Color,
+    enabled: Boolean = true,
     onClick: () -> Unit
 ) {
     Surface(
         shape = RoundedCornerShape(6.dp),
-        color = Color(0xFF1E293B).copy(alpha = 0.6f),
-        modifier = Modifier.clickable(onClick = onClick)
+        color = if (enabled) Color(0xFF1E293B).copy(alpha = 0.6f) else Color(0xFF1E293B).copy(alpha = 0.25f),
+        modifier = Modifier.clickable(enabled = enabled, onClick = onClick)
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -982,12 +1354,12 @@ private fun PlayerLabeledButton(
             Icon(
                 imageVector = icon,
                 contentDescription = label,
-                tint = tint,
+                tint = if (enabled) tint else Color(0xFF475569),
                 modifier = Modifier.size(16.dp)
             )
             Text(
                 text = label,
-                color = Color.White,
+                color = if (enabled) Color.White else Color(0xFF64748B),
                 fontSize = 9.sp,
                 fontWeight = FontWeight.Medium,
                 maxLines = 1
@@ -998,7 +1370,7 @@ private fun PlayerLabeledButton(
 
 @Composable
 private fun DiagnosticMetricRow(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    icon: ImageVector,
     iconColor: Color,
     label: String,
     value: String

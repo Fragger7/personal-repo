@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.sp
 import com.projectstrong.iptv.network.IPTVClient
 import com.projectstrong.iptv.data.VaultManager
 import com.projectstrong.iptv.data.FavoritesManager
+import com.projectstrong.iptv.data.PlayerScope
 import com.projectstrong.iptv.ui.theme.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -714,6 +715,7 @@ fun FullScreenCatalogExplorer(
             streamName = channel.name,
             streamId = channel.streamId,
             categoryName = catName,
+            scope = PlayerScope.INSPECTOR,
             onDismiss = { previewChannel = null }
         )
     }

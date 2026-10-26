@@ -170,6 +170,7 @@ object VaultManager {
     fun lock() {
         isUnlocked = false
         currentSessionPassword = null
+        PlayerHistoryManager.clearVaultHistory()
     }
 
     fun updateLastActive() {

@@ -75,6 +75,7 @@ class MainActivity : ComponentActivity() {
         com.projectstrong.iptv.data.FavoritesManager.init(applicationContext)
         com.projectstrong.iptv.data.SettingsManager.init(applicationContext)
         com.projectstrong.iptv.data.ProviderIntelligenceManager.init(applicationContext)
+        com.projectstrong.iptv.data.PlayerHistoryManager.init(applicationContext)
 
         // Setup reactive network callback to dynamically track VPN / WiFi / Cellular / Offline transitions
         connectivityManager = getSystemService(Context.CONNECTIVITY_SERVICE) as? ConnectivityManager
@@ -173,6 +174,7 @@ class MainActivity : ComponentActivity() {
                                     streamName = streamPreviewState.streamName,
                                     streamId = streamPreviewState.streamId,
                                     categoryName = streamPreviewState.categoryName,
+                                    scope = streamPreviewState.scope,
                                     onDismiss = { streamPreviewState.hide() }
                                 )
                             }

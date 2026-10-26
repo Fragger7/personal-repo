@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.sp
 import com.projectstrong.iptv.data.DataStore
 import com.projectstrong.iptv.data.FavoriteItem
 import com.projectstrong.iptv.data.FavoritesManager
+import com.projectstrong.iptv.data.PlayerScope
 import com.projectstrong.iptv.ui.components.*
 import com.projectstrong.iptv.ui.state.LocalStreamPreviewState
 import com.projectstrong.iptv.ui.theme.*
@@ -1029,7 +1030,8 @@ fun FavoritesTab() {
                                                         streamUrl = item.directUrl,
                                                         streamName = item.displayName,
                                                         streamId = item.streamId,
-                                                        categoryName = item.categoryName.ifEmpty { "Favorite Channel" }
+                                                        categoryName = item.categoryName.ifEmpty { "Favorite Channel" },
+                                                        scope = PlayerScope.FAVORITES
                                                     )
                                                 }
                                             )

@@ -20,8 +20,14 @@ The native Android app (`/android`) runs directly on mobile/residential IP conne
   * Hardware-accelerated direct stream playback with custom evasion user-agent (`IPTVSmartersPro/1.1.1`) and software decoder fallback.
   * True full-screen mode linked with sensor landscape orientation (`SCREEN_ORIENTATION_SENSOR_LANDSCAPE`).
   * Live forensic telemetry HUD: Bitrate throughput (`kbps` / `Mbps`), buffer health cushion (`seconds ahead`), video resolution, video/audio codecs, and socket latency.
-  * Clear labeled controls: Play/Pause, Mute/Unmute, Aspect Ratio (Fit/Fill/Zoom), Live Re-Sync, Copy URL, and Open in External Player (VLC / MX Player).
+  * Clear labeled controls: Play/Pause, Mute/Unmute, Aspect Ratio (Fit/Fill/Zoom), Live Re-Sync, Last Channel (Recall), Watch History, Copy URL, and Open in External Player (VLC / MX Player).
   * Scrub slider with dynamic time formatting (`mm:ss` / `hh:mm:ss`) for non-live and catchup streams.
+* **Instant Last Channel Recall & Scoped Watch History Engine (`PlayerHistoryManager.kt`)**:
+  * **Instant TV Recall ("Last" Button)**: Toggles seamlessly between current and previously watched channels directly on the active ExoPlayer instance with zero dialog reload. Positioned immediately to the right of the Sync button on the player controls HUD.
+  * **7-Item Rolling MRU History & De-duplication**: Tracks up to 7 recently played channels with automatic Most-Recently-Used promotion and FIFO eviction.
+  * **Zero Cross-Contamination / 3-Tier Player Scoping**: Strictly isolates watch history between Stream Inspector, Vault, and Favorites (`PlayerScope.INSPECTOR`, `PlayerScope.VAULT`, `PlayerScope.FAVORITES`).
+  * **Zero-Knowledge Vault Isolation**: Vault history is held in-memory session only and auto-wiped whenever the Vault locks or times out to preserve AEAD cryptography without plaintext disk leakage. Inspector and Favorites history persist across app restarts.
+  * **Frosted Bottom Sheet Overlay**: In-player overlay with "PLAYING" badge, 1-tap channel switching, long-press removal, inline individual delete icons, and 1-tap "Clear All" history wipe.
 * **16-Column Enterprise Master Grid & Detail Snapping**:
   * High-density horizontal `LazyColumn` grids with multi-column sorting (Date Added, Status, Type, Sync Status, Host, Provider, Username, Password, MAC, Channels, VODs, Days Left, Expires, Connections, Timezone, Notes).
   * Master-Detail navigation with auto-scrolling to the deep-dive inspector drawer.

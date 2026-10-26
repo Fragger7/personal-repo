@@ -304,6 +304,7 @@ Remove-Item -Recurse -Force "C:\Development\Apps\Project Strong\personal-repo-te
 | **Zero-Knowledge AES-256 Encrypted Channel Vault** | `VaultManager.kt`, `VaultTab.kt`, `vault.json`, PBKDF2-HMAC-SHA256, GCM auth tag integrity, auto-lock | 🟢 **Verified & Live** |
 | **Enterprise Vault Data Grid & Bulk Multi-Select** | `VaultTab.kt`, `GridActionIconButton`, in-row cloud push, row selection, bulk check/delete/push floating bar | 🟢 **Verified & Live** |
 | **Native SwiftKey Incognito & IME Privacy Isolation** | `IncognitoPasswordTextField.kt`, `IncognitoEditText`, `IME_FLAG_NO_PERSONALIZED_LEARNING`, `setLines(1)` masking | 🟢 **Verified & Live** |
+| **Last Channel Recall & Scoped Watch History Engine** | `PlayerHistoryManager.kt`, `StreamPreviewDialog.kt`, `StreamPreviewState.kt`, `VaultManager.kt`, 3-tier scoping, 7-item MRU FIFO, long-press deletion, clear-all | 🟢 **Verified & Live** |
 
 ---
 

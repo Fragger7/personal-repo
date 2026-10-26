@@ -25,6 +25,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.projectstrong.iptv.data.DataStore
+import com.projectstrong.iptv.data.PlayerScope
 import com.projectstrong.iptv.data.VaultItem
 import com.projectstrong.iptv.data.VaultManager
 import com.projectstrong.iptv.ui.components.*
@@ -1058,7 +1059,8 @@ fun VaultTab(
                                                         streamUrl = item.directUrl,
                                                         streamName = item.displayName,
                                                         streamId = item.streamId,
-                                                        categoryName = item.categoryName.ifEmpty { "Vault Channel" }
+                                                        categoryName = item.categoryName.ifEmpty { "Vault Channel" },
+                                                        scope = PlayerScope.VAULT
                                                     )
                                                 }
                                             )
