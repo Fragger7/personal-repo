@@ -723,5 +723,15 @@
     "url": "https://www.ebay.com/itm/227586715185",
     "reaped_at": "2026-10-30T01:09:47.427716+00:00",
     "reason": "reaped"
+  },
+  "ebay_157867523541": {
+    "url": "https://www.ebay.com/itm/157867523541",
+    "reaped_at": "2026-10-30T07:18:05.580667+00:00",
+    "reason": "reaped"
+  },
+  "ebay_860095047658": {
+    "url": "https://www.ebay.com/itm/860095047658",
+    "reaped_at": "2026-10-30T07:18:05.581532+00:00",
+    "reason": "reaped"
   }
 }
