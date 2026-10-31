@@ -20,7 +20,8 @@
 | [**`ws-deal-hunter/`**](./ws-deal-hunter/) | Autonomous Workstation Deal Hunter, Arbitrage Engine & Live Dashboard | [wsdealhunter.vercel.app](https://wsdealhunter.vercel.app/) |
 | [**`daily-push/`**](./daily-push/) | Automated daily Git push & development activity logger | — |
 | [**`lease-hunter/`**](./lease-hunter/) | Real estate & lease opportunity scraper and analysis tool | — |
-| [**`project-strong/`**](./project-strong/) | Strength workout & fitness tracking companion | — |
+
+*(Note: Sherlock Streams has been migrated to its own dedicated private repository at `https://github.com/Fragger7/sherlock-streams` / local path `/Users/admin/Development/sherlock-streams`).*
 
 ---
 

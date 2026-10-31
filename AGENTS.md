@@ -10,7 +10,7 @@
   1. **`ws-deal-hunter/`**: Autonomous Workstation Deal Hunter & Arbitrage Engine (eBay, Swappa, Reddit, DFS Refurbished, Micro Center, B&H). Dashboards: [Vercel](https://wsdealhunter.vercel.app/) & [Streamlit](https://wsdealhunter.streamlit.app/).
   2. **`lease-hunter/`**: EV & Automotive Lease Valuation Engine.
   3. **`daily-push/`**: Automated Daily Push & Notification Pipelines.
-  4. **`project-strong/`**: Core Fitness & Analytics Platform.
+  *(Note: Sherlock Streams has been migrated to its own dedicated private repository at `https://github.com/Fragger7/sherlock-streams` / local path `/Users/admin/Development/sherlock-streams`).*
   *(Note: TVMime has been migrated to its own dedicated repository at `https://github.com/Fragger7/tvmime` / local path `/Users/admin/Development/tvmime`).*
 
 
@@ -52,7 +52,7 @@
 ### 5. Monorepo Directory Boundary Invariance
 * **All Deal Hunter code belongs strictly in `ws-deal-hunter/`**:
   - Never generate loose script files, debug outputs, or test data at the workspace root.
-  - Keep peer project directories (`lease-hunter/`, `daily-push/`, `project-strong/`, `tvmime/`) isolated and untouched.
+  - Keep peer project directories (`lease-hunter/`, `daily-push/`) isolated and untouched.
 
 ### 6. Zero Dummy Data in Production
 * Under NO circumstances should mock data, synthetic seed listings, or fallback generators be committed to `deals.json` or served to production dashboards. If a live scraper returns 0 items, it must return `[]`.
